@@ -40,7 +40,6 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
@@ -111,7 +110,7 @@ TEST_P(BookChangesParameterTest, InvalidParams)
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{BookChangesHandler{backend_}};
-        auto const req = json::parse(testBundle.testJson);
+        auto const req = boost::json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -124,9 +123,9 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
-    static auto const kINPUT = json::parse(R"JSON({"ledger_index": 30})JSON");
+    static auto const kINPUT = boost::json::parse(R"JSON({"ledger_index": 30})JSON");
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -143,7 +142,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillByDefault(Return(std::nullopt));
 
-    static auto const kINPUT = json::parse(R"JSON({"ledger_index": "30"})JSON");
+    static auto const kINPUT = boost::json::parse(R"JSON({"ledger_index": "30"})JSON");
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -157,10 +156,10 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
 TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
 {
     // return empty ledgerHeader
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kINPUT = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "ledger_hash": "{}"
@@ -206,10 +205,10 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
 
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STObject const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1);
+    xrpl::STObject const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 
@@ -217,9 +216,9 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
 
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(json::parse("{}"), Context{yield});
+        auto const output = handler.process(boost::json::parse("{}"), Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
+        EXPECT_EQ(*output.result, boost::json::parse(kEXPECTED_OUT));
     });
 }
 
@@ -252,10 +251,10 @@ TEST_F(RPCBookChangesHandlerTest, NormalPathWithDomain)
 
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STObject const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1, kDOMAIN);
+    xrpl::STObject const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1, kDOMAIN);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 
@@ -263,8 +262,8 @@ TEST_F(RPCBookChangesHandlerTest, NormalPathWithDomain)
 
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(json::parse("{}"), Context{yield});
+        auto const output = handler.process(boost::json::parse("{}"), Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
+        EXPECT_EQ(*output.result, boost::json::parse(kEXPECTED_OUT));
     });
 }

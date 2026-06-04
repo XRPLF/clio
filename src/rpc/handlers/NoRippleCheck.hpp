@@ -109,7 +109,7 @@ public:
             {JS(role),
              validation::Required{},
              meta::WithCustomError{
-                 validation::OneOf{"gateway", "user"}, Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"}
+                 validation::OneOf{"gateway", "user"}, Status{RippledError::RpcInvalidParams, "role field is invalid"}
              }},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},

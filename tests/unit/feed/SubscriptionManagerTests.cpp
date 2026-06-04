@@ -58,7 +58,6 @@ constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF2
 
 }  // namespace
 
-namespace json = boost::json;
 using namespace feed;
 using namespace feed::impl;
 using namespace data;
@@ -101,8 +100,8 @@ TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtx)
 
     EXPECT_CALL(*sessionPtr_, send(testing::_)).Times(testing::AtMost(2));
 
-    subscriptionManagerPtr_->forwardManifest(json::parse(kJSON_MANIFEST).get_object());
-    subscriptionManagerPtr_->forwardValidation(json::parse(kJSON_VALIDATION).get_object());
+    subscriptionManagerPtr_->forwardManifest(boost::json::parse(kJSON_MANIFEST).get_object());
+    subscriptionManagerPtr_->forwardValidation(boost::json::parse(kJSON_VALIDATION).get_object());
 }
 
 TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtxSessionDieEarly)
@@ -115,8 +114,8 @@ TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtxSessionDieEarly)
     EXPECT_CALL(*sessionPtr_, send(testing::_)).Times(0);
     session_.reset();
 
-    subscriptionManagerPtr_->forwardManifest(json::parse(R"JSON({"manifest": "test"})JSON").get_object());
-    subscriptionManagerPtr_->forwardValidation(json::parse(R"JSON({"validation": "test"})JSON").get_object());
+    subscriptionManagerPtr_->forwardManifest(boost::json::parse(R"JSON({"manifest": "test"})JSON").get_object());
+    subscriptionManagerPtr_->forwardValidation(boost::json::parse(R"JSON({"validation": "test"})JSON").get_object());
 }
 
 TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
@@ -165,10 +164,10 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     subscriptionManagerPtr_->subProposedAccount(account, session1);
     subscriptionManagerPtr_->subProposedAccount(account, session2);
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
     subscriptionManagerPtr_->subBook(book, session1);
     subscriptionManagerPtr_->subBook(book, session2);
-    EXPECT_EQ(subscriptionManagerPtr_->report(), json::parse(kREPORT_RETURN));
+    EXPECT_EQ(subscriptionManagerPtr_->report(), boost::json::parse(kREPORT_RETURN));
 
     // count down when unsub manually
     subscriptionManagerPtr_->unsubBookChanges(session1);
@@ -184,7 +183,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     auto const account2 = getAccountIdWithString(kACCOUNT2);
     subscriptionManagerPtr_->unsubAccount(account2, session1);
     subscriptionManagerPtr_->unsubProposedAccount(account2, session1);
-    auto checkResult = [](json::object reportReturn, int result) {
+    auto checkResult = [](boost::json::object reportReturn, int result) {
         EXPECT_EQ(reportReturn["book_changes"], result);
         EXPECT_EQ(reportReturn["validations"], result);
         EXPECT_EQ(reportReturn["transactions_proposed"], result);
@@ -208,11 +207,11 @@ TEST_F(SubscriptionManagerTest, ManifestTest)
     EXPECT_CALL(*sessionPtr_, onDisconnect);
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY_MANIFEST)));
     subscriptionManagerPtr_->subManifest(session_);
-    subscriptionManagerPtr_->forwardManifest(json::parse(kDUMMY_MANIFEST).get_object());
+    subscriptionManagerPtr_->forwardManifest(boost::json::parse(kDUMMY_MANIFEST).get_object());
 
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY_MANIFEST))).Times(0);
     subscriptionManagerPtr_->unsubManifest(session_);
-    subscriptionManagerPtr_->forwardManifest(json::parse(kDUMMY_MANIFEST).get_object());
+    subscriptionManagerPtr_->forwardManifest(boost::json::parse(kDUMMY_MANIFEST).get_object());
 }
 
 TEST_F(SubscriptionManagerTest, ValidationTest)
@@ -221,11 +220,11 @@ TEST_F(SubscriptionManagerTest, ValidationTest)
     EXPECT_CALL(*sessionPtr_, onDisconnect);
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY)));
     subscriptionManagerPtr_->subValidation(session_);
-    subscriptionManagerPtr_->forwardValidation(json::parse(kDUMMY).get_object());
+    subscriptionManagerPtr_->forwardValidation(boost::json::parse(kDUMMY).get_object());
 
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY))).Times(0);
     subscriptionManagerPtr_->unsubValidation(session_);
-    subscriptionManagerPtr_->forwardValidation(json::parse(kDUMMY).get_object());
+    subscriptionManagerPtr_->forwardValidation(boost::json::parse(kDUMMY).get_object());
 }
 
 TEST_F(SubscriptionManagerTest, BookChangesTest)
@@ -237,10 +236,10 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 32);
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STObject const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1);
+    xrpl::STObject const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
     static constexpr auto kBOOK_CHANGE_PUBLISH =
@@ -300,14 +299,14 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
         EXPECT_CALL(*sessionPtr_, onDisconnect);
         auto const res = subscriptionManagerPtr_->subLedger(yield, session_);
         // check the response
-        EXPECT_EQ(res, json::parse(kLEDGER_RESPONSE));
+        EXPECT_EQ(res, boost::json::parse(kLEDGER_RESPONSE));
     });
     ctx.run();
     EXPECT_EQ(subscriptionManagerPtr_->report()["ledger"], 1);
 
     // test publish
     auto const ledgerHeader2 = createLedgerHeader(kLEDGER_HASH, 31);
-    auto fee2 = ripple::Fees();
+    auto fee2 = xrpl::Fees();
     fee2.reserve = 10;
     static constexpr auto kLEDGER_PUB =
         R"JSON({
@@ -334,7 +333,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
 {
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
     auto const account = getAccountIdWithString(kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
     EXPECT_CALL(*sessionPtr_, onDisconnect).Times(3);
     subscriptionManagerPtr_->subBook(book, session_);
     subscriptionManagerPtr_->subTransactions(session_);
@@ -487,7 +486,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
         })JSON";
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY_TRANSACTION))).Times(2);
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(2);
-    subscriptionManagerPtr_->forwardProposedTransaction(json::parse(kDUMMY_TRANSACTION).get_object());
+    subscriptionManagerPtr_->forwardProposedTransaction(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();

@@ -27,7 +27,6 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
@@ -45,7 +44,7 @@ TEST_F(RPCLedgerRangeTest, LedgerRangeMinMaxSame)
         backend_->updateRange(kRANGE_MIN);
 
         auto const handler = AnyHandler{LedgerRangeHandler{backend_}};
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         auto const json = output.result.value();
@@ -60,7 +59,7 @@ TEST_F(RPCLedgerRangeTest, LedgerRangeFullySet)
         backend_->setRange(kRANGE_MIN, kRANGE_MAX);
 
         auto const handler = AnyHandler{LedgerRangeHandler{backend_}};
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         auto const json = output.result.value();

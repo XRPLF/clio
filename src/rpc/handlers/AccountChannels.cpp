@@ -51,32 +51,32 @@
 namespace rpc {
 
 void
-AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle)
+AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, xrpl::SLE const& channelSle)
 {
     ChannelResponse channel;
-    channel.channelID = ripple::to_string(channelSle.key());
-    channel.account = ripple::to_string(channelSle.getAccountID(ripple::sfAccount));
-    channel.accountDestination = ripple::to_string(channelSle.getAccountID(ripple::sfDestination));
-    channel.amount = channelSle[ripple::sfAmount].getText();
-    channel.balance = channelSle[ripple::sfBalance].getText();
-    channel.settleDelay = channelSle[ripple::sfSettleDelay];
+    channel.channelID = xrpl::to_string(channelSle.key());
+    channel.account = xrpl::to_string(channelSle.getAccountID(xrpl::sfAccount));
+    channel.accountDestination = xrpl::to_string(channelSle.getAccountID(xrpl::sfDestination));
+    channel.amount = channelSle[xrpl::sfAmount].getText();
+    channel.balance = channelSle[xrpl::sfBalance].getText();
+    channel.settleDelay = channelSle[xrpl::sfSettleDelay];
 
-    if (publicKeyType(channelSle[ripple::sfPublicKey])) {
-        ripple::PublicKey const pk(channelSle[ripple::sfPublicKey]);
-        channel.publicKey = toBase58(ripple::TokenType::AccountPublic, pk);
+    if (publicKeyType(channelSle[xrpl::sfPublicKey])) {
+        xrpl::PublicKey const pk(channelSle[xrpl::sfPublicKey]);
+        channel.publicKey = toBase58(xrpl::TokenType::AccountPublic, pk);
         channel.publicKeyHex = strHex(pk);
     }
 
-    if (auto const& v = channelSle[~ripple::sfExpiration])
+    if (auto const& v = channelSle[~xrpl::sfExpiration])
         channel.expiration = v;
 
-    if (auto const& v = channelSle[~ripple::sfCancelAfter])
+    if (auto const& v = channelSle[~xrpl::sfCancelAfter])
         channel.cancelAfter = v;
 
-    if (auto const& v = channelSle[~ripple::sfSourceTag])
+    if (auto const& v = channelSle[~xrpl::sfSourceTag])
         channel.sourceTag = v;
 
-    if (auto const& v = channelSle[~ripple::sfDestinationTag])
+    if (auto const& v = channelSle[~xrpl::sfDestinationTag])
         channel.destinationTag = v;
 
     jsonChannels.push_back(channel);
@@ -97,18 +97,18 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input const& input, Cont
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+        sharedPtrBackend_->fetchLedgerObject(xrpl::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::RpcActNotFound, "accountNotFound"}};
 
     auto const destAccountID = input.destinationAccount ? accountFromStringStrict(input.destinationAccount.value())
-                                                        : std::optional<ripple::AccountID>{};
+                                                        : std::optional<xrpl::AccountID>{};
 
     Output response;
-    auto const addToResponse = [&](ripple::SLE const sle) {
-        if (sle.getType() == ripple::ltPAYCHAN && sle.getAccountID(ripple::sfAccount) == accountID &&
-            (!destAccountID || *destAccountID == sle.getAccountID(ripple::sfDestination))) {
+    auto const addToResponse = [&](xrpl::SLE const sle) {
+        if (sle.getType() == xrpl::ltPAYCHAN && sle.getAccountID(xrpl::sfAccount) == accountID &&
+            (!destAccountID || *destAccountID == sle.getAccountID(xrpl::sfDestination))) {
             addChannel(response.channels, sle);
         }
 
@@ -124,7 +124,7 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input const& input, Cont
 
     response.account = input.account;
     response.limit = input.limit;
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
     auto const nextMarker = expectedNext.value();

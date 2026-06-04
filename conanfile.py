@@ -12,16 +12,11 @@ class ClioConan(ConanFile):
     options = {}
 
     requires = [
-        "boost/1.83.0",
         "cassandra-cpp-driver/2.17.0",
         "fmt/12.1.0",
-        "grpc/1.50.1",
         "libbacktrace/cci.20210118",
-        "openssl/1.1.1w",
-        "protobuf/3.21.12",
         "spdlog/1.17.0",
-        "xrpl/3.0.0",
-        "zlib/1.3.1",
+        "xrpl/3.2.0-rc4@local",
     ]
 
     default_options = {
@@ -36,7 +31,7 @@ class ClioConan(ConanFile):
         "protobuf/*:shared": False,
         "protobuf/*:with_zlib": True,
         "snappy/*:shared": False,
-        "xrpl/*:rocksdb": False,
+        "xrpl/*:rocksdb": True,  # TODO: revert to false when includes are fixed in libxrpl
         "xrpl/*:tests": False,
     }
 
@@ -45,6 +40,19 @@ class ClioConan(ConanFile):
     def requirements(self):
         self.requires("gtest/1.17.0")
         self.requires("benchmark/1.9.4")
+        # Clio's own code includes grpc (<grpcpp/...>) and openssl (via
+        # <boost/asio/ssl>) headers directly, but xrpl does not re-export them
+        # (only boost/date/xxhash are required with transitive_headers=True).
+        # So they must be direct requirements of clio to get their include dirs;
+        # the version pins match xrpl's, so this does not change any package_id.
+        self.requires("grpc/1.78.1")
+        self.requires("openssl/3.6.2")
+        # Pin the remaining transitive deps to the exact versions xrpl uses.
+        # override=True only sets the version when the package appears
+        # transitively (it does not make them direct deps), and matches xrpl's
+        # force=True boost pin that overrides nudb's `boost < 1.91.0` cap.
+        self.requires("boost/1.91.0", override=True)
+        self.requires("zlib/1.3.2", override=True)
 
     def configure(self):
         if self.settings.compiler == "apple-clang":

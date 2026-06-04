@@ -30,12 +30,12 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/jss.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 
@@ -43,7 +43,7 @@
 #include <optional>
 #include <string>
 
-using namespace ripple;
+using namespace xrpl;
 
 namespace rpc {
 
@@ -61,16 +61,16 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const limit = input.limit.value_or(MPTHoldersHandler::kLIMIT_DEFAULT);
-    auto const mptID = ripple::uint192{input.mptID.c_str()};
+    auto const mptID = xrpl::uint192{input.mptID.c_str()};
 
     auto const issuanceLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::mptIssuance(mptID).key, lgrInfo.seq, ctx.yield);
+        sharedPtrBackend_->fetchLedgerObject(xrpl::keylet::mptIssuance(mptID).key, lgrInfo.seq, ctx.yield);
     if (!issuanceLedgerObject)
-        return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "objectNotFound"}};
+        return Error{Status{RippledError::RpcObjectNotFound, "objectNotFound"}};
 
-    std::optional<ripple::AccountID> cursor;
+    std::optional<xrpl::AccountID> cursor;
     if (input.marker)
-        cursor = ripple::AccountID{input.marker->c_str()};
+        cursor = xrpl::AccountID{input.marker->c_str()};
 
     auto const dbResponse = sharedPtrBackend_->fetchMPTHolders(mptID, limit, cursor, lgrInfo.seq, ctx.yield);
     auto output = MPTHoldersHandler::Output{};
@@ -80,14 +80,14 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
 
     boost::json::array const mpts;
     for (auto const& mpt : dbResponse.mptokens) {
-        ripple::STLedgerEntry const sle{ripple::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key};
+        xrpl::STLedgerEntry const sle{xrpl::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key};
         boost::json::object mptJson;
 
-        mptJson[JS(account)] = toBase58(sle[ripple::sfAccount]);
+        mptJson[JS(account)] = toBase58(sle[xrpl::sfAccount]);
         mptJson[JS(flags)] = sle.getFlags();
         mptJson["mpt_amount"] =
-            toBoostJson(ripple::STUInt64{ripple::sfMPTAmount, sle[ripple::sfMPTAmount]}.getJson(JsonOptions::none));
-        mptJson["mptoken_index"] = ripple::to_string(ripple::keylet::mptoken(mptID, sle[ripple::sfAccount]).key);
+            toBoostJson(xrpl::STUInt64{xrpl::sfMPTAmount, sle[xrpl::sfMPTAmount]}.getJson(JsonOptions::Values::None));
+        mptJson["mptoken_index"] = xrpl::to_string(xrpl::keylet::mptoken(mptID, sle[xrpl::sfAccount]).key);
 
         output.mpts.push_back(mptJson);
     }

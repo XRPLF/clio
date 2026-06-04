@@ -69,7 +69,7 @@ private:
     updateBookSuccessor(
         std::optional<data::LedgerObject> const& maybeSuccessor,
         auto seq,
-        ripple::uint256 const& bookBase
+        xrpl::uint256 const& bookBase
     ) const;
 
     void

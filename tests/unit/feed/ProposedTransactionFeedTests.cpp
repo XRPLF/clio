@@ -58,7 +58,6 @@ constexpr auto kDUMMY_TRANSACTION =
 }  // namespace
 
 using namespace feed::impl;
-namespace json = boost::json;
 using namespace util::prometheus;
 
 using FeedProposedTransactionTest = FeedBaseTest<ProposedTransactionFeed>;
@@ -70,12 +69,12 @@ TEST_F(FeedProposedTransactionTest, ProposedTransaction)
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
 
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION)));
-    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+    testFeedPtr->pub(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 0);
 
-    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+    testFeedPtr->pub(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 }
 
 TEST_F(FeedProposedTransactionTest, AccountProposedTransaction)
@@ -95,13 +94,13 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransaction)
 
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION)));
 
-    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+    testFeedPtr->pub(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 
     // unsub
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+    testFeedPtr->pub(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 }
 
 TEST_F(FeedProposedTransactionTest, SubStreamAndAccount)
@@ -116,20 +115,20 @@ TEST_F(FeedProposedTransactionTest, SubStreamAndAccount)
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION))).Times(2);
 
-    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+    testFeedPtr->pub(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 
     // unsub
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION)));
 
-    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+    testFeedPtr->pub(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 
     // unsub transaction
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 0);
 
-    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+    testFeedPtr->pub(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 }
 
 TEST_F(FeedProposedTransactionTest, AccountProposedTransactionDuplicate)
@@ -143,19 +142,19 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransactionDuplicate)
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION)));
-    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+    testFeedPtr->pub(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 
     // unsub account1
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION)));
-    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+    testFeedPtr->pub(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 
     // unsub account2
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+    testFeedPtr->pub(boost::json::parse(kDUMMY_TRANSACTION).get_object());
 }
 
 TEST_F(FeedProposedTransactionTest, Count)

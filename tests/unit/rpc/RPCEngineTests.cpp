@@ -58,7 +58,6 @@
 using namespace data;
 using namespace rpc;
 using namespace util;
-namespace json = boost::json;
 using namespace testing;
 using namespace util::config;
 
@@ -143,7 +142,7 @@ generateTestValuesForParametersTest()
          .isTooBusy = neverCalled,
          .isUnknownCmd = neverCalled,
          .handlerReturnError = false,
-         .status = rpc::Status{RippledError::rpcNO_PERMISSION},
+         .status = rpc::Status{RippledError::RpcNoPermission},
          .response = std::nullopt},
         {.testName = "BackendTooBusy",
          .isAdmin = false,
@@ -153,7 +152,7 @@ generateTestValuesForParametersTest()
          .isTooBusy = true,
          .isUnknownCmd = neverCalled,
          .handlerReturnError = false,
-         .status = rpc::Status{RippledError::rpcTOO_BUSY},
+         .status = rpc::Status{RippledError::RpcTooBusy},
          .response = std::nullopt},
         {.testName = "HandlerUnknown",
          .isAdmin = false,
@@ -163,7 +162,7 @@ generateTestValuesForParametersTest()
          .isTooBusy = false,
          .isUnknownCmd = true,
          .handlerReturnError = false,
-         .status = rpc::Status{RippledError::rpcUNKNOWN_COMMAND},
+         .status = rpc::Status{RippledError::RpcUnknownCommand},
          .response = std::nullopt},
         {.testName = "HandlerReturnError",
          .isAdmin = false,
@@ -212,7 +211,7 @@ TEST_P(RPCEngineFlowParameterTest, Test)
     if (testBundle.forwarded) {
         EXPECT_CALL(*mockLoadBalancerPtr_, forwardToRippled)
             .WillOnce(
-                Return(std::expected<boost::json::object, rpc::ClioError>(json::parse(kFORWARD_REPLY).as_object()))
+                Return(std::expected<boost::json::object, rpc::ClioError>(boost::json::parse(kFORWARD_REPLY).as_object()))
             );
         EXPECT_CALL(*handlerProvider, contains).WillOnce(Return(true));
         EXPECT_CALL(*mockCountersPtr_, rpcForwarded(testBundle.method));
@@ -293,7 +292,7 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
 
         auto const res = engine->buildResponse(ctx);
         ASSERT_FALSE(res.response.has_value());
-        EXPECT_EQ(res.response.error(), Status{RippledError::rpcTOO_BUSY});
+        EXPECT_EQ(res.response.error(), Status{RippledError::RpcTooBusy});
     });
 }
 
@@ -324,7 +323,7 @@ TEST_F(RPCEngineTest, ThrowException)
 
         auto const res = engine->buildResponse(ctx);
         ASSERT_FALSE(res.response.has_value());
-        EXPECT_EQ(res.response.error(), Status{RippledError::rpcINTERNAL});
+        EXPECT_EQ(res.response.error(), Status{RippledError::RpcInternal});
     });
 }
 
@@ -409,7 +408,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(RPCEngineCacheParameterTest, Test)
 {
     auto const& testParam = GetParam();
-    auto const json = ConfigFileJson{json::parse(testParam.config).as_object()};
+    auto const json = ConfigFileJson{boost::json::parse(testParam.config).as_object()};
 
     auto cfgCache{generateDefaultRPCEngineConfig()};
     auto const errors = cfgCache.parse(json);

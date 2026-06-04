@@ -26,8 +26,8 @@
 namespace etl::impl {
 
 struct CursorPair {
-    ripple::uint256 start;
-    ripple::uint256 end;
+    xrpl::uint256 start;
+    xrpl::uint256 end;
 };
 
 struct BaseCursorProvider {

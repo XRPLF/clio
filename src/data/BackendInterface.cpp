@@ -64,7 +64,7 @@ BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 void
 BackendInterface::writeLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob)
 {
-    ASSERT(key.size() == sizeof(ripple::uint256), "Key must be 256 bits");
+    ASSERT(key.size() == sizeof(xrpl::uint256), "Key must be 256 bits");
     doWriteLedgerObject(std::move(key), seq, std::move(blob));
 }
 
@@ -77,14 +77,14 @@ BackendInterface::hardFetchLedgerRangeNoThrow() const
 // *** state data methods
 std::optional<Blob>
 BackendInterface::fetchLedgerObject(
-    ripple::uint256 const& key,
+    xrpl::uint256 const& key,
     std::uint32_t const sequence,
     boost::asio::yield_context yield
 ) const
 {
     auto obj = cache_.get().get(key, sequence);
     if (obj) {
-        LOG(log_.trace()) << "Cache hit - " << ripple::strHex(key);
+        LOG(log_.trace()) << "Cache hit - " << xrpl::strHex(key);
         return obj;
     }
 
@@ -99,7 +99,7 @@ BackendInterface::fetchLedgerObject(
 
 std::optional<std::uint32_t>
 BackendInterface::fetchLedgerObjectSeq(
-    ripple::uint256 const& key,
+    xrpl::uint256 const& key,
     std::uint32_t const sequence,
     boost::asio::yield_context yield
 ) const
@@ -112,14 +112,14 @@ BackendInterface::fetchLedgerObjectSeq(
 
 std::vector<Blob>
 BackendInterface::fetchLedgerObjects(
-    std::vector<ripple::uint256> const& keys,
+    std::vector<xrpl::uint256> const& keys,
     std::uint32_t const sequence,
     boost::asio::yield_context yield
 ) const
 {
     std::vector<Blob> results;
     results.resize(keys.size());
-    std::vector<ripple::uint256> misses;
+    std::vector<xrpl::uint256> misses;
     for (size_t i = 0; i < keys.size(); ++i) {
         auto obj = cache_.get().get(keys[i], sequence);
         if (obj) {
@@ -144,25 +144,25 @@ BackendInterface::fetchLedgerObjects(
 }
 
 // Fetches the successor to key/index
-std::optional<ripple::uint256>
+std::optional<xrpl::uint256>
 BackendInterface::fetchSuccessorKey(
-    ripple::uint256 key,
+    xrpl::uint256 key,
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context yield
 ) const
 {
     auto succ = cache_.get().getSuccessor(key, ledgerSequence);
     if (succ) {
-        LOG(log_.trace()) << "Cache hit - " << ripple::strHex(key);
+        LOG(log_.trace()) << "Cache hit - " << xrpl::strHex(key);
     } else {
-        LOG(log_.trace()) << "Cache miss - " << ripple::strHex(key);
+        LOG(log_.trace()) << "Cache miss - " << xrpl::strHex(key);
     }
     return succ ? succ->key : doFetchSuccessorKey(key, ledgerSequence, yield);
 }
 
 std::optional<LedgerObject>
 BackendInterface::fetchSuccessorObject(
-    ripple::uint256 key,
+    xrpl::uint256 key,
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context yield
 ) const
@@ -180,7 +180,7 @@ BackendInterface::fetchSuccessorObject(
 
 BookOffersPage
 BackendInterface::fetchBookOffers(
-    ripple::uint256 const& book,
+    xrpl::uint256 const& book,
     std::uint32_t const ledgerSequence,
     std::uint32_t const limit,
     boost::asio::yield_context yield
@@ -189,9 +189,9 @@ BackendInterface::fetchBookOffers(
     // TODO try to speed this up. This can take a few seconds. The goal is
     // to get it down to a few hundred milliseconds.
     BookOffersPage page;
-    ripple::uint256 const bookEnd = ripple::getQualityNext(book);
-    ripple::uint256 uTipIndex = book;
-    std::vector<ripple::uint256> keys;
+    xrpl::uint256 const bookEnd = xrpl::getQualityNext(book);
+    xrpl::uint256 uTipIndex = book;
+    std::vector<xrpl::uint256> keys;
     auto getMillis = [](auto diff) { return std::chrono::duration_cast<std::chrono::milliseconds>(diff).count(); };
     auto begin = std::chrono::system_clock::now();
     std::uint32_t numSucc = 0;
@@ -211,17 +211,17 @@ BackendInterface::fetchBookOffers(
         uTipIndex = offerDir->key;
         while (keys.size() < limit) {
             ++numPages;
-            ripple::STLedgerEntry const sle{
-                ripple::SerialIter{offerDir->blob.data(), offerDir->blob.size()}, offerDir->key
+            xrpl::STLedgerEntry const sle{
+                xrpl::SerialIter{offerDir->blob.data(), offerDir->blob.size()}, offerDir->key
             };
-            auto indexes = sle.getFieldV256(ripple::sfIndexes);
+            auto indexes = sle.getFieldV256(xrpl::sfIndexes);
             keys.insert(keys.end(), indexes.begin(), indexes.end());
-            auto next = sle.getFieldU64(ripple::sfIndexNext);
+            auto next = sle.getFieldU64(xrpl::sfIndexNext);
             if (next == 0u) {
                 LOG(log_.trace()) << "Next is empty. breaking";
                 break;
             }
-            auto nextKey = ripple::keylet::page(uTipIndex, next);
+            auto nextKey = xrpl::keylet::page(uTipIndex, next);
             auto nextDir = fetchLedgerObject(nextKey.key, ledgerSequence, yield);
             ASSERT(nextDir.has_value(), "Next dir must exist");
             offerDir->blob = *nextDir;
@@ -233,7 +233,7 @@ BackendInterface::fetchBookOffers(
     auto mid = std::chrono::system_clock::now();
     auto objs = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < keys.size() && i < limit; ++i) {
-        LOG(log_.trace()) << "Key = " << ripple::strHex(keys[i]) << " blob = " << ripple::strHex(objs[i])
+        LOG(log_.trace()) << "Key = " << xrpl::strHex(keys[i]) << " blob = " << xrpl::strHex(objs[i])
                           << " ledgerSequence = " << ledgerSequence;
         ASSERT(!objs[i].empty(), "Ledger object can't be empty");
         page.offers.push_back({keys[i], objs[i]});
@@ -247,7 +247,7 @@ BackendInterface::fetchBookOffers(
                       << ". num pages = " << std::to_string(numPages) << ". Fetching all objects took "
                       << std::to_string(getMillis(end - mid))
                       << " milliseconds. total time = " << std::to_string(getMillis(end - begin)) << " milliseconds"
-                      << " book = " << ripple::strHex(book);
+                      << " book = " << xrpl::strHex(book);
 
     return page;
 }
@@ -305,7 +305,7 @@ BackendInterface::setRange(uint32_t min, uint32_t max, bool force)
 
 LedgerPage
 BackendInterface::fetchLedgerPage(
-    std::optional<ripple::uint256> const& cursor,
+    std::optional<xrpl::uint256> const& cursor,
     std::uint32_t const ledgerSequence,
     std::uint32_t const limit,
     bool outOfOrder,
@@ -314,11 +314,11 @@ BackendInterface::fetchLedgerPage(
 {
     LedgerPage page;
 
-    std::vector<ripple::uint256> keys;
+    std::vector<xrpl::uint256> keys;
     bool reachedEnd = false;
 
     while (keys.size() < limit && !reachedEnd) {
-        ripple::uint256 const& curCursor = [&]() {
+        xrpl::uint256 const& curCursor = [&]() {
             if (!keys.empty())
                 return keys.back();
             return (cursor ? *cursor : kFIRST_KEY);
@@ -339,11 +339,11 @@ BackendInterface::fetchLedgerPage(
         if (!objects[i].empty()) {
             page.objects.push_back({keys[i], std::move(objects[i])});
         } else if (!outOfOrder) {
-            LOG(log_.error()) << "Deleted or non-existent object in successor table. key = " << ripple::strHex(keys[i])
+            LOG(log_.error()) << "Deleted or non-existent object in successor table. key = " << xrpl::strHex(keys[i])
                               << " - seq = " << ledgerSequence;
             std::stringstream msg;
             for (size_t j = 0; j < objects.size(); ++j) {
-                msg << " - " << ripple::strHex(keys[j]);
+                msg << " - " << xrpl::strHex(keys[j]);
             }
             LOG(log_.error()) << msg.str();
 
@@ -357,12 +357,12 @@ BackendInterface::fetchLedgerPage(
     return page;
 }
 
-std::optional<ripple::Fees>
+std::optional<xrpl::Fees>
 BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context yield) const
 {
-    ripple::Fees fees;
+    xrpl::Fees fees;
 
-    auto key = ripple::keylet::fees().key;
+    auto key = xrpl::keylet::fees().key;
     auto bytes = fetchLedgerObject(key, seq, yield);
 
     if (!bytes) {
@@ -370,17 +370,17 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context 
         return {};
     }
 
-    ripple::SerialIter it(bytes->data(), bytes->size());
-    ripple::SLE const sle{it, key};
+    xrpl::SerialIter it(bytes->data(), bytes->size());
+    xrpl::SLE const sle{it, key};
 
     // XRPFees amendment introduced new fields for fees calculations.
     // New fields are set and the old fields are removed via `set_fees` tx.
     // Fallback to old fields if `set_fees` was not yet used to update the fields on this tx.
     auto hasNewFields = false;
     {
-        auto const baseFeeXRP = sle.at(~ripple::sfBaseFeeDrops);
-        auto const reserveBaseXRP = sle.at(~ripple::sfReserveBaseDrops);
-        auto const reserveIncrementXRP = sle.at(~ripple::sfReserveIncrementDrops);
+        auto const baseFeeXRP = sle.at(~xrpl::sfBaseFeeDrops);
+        auto const reserveBaseXRP = sle.at(~xrpl::sfReserveBaseDrops);
+        auto const reserveIncrementXRP = sle.at(~xrpl::sfReserveIncrementDrops);
 
         if (baseFeeXRP)
             fees.base = baseFeeXRP->xrp();
@@ -396,9 +396,9 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context 
 
     if (not hasNewFields) {
         // Fallback to old fields
-        auto const baseFee = sle.at(~ripple::sfBaseFee);
-        auto const reserveBase = sle.at(~ripple::sfReserveBase);
-        auto const reserveIncrement = sle.at(~ripple::sfReserveIncrement);
+        auto const baseFee = sle.at(~xrpl::sfBaseFee);
+        auto const reserveBase = sle.at(~xrpl::sfReserveBase);
+        auto const reserveIncrement = sle.at(~xrpl::sfReserveIncrement);
 
         if (baseFee)
             fees.base = baseFee.value();

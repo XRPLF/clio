@@ -69,7 +69,7 @@ struct ClioErrorInfo {
 };
 
 /** @brief Clio uses compatible Rippled error codes for most RPC errors. */
-using RippledError = ripple::error_code_i;
+using RippledError = xrpl::ErrorCodeI;
 
 /**
  * @brief Clio operates on a combination of Rippled and Custom Clio error codes.
@@ -81,7 +81,7 @@ using CombinedError = std::variant<RippledError, ClioError>;
 
 /** @brief A status returned from any RPC handler. */
 struct Status {
-    CombinedError code = RippledError::rpcSUCCESS;
+    CombinedError code = RippledError::RpcSuccess;
     std::string error;
     std::string message;
     std::optional<boost::json::object> extraInfo;
@@ -111,7 +111,7 @@ struct Status {
      *
      * @param message The message
      */
-    explicit Status(std::string message) : code(ripple::rpcUNKNOWN), message(std::move(message))
+    explicit Status(std::string message) : code(xrpl::RpcUnknown), message(std::move(message))
     {
     }
 
@@ -148,7 +148,7 @@ struct Status {
     operator bool() const
     {
         if (auto err = std::get_if<RippledError>(&code))
-            return *err != RippledError::rpcSUCCESS;
+            return *err != RippledError::RpcSuccess;
 
         return true;
     }

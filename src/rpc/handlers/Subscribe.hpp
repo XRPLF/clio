@@ -78,7 +78,7 @@ public:
      * @brief A struct to hold the data for one order book
      */
     struct OrderBook {
-        ripple::Book book;
+        xrpl::Book book;
         std::optional<std::string> taker;
         bool snapshot = false;
         bool both = false;

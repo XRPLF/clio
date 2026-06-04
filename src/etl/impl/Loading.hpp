@@ -86,7 +86,7 @@ public:
         std::optional<std::string> lastKey
     ) override;
 
-    std::optional<ripple::LedgerHeader>
+    std::optional<xrpl::LedgerHeader>
     loadInitialLedger(model::LedgerData const& data) override;
 };
 

@@ -67,10 +67,10 @@ auto
 createTestData()
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE),  // not AUTHORIZE so will not be written
-        util::createTransaction(ripple::TxType::ttMPTOKEN_AUTHORIZE, kHASH, kTXN_META, kTXN_HEX),
-        util::createTransaction(ripple::TxType::ttAMM_CREATE),               // not MPT - will be filtered
-        util::createTransaction(ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE),  // not unique - will be filtered
+        util::createTransaction(xrpl::TxType::ttMPTOKEN_ISSUANCE_CREATE),  // not AUTHORIZE so will not be written
+        util::createTransaction(xrpl::TxType::ttMPTOKEN_AUTHORIZE, kHASH, kTXN_META, kTXN_HEX),
+        util::createTransaction(xrpl::TxType::ttAMM_CREATE),               // not MPT - will be filtered
+        util::createTransaction(xrpl::TxType::ttMPTOKEN_ISSUANCE_CREATE),  // not unique - will be filtered
     };
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
@@ -89,9 +89,9 @@ auto
 createMultipleHoldersTestData()
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttMPTOKEN_AUTHORIZE, kHASH, kTXN_META, kTXN_HEX),
-        util::createTransaction(ripple::TxType::ttMPTOKEN_AUTHORIZE, kHASH2, kTXN_META, kTXN_HEX),
-        util::createTransaction(ripple::TxType::ttMPTOKEN_AUTHORIZE, kHASH3, kTXN_META, kTXN_HEX)
+        util::createTransaction(xrpl::TxType::ttMPTOKEN_AUTHORIZE, kHASH, kTXN_META, kTXN_HEX),
+        util::createTransaction(xrpl::TxType::ttMPTOKEN_AUTHORIZE, kHASH2, kTXN_META, kTXN_HEX),
+        util::createTransaction(xrpl::TxType::ttMPTOKEN_AUTHORIZE, kHASH3, kTXN_META, kTXN_HEX)
     };
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);

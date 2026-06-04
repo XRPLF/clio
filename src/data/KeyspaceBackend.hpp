@@ -117,22 +117,22 @@ public:
 
     NFTsAndCursor
     fetchNFTsByIssuer(
-        ripple::AccountID const& issuer,
+        xrpl::AccountID const& issuer,
         std::optional<std::uint32_t> const& taxon,
         std::uint32_t const ledgerSequence,
         std::uint32_t const limit,
-        std::optional<ripple::uint256> const& cursorIn,
+        std::optional<xrpl::uint256> const& cursorIn,
         boost::asio::yield_context yield
     ) const override
     {
-        std::vector<ripple::uint256> nftIDs;
+        std::vector<xrpl::uint256> nftIDs;
         if (taxon.has_value()) {
             // Keyspace and ScyllaDB uses the same logic for taxon-filtered queries
             nftIDs = fetchNFTIDsByTaxon(issuer, *taxon, limit, cursorIn, yield);
         } else {
             // Amazon Keyspaces Workflow for non-taxon queries
-            auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
-            auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
+            auto const startTaxon = cursorIn.has_value() ? xrpl::nft::toUInt32(xrpl::nft::getTaxon(*cursorIn)) : 0;
+            auto const startTokenID = cursorIn.value_or(xrpl::uint256(0));
 
             Statement const firstQuery = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
             firstQuery.bindAt(1, startTaxon);
@@ -141,7 +141,7 @@ public:
 
             auto const firstRes = executor_.read(yield, firstQuery);
             if (firstRes.has_value()) {
-                for (auto const [nftID] : extract<ripple::uint256>(*firstRes))
+                for (auto const [nftID] : extract<xrpl::uint256>(*firstRes))
                     nftIDs.push_back(nftID);
             }
 
@@ -153,7 +153,7 @@ public:
 
                 auto const secondRes = executor_.read(yield, secondQuery);
                 if (secondRes.has_value()) {
-                    for (auto const [nftID] : extract<ripple::uint256>(*secondRes))
+                    for (auto const [nftID] : extract<xrpl::uint256>(*secondRes))
                         nftIDs.push_back(nftID);
                 }
             }
@@ -172,9 +172,9 @@ public:
      * @param pageSize The maximum number of accounts per page.
      * @param seq The accounts need to exist at this ledger sequence.
      * @param yield The coroutine context.
-     * @return A vector of ripple::uint256 representing the account root hashes.
+     * @return A vector of xrpl::uint256 representing the account root hashes.
      */
-    std::vector<ripple::uint256>
+    std::vector<xrpl::uint256>
     fetchAccountRoots(
         [[maybe_unused]] std::uint32_t number,
         [[maybe_unused]] std::uint32_t pageSize,
@@ -187,41 +187,41 @@ public:
     }
 
 private:
-    std::vector<ripple::uint256>
+    std::vector<xrpl::uint256>
     fetchNFTIDsByTaxon(
-        ripple::AccountID const& issuer,
+        xrpl::AccountID const& issuer,
         std::uint32_t const taxon,
         std::uint32_t const limit,
-        std::optional<ripple::uint256> const& cursorIn,
+        std::optional<xrpl::uint256> const& cursorIn,
         boost::asio::yield_context yield
     ) const
     {
-        std::vector<ripple::uint256> nftIDs;
+        std::vector<xrpl::uint256> nftIDs;
         Statement const statement = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
         statement.bindAt(1, taxon);
-        statement.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
+        statement.bindAt(2, cursorIn.value_or(xrpl::uint256(0)));
         statement.bindAt(3, Limit{limit});
 
         auto const res = executor_.read(yield, statement);
         if (res.has_value() && res->hasRows()) {
-            for (auto const [nftID] : extract<ripple::uint256>(*res))
+            for (auto const [nftID] : extract<xrpl::uint256>(*res))
                 nftIDs.push_back(nftID);
         }
         return nftIDs;
     }
 
-    std::vector<ripple::uint256>
+    std::vector<xrpl::uint256>
     fetchNFTIDsWithoutTaxon(
-        ripple::AccountID const& issuer,
+        xrpl::AccountID const& issuer,
         std::uint32_t const limit,
-        std::optional<ripple::uint256> const& cursorIn,
+        std::optional<xrpl::uint256> const& cursorIn,
         boost::asio::yield_context yield
     ) const
     {
-        std::vector<ripple::uint256> nftIDs;
+        std::vector<xrpl::uint256> nftIDs;
 
-        auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
-        auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
+        auto const startTaxon = cursorIn.has_value() ? xrpl::nft::toUInt32(xrpl::nft::getTaxon(*cursorIn)) : 0;
+        auto const startTokenID = cursorIn.value_or(xrpl::uint256(0));
 
         Statement firstQuery = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
         firstQuery.bindAt(1, startTaxon);
@@ -230,7 +230,7 @@ private:
 
         auto const firstRes = executor_.read(yield, firstQuery);
         if (firstRes.has_value()) {
-            for (auto const [nftID] : extract<ripple::uint256>(*firstRes))
+            for (auto const [nftID] : extract<xrpl::uint256>(*firstRes))
                 nftIDs.push_back(nftID);
         }
 
@@ -242,7 +242,7 @@ private:
 
             auto const secondRes = executor_.read(yield, secondQuery);
             if (secondRes.has_value()) {
-                for (auto const [nftID] : extract<ripple::uint256>(*secondRes))
+                for (auto const [nftID] : extract<xrpl::uint256>(*secondRes))
                     nftIDs.push_back(nftID);
             }
         }
@@ -254,7 +254,7 @@ private:
      */
     NFTsAndCursor
     populateNFTsAndCreateCursor(
-        std::vector<ripple::uint256> const& nftIDs,
+        std::vector<xrpl::uint256> const& nftIDs,
         std::uint32_t const ledgerSequence,
         std::uint32_t const limit,
         boost::asio::yield_context yield
@@ -291,11 +291,11 @@ private:
 
         // Combine the results into final NFT objects.
         for (auto i = 0u; i < nftIDs.size(); ++i) {
-            if (auto const maybeRow = nftInfos[i].template get<uint32_t, ripple::AccountID, bool>();
+            if (auto const maybeRow = nftInfos[i].template get<uint32_t, xrpl::AccountID, bool>();
                 maybeRow.has_value()) {
                 auto [seq, owner, isBurned] = *maybeRow;
                 NFT nft(nftIDs[i], seq, owner, isBurned);
-                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri.has_value())
+                if (auto const maybeUri = nftUris[i].template get<xrpl::Blob>(); maybeUri.has_value())
                     nft.uri = *maybeUri;
                 ret.nfts.push_back(nft);
             }

@@ -61,16 +61,16 @@ namespace rpc {
 LedgerEntryHandler::Result
 LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context const& ctx) const
 {
-    ripple::uint256 key;
+    xrpl::uint256 key;
 
     if (input.index) {
-        key = ripple::uint256{std::string_view(*(input.index))};
+        key = xrpl::uint256{std::string_view(*(input.index))};
         if (key.isZero())
-            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
+            return Error{Status{RippledError::RpcEntryNotFound}};
     } else if (input.accountRoot) {
-        key = ripple::keylet::account(*util::parseBase58Wrapper<ripple::AccountID>(*(input.accountRoot))).key;
+        key = xrpl::keylet::account(*util::parseBase58Wrapper<xrpl::AccountID>(*(input.accountRoot))).key;
     } else if (input.did) {
-        key = ripple::keylet::did(*util::parseBase58Wrapper<ripple::AccountID>(*(input.did))).key;
+        key = xrpl::keylet::did(*util::parseBase58Wrapper<xrpl::AccountID>(*(input.did))).key;
     } else if (input.directory) {
         auto const expectedkey = composeKeyFromDirectory(*input.directory);
         if (!expectedkey.has_value())
@@ -78,28 +78,28 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
         key = expectedkey.value();
     } else if (input.offer) {
-        auto const id = util::parseBase58Wrapper<ripple::AccountID>(
+        auto const id = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.offer->at(JS(account)))
         );
-        key = ripple::keylet::offer(*id, boost::json::value_to<std::uint32_t>(input.offer->at(JS(seq)))).key;
+        key = xrpl::keylet::offer(*id, boost::json::value_to<std::uint32_t>(input.offer->at(JS(seq)))).key;
     } else if (input.rippleStateAccount) {
-        auto const id1 = util::parseBase58Wrapper<ripple::AccountID>(
+        auto const id1 = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.rippleStateAccount->at(JS(accounts)).as_array().at(0))
         );
-        auto const id2 = util::parseBase58Wrapper<ripple::AccountID>(
+        auto const id2 = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.rippleStateAccount->at(JS(accounts)).as_array().at(1))
         );
         auto const currency =
-            ripple::to_currency(boost::json::value_to<std::string>(input.rippleStateAccount->at(JS(currency))));
+            xrpl::toCurrency(boost::json::value_to<std::string>(input.rippleStateAccount->at(JS(currency))));
 
-        key = ripple::keylet::line(*id1, *id2, currency).key;
+        key = xrpl::keylet::line(*id1, *id2, currency).key;
     } else if (input.escrow) {
-        auto const id = util::parseBase58Wrapper<ripple::AccountID>(
+        auto const id = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.escrow->at(JS(owner)))
         );
-        key = ripple::keylet::escrow(*id, util::integralValueAs<uint32_t>(input.escrow->at(JS(seq)))).key;
+        key = xrpl::keylet::escrow(*id, util::integralValueAs<uint32_t>(input.escrow->at(JS(seq)))).key;
     } else if (input.depositPreauth) {
-        auto const owner = util::parseBase58Wrapper<ripple::AccountID>(
+        auto const owner = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.depositPreauth->at(JS(owner)))
         );
         // Only one of authorize or authorized_credentials MUST exist;
@@ -111,10 +111,10 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         }
 
         if (input.depositPreauth->contains(JS(authorized))) {
-            auto const authorized = util::parseBase58Wrapper<ripple::AccountID>(
+            auto const authorized = util::parseBase58Wrapper<xrpl::AccountID>(
                 boost::json::value_to<std::string>(input.depositPreauth->at(JS(authorized)))
             );
-            key = ripple::keylet::depositPreauth(*owner, *authorized).key;
+            key = xrpl::keylet::depositPreauth(*owner, *authorized).key;
         } else {
             auto const authorizedCredentials = rpc::credentials::parseAuthorizeCredentials(
                 input.depositPreauth->at(JS(authorized_credentials)).as_array()
@@ -124,28 +124,28 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             if (authCreds.size() != authorizedCredentials.size())
                 return Error{Status{ClioError::RpcMalformedAuthorizedCredentials, "duplicates in credentials."}};
 
-            key = ripple::keylet::depositPreauth(owner.value(), authCreds).key;
+            key = xrpl::keylet::depositPreauth(owner.value(), authCreds).key;
         }
     } else if (input.ticket) {
-        auto const id = util::parseBase58Wrapper<ripple::AccountID>(
+        auto const id = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.ticket->at(JS(account)))
         );
 
-        key = ripple::getTicketIndex(*id, util::integralValueAs<uint32_t>(input.ticket->at(JS(ticket_seq))));
+        key = xrpl::getTicketIndex(*id, util::integralValueAs<uint32_t>(input.ticket->at(JS(ticket_seq))));
     } else if (input.amm) {
         auto const getIssuerFromJson = [](auto const& assetJson) {
             // the field check has been done in validator
-            auto const currency = ripple::to_currency(boost::json::value_to<std::string>(assetJson.at(JS(currency))));
-            if (ripple::isXRP(currency)) {
-                return ripple::xrpIssue();
+            auto const currency = xrpl::toCurrency(boost::json::value_to<std::string>(assetJson.at(JS(currency))));
+            if (xrpl::isXRP(currency)) {
+                return xrpl::xrpIssue();
             }
-            auto const issuer = util::parseBase58Wrapper<ripple::AccountID>(
+            auto const issuer = util::parseBase58Wrapper<xrpl::AccountID>(
                 boost::json::value_to<std::string>(assetJson.at(JS(issuer)))
             );
-            return ripple::Issue{currency, *issuer};
+            return xrpl::Issue{currency, *issuer};
         };
 
-        key = ripple::keylet::amm(
+        key = xrpl::keylet::amm(
                   getIssuerFromJson(input.amm->at(JS(asset))), getIssuerFromJson(input.amm->at(JS(asset2)))
         )
                   .key;
@@ -154,17 +154,17 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             return Error{Status{ClioError::RpcMalformedRequest}};
 
         if (input.bridgeAccount) {
-            auto const bridgeAccount = util::parseBase58Wrapper<ripple::AccountID>(*(input.bridgeAccount));
-            auto const chainType = ripple::STXChainBridge::srcChain(bridgeAccount == input.bridge->lockingChainDoor());
+            auto const bridgeAccount = util::parseBase58Wrapper<xrpl::AccountID>(*(input.bridgeAccount));
+            auto const chainType = xrpl::STXChainBridge::srcChain(bridgeAccount == input.bridge->lockingChainDoor());
 
             if (bridgeAccount != input.bridge->door(chainType))
                 return Error{Status{ClioError::RpcMalformedRequest}};
 
-            key = ripple::keylet::bridge(input.bridge->value(), chainType).key;
+            key = xrpl::keylet::bridge(input.bridge->value(), chainType).key;
         } else if (input.chainClaimId) {
-            key = ripple::keylet::xChainClaimID(input.bridge->value(), input.chainClaimId.value()).key;
+            key = xrpl::keylet::xChainClaimID(input.bridge->value(), input.chainClaimId.value()).key;
         } else {
-            key = ripple::keylet::xChainCreateAccountClaimID(input.bridge->value(), input.createAccountClaimId.value())
+            key = xrpl::keylet::xChainCreateAccountClaimID(input.bridge->value(), input.createAccountClaimId.value())
                       .key;
         }
     } else if (input.oracleNode) {
@@ -172,38 +172,38 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
     } else if (input.credential) {
         key = input.credential.value();
     } else if (input.mptIssuance) {
-        auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuance))};
-        key = ripple::keylet::mptIssuance(mptIssuanceID).key;
+        auto const mptIssuanceID = xrpl::uint192{std::string_view(*(input.mptIssuance))};
+        key = xrpl::keylet::mptIssuance(mptIssuanceID).key;
     } else if (input.mptoken) {
         auto const holder =
-            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.mptoken->at(JS(account))));
-        auto const mptIssuanceID = ripple::uint192{
+            xrpl::parseBase58<xrpl::AccountID>(boost::json::value_to<std::string>(input.mptoken->at(JS(account))));
+        auto const mptIssuanceID = xrpl::uint192{
             std::string_view(boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id))))
         };
-        key = ripple::keylet::mptoken(mptIssuanceID, *holder).key;
+        key = xrpl::keylet::mptoken(mptIssuanceID, *holder).key;
     } else if (input.permissionedDomain) {
-        auto const account = ripple::parseBase58<ripple::AccountID>(
+        auto const account = xrpl::parseBase58<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.permissionedDomain->at(JS(account)))
         );
         auto const seq = util::integralValueAs<uint32_t>(input.permissionedDomain->at(JS(seq)));
-        key = ripple::keylet::permissionedDomain(*account, seq).key;
+        key = xrpl::keylet::permissionedDomain(*account, seq).key;
     } else if (input.vault) {
         auto const account =
-            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.vault->at(JS(owner))));
+            xrpl::parseBase58<xrpl::AccountID>(boost::json::value_to<std::string>(input.vault->at(JS(owner))));
         auto const seq = util::integralValueAs<uint32_t>(input.vault->at(JS(seq)));
-        key = ripple::keylet::vault(*account, seq).key;
+        key = xrpl::keylet::vault(*account, seq).key;
     } else if (input.delegate) {
         auto const account =
-            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.delegate->at(JS(account))));
-        auto const authorize = ripple::parseBase58<ripple::AccountID>(
+            xrpl::parseBase58<xrpl::AccountID>(boost::json::value_to<std::string>(input.delegate->at(JS(account))));
+        auto const authorize = xrpl::parseBase58<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.delegate->at(JS(authorize)))
         );
-        key = ripple::keylet::delegate(*account, *authorize).key;
+        key = xrpl::keylet::delegate(*account, *authorize).key;
     } else {
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
             return Error{Status{ClioError::RpcUnknownOption}};
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "No ledger_entry params provided."}};
+        return Error{Status{RippledError::RpcInvalidParams, "No ledger_entry params provided."}};
     }
 
     // check ledger exists
@@ -222,27 +222,27 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
     if (!ledgerObject || ledgerObject->empty()) {
         if (not input.includeDeleted)
-            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
+            return Error{Status{RippledError::RpcEntryNotFound}};
         auto const deletedSeq = sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
         if (!deletedSeq)
-            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
+            return Error{Status{RippledError::RpcEntryNotFound}};
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
         if (!ledgerObject || ledgerObject->empty())
-            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
+            return Error{Status{RippledError::RpcEntryNotFound}};
         output.deletedLedgerIndex = deletedSeq;
     }
 
-    ripple::STLedgerEntry const sle{ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
+    xrpl::STLedgerEntry const sle{xrpl::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
 
-    if (input.expectedType != ripple::ltANY && sle.getType() != input.expectedType)
-        return Error{Status{RippledError::rpcUNEXPECTED_LEDGER_TYPE}};
+    if (input.expectedType != xrpl::ltANY && sle.getType() != input.expectedType)
+        return Error{Status{RippledError::RpcUnexpectedLedgerType}};
 
-    output.index = ripple::strHex(key);
+    output.index = xrpl::strHex(key);
     output.ledgerIndex = lgrInfo.seq;
-    output.ledgerHash = ripple::strHex(lgrInfo.hash);
+    output.ledgerHash = xrpl::strHex(lgrInfo.hash);
 
     if (input.binary) {
-        output.nodeBinary = ripple::strHex(*ledgerObject);
+        output.nodeBinary = xrpl::strHex(*ledgerObject);
     } else {
         output.node = toJson(sle);
     }
@@ -250,28 +250,28 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
     return output;
 }
 
-std::expected<ripple::uint256, Status>
+std::expected<xrpl::uint256, Status>
 LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory) noexcept
 {
     // can not specify both dir_root and owner.
     if (directory.contains(JS(dir_root)) && directory.contains(JS(owner)))
-        return std::unexpected{Status{RippledError::rpcINVALID_PARAMS, "mayNotSpecifyBothDirRootAndOwner"}};
+        return std::unexpected{Status{RippledError::RpcInvalidParams, "mayNotSpecifyBothDirRootAndOwner"}};
 
     // at least one should available
     if (!(directory.contains(JS(dir_root)) || directory.contains(JS(owner))))
-        return std::unexpected{Status{RippledError::rpcINVALID_PARAMS, "missingOwnerOrDirRoot"}};
+        return std::unexpected{Status{RippledError::RpcInvalidParams, "missingOwnerOrDirRoot"}};
 
     uint64_t const subIndex =
         directory.contains(JS(sub_index)) ? boost::json::value_to<uint64_t>(directory.at(JS(sub_index))) : 0;
 
     if (directory.contains(JS(dir_root))) {
-        ripple::uint256 const uDirRoot{boost::json::value_to<std::string>(directory.at(JS(dir_root))).data()};
-        return ripple::keylet::page(uDirRoot, subIndex).key;
+        xrpl::uint256 const uDirRoot{boost::json::value_to<std::string>(directory.at(JS(dir_root))).data()};
+        return xrpl::keylet::page(uDirRoot, subIndex).key;
     }
 
     auto const ownerID =
-        util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(directory.at(JS(owner))));
-    return ripple::keylet::page(ripple::keylet::ownerDir(*ownerID), subIndex).key;
+        util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(directory.at(JS(owner))));
+    return xrpl::keylet::page(xrpl::keylet::ownerDir(*ownerID), subIndex).key;
 }
 
 void
@@ -315,64 +315,64 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.binary = jv.at(JS(binary)).as_bool();
 
     // check all the potential index
-    static auto const kINDEX_FIELD_TYPE_MAP = std::unordered_map<std::string, ripple::LedgerEntryType>{
-        {JS(index), ripple::ltANY},
-        {JS(directory), ripple::ltDIR_NODE},
-        {JS(offer), ripple::ltOFFER},
-        {JS(check), ripple::ltCHECK},
-        {JS(escrow), ripple::ltESCROW},
-        {JS(payment_channel), ripple::ltPAYCHAN},
-        {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
-        {JS(ticket), ripple::ltTICKET},
-        {JS(nft_page), ripple::ltNFTOKEN_PAGE},
-        {JS(amm), ripple::ltAMM},
-        {JS(xchain_owned_create_account_claim_id), ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
-        {JS(xchain_owned_claim_id), ripple::ltXCHAIN_OWNED_CLAIM_ID},
-        {JS(oracle), ripple::ltORACLE},
-        {JS(credential), ripple::ltCREDENTIAL},
-        {JS(mptoken), ripple::ltMPTOKEN},
-        {JS(permissioned_domain), ripple::ltPERMISSIONED_DOMAIN},
-        {JS(vault), ripple::ltVAULT},
-        {JS(delegate), ripple::ltDELEGATE},
-        {JS(amendments), ripple::ltAMENDMENTS},
-        {JS(fee), ripple::ltFEE_SETTINGS},
-        {JS(hashes), ripple::ltLEDGER_HASHES},
-        {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
-        {JS(nunl), ripple::ltNEGATIVE_UNL},
-        {JS(signer_list), ripple::ltSIGNER_LIST}
+    static auto const kINDEX_FIELD_TYPE_MAP = std::unordered_map<std::string, xrpl::LedgerEntryType>{
+        {JS(index), xrpl::ltANY},
+        {JS(directory), xrpl::ltDIR_NODE},
+        {JS(offer), xrpl::ltOFFER},
+        {JS(check), xrpl::ltCHECK},
+        {JS(escrow), xrpl::ltESCROW},
+        {JS(payment_channel), xrpl::ltPAYCHAN},
+        {JS(deposit_preauth), xrpl::ltDEPOSIT_PREAUTH},
+        {JS(ticket), xrpl::ltTICKET},
+        {JS(nft_page), xrpl::ltNFTOKEN_PAGE},
+        {JS(amm), xrpl::ltAMM},
+        {JS(xchain_owned_create_account_claim_id), xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
+        {JS(xchain_owned_claim_id), xrpl::ltXCHAIN_OWNED_CLAIM_ID},
+        {JS(oracle), xrpl::ltORACLE},
+        {JS(credential), xrpl::ltCREDENTIAL},
+        {JS(mptoken), xrpl::ltMPTOKEN},
+        {JS(permissioned_domain), xrpl::ltPERMISSIONED_DOMAIN},
+        {JS(vault), xrpl::ltVAULT},
+        {JS(delegate), xrpl::ltDELEGATE},
+        {JS(amendments), xrpl::ltAMENDMENTS},
+        {JS(fee), xrpl::ltFEE_SETTINGS},
+        {JS(hashes), xrpl::ltLEDGER_HASHES},
+        {JS(nft_offer), xrpl::ltNFTOKEN_OFFER},
+        {JS(nunl), xrpl::ltNEGATIVE_UNL},
+        {JS(signer_list), xrpl::ltSIGNER_LIST}
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {
-        auto const lockingDoor = *util::parseBase58Wrapper<ripple::AccountID>(
-            boost::json::value_to<std::string>(bridgeJson.at(ripple::sfLockingChainDoor.getJsonName().c_str()))
+        auto const lockingDoor = *util::parseBase58Wrapper<xrpl::AccountID>(
+            boost::json::value_to<std::string>(bridgeJson.at(xrpl::sfLockingChainDoor.getJsonName().cStr()))
         );
-        auto const issuingDoor = *util::parseBase58Wrapper<ripple::AccountID>(
-            boost::json::value_to<std::string>(bridgeJson.at(ripple::sfIssuingChainDoor.getJsonName().c_str()))
+        auto const issuingDoor = *util::parseBase58Wrapper<xrpl::AccountID>(
+            boost::json::value_to<std::string>(bridgeJson.at(xrpl::sfIssuingChainDoor.getJsonName().cStr()))
         );
         auto const lockingIssue =
-            parseIssue(bridgeJson.at(ripple::sfLockingChainIssue.getJsonName().c_str()).as_object());
+            parseIssue(bridgeJson.at(xrpl::sfLockingChainIssue.getJsonName().cStr()).as_object());
         auto const issuingIssue =
-            parseIssue(bridgeJson.at(ripple::sfIssuingChainIssue.getJsonName().c_str()).as_object());
+            parseIssue(bridgeJson.at(xrpl::sfIssuingChainIssue.getJsonName().cStr()).as_object());
 
-        return ripple::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
+        return xrpl::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
     };
 
     auto const parseOracleFromJson = [](boost::json::value const& json) {
         auto const account =
-            util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(json.at(JS(account))));
+            util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(json.at(JS(account))));
         auto const documentId = boost::json::value_to<uint32_t>(json.at(JS(oracle_document_id)));
 
-        return ripple::keylet::oracle(*account, documentId).key;
+        return xrpl::keylet::oracle(*account, documentId).key;
     };
 
     auto const parseCredentialFromJson = [](boost::json::value const& json) {
         auto const subject =
-            util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(json.at(JS(subject))));
+            util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(json.at(JS(subject))));
         auto const issuer =
-            util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(json.at(JS(issuer))));
-        auto const credType = ripple::strUnHex(boost::json::value_to<std::string>(json.at(JS(credential_type))));
+            util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(json.at(JS(issuer))));
+        auto const credType = xrpl::strUnHex(boost::json::value_to<std::string>(json.at(JS(credential_type))));
 
-        return ripple::keylet::credential(*subject, *issuer, ripple::Slice(credType->data(), credType->size())).key;
+        return xrpl::keylet::credential(*subject, *issuer, xrpl::Slice(credType->data(), credType->size())).key;
     };
 
     auto const indexFieldType = std::ranges::find_if(kINDEX_FIELD_TYPE_MAP, [&jsonObject](auto const& pair) {

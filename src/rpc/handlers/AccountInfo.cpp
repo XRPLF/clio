@@ -57,7 +57,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     using namespace data;
 
     if (!input.account && !input.ident)
-        return Error{Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}};
+        return Error{Status{RippledError::RpcInvalidParams, xrpl::RPC::missingFieldMessage(JS(account))}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountInfo's ledger range must be available");
@@ -71,18 +71,18 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountStr = input.account.value_or(input.ident.value_or(""));
     auto const accountID = accountFromStringStrict(accountStr);
-    auto const accountKeylet = ripple::keylet::account(*accountID);
+    auto const accountKeylet = xrpl::keylet::account(*accountID);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
-    ripple::STLedgerEntry const sle{
-        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
+    xrpl::STLedgerEntry const sle{
+        xrpl::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
     };
 
     if (!accountKeylet.check(sle))
-        return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
+        return Error{Status{RippledError::RpcDbDeserialization}};
 
     auto isEnabled = [this, &ctx, seq = lgrInfo.seq](auto key) {
         return amendmentCenter_->isEnabled(ctx.yield, key, seq);
@@ -94,7 +94,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 
     Output out{
         .ledgerIndex = lgrInfo.seq,
-        .ledgerHash = ripple::strHex(lgrInfo.hash),
+        .ledgerHash = xrpl::strHex(lgrInfo.hash),
         .accountData = sle,
         .isDisallowIncomingEnabled = isDisallowIncomingEnabled,
         .isClawbackEnabled = isClawbackEnabled,
@@ -107,20 +107,20 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     if (input.signerLists) {
         // We put the SignerList in an array because of an anticipated
         // future when we support multiple signer lists on one account.
-        auto const signersKey = ripple::keylet::signers(*accountID);
+        auto const signersKey = xrpl::keylet::signers(*accountID);
 
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
         auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
-        out.signerLists = std::vector<ripple::STLedgerEntry>();
+        out.signerLists = std::vector<xrpl::STLedgerEntry>();
 
         if (signers) {
-            ripple::STLedgerEntry const sleSigners{
-                ripple::SerialIter{signers->data(), signers->size()}, signersKey.key
+            xrpl::STLedgerEntry const sleSigners{
+                xrpl::SerialIter{signers->data(), signers->size()}, signersKey.key
             };
 
             if (!signersKey.check(sleSigners))
-                return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
+                return Error{Status{RippledError::RpcDbDeserialization}};
 
             out.signerLists->push_back(sleSigners);
         }
@@ -139,33 +139,33 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         {JS(validated), output.validated},
     };
 
-    std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> lsFlags{{
-        {"defaultRipple", ripple::lsfDefaultRipple},
-        {"depositAuth", ripple::lsfDepositAuth},
-        {"disableMasterKey", ripple::lsfDisableMaster},
-        {"disallowIncomingXRP", ripple::lsfDisallowXRP},
-        {"globalFreeze", ripple::lsfGlobalFreeze},
-        {"noFreeze", ripple::lsfNoFreeze},
-        {"passwordSpent", ripple::lsfPasswordSpent},
-        {"requireAuthorization", ripple::lsfRequireAuth},
-        {"requireDestinationTag", ripple::lsfRequireDestTag},
+    std::vector<std::pair<std::string_view, xrpl::LedgerSpecificFlags>> lsFlags{{
+        {"defaultRipple", xrpl::lsfDefaultRipple},
+        {"depositAuth", xrpl::lsfDepositAuth},
+        {"disableMasterKey", xrpl::lsfDisableMaster},
+        {"disallowIncomingXRP", xrpl::lsfDisallowXRP},
+        {"globalFreeze", xrpl::lsfGlobalFreeze},
+        {"noFreeze", xrpl::lsfNoFreeze},
+        {"passwordSpent", xrpl::lsfPasswordSpent},
+        {"requireAuthorization", xrpl::lsfRequireAuth},
+        {"requireDestinationTag", xrpl::lsfRequireDestTag},
     }};
 
     if (output.isDisallowIncomingEnabled) {
-        std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> const disallowIncomingFlags = {
-            {"disallowIncomingNFTokenOffer", ripple::lsfDisallowIncomingNFTokenOffer},
-            {"disallowIncomingCheck", ripple::lsfDisallowIncomingCheck},
-            {"disallowIncomingPayChan", ripple::lsfDisallowIncomingPayChan},
-            {"disallowIncomingTrustline", ripple::lsfDisallowIncomingTrustline},
+        std::vector<std::pair<std::string_view, xrpl::LedgerSpecificFlags>> const disallowIncomingFlags = {
+            {"disallowIncomingNFTokenOffer", xrpl::lsfDisallowIncomingNFTokenOffer},
+            {"disallowIncomingCheck", xrpl::lsfDisallowIncomingCheck},
+            {"disallowIncomingPayChan", xrpl::lsfDisallowIncomingPayChan},
+            {"disallowIncomingTrustline", xrpl::lsfDisallowIncomingTrustline},
         };
         lsFlags.insert(lsFlags.end(), disallowIncomingFlags.begin(), disallowIncomingFlags.end());
     }
 
     if (output.isClawbackEnabled)
-        lsFlags.emplace_back("allowTrustLineClawback", ripple::lsfAllowTrustLineClawback);
+        lsFlags.emplace_back("allowTrustLineClawback", xrpl::lsfAllowTrustLineClawback);
 
     if (output.isTokenEscrowEnabled)
-        lsFlags.emplace_back("allowTrustLineLocking", ripple::lsfAllowTrustLineLocking);
+        lsFlags.emplace_back("allowTrustLineLocking", xrpl::lsfAllowTrustLineLocking);
 
     boost::json::object acctFlags;
     for (auto const& lsf : lsFlags)

@@ -67,32 +67,32 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input const& input, 
     auto const destinationAccountID = accountFromStringStrict(input.destinationAccount);
 
     auto const srcAccountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*sourceAccountID).key, lgrInfo.seq, ctx.yield);
+        sharedPtrBackend_->fetchLedgerObject(xrpl::keylet::account(*sourceAccountID).key, lgrInfo.seq, ctx.yield);
 
     if (!srcAccountLedgerObject)
-        return Error{Status{RippledError::rpcSRC_ACT_NOT_FOUND, "source_accountNotFound"}};
+        return Error{Status{RippledError::RpcSrcActNotFound, "source_accountNotFound"}};
 
-    auto const dstKeylet = ripple::keylet::account(*destinationAccountID).key;
+    auto const dstKeylet = xrpl::keylet::account(*destinationAccountID).key;
     auto const dstAccountLedgerObject = sharedPtrBackend_->fetchLedgerObject(dstKeylet, lgrInfo.seq, ctx.yield);
 
     if (!dstAccountLedgerObject)
-        return Error{Status{RippledError::rpcDST_ACT_NOT_FOUND, "destination_accountNotFound"}};
+        return Error{Status{RippledError::RpcDstActNotFound, "destination_accountNotFound"}};
 
     Output response;
 
-    auto it = ripple::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
-    auto const sleDest = ripple::SLE{it, dstKeylet};
-    bool const reqAuth = sleDest.isFlag(ripple::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
+    auto it = xrpl::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
+    auto const sleDest = xrpl::SLE{it, dstKeylet};
+    bool const reqAuth = sleDest.isFlag(xrpl::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
     auto const& creds = input.credentials;
     bool const credentialsPresent = creds.has_value();
 
-    ripple::STArray authCreds;
+    xrpl::STArray authCreds;
     if (credentialsPresent) {
         if (creds.value().empty()) {
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array has no elements."}};
+            return Error{Status{RippledError::RpcInvalidParams, "credential array has no elements."}};
         }
-        if (creds.value().size() > ripple::maxCredentialsArraySize) {
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
+        if (creds.value().size() > xrpl::kMaxCredentialsArraySize) {
+            return Error{Status{RippledError::RpcInvalidParams, "credential array too long."}};
         }
         auto const credArray = credentials::fetchCredentialArray(
             input.credentials, *sourceAccountID, *sharedPtrBackend_, lgrInfo, ctx.yield
@@ -107,16 +107,16 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input const& input, 
     bool depositAuthorized = true;
 
     if (reqAuth) {
-        ripple::uint256 hashKey;
+        xrpl::uint256 hashKey;
         if (credentialsPresent) {
             auto const sortedAuthCreds = credentials::createAuthCredentials(authCreds);
             ASSERT(
                 sortedAuthCreds.size() == authCreds.size(), "should already be checked above that there is no duplicate"
             );
 
-            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, sortedAuthCreds).key;
+            hashKey = xrpl::keylet::depositPreauth(*destinationAccountID, sortedAuthCreds).key;
         } else {
-            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key;
+            hashKey = xrpl::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key;
         }
 
         depositAuthorized = sharedPtrBackend_->fetchLedgerObject(hashKey, lgrInfo.seq, ctx.yield).has_value();
@@ -124,7 +124,7 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input const& input, 
 
     response.sourceAccount = input.sourceAccount;
     response.destinationAccount = input.destinationAccount;
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
     response.depositAuthorized = depositAuthorized;
     if (credentialsPresent)

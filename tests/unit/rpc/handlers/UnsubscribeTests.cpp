@@ -42,7 +42,6 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 using namespace feed;
 
@@ -509,7 +508,7 @@ TEST_P(UnsubscribeParameterTest, InvalidParams)
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{UnsubscribeHandler{mockSubscriptionManagerPtr_}};
-        auto const req = json::parse(testBundle.testJson);
+        auto const req = boost::json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -522,7 +521,7 @@ TEST_F(RPCUnsubscribeTest, EmptyResponse)
 {
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{UnsubscribeHandler{mockSubscriptionManagerPtr_}};
-        auto const output = handler.process(json::parse(R"JSON({})JSON"), Context{yield, session_});
+        auto const output = handler.process(boost::json::parse(R"JSON({})JSON"), Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
     });
@@ -530,7 +529,7 @@ TEST_F(RPCUnsubscribeTest, EmptyResponse)
 
 TEST_F(RPCUnsubscribeTest, Streams)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         R"JSON({
             "streams": ["transactions_proposed", "transactions", "validations", "manifests", "book_changes", "ledger"]
         })JSON"
@@ -553,7 +552,7 @@ TEST_F(RPCUnsubscribeTest, Streams)
 
 TEST_F(RPCUnsubscribeTest, Accounts)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "accounts": ["{}", "{}"]
@@ -577,7 +576,7 @@ TEST_F(RPCUnsubscribeTest, Accounts)
 
 TEST_F(RPCUnsubscribeTest, AccountsProposed)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "accounts_proposed": ["{}", "{}"]
@@ -602,7 +601,7 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
 
 TEST_F(RPCUnsubscribeTest, Books)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "books": [
@@ -626,7 +625,7 @@ TEST_F(RPCUnsubscribeTest, Books)
     auto const book = parsedBookMaybe.value();
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(book, _)).Times(1);
-    EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(ripple::reversed(book), _)).Times(1);
+    EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(xrpl::reversed(book), _)).Times(1);
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{UnsubscribeHandler{mockSubscriptionManagerPtr_}};
@@ -638,7 +637,7 @@ TEST_F(RPCUnsubscribeTest, Books)
 
 TEST_F(RPCUnsubscribeTest, SingleBooks)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "books": [

@@ -61,7 +61,7 @@ struct Ext4SpecMissing {
 };
 
 struct Ext4Fixed {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
 
     static void
     onTransaction(uint32_t, etl::model::Transaction const&);
@@ -78,7 +78,7 @@ struct Ext6SpecMissing {
 };
 
 struct Ext6Fixed {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
 
     static void
     onInitialTransaction(uint32_t, etl::model::Transaction const&);
@@ -86,11 +86,11 @@ struct Ext6Fixed {
 
 struct ExtRealistic {
     using spec = etl::model::Spec<
-        ripple::TxType::ttNFTOKEN_BURN,
-        ripple::TxType::ttNFTOKEN_ACCEPT_OFFER,
-        ripple::TxType::ttNFTOKEN_CREATE_OFFER,
-        ripple::TxType::ttNFTOKEN_CANCEL_OFFER,
-        ripple::TxType::ttNFTOKEN_MINT>;
+        xrpl::TxType::ttNFTOKEN_BURN,
+        xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER,
+        xrpl::TxType::ttNFTOKEN_CREATE_OFFER,
+        xrpl::TxType::ttNFTOKEN_CANCEL_OFFER,
+        xrpl::TxType::ttNFTOKEN_MINT>;
 
     static void
     onLedgerData(etl::model::LedgerData const&);
@@ -117,12 +117,12 @@ static_assert(SomeExtension<ExtRealistic>);
 static_assert(not SomeExtension<ExtCombinesTwoOfKind>);
 
 struct ValidSpec {
-    using spec = etl::model::Spec<ripple::ttNFTOKEN_BURN, ripple::ttNFTOKEN_MINT>;
+    using spec = etl::model::Spec<xrpl::ttNFTOKEN_BURN, xrpl::ttNFTOKEN_MINT>;
 };
 
 // invalid spec does not compile:
 // struct DuplicatesSpec {
-//     using spec = etl::model::Spec<ripple::ttNFTOKEN_BURN, ripple::ttNFTOKEN_BURN, ripple::ttNFTOKEN_MINT>;
+//     using spec = etl::model::Spec<xrpl::ttNFTOKEN_BURN, xrpl::ttNFTOKEN_BURN, xrpl::ttNFTOKEN_MINT>;
 // };
 
 static_assert(ContainsSpec<ValidSpec>);
@@ -147,15 +147,15 @@ struct MockExtOnObject {
 };
 
 struct MockExtTransactionNftBurn {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onTransaction, (uint32_t, etl::model::Transaction const&), (const));
 };
 
 struct MockExtTransactionNftOffer {
     using spec = etl::model::Spec<
-        ripple::TxType::ttNFTOKEN_CREATE_OFFER,
-        ripple::TxType::ttNFTOKEN_CANCEL_OFFER,
-        ripple::TxType::ttNFTOKEN_ACCEPT_OFFER>;
+        xrpl::TxType::ttNFTOKEN_CREATE_OFFER,
+        xrpl::TxType::ttNFTOKEN_CANCEL_OFFER,
+        xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER>;
     MOCK_METHOD(void, onTransaction, (uint32_t, etl::model::Transaction const&), (const));
 };
 
@@ -168,15 +168,15 @@ struct MockExtInitialObjects {
 };
 
 struct MockExtNftBurn {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onInitialTransaction, (uint32_t, etl::model::Transaction const&), (const));
 };
 
 struct MockExtNftOffer {
     using spec = etl::model::Spec<
-        ripple::TxType::ttNFTOKEN_CREATE_OFFER,
-        ripple::TxType::ttNFTOKEN_CANCEL_OFFER,
-        ripple::TxType::ttNFTOKEN_ACCEPT_OFFER>;
+        xrpl::TxType::ttNFTOKEN_CREATE_OFFER,
+        xrpl::TxType::ttNFTOKEN_CANCEL_OFFER,
+        xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER>;
     MOCK_METHOD(void, onInitialTransaction, (uint32_t, etl::model::Transaction const&), (const));
 };
 
@@ -212,7 +212,7 @@ struct MockExtOnObjectReadonly {
 };
 
 struct MockExtTransactionNftBurnReadonly {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onTransaction, (uint32_t, etl::model::Transaction const&), (const));
 
     static bool
@@ -243,7 +243,7 @@ struct MockExtInitialObjectsReadonly {
 };
 
 struct MockExtNftBurnReadonly {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onInitialTransaction, (uint32_t, etl::model::Transaction const&), (const));
 
     static bool
@@ -268,9 +268,9 @@ protected:
 TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForInitialTransaction)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
     auto extBurn = MockExtNftBurn{};
@@ -297,9 +297,9 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForInitialTransaction)
 TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForTransaction)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
     auto extBurn = MockExtTransactionNftBurn{};
@@ -371,9 +371,9 @@ TEST_F(RegistryTest, ObjectsDispatched)
 TEST_F(RegistryTest, OnLedgerDataForBatch)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
     auto ext = MockExtLedgerData{};
@@ -414,9 +414,9 @@ TEST_F(RegistryTest, InitialDataCorrectOrderOfHookCalls)
     auto extInitialTransaction = MockExtNftBurn{};
 
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
     testing::InSequence const seqGuard;
@@ -445,9 +445,9 @@ TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
     auto extOnObject = MockExtOnObject{};
 
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
     auto objects = std::vector{
         util::createObject(),
@@ -481,8 +481,8 @@ TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
 TEST_F(RegistryTest, ReadonlyModeLedgerDataAllowed)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
 
     auto ext = MockExtLedgerDataReadonly{};
@@ -508,8 +508,8 @@ TEST_F(RegistryTest, ReadonlyModeLedgerDataAllowed)
 TEST_F(RegistryTest, ReadonlyModeTransactionAllowed)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
 
     auto extTx = MockExtTransactionNftBurnReadonly{};
@@ -563,8 +563,8 @@ TEST_F(RegistryTest, ReadonlyModeObjectAllowed)
 TEST_F(RegistryTest, ReadonlyModeInitialDataAllowed)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
 
     auto extInitialData = MockExtInitialDataReadonly{};
@@ -590,8 +590,8 @@ TEST_F(RegistryTest, ReadonlyModeInitialDataAllowed)
 TEST_F(RegistryTest, ReadonlyModeInitialTransactionAllowed)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
 
     auto extTx = MockExtNftBurnReadonly{};
@@ -771,7 +771,7 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
     state_.isWriting = false;
 
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
     auto objects = std::vector{
         util::createObject(),
@@ -814,7 +814,7 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
 TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
 {
     struct ExtWithBothHooksAndAllowReadonly {
-        using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+        using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
 
         MOCK_METHOD(void, onObject, (uint32_t, etl::model::Object const&), (const));
         MOCK_METHOD(void, onInitialObject, (uint32_t, etl::model::Object const&), (const));
@@ -832,7 +832,7 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
     state_.isWriting = false;
 
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
     auto objects = std::vector{
         util::createObject(),

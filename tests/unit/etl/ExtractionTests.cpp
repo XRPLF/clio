@@ -55,9 +55,9 @@ TEST_F(ExtractionModelTests, LedgerDataCopyableAndEquatable)
 {
     auto const first = etl::model::LedgerData{
         .transactions =
-            {util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-             util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-             util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER)},
+            {util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+             util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+             util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER)},
         .objects = {util::createObject(), util::createObject(), util::createObject()},
         .successors = std::vector<etl::model::BookSuccessor>{{.firstBook = "first", .bookBase = "base"}},
         .edgeKeys = std::vector<std::string>{"key1", "key2"},
@@ -108,11 +108,11 @@ TEST_F(ExtractionModelTests, LedgerDataCopyableAndEquatable)
 
 TEST_F(ExtractionModelTests, TransactionIsEquatable)
 {
-    auto const tx = std::vector{util::createTransaction(ripple::TxType::ttNFTOKEN_BURN)};
+    auto const tx = std::vector{util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN)};
     auto other = tx;
     EXPECT_EQ(tx, other);
 
-    other.push_back(util::createTransaction(ripple::TxType::ttNFTOKEN_ACCEPT_OFFER));
+    other.push_back(util::createTransaction(xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER));
     EXPECT_NE(tx, other);
 }
 
@@ -124,7 +124,7 @@ TEST_F(ExtractionModelTests, ObjectCopyableAndEquatable)
 
     {
         auto third = other;
-        third.key = ripple::uint256{42};
+        third.key = xrpl::uint256{42};
         EXPECT_NE(obj, third);
     }
     {
@@ -194,7 +194,7 @@ TEST_F(ExtractionTests, OneTransaction)
 {
     using namespace etl::impl;
 
-    auto expected = util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER);
+    auto expected = util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER);
 
     auto original = org::xrpl::rpc::v1::TransactionAndMetadata();
     auto [metaRaw, txRaw] = util::createTxAndMetaBlobs();
@@ -212,7 +212,7 @@ TEST_F(ExtractionTests, MultipleTransactions)
 {
     using namespace etl::impl;
 
-    auto expected = util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER);
+    auto expected = util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER);
 
     auto original = org::xrpl::rpc::v1::TransactionAndMetadata();
     auto [metaRaw, txRaw] = util::createTxAndMetaBlobs();
@@ -249,8 +249,8 @@ TEST_F(ExtractionTests, OneObject)
     );
 
     auto res = extractObj(original);
-    EXPECT_EQ(ripple::strHex(res.key), ripple::strHex(expected.keyRaw));
-    EXPECT_EQ(ripple::strHex(res.data), ripple::strHex(expected.dataRaw));
+    EXPECT_EQ(xrpl::strHex(res.key), xrpl::strHex(expected.keyRaw));
+    EXPECT_EQ(xrpl::strHex(res.data), xrpl::strHex(expected.dataRaw));
     EXPECT_EQ(res.predecessor, uint256ToString(data::kLAST_KEY));
     EXPECT_EQ(res.successor, uint256ToString(data::kFIRST_KEY));
     EXPECT_EQ(res.type, expected.type);
@@ -271,8 +271,8 @@ TEST_F(ExtractionTests, OneObjectWithSuccessorAndPredecessor)
     );
 
     auto res = extractObj(original);
-    EXPECT_EQ(ripple::strHex(res.key), ripple::strHex(expected.keyRaw));
-    EXPECT_EQ(ripple::strHex(res.data), ripple::strHex(expected.dataRaw));
+    EXPECT_EQ(xrpl::strHex(res.key), xrpl::strHex(expected.keyRaw));
+    EXPECT_EQ(xrpl::strHex(res.data), xrpl::strHex(expected.dataRaw));
     EXPECT_EQ(res.predecessor, expected.predecessor);
     EXPECT_EQ(res.successor, expected.successor);
     EXPECT_EQ(res.type, expected.type);
@@ -300,8 +300,8 @@ TEST_F(ExtractionTests, MultipleObjects)
     EXPECT_EQ(res.size(), 10);
 
     for (auto const& obj : res) {
-        EXPECT_EQ(ripple::strHex(obj.key), ripple::strHex(expected.keyRaw));
-        EXPECT_EQ(ripple::strHex(obj.data), ripple::strHex(expected.dataRaw));
+        EXPECT_EQ(xrpl::strHex(obj.key), xrpl::strHex(expected.keyRaw));
+        EXPECT_EQ(xrpl::strHex(obj.data), xrpl::strHex(expected.dataRaw));
         EXPECT_EQ(obj.predecessor, uint256ToString(data::kLAST_KEY));
         EXPECT_EQ(obj.successor, uint256ToString(data::kFIRST_KEY));
         EXPECT_EQ(obj.type, expected.type);
@@ -318,8 +318,8 @@ TEST_F(ExtractionTests, OneSuccessor)
     original.set_book_base(expected.bookBase);
 
     auto res = extractSuccessor(original);
-    EXPECT_EQ(ripple::strHex(res.firstBook), ripple::strHex(expected.firstBook));
-    EXPECT_EQ(ripple::strHex(res.bookBase), ripple::strHex(expected.bookBase));
+    EXPECT_EQ(xrpl::strHex(res.firstBook), xrpl::strHex(expected.firstBook));
+    EXPECT_EQ(xrpl::strHex(res.bookBase), xrpl::strHex(expected.bookBase));
 }
 
 TEST_F(ExtractionTests, MultipleSuccessors)

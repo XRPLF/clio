@@ -87,7 +87,7 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return `RippledError::rpcNOT_SUPPORTED` if the value matched; otherwise no error is returned
+     * @return `RippledError::RpcNotSupported` if the value matched; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -97,7 +97,7 @@ public:
             auto const res = value_to<T>(value.as_object().at(key));
             if (value_ == res) {
                 return Error{Status{
-                    RippledError::rpcNOT_SUPPORTED,
+                    RippledError::RpcNotSupported,
                     fmt::format("Not supported field '{}'s value '{}'", std::string{key}, res)
                 }};
             }
@@ -117,13 +117,13 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return `RippledError::rpcNOT_SUPPORTED` if the field is found; otherwise no error is returned
+     * @return `RippledError::RpcNotSupported` if the field is found; otherwise no error is returned
      */
     [[nodiscard]] static MaybeError
     verify(boost::json::value const& value, std::string_view key)
     {
         if (value.is_object() and value.as_object().contains(key))
-            return Error{Status{RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key} + '\''}};
+            return Error{Status{RippledError::RpcNotSupported, "Not supported field '" + std::string{key} + '\''}};
 
         return {};
     }
@@ -147,7 +147,7 @@ struct Type final {
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     * @return `RippledError::RpcInvalidParams` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value& value, std::string_view key) const
@@ -159,7 +159,7 @@ struct Type final {
         auto const convertible = (checkTypeAndClamp<Types>(res) || ...);
 
         if (not convertible)
-            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::RpcInvalidParams}};
 
         return {};
     }
@@ -189,7 +189,7 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     * @return `RippledError::RpcInvalidParams` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -204,7 +204,7 @@ public:
         // TODO: may want a way to make this code more generic (e.g. use a free
         // function that can be overridden for this comparison)
         if (res < min_ || res > max_)
-            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::RpcInvalidParams}};
 
         return {};
     }
@@ -232,7 +232,7 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     * @return `RippledError::RpcInvalidParams` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -245,7 +245,7 @@ public:
         auto const res = value_to<Type>(value.as_object().at(key));
 
         if (res < min_)
-            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::RpcInvalidParams}};
 
         return {};
     }
@@ -273,7 +273,7 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     * @return `RippledError::RpcInvalidParams` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -286,7 +286,7 @@ public:
         auto const res = value_to<Type>(value.as_object().at(key));
 
         if (res > max_)
-            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::RpcInvalidParams}};
 
         return {};
     }
@@ -313,7 +313,7 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     * @return `RippledError::RpcInvalidParams` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const;
@@ -341,7 +341,7 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     * @return `RippledError::RpcInvalidParams` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -353,7 +353,7 @@ public:
 
         auto const res = value_to<Type>(value.as_object().at(key));
         if (res != original_)
-            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::RpcInvalidParams}};
 
         return {};
     }
@@ -396,7 +396,7 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     * @return `RippledError::RpcInvalidParams` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
@@ -408,7 +408,7 @@ public:
 
         auto const res = value_to<Type>(value.as_object().at(key));
         if (std::find(std::begin(options_), std::end(options_), res) == std::end(options_))
-            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}};
+            return Error{Status{RippledError::RpcInvalidParams, fmt::format("Invalid field '{}'.", key)}};
 
         return {};
     }
@@ -460,18 +460,18 @@ checkIsU32Numeric(std::string_view sv);
 
 template <class HexType>
     requires(
-        std::is_same_v<HexType, ripple::uint160> || std::is_same_v<HexType, ripple::uint192> ||
-        std::is_same_v<HexType, ripple::uint256>
+        std::is_same_v<HexType, xrpl::uint160> || std::is_same_v<HexType, xrpl::uint192> ||
+        std::is_same_v<HexType, xrpl::uint256>
     )
 MaybeError
 makeHexStringValidator(boost::json::value const& value, std::string_view key)
 {
     if (!value.is_string())
-        return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
+        return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotString"}};
 
     HexType parsedInt;
     if (!parsedInt.parseHex(value.as_string().c_str()))
-        return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
+        return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "Malformed"}};
 
     return MaybeError{};
 }
@@ -573,7 +573,7 @@ struct CustomValidators final {
     static CustomValidator subscribeAccountsValidator;
 
     /**
-     * @brief Validates an asset (ripple::Issue).
+     * @brief Validates an asset (xrpl::Issue).
      *
      * Used by amm_info.
      */
@@ -604,7 +604,7 @@ struct Hex256ItemType final {
      *
      * @param value the value to verify
      * @param key The key used to retrieve the tested value from the outer object
-     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     * @return `RippledError::RpcInvalidParams` if validation failed; otherwise no error is returned
      */
     [[nodiscard]] static MaybeError
     verify(boost::json::value const& value, std::string_view key)
@@ -616,9 +616,9 @@ struct Hex256ItemType final {
 
         // loop through each item in the array and make sure it is uint256 hex string
         for (auto const& elem : res.as_array()) {
-            ripple::uint256 num;
+            xrpl::uint256 num;
             if (!elem.is_string() || !num.parseHex(elem.as_string())) {
-                return Error{Status{RippledError::rpcINVALID_PARAMS, "Item is not a valid uint256 type."}};
+                return Error{Status{RippledError::RpcInvalidParams, "Item is not a valid uint256 type."}};
             }
         }
         return {};

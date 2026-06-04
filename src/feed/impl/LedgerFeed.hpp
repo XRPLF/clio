@@ -77,8 +77,8 @@ public:
      * @param networkID The network ID.
      */
     void
-    pub(ripple::LedgerHeader const& lgrInfo,
-        ripple::Fees const& fees,
+    pub(xrpl::LedgerHeader const& lgrInfo,
+        xrpl::Fees const& fees,
         std::string const& ledgerRange,
         uint32_t txnCount,
         uint32_t networkID);
@@ -86,8 +86,8 @@ public:
 private:
     static boost::json::object
     makeLedgerPubMessage(
-        ripple::LedgerHeader const& lgrInfo,
-        ripple::Fees const& fees,
+        xrpl::LedgerHeader const& lgrInfo,
+        xrpl::Fees const& fees,
         std::string const& ledgerRange,
         uint32_t txnCount,
         uint32_t networkID

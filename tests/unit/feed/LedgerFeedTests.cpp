@@ -35,7 +35,6 @@ constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF2
 }  // namespace
 
 using namespace feed::impl;
-namespace json = boost::json;
 using namespace testing;
 
 using FeedLedgerTest = FeedBaseTest<LedgerFeed>;
@@ -68,7 +67,7 @@ TEST_F(FeedLedgerTest, SubPub)
         EXPECT_CALL(*mockSessionPtr, onDisconnect);
         auto res = testFeedPtr->sub(yield, backend_, sessionPtr, networkID);
         // check the response
-        EXPECT_EQ(res, json::parse(kLEDGER_RESPONSE));
+        EXPECT_EQ(res, boost::json::parse(kLEDGER_RESPONSE));
     });
     ioContext.run();
     EXPECT_EQ(testFeedPtr->count(), 1);
@@ -90,7 +89,7 @@ TEST_F(FeedLedgerTest, SubPub)
     // test publish
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kLEDGER_PUB))).Times(1);
     auto const ledgerHeader2 = createLedgerHeader(kLEDGER_HASH, 31);
-    auto fee2 = ripple::Fees();
+    auto fee2 = xrpl::Fees();
     fee2.reserve = 10;
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8, networkID);
 
@@ -128,7 +127,7 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     util::spawn(ioContext, [this](boost::asio::yield_context yield) {
         auto res = testFeedPtr->sub(yield, backend_, sessionPtr, networkID);
         // check the response
-        EXPECT_EQ(res, json::parse(kLEDGER_RESPONSE));
+        EXPECT_EQ(res, boost::json::parse(kLEDGER_RESPONSE));
     });
 
     ioContext.run();
@@ -142,7 +141,7 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     EXPECT_EQ(testFeedPtr->count(), 0);
 
     auto const ledgerHeader2 = createLedgerHeader(kLEDGER_HASH, 31);
-    auto fee2 = ripple::Fees();
+    auto fee2 = xrpl::Fees();
     fee2.reserve = 10;
     // no error
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8, networkID);

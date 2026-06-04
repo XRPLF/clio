@@ -41,8 +41,8 @@ namespace feed::impl {
 
 boost::json::object
 LedgerFeed::makeLedgerPubMessage(
-    ripple::LedgerHeader const& lgrInfo,
-    ripple::Fees const& fees,
+    xrpl::LedgerHeader const& lgrInfo,
+    xrpl::Fees const& fees,
     std::string const& ledgerRange,
     uint32_t const txnCount,
     uint32_t const networkID
@@ -93,8 +93,8 @@ LedgerFeed::sub(
 
 void
 LedgerFeed::pub(
-    ripple::LedgerHeader const& lgrInfo,
-    ripple::Fees const& fees,
+    xrpl::LedgerHeader const& lgrInfo,
+    xrpl::Fees const& fees,
     std::string const& ledgerRange,
     uint32_t const txnCount,
     uint32_t const networkID

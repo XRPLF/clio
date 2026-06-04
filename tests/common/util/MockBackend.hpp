@@ -45,16 +45,16 @@ struct MockBackend : public BackendInterface {
     }
 
     MOCK_METHOD(
-        std::optional<ripple::LedgerHeader>,
+        std::optional<xrpl::LedgerHeader>,
         fetchLedgerBySequence,
         (std::uint32_t const, boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
-        std::optional<ripple::LedgerHeader>,
+        std::optional<xrpl::LedgerHeader>,
         fetchLedgerByHash,
-        (ripple::uint256 const&, boost::asio::yield_context),
+        (xrpl::uint256 const&, boost::asio::yield_context),
         (const, override)
     );
 
@@ -68,21 +68,21 @@ struct MockBackend : public BackendInterface {
     MOCK_METHOD(
         std::optional<data::TransactionAndMetadata>,
         fetchTransaction,
-        (ripple::uint256 const&, boost::asio::yield_context),
+        (xrpl::uint256 const&, boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
         std::vector<data::TransactionAndMetadata>,
         fetchTransactions,
-        (std::vector<ripple::uint256> const&, boost::asio::yield_context),
+        (std::vector<xrpl::uint256> const&, boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
         data::TransactionsAndCursor,
         fetchAccountTransactions,
-        (ripple::AccountID const&,
+        (xrpl::AccountID const&,
          std::uint32_t const,
          bool,
          std::optional<data::TransactionsCursor> const&,
@@ -98,7 +98,7 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(
-        std::vector<ripple::uint256>,
+        std::vector<xrpl::uint256>,
         fetchAllTransactionHashesInLedger,
         (std::uint32_t const, boost::asio::yield_context),
         (const, override)
@@ -107,14 +107,14 @@ struct MockBackend : public BackendInterface {
     MOCK_METHOD(
         std::optional<data::NFT>,
         fetchNFT,
-        (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),
+        (xrpl::uint256 const&, std::uint32_t const, boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
         data::TransactionsAndCursor,
         fetchNFTTransactions,
-        (ripple::uint256 const&,
+        (xrpl::uint256 const&,
          std::uint32_t const,
          bool const,
          std::optional<data::TransactionsCursor> const&,
@@ -125,11 +125,11 @@ struct MockBackend : public BackendInterface {
     MOCK_METHOD(
         data::NFTsAndCursor,
         fetchNFTsByIssuer,
-        (ripple::AccountID const& issuer,
+        (xrpl::AccountID const& issuer,
          std::optional<std::uint32_t> const& taxon,
          std::uint32_t const ledgerSequence,
          std::uint32_t const limit,
-         std::optional<ripple::uint256> const& cursorIn,
+         std::optional<xrpl::uint256> const& cursorIn,
          boost::asio::yield_context yield),
         (const, override)
     );
@@ -137,12 +137,12 @@ struct MockBackend : public BackendInterface {
     MOCK_METHOD(
         std::vector<data::Blob>,
         doFetchLedgerObjects,
-        (std::vector<ripple::uint256> const&, std::uint32_t const, boost::asio::yield_context),
+        (std::vector<xrpl::uint256> const&, std::uint32_t const, boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
-        std::vector<ripple::uint256>,
+        std::vector<xrpl::uint256>,
         fetchAccountRoots,
         (std::uint32_t, std::uint32_t, std::uint32_t, boost::asio::yield_context),
         (const, override)
@@ -151,14 +151,14 @@ struct MockBackend : public BackendInterface {
     MOCK_METHOD(
         std::optional<data::Blob>,
         doFetchLedgerObject,
-        (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),
+        (xrpl::uint256 const&, std::uint32_t const, boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
         std::optional<std::uint32_t>,
         doFetchLedgerObjectSeq,
-        (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),
+        (xrpl::uint256 const&, std::uint32_t const, boost::asio::yield_context),
         (const, override)
     );
 
@@ -170,9 +170,9 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(
-        std::optional<ripple::uint256>,
+        std::optional<xrpl::uint256>,
         doFetchSuccessorKey,
-        (ripple::uint256, std::uint32_t const, boost::asio::yield_context),
+        (xrpl::uint256, std::uint32_t const, boost::asio::yield_context),
         (const, override)
     );
 
@@ -193,7 +193,7 @@ struct MockBackend : public BackendInterface {
         (const, override)
     );
 
-    MOCK_METHOD(void, writeLedger, (ripple::LedgerHeader const&, std::string&&), (override));
+    MOCK_METHOD(void, writeLedger, (xrpl::LedgerHeader const&, std::string&&), (override));
 
     MOCK_METHOD(void, writeLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));
 
@@ -233,9 +233,9 @@ struct MockBackend : public BackendInterface {
     MOCK_METHOD(
         data::MPTHoldersAndCursor,
         fetchMPTHolders,
-        (ripple::uint192 const& mptID,
+        (xrpl::uint192 const& mptID,
          std::uint32_t const,
-         (std::optional<ripple::AccountID> const&),
+         (std::optional<xrpl::AccountID> const&),
          std::uint32_t const,
          boost::asio::yield_context),
         (const, override)

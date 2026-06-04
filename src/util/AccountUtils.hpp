@@ -44,7 +44,7 @@ parseBase58Wrapper(std::string const& str)
     if (!std::all_of(std::begin(str), std::end(str), [](unsigned char c) { return std::isalnum(c); }))
         return std::nullopt;
 
-    return ripple::parseBase58<T>(str);
+    return xrpl::parseBase58<T>(str);
 }
 
 /**
@@ -58,12 +58,12 @@ parseBase58Wrapper(std::string const& str)
  */
 template <class T>
 [[nodiscard]] std::optional<T>
-parseBase58Wrapper(ripple::TokenType type, std::string const& str)
+parseBase58Wrapper(xrpl::TokenType type, std::string const& str)
 {
     if (!std::all_of(std::begin(str), std::end(str), [](unsigned char c) { return std::isalnum(c); }))
         return std::nullopt;
 
-    return ripple::parseBase58<T>(type, str);
+    return xrpl::parseBase58<T>(type, str);
 }
 
 }  // namespace util

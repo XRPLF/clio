@@ -45,7 +45,6 @@
 using namespace rpc;
 using namespace testing;
 using namespace util::config;
-namespace json = boost::json;
 
 namespace {
 constexpr auto kCLIENT_IP = "127.0.0.1";
@@ -277,7 +276,7 @@ TEST_P(ShouldForwardParameterTest, Test)
     auto const rawHandlerProviderPtr = handlerProvider_.get();
     auto const apiVersion = testBundle.apiVersion;
     auto const method = testBundle.method;
-    auto const params = json::parse(testBundle.testJson);
+    auto const params = boost::json::parse(testBundle.testJson);
 
     ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(testBundle.mockedIsClioOnly));
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(testBundle.called);
@@ -306,13 +305,13 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
     auto const rawBalancerPtr = loadBalancer_.get();
     auto const apiVersion = 2u;
     auto const method = "submit";
-    auto const params = json::parse(R"JSON({"test": true})JSON");
-    auto const forwarded = json::parse(R"JSON({"test": true, "command": "submit"})JSON");
+    auto const params = boost::json::parse(R"JSON({"test": true})JSON");
+    auto const forwarded = boost::json::parse(R"JSON({"test": true, "command": "submit"})JSON");
 
     EXPECT_CALL(
         *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _)
     )
-        .WillOnce(Return(json::object{}));
+        .WillOnce(Return(boost::json::object{}));
 
     EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
@@ -343,8 +342,8 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
     auto const rawBalancerPtr = loadBalancer_.get();
     auto const apiVersion = 2u;
     auto const method = "submit";
-    auto const params = json::parse(R"JSON({"test": true})JSON");
-    auto const forwarded = json::parse(R"JSON({"test": true, "command": "submit"})JSON");
+    auto const params = boost::json::parse(R"JSON({"test": true})JSON");
+    auto const forwarded = boost::json::parse(R"JSON({"test": true, "command": "submit"})JSON");
 
     EXPECT_CALL(
         *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _)

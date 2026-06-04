@@ -96,7 +96,7 @@ makeHttpContext(
     auto const command = boost::json::value_to<std::string>(request.at("method"));
 
     if (command == "subscribe" || command == "unsubscribe")
-        return Error{{RippledError::rpcBAD_SYNTAX, "Subscribe and unsubscribe are only allowed for websocket."}};
+        return Error{{RippledError::RpcBadSyntax, "Subscribe and unsubscribe are only allowed for websocket."}};
 
     if (!request.at("params").is_array())
         return Error{{ClioError::RpcParamsUnparsable, "Missing params array."}};

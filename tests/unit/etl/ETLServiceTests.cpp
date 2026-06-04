@@ -102,7 +102,7 @@ struct MockExtractor : etl::ExtractorInterface {
 struct MockLoader : etl::LoaderInterface {
     using ExpectedType = std::expected<void, etl::LoaderError>;
     MOCK_METHOD(ExpectedType, load, (etl::model::LedgerData const&), (override));
-    MOCK_METHOD(std::optional<ripple::LedgerHeader>, loadInitialLedger, (etl::model::LedgerData const&), (override));
+    MOCK_METHOD(std::optional<xrpl::LedgerHeader>, loadInitialLedger, (etl::model::LedgerData const&), (override));
 };
 
 struct MockCacheLoader : etl::CacheLoaderInterface {
@@ -307,7 +307,7 @@ TEST_F(ETLServiceTests, RunWithEmptyDatabase)
     EXPECT_CALL(*extractor_, extractLedgerOnly(kSEQ)).WillOnce(testing::Return(ledgerData));
     EXPECT_CALL(*balancer_, loadInitialLedger(kSEQ, testing::_, testing::_))
         .WillOnce(testing::Return(std::vector<std::string>{}));
-    EXPECT_CALL(*loader_, loadInitialLedger).WillOnce(testing::Return(ripple::LedgerHeader{}));
+    EXPECT_CALL(*loader_, loadInitialLedger).WillOnce(testing::Return(xrpl::LedgerHeader{}));
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
         .InSequence(s)
         .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));

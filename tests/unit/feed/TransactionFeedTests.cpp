@@ -239,7 +239,7 @@ TEST_F(FeedTransactionTest, SubTransactionV1)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -261,7 +261,7 @@ TEST_F(FeedTransactionTest, SubTransactionForProposedTx)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -282,7 +282,7 @@ TEST_F(FeedTransactionTest, SubTransactionV2)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -308,7 +308,7 @@ TEST_F(FeedTransactionTest, SubAccountV1)
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
 
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -334,7 +334,7 @@ TEST_F(FeedTransactionTest, SubForProposedAccount)
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
 
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -357,7 +357,7 @@ TEST_F(FeedTransactionTest, SubAccountV2)
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
 
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -384,7 +384,7 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
 
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -404,7 +404,7 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
 TEST_F(FeedTransactionTest, SubBookV1)
 {
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
@@ -593,7 +593,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
 TEST_F(FeedTransactionTest, SubBookV2)
 {
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
@@ -686,7 +686,7 @@ TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -723,7 +723,7 @@ TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -757,7 +757,7 @@ TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -816,7 +816,7 @@ TEST_F(FeedTransactionTest, SubRepeat)
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
@@ -841,32 +841,32 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
+    xrpl::STObject const obj = createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray const metaArray{0};
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 22);
+    xrpl::STArray const metaArray{0};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 22);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    ripple::STObject line(ripple::sfIndexes);
-    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
-    line.setFieldAmount(ripple::sfLowLimit, ripple::STAmount(10, false));
-    line.setFieldAmount(ripple::sfHighLimit, ripple::STAmount(100, false));
-    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{kTXN_ID});
-    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
-    line.setFieldU32(ripple::sfFlags, 0);
+    xrpl::STObject line(xrpl::sfIndexes);
+    line.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltRIPPLE_STATE);
+    line.setFieldAmount(xrpl::sfLowLimit, xrpl::STAmount(10, false));
+    line.setFieldAmount(xrpl::sfHighLimit, xrpl::STAmount(100, false));
+    line.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{kTXN_ID});
+    line.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 3);
+    line.setFieldU32(xrpl::sfFlags, 0);
     auto const issue2 = getIssue(kCURRENCY, kISSUER);
-    line.setFieldAmount(ripple::sfBalance, ripple::STAmount(issue2, 100));
+    line.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(issue2, 100));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
     auto const issueAccount = getAccountIdWithString(kISSUER);
-    auto const kk = ripple::keylet::account(issueAccount).key;
+    auto const kk = xrpl::keylet::account(issueAccount).key;
     ON_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .WillByDefault(testing::Return(line.getSerializer().peekData()));
-    ripple::STObject const accountRoot = createAccountRootObject(kISSUER, 0, 1, 10, 2, kTXN_ID, 3);
+    xrpl::STObject const accountRoot = createAccountRootObject(kISSUER, 0, 1, 10, 2, kTXN_ID, 3);
     ON_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
@@ -976,31 +976,31 @@ TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
+    xrpl::STObject const obj = createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray const metaArray{0};
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 22);
+    xrpl::STArray const metaArray{0};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 22);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    ripple::STObject line(ripple::sfIndexes);
-    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
-    line.setFieldAmount(ripple::sfLowLimit, ripple::STAmount(10, false));
-    line.setFieldAmount(ripple::sfHighLimit, ripple::STAmount(100, false));
-    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{kTXN_ID});
-    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
-    line.setFieldU32(ripple::sfFlags, ripple::lsfHighFreeze);
-    line.setFieldAmount(ripple::sfBalance, ripple::STAmount(getIssue(kCURRENCY, kISSUER), 100));
+    xrpl::STObject line(xrpl::sfIndexes);
+    line.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltRIPPLE_STATE);
+    line.setFieldAmount(xrpl::sfLowLimit, xrpl::STAmount(10, false));
+    line.setFieldAmount(xrpl::sfHighLimit, xrpl::STAmount(100, false));
+    line.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{kTXN_ID});
+    line.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 3);
+    line.setFieldU32(xrpl::sfFlags, xrpl::lsfHighFreeze);
+    line.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(getIssue(kCURRENCY, kISSUER), 100));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
     auto const issueAccount = getAccountIdWithString(kISSUER);
-    auto const kk = ripple::keylet::account(issueAccount).key;
+    auto const kk = xrpl::keylet::account(issueAccount).key;
     ON_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .WillByDefault(testing::Return(line.getSerializer().peekData()));
-    ripple::STObject const accountRoot = createAccountRootObject(kISSUER, 0, 1, 10, 2, kTXN_ID, 3);
+    xrpl::STObject const accountRoot = createAccountRootObject(kISSUER, 0, 1, 10, 2, kTXN_ID, 3);
     ON_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
@@ -1016,32 +1016,32 @@ TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
+    xrpl::STObject const obj = createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray const metaArray{0};
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 22);
+    xrpl::STArray const metaArray{0};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 22);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    ripple::STObject line(ripple::sfIndexes);
-    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
-    line.setFieldAmount(ripple::sfLowLimit, ripple::STAmount(10, false));
-    line.setFieldAmount(ripple::sfHighLimit, ripple::STAmount(100, false));
-    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{kTXN_ID});
-    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
-    line.setFieldU32(ripple::sfFlags, ripple::lsfHighFreeze);
+    xrpl::STObject line(xrpl::sfIndexes);
+    line.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltRIPPLE_STATE);
+    line.setFieldAmount(xrpl::sfLowLimit, xrpl::STAmount(10, false));
+    line.setFieldAmount(xrpl::sfHighLimit, xrpl::STAmount(100, false));
+    line.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{kTXN_ID});
+    line.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 3);
+    line.setFieldU32(xrpl::sfFlags, xrpl::lsfHighFreeze);
     auto const issueAccount = getAccountIdWithString(kISSUER);
-    line.setFieldAmount(ripple::sfBalance, ripple::STAmount(getIssue(kCURRENCY, kISSUER), 100));
+    line.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(getIssue(kCURRENCY, kISSUER), 100));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
-    auto const kk = ripple::keylet::account(issueAccount).key;
+    auto const kk = xrpl::keylet::account(issueAccount).key;
     ON_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .WillByDefault(testing::Return(line.getSerializer().peekData()));
-    ripple::STObject const accountRoot =
-        createAccountRootObject(kISSUER, ripple::lsfGlobalFreeze, 1, 10, 2, kTXN_ID, 3);
+    xrpl::STObject const accountRoot =
+        createAccountRootObject(kISSUER, xrpl::lsfGlobalFreeze, 1, 10, 2, kTXN_ID, 3);
     ON_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
@@ -1063,7 +1063,7 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidatedAccount)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -1090,7 +1090,7 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidated)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -1112,7 +1112,7 @@ TEST_F(FeedTransactionTest, SubProposedDisconnect)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -1135,7 +1135,7 @@ TEST_F(FeedTransactionTest, SubProposedAccountDisconnect)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
@@ -1157,37 +1157,37 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj =
+    xrpl::STObject const obj =
         createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kLPTOKEN_CURRENCY, kAMM_ACCOUNT, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray const metaArray{0};
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 22);
+    xrpl::STArray const metaArray{0};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 22);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    ripple::STObject line(ripple::sfIndexes);
-    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
-    line.setFieldAmount(ripple::sfLowLimit, ripple::STAmount(10, false));
-    line.setFieldAmount(ripple::sfHighLimit, ripple::STAmount(100, false));
-    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{kTXN_ID});
-    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
-    line.setFieldU32(ripple::sfFlags, 0);
+    xrpl::STObject line(xrpl::sfIndexes);
+    line.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltRIPPLE_STATE);
+    line.setFieldAmount(xrpl::sfLowLimit, xrpl::STAmount(10, false));
+    line.setFieldAmount(xrpl::sfHighLimit, xrpl::STAmount(100, false));
+    line.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{kTXN_ID});
+    line.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 3);
+    line.setFieldU32(xrpl::sfFlags, 0);
     auto const issue2 = getIssue(kLPTOKEN_CURRENCY, kAMM_ACCOUNT);
-    line.setFieldAmount(ripple::sfBalance, ripple::STAmount(issue2, 100));
+    line.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(issue2, 100));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .Times(2)
         .WillRepeatedly(testing::Return(line.getSerializer().peekData()));
 
-    auto const ammID = ripple::uint256{54321};
+    auto const ammID = xrpl::uint256{54321};
 
     // create an amm account because in `accountHolds` checks for the ammID
     auto const ammAccount = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const kk = ripple::keylet::account(ammAccount).key;
-    ripple::STObject const ammAccountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 1, 10, 2, kTXN_ID, 3, 0, ammID);
+    auto const kk = xrpl::keylet::account(ammAccount).key;
+    xrpl::STObject const ammAccountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 1, 10, 2, kTXN_ID, 3, 0, ammID);
     EXPECT_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
         .Times(2)
         .WillRepeatedly(testing::Return(ammAccountRoot.getSerializer().peekData()));
@@ -1234,14 +1234,14 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
         .WillOnce(testing::Return(true));
 
     auto const ammObj =
-        createAmmObject(kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), kCURRENCY, kISSUER);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
+        createAmmObject(kAMM_ACCOUNT, "XRP", xrpl::toBase58(xrpl::xrpAccount()), kCURRENCY, kISSUER);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::amm(ammID).key, testing::_, testing::_))
         .WillOnce(testing::Return(ammObj.getSerializer().peekData()));
 
     // create the issuer account that enacted global freeze
     auto const issuerAccount = getAccountIdWithString(kISSUER);
-    ripple::STObject const issuerAccountRoot = createAccountRootObject(kISSUER, 4194304, 1, 10, 2, kTXN_ID, 3);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(issuerAccount).key, testing::_, testing::_))
+    xrpl::STObject const issuerAccountRoot = createAccountRootObject(kISSUER, 4194304, 1, 10, 2, kTXN_ID, 3);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(issuerAccount).key, testing::_, testing::_))
         .WillOnce(testing::Return(issuerAccountRoot.getSerializer().peekData()));
 
     testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
@@ -1363,7 +1363,7 @@ TEST_F(FeedTransactionTest, PublishesMPTokenAuthorizeTx)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     // The issuance ID that this transaction is authorizing
-    auto const mptIssuanceID = ripple::makeMptID(1, getAccountIdWithString(kACCOUNT1));
+    auto const mptIssuanceID = xrpl::makeMptID(1, getAccountIdWithString(kACCOUNT1));
     auto const trans = createMPTokenAuthorizeTxWithMetadata(kACCOUNT1, mptIssuanceID, 15, 5);
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
@@ -1405,7 +1405,7 @@ TEST_F(TransactionFeedMockPrometheusTest, subUnsub)
     testFeedPtr_->unsub(account, sessionPtr_);
 
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
     EXPECT_CALL(*mockSessionPtr_, onDisconnect);
     testFeedPtr_->sub(book, sessionPtr_);
     testFeedPtr_->unsub(book, sessionPtr_);
@@ -1435,7 +1435,7 @@ TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
     testFeedPtr_->sub(account, sessionPtr_);
 
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
     testFeedPtr_->sub(book, sessionPtr_);
 
     // Emulate onDisconnect signal is called

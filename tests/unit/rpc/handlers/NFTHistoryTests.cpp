@@ -40,7 +40,6 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
@@ -255,7 +254,7 @@ TEST_P(NFTHistoryParameterTest, InvalidParams)
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto const req = json::parse(testBundle.testJson);
+        auto const req = boost::json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -270,19 +269,19 @@ genTransactions(uint32_t seq1, uint32_t seq2)
 {
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = seq1;
-    ripple::STObject const metaObj = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 22, 23);
+    xrpl::STObject const metaObj = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 22, 23);
     trans1.metadata = metaObj.getSerializer().peekData();
     trans1.date = 1;
     transactions.push_back(trans1);
 
     auto trans2 = TransactionAndMetadata();
-    ripple::STObject const obj2 = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj2 = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 1, 1, 32);
     trans2.transaction = obj.getSerializer().peekData();
     trans2.ledgerSequence = seq2;
-    ripple::STObject const metaObj2 = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 22, 23);
+    xrpl::STObject const metaObj2 = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 22, 23);
     trans2.metadata = metaObj2.getSerializer().peekData();
     trans2.date = 2;
     transactions.push_back(trans2);
@@ -308,7 +307,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -326,7 +325,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ + 1);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ - 1);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(output.result->at("marker").as_object(), boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
@@ -446,7 +445,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -586,7 +585,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -620,7 +619,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -638,7 +637,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(output.result->at("marker").as_object(), boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
@@ -663,7 +662,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -681,7 +680,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(output.result->at("marker").as_object(), boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
@@ -706,7 +705,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -724,7 +723,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(output.result->at("marker").as_object(), boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
             output.result->at("transactions").as_array()[0].as_object().at("meta").as_string(),
@@ -762,7 +761,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -780,7 +779,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(output.result->at("marker").as_object(), boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
             output.result->at("transactions").as_array()[0].as_object().at("meta_blob").as_string(),
@@ -815,7 +814,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -836,7 +835,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
         EXPECT_EQ(output.result->at("limit").as_uint64(), 2);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(output.result->at("marker").as_object(), boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
     });
 }
@@ -865,7 +864,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -893,7 +892,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerIntIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -918,7 +917,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerStringIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -956,11 +955,11 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ - 1);
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -1000,7 +999,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -1043,7 +1042,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -1063,7 +1062,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ - 2);
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(output.result->at("marker").as_object(), boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
     });
 }
 
@@ -1086,7 +1085,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        static auto const kINPUT = json::parse(
+        static auto const kINPUT = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "nft_id": "{}",
@@ -1106,7 +1105,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ + 1);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ - 1);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(output.result->at("marker").as_object(), boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_EQ(output.result->as_object().at("limit").as_uint64(), NFTHistoryHandler::kLIMIT_MAX);
     });

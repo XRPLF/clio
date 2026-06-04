@@ -52,7 +52,7 @@ OutputFile::writeToFile(char const* data, size_t size)
     shasum_.update(data, size);
 }
 
-ripple::uint256
+xrpl::uint256
 OutputFile::hash() const
 {
     auto sum = shasum_;

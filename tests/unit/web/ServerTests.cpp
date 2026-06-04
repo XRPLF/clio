@@ -642,7 +642,7 @@ INSTANTIATE_TEST_CASE_P(
         WebServerAdminTestParams{
             .config = jsonServerConfigWithAdminPassword(tests::util::generateFreePort()),
             .headers = {WebHeader(
-                http::field::authentication_info,
+                http::field::accept,
                 fmt::format("{}{}", PasswordAdminVerificationStrategy::kPASSWORD_PREFIX, kSECRET_SHA256)
             )},
             .expectedResponse = "user"

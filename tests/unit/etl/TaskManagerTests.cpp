@@ -63,7 +63,7 @@ struct MockExtractor : etl::ExtractorInterface {
 struct MockLoader : etl::LoaderInterface {
     using ExpectedType = std::expected<void, etl::LoaderError>;
     MOCK_METHOD(ExpectedType, load, (LedgerData const&), (override));
-    MOCK_METHOD(std::optional<ripple::LedgerHeader>, loadInitialLedger, (LedgerData const&), (override));
+    MOCK_METHOD(std::optional<xrpl::LedgerHeader>, loadInitialLedger, (LedgerData const&), (override));
 };
 
 struct MockMonitor : etl::MonitorInterface {

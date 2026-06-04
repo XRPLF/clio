@@ -197,7 +197,7 @@ public:
      * @param ctx The boost asio context
      * @return The account hash if found, otherwise std::nullopt
      */
-    std::optional<ripple::uint256>
+    std::optional<xrpl::uint256>
     fetchAccountHashViaSequence(std::uint64_t sequence, boost::asio::yield_context ctx)
     {
         static auto kFETCH_ACCOUNT_HASH = [this]() {
@@ -220,7 +220,7 @@ public:
             return std::nullopt;
         }
 
-        for (auto const& [accountHash] : data::cassandra::extract<ripple::uint256>(result)) {
+        for (auto const& [accountHash] : data::cassandra::extract<xrpl::uint256>(result)) {
             return accountHash;
         }
         return std::nullopt;

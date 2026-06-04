@@ -49,26 +49,26 @@
 namespace rpc {
 
 void
-AccountMPTokensHandler::addMPToken(std::vector<MPTokenResponse>& mpts, ripple::SLE const& sle)
+AccountMPTokensHandler::addMPToken(std::vector<MPTokenResponse>& mpts, xrpl::SLE const& sle)
 {
     MPTokenResponse token{};
-    auto const flags = sle.getFieldU32(ripple::sfFlags);
+    auto const flags = sle.getFieldU32(xrpl::sfFlags);
 
-    token.MPTokenID = ripple::strHex(sle.key());
-    token.account = ripple::to_string(sle.getAccountID(ripple::sfAccount));
-    token.MPTokenIssuanceID = ripple::strHex(sle.getFieldH192(ripple::sfMPTokenIssuanceID));
-    token.MPTAmount = sle.getFieldU64(ripple::sfMPTAmount);
+    token.MPTokenID = xrpl::strHex(sle.key());
+    token.account = xrpl::to_string(sle.getAccountID(xrpl::sfAccount));
+    token.MPTokenIssuanceID = xrpl::strHex(sle.getFieldH192(xrpl::sfMPTokenIssuanceID));
+    token.MPTAmount = sle.getFieldU64(xrpl::sfMPTAmount);
 
-    if (sle.isFieldPresent(ripple::sfLockedAmount))
-        token.lockedAmount = sle.getFieldU64(ripple::sfLockedAmount);
+    if (sle.isFieldPresent(xrpl::sfLockedAmount))
+        token.lockedAmount = sle.getFieldU64(xrpl::sfLockedAmount);
 
     auto const setFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
         if ((flags & mask) != 0u)
             field = true;
     };
 
-    setFlag(token.mptLocked, ripple::lsfMPTLocked);
-    setFlag(token.mptAuthorized, ripple::lsfMPTAuthorized);
+    setFlag(token.mptLocked, xrpl::lsfMPTLocked);
+    setFlag(token.mptAuthorized, xrpl::lsfMPTAuthorized);
 
     mpts.push_back(token);
 }
@@ -88,16 +88,16 @@ AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Cont
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+        sharedPtrBackend_->fetchLedgerObject(xrpl::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
     if (not accountLedgerObject.has_value())
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
     Output response;
     response.mpts.reserve(input.limit);
 
-    auto const addToResponse = [&](ripple::SLE const& sle) {
-        if (sle.getType() == ripple::ltMPTOKEN) {
+    auto const addToResponse = [&](xrpl::SLE const& sle) {
+        if (sle.getType() == xrpl::ltMPTOKEN) {
             addMPToken(response.mpts, sle);
         }
     };
@@ -114,7 +114,7 @@ AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Cont
     response.account = input.account;
     response.limit = input.limit;
 
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
     if (nextMarker.isNonZero())

@@ -67,7 +67,7 @@ public:
         uint32_t ledgerIndex{};
         std::optional<std::string> marker;
         uint32_t limit{};
-        std::vector<ripple::SLE> accountObjects;
+        std::vector<xrpl::SLE> accountObjects;
         bool validated = true;
     };
 
@@ -80,7 +80,7 @@ public:
         std::optional<uint32_t> ledgerIndex;
         uint32_t limit = kLIMIT_DEFAULT;  // [10,400]
         std::optional<std::string> marker;
-        std::optional<ripple::LedgerEntryType> type;
+        std::optional<xrpl::LedgerEntryType> type;
         bool deletionBlockersOnly = false;
     };
 

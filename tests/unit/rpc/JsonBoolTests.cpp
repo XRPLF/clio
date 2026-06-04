@@ -27,7 +27,6 @@
 #include <vector>
 
 using namespace rpc;
-namespace json = boost::json;
 using namespace testing;
 
 struct JsonBoolTestsCaseBundle {
@@ -71,7 +70,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(JsonBoolTests, Parse)
 {
     auto const testBundle = GetParam();
-    auto const jv = json::parse(testBundle.json).as_object();
+    auto const jv = boost::json::parse(testBundle.json).as_object();
     ASSERT_TRUE(jv.contains("test_bool"));
     EXPECT_EQ(testBundle.expectedBool, value_to<JsonBool>(jv.at("test_bool")).value);
 }

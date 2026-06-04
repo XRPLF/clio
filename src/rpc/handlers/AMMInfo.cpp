@@ -62,7 +62,7 @@
 namespace {
 
 std::string
-toIso8601(ripple::NetClock::time_point tp)
+toIso8601(xrpl::NetClock::time_point tp)
 {
     using namespace std::chrono;
     static constexpr auto kRIPPLE_EPOCH_OFFSET = seconds{kRIPPLE_EPOCH_START};
@@ -80,19 +80,19 @@ namespace rpc {
 AMMInfoHandler::Result
 AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) const
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     auto const hasInvalidParams = [&input] {
         // no asset/asset2 can be specified if amm account is specified
         if (input.ammAccount)
-            return input.issue1 != ripple::noIssue() || input.issue2 != ripple::noIssue();
+            return input.issue1 != xrpl::noIssue() || input.issue2 != xrpl::noIssue();
 
         // both assets must be specified when amm account is not specified
-        return input.issue1 == ripple::noIssue() || input.issue2 == ripple::noIssue();
+        return input.issue1 == xrpl::noIssue() || input.issue2 == xrpl::noIssue();
     }();
 
     if (hasInvalidParams)
-        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+        return Error{Status{RippledError::RpcInvalidParams}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AMMInfo's ledger range must be available");
@@ -109,22 +109,22 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
     if (input.accountID) {
         auto keylet = keylet::account(*input.accountID);
         if (not sharedPtrBackend_->fetchLedgerObject(keylet.key, lgrInfo.seq, ctx.yield))
-            return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+            return Error{Status{RippledError::RpcActNotFound}};
     }
 
-    ripple::uint256 ammID;
+    xrpl::uint256 ammID;
     if (input.ammAccount) {
         auto const accountKeylet = keylet::account(*input.ammAccount);
         auto const accountLedgerObject =
             sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
         if (not accountLedgerObject)
-            return Error{Status{RippledError::rpcACT_MALFORMED}};
-        ripple::STLedgerEntry const sle{
-            ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
+            return Error{Status{RippledError::RpcActMalformed}};
+        xrpl::STLedgerEntry const sle{
+            xrpl::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
         };
-        if (not sle.isFieldPresent(ripple::sfAMMID))
-            return Error{Status{RippledError::rpcACT_NOT_FOUND}};
-        ammID = sle.getFieldH256(ripple::sfAMMID);
+        if (not sle.isFieldPresent(xrpl::sfAMMID))
+            return Error{Status{RippledError::RpcActNotFound}};
+        ammID = sle.getFieldH256(xrpl::sfAMMID);
     }
 
     auto issue1 = input.issue1;
@@ -133,18 +133,18 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
     auto const ammBlob = sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (not ammBlob)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
     auto const amm = SLE{SerialIter{ammBlob->data(), ammBlob->size()}, ammKeylet.key};
     auto const ammAccountID = amm.getAccountID(sfAccount);
     auto const accBlob =
         sharedPtrBackend_->fetchLedgerObject(keylet::account(ammAccountID).key, lgrInfo.seq, ctx.yield);
     if (not accBlob)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
     // If the issue1 and issue2 are not specified, we need to get them from the AMM.
     // Otherwise we preserve the mapping of asset1 -> issue1 and asset2 -> issue2 as requested by the user.
-    if (issue1 == ripple::noIssue() and issue2 == ripple::noIssue()) {
+    if (issue1 == xrpl::noIssue() and issue2 == xrpl::noIssue()) {
         issue1 = amm[sfAsset].get<Issue>();
         issue2 = amm[sfAsset2].get<Issue>();
     }
@@ -158,10 +158,10 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
 
     Output response;
     response.ledgerIndex = lgrInfo.seq;
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
-    response.amount1 = toBoostJson(asset1Balance.getJson(JsonOptions::none));
-    response.amount2 = toBoostJson(asset2Balance.getJson(JsonOptions::none));
-    response.lpToken = toBoostJson(lptAMMBalance.getJson(JsonOptions::none));
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
+    response.amount1 = toBoostJson(asset1Balance.getJson(JsonOptions::Values::None));
+    response.amount2 = toBoostJson(asset2Balance.getJson(JsonOptions::Values::None));
+    response.lpToken = toBoostJson(lptAMMBalance.getJson(JsonOptions::Values::None));
     response.tradingFee = amm[sfTradingFee];
     response.ammAccount = to_string(ammAccountID);
 
@@ -182,8 +182,8 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
             boost::json::object auction;
             auto const timeSlot = ammAuctionTimeSlot(lgrInfo.parentCloseTime.time_since_epoch().count(), auctionSlot);
 
-            auction[JS(time_interval)] = timeSlot ? *timeSlot : AUCTION_SLOT_TIME_INTERVALS;
-            auction[JS(price)] = toBoostJson(auctionSlot[sfPrice].getJson(JsonOptions::none));
+            auction[JS(time_interval)] = timeSlot ? *timeSlot : xrpl::kAuctionSlotTimeIntervals;
+            auction[JS(price)] = toBoostJson(auctionSlot[sfPrice].getJson(JsonOptions::Values::None));
             auction[JS(discounted_fee)] = auctionSlot[sfDiscountedFee];
             auction[JS(account)] = to_string(auctionSlot.getAccountID(sfAccount));
             auction[JS(expiration)] = toIso8601(NetClock::time_point{NetClock::duration{auctionSlot[sfExpiration]}});
@@ -233,12 +233,12 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
     static auto const kSTRING_ISSUE_VALIDATOR =
         validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
             if (not value.is_string())
-                return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
+                return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotString"}};
 
             try {
-                ripple::issueFromJson(boost::json::value_to<std::string>(value));
+                xrpl::issueFromJson(boost::json::value_to<std::string>(value));
             } catch (std::runtime_error const&) {
-                return Error{Status{RippledError::rpcISSUE_MALFORMED}};
+                return Error{Status{RippledError::RpcIssueMalformed}};
             }
 
             return MaybeError{};
@@ -249,28 +249,28 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
         {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
         {JS(asset),
          meta::WithCustomError{
-             validation::Type<std::string, boost::json::object>{}, Status(RippledError::rpcISSUE_MALFORMED)
+             validation::Type<std::string, boost::json::object>{}, Status(RippledError::RpcIssueMalformed)
          },
          meta::IfType<std::string>{kSTRING_ISSUE_VALIDATOR},
          meta::IfType<boost::json::object>{
              meta::WithCustomError{
-                 validation::CustomValidators::currencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)
+                 validation::CustomValidators::currencyIssueValidator, Status(RippledError::RpcIssueMalformed)
              },
          }},
         {JS(asset2),
          meta::WithCustomError{
-             validation::Type<std::string, boost::json::object>{}, Status(RippledError::rpcISSUE_MALFORMED)
+             validation::Type<std::string, boost::json::object>{}, Status(RippledError::RpcIssueMalformed)
          },
          meta::IfType<std::string>{kSTRING_ISSUE_VALIDATOR},
          meta::IfType<boost::json::object>{
              meta::WithCustomError{
-                 validation::CustomValidators::currencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)
+                 validation::CustomValidators::currencyIssueValidator, Status(RippledError::RpcIssueMalformed)
              },
          }},
         {JS(amm_account),
-         meta::WithCustomError{validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+         meta::WithCustomError{validation::CustomValidators::accountValidator, Status(RippledError::RpcActMalformed)}},
         {JS(account),
-         meta::WithCustomError{validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+         meta::WithCustomError{validation::CustomValidators::accountValidator, Status(RippledError::RpcActMalformed)}},
     };
 
     return kRPC_SPEC;

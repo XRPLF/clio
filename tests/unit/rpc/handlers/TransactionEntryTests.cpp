@@ -36,7 +36,6 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
@@ -60,7 +59,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const output = handler.process(json::parse("{}"), Context{yield});
+        auto const output = handler.process(boost::json::parse("{}"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "fieldNotFoundTransaction");
@@ -72,7 +71,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const output = handler.process(json::parse(R"JSON({"tx_hash": "123"})JSON"), Context{yield});
+        auto const output = handler.process(boost::json::parse(R"JSON({"tx_hash": "123"})JSON"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -83,11 +82,11 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash return empty
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kINDEX}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kINDEX}, _))
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "ledger_hash": "{}",
@@ -111,9 +110,9 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 {
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "ledger_index": "4",
@@ -136,12 +135,12 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 {
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(createLedgerHeader(kINDEX, 30)));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _))
+    ON_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*backend_, fetchTransaction).Times(1);
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "tx_hash": "{}"
@@ -165,7 +164,7 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
         createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 10;
-    ON_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillByDefault(Return(tx));
+    ON_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*backend_, fetchTransaction).Times(1);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(createLedgerHeader(kINDEX, 30)));
@@ -173,7 +172,7 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "tx_hash": "{}",
@@ -237,7 +236,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
         createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 30;
-    ON_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillByDefault(Return(tx));
+    ON_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*backend_, fetchTransaction).Times(1);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
@@ -245,7 +244,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "tx_hash": "{}",
@@ -257,7 +256,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(kOUTPUT), *output.result);
+        EXPECT_EQ(boost::json::parse(kOUTPUT), *output.result);
     });
 }
 
@@ -309,12 +308,12 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
         createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 30;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "tx_hash": "{}",
@@ -326,6 +325,6 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
         );
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(kOUTPUT), *output.result);
+        EXPECT_EQ(boost::json::parse(kOUTPUT), *output.result);
     });
 }

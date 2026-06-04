@@ -57,7 +57,7 @@ public:
     void
     writeRaw(char const* data, size_t size);
 
-    ripple::uint256
+    xrpl::uint256
     hash() const;
 
 private:

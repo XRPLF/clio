@@ -64,64 +64,64 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+        sharedPtrBackend_->fetchLedgerObject(xrpl::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::RpcActNotFound, "accountNotFound"}};
 
     auto response = Output{};
     response.account = input.account;
     response.limit = input.limit;
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
     // if a marker was passed, start at the page specified in marker. Else, start at the max page
     auto const pageKey =
-        input.marker ? ripple::uint256{input.marker->c_str()} : ripple::keylet::nftpage_max(*accountID).key;
+        input.marker ? xrpl::uint256{input.marker->c_str()} : xrpl::keylet::nftpageMax(*accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
     if (!blob) {
         if (input.marker.has_value())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "Marker field does not match any valid Page ID"}};
+            return Error{Status{RippledError::RpcInvalidParams, "Marker field does not match any valid Page ID"}};
         return response;
     }
 
-    std::optional<ripple::SLE const> page{ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
+    std::optional<xrpl::SLE const> page{xrpl::SLE{xrpl::SerialIter{blob->data(), blob->size()}, pageKey}};
 
-    if (page->getType() != ripple::ltNFTOKEN_PAGE)
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "Marker matches Page ID from another Account"}};
+    if (page->getType() != xrpl::ltNFTOKEN_PAGE)
+        return Error{Status{RippledError::RpcInvalidParams, "Marker matches Page ID from another Account"}};
 
     auto numPages = 0u;
 
     while (page) {
-        auto const arr = page->getFieldArray(ripple::sfNFTokens);
+        auto const arr = page->getFieldArray(xrpl::sfNFTokens);
 
         for (auto const& nft : arr) {
-            auto const nftokenID = nft[ripple::sfNFTokenID];
+            auto const nftokenID = nft[xrpl::sfNFTokenID];
 
-            response.nfts.push_back(toBoostJson(nft.getJson(ripple::JsonOptions::none)));
+            response.nfts.push_back(toBoostJson(nft.getJson(xrpl::JsonOptions::Values::None)));
             auto& obj = response.nfts.back().as_object();
 
             // Pull out the components of the nft ID.
-            obj[SFS(sfFlags)] = ripple::nft::getFlags(nftokenID);
-            obj[SFS(sfIssuer)] = to_string(ripple::nft::getIssuer(nftokenID));
-            obj[SFS(sfNFTokenTaxon)] = ripple::nft::toUInt32(ripple::nft::getTaxon(nftokenID));
-            obj[JS(nft_serial)] = ripple::nft::getSerial(nftokenID);
+            obj[SFS(sfFlags)] = xrpl::nft::getFlags(nftokenID);
+            obj[SFS(sfIssuer)] = to_string(xrpl::nft::getIssuer(nftokenID));
+            obj[SFS(sfNFTokenTaxon)] = xrpl::nft::toUInt32(xrpl::nft::getTaxon(nftokenID));
+            obj[JS(nft_serial)] = xrpl::nft::getSerial(nftokenID);
 
-            if (std::uint16_t const xferFee = {ripple::nft::getTransferFee(nftokenID)})
+            if (std::uint16_t const xferFee = {xrpl::nft::getTransferFee(nftokenID)})
                 obj[SFS(sfTransferFee)] = xferFee;
         }
 
         ++numPages;
-        if (auto const npm = (*page)[~ripple::sfPreviousPageMin]) {
-            auto const nextKey = ripple::Keylet(ripple::ltNFTOKEN_PAGE, *npm);
+        if (auto const npm = (*page)[~xrpl::sfPreviousPageMin]) {
+            auto const nextKey = xrpl::Keylet(xrpl::ltNFTOKEN_PAGE, *npm);
             if (numPages == input.limit) {
                 response.marker = to_string(nextKey.key);
                 return response;
             }
 
             auto const nextBlob = sharedPtrBackend_->fetchLedgerObject(nextKey.key, lgrInfo.seq, ctx.yield);
-            page.emplace(ripple::SLE{ripple::SerialIter{nextBlob->data(), nextBlob->size()}, nextKey.key});
+            page.emplace(xrpl::SLE{xrpl::SerialIter{nextBlob->data(), nextBlob->size()}, nextKey.key});
         } else {
             page.reset();
         }

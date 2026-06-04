@@ -48,7 +48,7 @@ SubscriptionManager::unsubBookChanges(SubscriberSharedPtr const& subscriber)
 
 void
 SubscriptionManager::pubBookChanges(
-    ripple::LedgerHeader const& lgrInfo,
+    xrpl::LedgerHeader const& lgrInfo,
     std::vector<data::TransactionAndMetadata> const& transactions
 )
 {
@@ -72,7 +72,7 @@ SubscriptionManager::unsubProposedTransactions(SubscriberSharedPtr const& subscr
 }
 
 void
-SubscriptionManager::subProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::subProposedAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     proposedTransactionFeed_.sub(account, subscriber);
     // Same as proposed_transactions subscribers, proposed_account subscribers also subscribe to the transaction feed to
@@ -81,7 +81,7 @@ SubscriptionManager::subProposedAccount(ripple::AccountID const& account, Subscr
 }
 
 void
-SubscriptionManager::unsubProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::unsubProposedAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     proposedTransactionFeed_.unsub(account, subscriber);
     transactionFeed_.unsubProposed(account, subscriber);
@@ -107,8 +107,8 @@ SubscriptionManager::unsubLedger(SubscriberSharedPtr const& subscriber)
 
 void
 SubscriptionManager::pubLedger(
-    ripple::LedgerHeader const& lgrInfo,
-    ripple::Fees const& fees,
+    xrpl::LedgerHeader const& lgrInfo,
+    xrpl::Fees const& fees,
     std::string const& ledgerRange,
     std::uint32_t const txnCount
 )
@@ -165,31 +165,31 @@ SubscriptionManager::unsubTransactions(SubscriberSharedPtr const& subscriber)
 }
 
 void
-SubscriptionManager::subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::subAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     transactionFeed_.sub(account, subscriber);
 }
 
 void
-SubscriptionManager::unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::unsubAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     transactionFeed_.unsub(account, subscriber);
 }
 
 void
-SubscriptionManager::subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::subBook(xrpl::Book const& book, SubscriberSharedPtr const& subscriber)
 {
     transactionFeed_.sub(book, subscriber);
 }
 
 void
-SubscriptionManager::unsubBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::unsubBook(xrpl::Book const& book, SubscriberSharedPtr const& subscriber)
 {
     transactionFeed_.unsub(book, subscriber);
 }
 
 void
-SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& txMeta, ripple::LedgerHeader const& lgrInfo)
+SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& txMeta, xrpl::LedgerHeader const& lgrInfo)
 {
     transactionFeed_.pub(txMeta, lgrInfo, backend_, amendmentCenter_, networkID_);
 }

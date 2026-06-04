@@ -65,12 +65,12 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+        sharedPtrBackend_->fetchLedgerObject(xrpl::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::RpcActNotFound, "accountNotFound"}};
 
-    auto typeFilter = std::optional<std::vector<ripple::LedgerEntryType>>{};
+    auto typeFilter = std::optional<std::vector<xrpl::LedgerEntryType>>{};
 
     if (input.deletionBlockersOnly) {
         typeFilter.emplace();
@@ -84,12 +84,12 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
             typeFilter->push_back(type);
         }
     } else {
-        if (input.type && input.type != ripple::ltANY)
+        if (input.type && input.type != xrpl::ltANY)
             typeFilter = {*input.type};
     }
 
     Output response;
-    auto const addToResponse = [&](ripple::SLE&& sle) {
+    auto const addToResponse = [&](xrpl::SLE&& sle) {
         if (not typeFilter or
             std::find(std::begin(typeFilter.value()), std::end(typeFilter.value()), sle.getType()) !=
                 std::end(typeFilter.value())) {
@@ -105,7 +105,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
     if (!expectedNext.has_value())
         return Error{expectedNext.error()};
 
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
     response.limit = input.limit;
     response.account = input.account;

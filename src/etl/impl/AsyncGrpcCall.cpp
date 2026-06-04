@@ -45,22 +45,22 @@ namespace etl::impl {
 
 AsyncGrpcCall::AsyncGrpcCall(
     uint32_t seq,
-    ripple::uint256 const& marker,
-    std::optional<ripple::uint256> const& nextMarker
+    xrpl::uint256 const& marker,
+    std::optional<xrpl::uint256> const& nextMarker
 )
 {
     request_.set_user("ETL");
     request_.mutable_ledger()->set_sequence(seq);
 
     if (marker.isNonZero())
-        request_.set_marker(marker.data(), ripple::uint256::size());
+        request_.set_marker(marker.data(), xrpl::uint256::size());
 
     nextPrefix_ = nextMarker ? nextMarker->data()[0] : 0x00;
     auto const prefix = marker.data()[0];
 
-    LOG(log_.debug()) << "Setting up AsyncGrpcCall. marker = " << ripple::strHex(marker)
-                      << ". prefix = " << ripple::strHex(std::string(1, prefix))
-                      << ". nextPrefix_ = " << ripple::strHex(std::string(1, nextPrefix_));
+    LOG(log_.debug()) << "Setting up AsyncGrpcCall. marker = " << xrpl::strHex(marker)
+                      << ". prefix = " << xrpl::strHex(std::string(1, prefix))
+                      << ". nextPrefix_ = " << xrpl::strHex(std::string(1, nextPrefix_));
 
     ASSERT(
         nextPrefix_ > prefix or nextPrefix_ == 0x00,
@@ -157,7 +157,7 @@ AsyncGrpcCall::call(std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stu
 std::string
 AsyncGrpcCall::getMarkerPrefix()
 {
-    return next_->marker().empty() ? std::string{} : ripple::strHex(std::string{next_->marker().data()[0]});
+    return next_->marker().empty() ? std::string{} : xrpl::strHex(std::string{next_->marker().data()[0]});
 }
 
 // this is used to generate edgeKeys - keys that were the last one in the onInitialObjects list

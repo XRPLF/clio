@@ -478,7 +478,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPErrorPath)
 
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(
-            testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}})
+            testing::Return(rpc::Result{rpc::Status{rpc::RippledError::RpcInvalidParams, "ledgerIndexMalformed"}})
         );
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
@@ -527,7 +527,7 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
 
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(
-            testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}})
+            testing::Return(rpc::Result{rpc::Status{rpc::RippledError::RpcInvalidParams, "ledgerIndexMalformed"}})
         );
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));

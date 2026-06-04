@@ -141,7 +141,7 @@ public:
             {JS(account),
              validation::Required{},
              meta::WithCustomError{
-                 validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)
+                 validation::CustomValidators::accountValidator, Status(RippledError::RpcActMalformed)
              }},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(limit),
@@ -170,8 +170,8 @@ private:
     static void
     addMPTokenIssuance(
         std::vector<MPTokenIssuanceResponse>& issuances,
-        ripple::SLE const& sle,
-        ripple::AccountID const& account
+        xrpl::SLE const& sle,
+        xrpl::AccountID const& account
     );
 
 private:

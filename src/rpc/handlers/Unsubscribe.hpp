@@ -55,7 +55,7 @@ public:
      * @brief A struct to hold one order book
      */
     struct OrderBook {
-        ripple::Book book;
+        xrpl::Book book;
         bool both = false;
     };
 

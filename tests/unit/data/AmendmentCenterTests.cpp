@@ -32,8 +32,8 @@
 #include <xrpl/protocol/Indexes.h>
 
 #include <algorithm>
+#include <functional>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -49,23 +49,23 @@ struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest, 
 // we forgot to register in data::Amendments.
 TEST_F(AmendmentCenterTest, AllAmendmentsFromLibXRPLAreSupported)
 {
-    for (auto const& [name, _] : ripple::allAmendments()) {
+    for (auto const& [name, _] : xrpl::allAmendments()) {
         EXPECT_TRUE(amendmentCenter.isSupported(name)) << "XRPL amendment not supported by Clio: " << name;
     }
 
-    ASSERT_EQ(amendmentCenter.getSupported().size(), ripple::allAmendments().size());
-    ASSERT_EQ(amendmentCenter.getAll().size(), ripple::allAmendments().size());
+    ASSERT_EQ(amendmentCenter.getSupported().size(), xrpl::allAmendments().size());
+    ASSERT_EQ(amendmentCenter.getAll().size(), xrpl::allAmendments().size());
 }
 
 TEST_F(AmendmentCenterTest, Accessors)
 {
     {
         auto const am = amendmentCenter.getAmendment("DisallowIncoming");
-        EXPECT_EQ(am.feature, ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
+        EXPECT_EQ(am.feature, xrpl::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
     }
     {
         auto const am = amendmentCenter["DisallowIncoming"];
-        EXPECT_EQ(am.feature, ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
+        EXPECT_EQ(am.feature, xrpl::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
     }
 
     auto const a = amendmentCenter[Amendments::Flow];
@@ -79,7 +79,7 @@ TEST_F(AmendmentCenterTest, IsEnabled)
     EXPECT_FALSE(amendmentCenter.isSupported("unknown"));
 
     auto const amendments = createAmendmentsObject({Amendments::fixUniversalNumber});
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::amendments().key, kSEQ, testing::_))
         .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
 
     EXPECT_TRUE(amendmentCenter.isEnabled("fixUniversalNumber", kSEQ));
@@ -90,7 +90,7 @@ TEST_F(AmendmentCenterTest, IsEnabled)
 TEST_F(AmendmentCenterTest, IsMultipleEnabled)
 {
     auto const amendments = createAmendmentsObject({Amendments::fixUniversalNumber});
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::amendments().key, kSEQ, testing::_))
         .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
     runSpawn([this](auto yield) {
@@ -106,7 +106,7 @@ TEST_F(AmendmentCenterTest, IsMultipleEnabled)
 
 TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenAmendmentsLedgerObjectUnavailable)
 {
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::amendments().key, kSEQ, testing::_))
         .WillOnce(testing::Return(std::nullopt));
 
     runSpawn([this](auto yield) {
@@ -117,7 +117,7 @@ TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenAmendmentsLedgerObjectUnava
 TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenNoAmendments)
 {
     auto const amendments = createBrokenAmendmentsObject();
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::amendments().key, kSEQ, testing::_))
         .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
     runSpawn([this](auto yield) { EXPECT_FALSE(amendmentCenter.isEnabled(yield, "irrelevant", kSEQ)); });
@@ -125,7 +125,7 @@ TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenNoAmendments)
 
 TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenAmendmentsLedgerObjectUnavailable)
 {
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::amendments().key, kSEQ, testing::_))
         .WillOnce(testing::Return(std::nullopt));
 
     runSpawn([this](auto yield) {
@@ -141,7 +141,7 @@ TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenAmendmentsLedgerObj
 TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenNoAmendments)
 {
     auto const amendments = createBrokenAmendmentsObject();
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::amendments().key, kSEQ, testing::_))
         .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
     runSpawn([this](auto yield) {
@@ -157,7 +157,7 @@ TEST(AmendmentTest, GenerateAmendmentId)
 {
     // https://xrpl.org/known-amendments.html#disallowincoming refer to the published id
     EXPECT_EQ(
-        ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"),
+        xrpl::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"),
         Amendment::getAmendmentId("DisallowIncoming")
     );
 }
@@ -185,11 +185,11 @@ TEST_F(AmendmentKeyTest, Convertible)
         std::string const s1 = first;
         EXPECT_EQ(s1, key1);
 
-        ripple::uint256 const k1 = first;
-        ripple::uint256 const k2 = second;
+        xrpl::uint256 const k1 = first;
+        xrpl::uint256 const k2 = second;
 
-        EXPECT_EQ(k1, ripple::uint256{"7E365F775657DC0EB960E6295A1F44B3F67479F54D5D12C5D87E6DB234F072E3"});
-        EXPECT_EQ(k2, ripple::uint256{"B4F33541E0E2FC2F7AA17D2D2E6A9B424809123485251D3413E91CC462309772"});
+        EXPECT_EQ(k1, xrpl::uint256{"7E365F775657DC0EB960E6295A1F44B3F67479F54D5D12C5D87E6DB234F072E3"});
+        EXPECT_EQ(k2, xrpl::uint256{"B4F33541E0E2FC2F7AA17D2D2E6A9B424809123485251D3413E91CC462309772"});
     });
 }
 

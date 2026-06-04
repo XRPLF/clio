@@ -41,7 +41,7 @@ namespace migration::cassandra::impl {
  */
 struct TableTransactionsDesc {
     // hash, date, ledger_seq, metadata, transaction
-    using Row = std::tuple<ripple::uint256, std::uint64_t, std::uint32_t, ripple::Blob, ripple::Blob>;
+    using Row = std::tuple<xrpl::uint256, std::uint64_t, std::uint32_t, xrpl::Blob, xrpl::Blob>;
     static constexpr char const* kPARTITION_KEY = "hash";
     static constexpr char const* kTABLE_NAME = "transactions";
 };
@@ -52,7 +52,7 @@ struct TableTransactionsDesc {
  */
 class TransactionsAdapter : public impl::FullTableScannerAdapterBase<TableTransactionsDesc> {
 public:
-    using OnTransactionRead = std::function<void(ripple::STTx, ripple::TxMeta)>;
+    using OnTransactionRead = std::function<void(xrpl::STTx, xrpl::TxMeta)>;
 
     /**
      * @brief Construct a new Transactions Adapter object

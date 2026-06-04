@@ -58,7 +58,7 @@ public:
         }();
 
         rg::sort(accountRoots);
-        std::vector<ripple::uint256> cursors{data::kFIRST_KEY};
+        std::vector<xrpl::uint256> cursors{data::kFIRST_KEY};
         rg::copy(accountRoots.begin(), accountRoots.end(), std::back_inserter(cursors));
         rg::sort(cursors);
         cursors.push_back(data::kLAST_KEY);

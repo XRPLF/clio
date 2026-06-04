@@ -35,7 +35,6 @@ using namespace rpc;
 using namespace rpc::validation;
 using namespace tests::common;
 
-namespace json = boost::json;
 
 class RPCDefaultProcessorTest : public HandlerBaseTest {};
 
@@ -45,7 +44,7 @@ TEST_F(RPCDefaultProcessorTest, ValidInput)
         HandlerMock const handler;
         rpc::impl::DefaultProcessor<HandlerMock> const processor;
 
-        auto const input = json::parse(R"JSON({ "something": "works" })JSON");
+        auto const input = boost::json::parse(R"JSON({ "something": "works" })JSON");
         auto const spec = RpcSpec{{"something", Required{}}};
         auto const data = InOutFake{"works"};
         EXPECT_CALL(handler, spec(_)).WillOnce(ReturnRef(spec));
@@ -64,7 +63,7 @@ TEST_F(RPCDefaultProcessorTest, NoInputValidCall)
         rpc::impl::DefaultProcessor<HandlerWithoutInputMock> const processor;
 
         auto const data = InOutFake{"works"};
-        auto const input = json::parse(R"JSON({})JSON");
+        auto const input = boost::json::parse(R"JSON({})JSON");
         EXPECT_CALL(handler, process(_)).WillOnce(Return(data));
 
         auto const ret = processor(handler, input, Context{yield});
@@ -79,7 +78,7 @@ TEST_F(RPCDefaultProcessorTest, InvalidInput)
         HandlerMock const handler;
         rpc::impl::DefaultProcessor<HandlerMock> const processor;
 
-        auto const input = json::parse(R"JSON({ "other": "nope" })JSON");
+        auto const input = boost::json::parse(R"JSON({ "other": "nope" })JSON");
         auto const spec = RpcSpec{{"something", Required{}}};
         EXPECT_CALL(handler, spec(_)).WillOnce(ReturnRef(spec));
 

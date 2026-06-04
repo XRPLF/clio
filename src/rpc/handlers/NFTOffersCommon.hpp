@@ -58,7 +58,7 @@ public:
      */
     struct Output {
         std::string nftID;
-        std::vector<ripple::SLE> offers;
+        std::vector<xrpl::SLE> offers;
 
         // validated should be sent via framework
         bool validated = true;
@@ -125,8 +125,8 @@ protected:
     Result
     iterateOfferDirectory(
         Input input,
-        ripple::uint256 const& tokenID,
-        ripple::Keylet const& directory,
+        xrpl::uint256 const& tokenID,
+        xrpl::Keylet const& directory,
         boost::asio::yield_context yield
     ) const;
 

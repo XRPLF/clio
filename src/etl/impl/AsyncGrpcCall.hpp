@@ -59,7 +59,7 @@ private:
     std::optional<std::string> predecessorKey_;
 
 public:
-    AsyncGrpcCall(uint32_t seq, ripple::uint256 const& marker, std::optional<ripple::uint256> const& nextMarker);
+    AsyncGrpcCall(uint32_t seq, xrpl::uint256 const& marker, std::optional<xrpl::uint256> const& nextMarker);
 
     static std::vector<AsyncGrpcCall>
     makeAsyncCalls(uint32_t const sequence, uint32_t const numMarkers);

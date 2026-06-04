@@ -39,8 +39,8 @@ getTxTypesInLowercase()
     static std::unordered_set<std::string> const kTYPES_KEYS_IN_LOWERCASE = []() {
         std::unordered_set<std::string> keys;
         std::transform(
-            ripple::TxFormats::getInstance().begin(),
-            ripple::TxFormats::getInstance().end(),
+            xrpl::TxFormats::getInstance().begin(),
+            xrpl::TxFormats::getInstance().end(),
             std::inserter(keys, keys.begin()),
             [](auto const& pair) { return util::toLower(pair.getName()); }
         );

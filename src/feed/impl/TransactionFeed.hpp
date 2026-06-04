@@ -71,12 +71,12 @@ class TransactionFeed {
     std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subBookCount_;
 
-    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountSignal_;
-    TrackableSignalMap<ripple::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_;
+    TrackableSignalMap<xrpl::AccountID, Subscriber, AllVersionTransactionsType const&> accountSignal_;
+    TrackableSignalMap<xrpl::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_;
     TrackableSignal<Subscriber, AllVersionTransactionsType const&> signal_;
 
     // Signals for proposed tx subscribers
-    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountProposedSignal_;
+    TrackableSignalMap<xrpl::AccountID, Subscriber, AllVersionTransactionsType const&> accountProposedSignal_;
     TrackableSignal<Subscriber, AllVersionTransactionsType const&> txProposedSignal_;
 
     std::unordered_set<SubscriberPtr>
@@ -113,7 +113,7 @@ public:
      * @param account The account to watch.
      */
     void
-    sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+    sub(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Subscribe to the transaction feed, only receive the feed when particular order book is affected.
@@ -121,7 +121,7 @@ public:
      * @param book The order book to watch.
      */
     void
-    sub(ripple::Book const& book, SubscriberSharedPtr const& subscriber);
+    sub(xrpl::Book const& book, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Subscribe to the transaction feed for proposed transaction stream.
@@ -137,7 +137,7 @@ public:
      * @param account The account to watch.
      */
     void
-    subProposed(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+    subProposed(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the transaction feed.
@@ -152,7 +152,7 @@ public:
      * @param account The account to unsubscribe.
      */
     void
-    unsub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+    unsub(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the transaction feed for proposed transaction stream.
@@ -167,7 +167,7 @@ public:
      * @param account The account to unsubscribe.
      */
     void
-    unsubProposed(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+    unsubProposed(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the transaction feed for particular order book.
@@ -175,7 +175,7 @@ public:
      * @param book The book to unsubscribe.
      */
     void
-    unsub(ripple::Book const& book, SubscriberSharedPtr const& subscriber);
+    unsub(xrpl::Book const& book, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Publishes the transaction feed.
@@ -186,7 +186,7 @@ public:
      */
     void
     pub(data::TransactionAndMetadata const& txMeta,
-        ripple::LedgerHeader const& lgrInfo,
+        xrpl::LedgerHeader const& lgrInfo,
         std::shared_ptr<data::BackendInterface const> const& backend,
         std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
         uint32_t networkID);
@@ -214,15 +214,15 @@ private:
     unsubInternal(SubscriberPtr subscriber);
 
     void
-    unsubInternal(ripple::AccountID const& account, SubscriberPtr subscriber);
+    unsubInternal(xrpl::AccountID const& account, SubscriberPtr subscriber);
 
     void
     unsubProposedInternal(SubscriberPtr subscriber);
 
     void
-    unsubProposedInternal(ripple::AccountID const& account, SubscriberPtr subscriber);
+    unsubProposedInternal(xrpl::AccountID const& account, SubscriberPtr subscriber);
 
     void
-    unsubInternal(ripple::Book const& book, SubscriberPtr subscriber);
+    unsubInternal(xrpl::Book const& book, SubscriberPtr subscriber);
 };
 }  // namespace feed::impl

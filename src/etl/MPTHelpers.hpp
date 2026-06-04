@@ -22,8 +22,8 @@
 
 #include "data/DBHelpers.hpp"
 
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/TxMeta.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/TxMeta.h>
 
 namespace etl {
 
@@ -35,7 +35,7 @@ namespace etl {
  * @return The MPTIssuanceID and holder pair as a optional
  */
 std::optional<MPTHolderData>
-getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+getMPTHolderFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
 
 /**
  * @brief Pull MPT data from ledger object via loadInitialLedger.

@@ -131,11 +131,11 @@ public:
             {JS(account),
              validation::Required{},
              meta::WithCustomError{
-                 validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)
+                 validation::CustomValidators::accountValidator, Status(RippledError::RpcActMalformed)
              }},
             {JS(peer),
              meta::WithCustomError{
-                 validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)
+                 validation::CustomValidators::accountValidator, Status(RippledError::RpcActMalformed)
              }},
             {JS(ignore_default), validation::Type<bool>{}},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
@@ -166,9 +166,9 @@ private:
     static void
     addLine(
         std::vector<LineResponse>& lines,
-        ripple::SLE const& lineSle,
-        ripple::AccountID const& account,
-        std::optional<ripple::AccountID> const& peerAccount
+        xrpl::SLE const& lineSle,
+        xrpl::AccountID const& account,
+        std::optional<xrpl::AccountID> const& peerAccount
     );
 
 private:

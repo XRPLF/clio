@@ -221,7 +221,7 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaHash)
 {
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, testing::_))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, testing::_))
         .WillOnce(testing::Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {

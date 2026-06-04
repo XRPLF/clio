@@ -69,11 +69,11 @@ public:
         uint32_t ledgerIndex;
         std::string accountID;
         bool overflow = false;
-        std::map<ripple::Currency, ripple::STAmount> sums;
-        std::map<ripple::AccountID, std::vector<ripple::STAmount>> hotBalances;
-        std::map<ripple::AccountID, std::vector<ripple::STAmount>> assets;
-        std::map<ripple::AccountID, std::vector<ripple::STAmount>> frozenBalances;
-        std::map<ripple::Currency, ripple::STAmount> locked;
+        std::map<xrpl::Currency, xrpl::STAmount> sums;
+        std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> hotBalances;
+        std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> assets;
+        std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> frozenBalances;
+        std::map<xrpl::Currency, xrpl::STAmount> locked;
         // validated should be sent via framework
         bool validated = true;
     };
@@ -83,7 +83,7 @@ public:
      */
     struct Input {
         std::string account;
-        std::set<ripple::AccountID> hotWallets;
+        std::set<xrpl::AccountID> hotWallets;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
     };
@@ -117,16 +117,16 @@ public:
 
                     // wallet needs to be an valid accountID or public key
                     auto const wallets = value.is_array() ? value.as_array() : boost::json::array{value};
-                    auto const getAccountID = [](auto const& j) -> std::optional<ripple::AccountID> {
+                    auto const getAccountID = [](auto const& j) -> std::optional<xrpl::AccountID> {
                         if (j.is_string()) {
-                            auto const pk = util::parseBase58Wrapper<ripple::PublicKey>(
-                                ripple::TokenType::AccountPublic, boost::json::value_to<std::string>(j)
+                            auto const pk = util::parseBase58Wrapper<xrpl::PublicKey>(
+                                xrpl::TokenType::AccountPublic, boost::json::value_to<std::string>(j)
                             );
 
                             if (pk)
-                                return ripple::calcAccountID(*pk);
+                                return xrpl::calcAccountID(*pk);
 
-                            return util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(j));
+                            return util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(j));
                         }
 
                         return {};
@@ -149,9 +149,9 @@ public:
         };
 
         static auto const kSPEC_V1 =
-            RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_HOTWALLET)}}};
+            RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(xrpl::RpcInvalidHotwallet)}}};
         static auto const kSPEC_V2 =
-            RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_PARAMS)}}};
+            RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(xrpl::RpcInvalidParams)}}};
 
         return apiVersion == 1 ? kSPEC_V1 : kSPEC_V2;
     }

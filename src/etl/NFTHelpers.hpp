@@ -41,7 +41,7 @@ namespace etl {
  * @return NFT URI change data as a pair of transactions and optional NFTsData
  */
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNftokenModifyData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+getNftokenModifyData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
 
 /**
  * @brief Get the NFT Token mint data from a transaction
@@ -51,7 +51,7 @@ getNftokenModifyData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
  * @return NFT Token mint data as a pair of transactions and optional NFTsData
  */
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+getNFTokenMintData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
 
 /**
  * @brief Get the NFT Token burn data from a transaction
@@ -61,7 +61,7 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
  * @return NFT Token burn data as a pair of transactions and optional NFTsData
  */
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+getNFTokenBurnData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
 
 /**
  * @brief Get the NFT Token accept offer data from a transaction
@@ -71,7 +71,7 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
  * @return NFT Token accept offer data as a pair of transactions and optional NFTsData
  */
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+getNFTokenAcceptOfferData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
 
 /**
  * @brief Get the NFT Token cancel offer data from a transaction
@@ -81,7 +81,7 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
  * @return NFT Token cancel offer data as a pair of transactions and optional NFTsData
  */
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTokenCancelOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+getNFTokenCancelOfferData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
 
 /**
  * @brief Get the NFT Token create offer data from a transaction
@@ -91,7 +91,7 @@ getNFTokenCancelOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
  * @return NFT Token create offer data as a pair of transactions and optional NFTsData
  */
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTokenCreateOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+getNFTokenCreateOfferData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
 
 /**
  * @brief Pull NFT data from TX via ETLService.
@@ -101,7 +101,7 @@ getNFTokenCreateOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
  * @return NFT transactions data as a pair of transactions and optional NFTsData
  */
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+getNFTDataFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
 
 /**
  * @brief Pull NFT data from ledger object via loadInitialLedger.

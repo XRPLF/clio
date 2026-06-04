@@ -43,7 +43,6 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 using TestServerInfoHandler = BaseServerInfoHandler<MockCounters>;
@@ -143,7 +142,7 @@ TEST_F(RPCServerInfoHandlerTest, NoLedgerHeaderErrorsOutWithInternal)
     }};
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
@@ -164,7 +163,7 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
     }};
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
@@ -198,7 +197,7 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
     }};
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield, {}, false, kCLIENT_IP});
 
         validateNormalOutput(output);
@@ -235,7 +234,7 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
     }};
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield, {}, false, kCLIENT_IP});
 
         validateNormalOutput(output);
@@ -270,7 +269,7 @@ TEST_F(RPCServerInfoHandlerTest, CorruptionDetectedIsPresentIfSet)
     }};
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield, {}, false, kCLIENT_IP});
 
         validateNormalOutput(output);
@@ -303,7 +302,7 @@ TEST_F(RPCServerInfoHandlerTest, CacheReportsEnabledFlagCorrectly)
     }};
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield, {}, false, kCLIENT_IP});
 
         validateNormalOutput(output);
@@ -316,7 +315,7 @@ TEST_F(RPCServerInfoHandlerTest, CacheReportsEnabledFlagCorrectly)
     backend_->cache().setDisabled();
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield, {}, false, kCLIENT_IP});
 
         validateNormalOutput(output);
@@ -333,7 +332,7 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
     MockCounters* rawCountersPtr = mockCountersPtr_.get();
     MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
 
-    auto const empty = json::object{};
+    auto const empty = boost::json::object{};
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -358,7 +357,7 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
     }};
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield, {}, true});
 
         validateNormalOutput(output);
@@ -372,7 +371,7 @@ TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
     MockCounters* rawCountersPtr = mockCountersPtr_.get();
     MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
 
-    auto const empty = json::object{};
+    auto const empty = boost::json::object{};
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -399,7 +398,7 @@ TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
     }};
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse(R"JSON(
+        auto const req = boost::json::parse(R"JSON(
             {
                 "backend_counters": true
             }
@@ -417,7 +416,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     MockCounters* rawCountersPtr = mockCountersPtr_.get();
     MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
 
-    auto const empty = json::object{};
+    auto const empty = boost::json::object{};
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -428,7 +427,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 
     EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).WillOnce(Return(false));
 
-    auto const rippledObj = json::parse(R"JSON({
+    auto const rippledObj = boost::json::parse(R"JSON({
         "result": {
             "info": {
                 "build_version": "1234",
@@ -452,7 +451,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     }};
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield, {}, true});
 
         validateNormalOutput(output);
@@ -467,7 +466,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     MockCounters* rawCountersPtr = mockCountersPtr_.get();
     MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
 
-    auto const empty = json::object{};
+    auto const empty = boost::json::object{};
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -478,7 +477,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
 
     EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).WillOnce(Return(false));
 
-    auto const rippledObj = json::parse(R"JSON({
+    auto const rippledObj = boost::json::parse(R"JSON({
         "result": {
             "info": {}
         }
@@ -497,7 +496,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     }};
 
     runSpawn([&](auto yield) {
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto const output = handler.process(req, Context{yield, {}, true});
 
         validateNormalOutput(output);

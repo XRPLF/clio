@@ -35,7 +35,6 @@ constexpr auto kMAX_API_VERSION = 10u;
 
 using namespace util::config;
 using namespace rpc::impl;
-namespace json = boost::json;
 
 class RPCAPIVersionTest : public virtual ::testing::Test {
 protected:
@@ -44,35 +43,35 @@ protected:
 
 TEST_F(RPCAPIVersionTest, ReturnsDefaultVersionIfNotSpecified)
 {
-    auto ver = parser_.parse(json::parse("{}").as_object());
+    auto ver = parser_.parse(boost::json::parse("{}").as_object());
     EXPECT_TRUE(ver);
     EXPECT_EQ(ver.value(), kDEFAULT_API_VERSION);
 }
 
 TEST_F(RPCAPIVersionTest, ReturnsErrorIfVersionHigherThanMaxSupported)
 {
-    auto ver = parser_.parse(json::parse(R"JSON({"api_version": 11})JSON").as_object());
+    auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": 11})JSON").as_object());
     EXPECT_FALSE(ver);
 }
 
 TEST_F(RPCAPIVersionTest, ReturnsErrorIfVersionLowerThanMinSupported)
 {
-    auto ver = parser_.parse(json::parse(R"JSON({"api_version": 1})JSON").as_object());
+    auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": 1})JSON").as_object());
     EXPECT_FALSE(ver);
 }
 
 TEST_F(RPCAPIVersionTest, ReturnsErrorOnWrongType)
 {
     {
-        auto ver = parser_.parse(json::parse(R"JSON({"api_version": null})JSON").as_object());
+        auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": null})JSON").as_object());
         EXPECT_FALSE(ver);
     }
     {
-        auto ver = parser_.parse(json::parse(R"JSON({"api_version": "5"})JSON").as_object());
+        auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": "5"})JSON").as_object());
         EXPECT_FALSE(ver);
     }
     {
-        auto ver = parser_.parse(json::parse(R"JSON({"api_version": "wrong"})JSON").as_object());
+        auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": "wrong"})JSON").as_object());
         EXPECT_FALSE(ver);
     }
 }
@@ -80,17 +79,17 @@ TEST_F(RPCAPIVersionTest, ReturnsErrorOnWrongType)
 TEST_F(RPCAPIVersionTest, ReturnsParsedVersionIfAllPreconditionsAreMet)
 {
     {
-        auto ver = parser_.parse(json::parse(R"JSON({"api_version": 2})JSON").as_object());
+        auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": 2})JSON").as_object());
         EXPECT_TRUE(ver);
         EXPECT_EQ(ver.value(), 2u);
     }
     {
-        auto ver = parser_.parse(json::parse(R"JSON({"api_version": 10})JSON").as_object());
+        auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": 10})JSON").as_object());
         EXPECT_TRUE(ver);
         EXPECT_EQ(ver.value(), 10u);
     }
     {
-        auto ver = parser_.parse(json::parse(R"JSON({"api_version": 5})JSON").as_object());
+        auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": 5})JSON").as_object());
         EXPECT_TRUE(ver);
         EXPECT_EQ(ver.value(), 5u);
     }
@@ -107,31 +106,31 @@ TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
     ProductionAPIVersionParser const configuredParser{cfg.getObject("api_version")};
 
     {
-        auto ver = configuredParser.parse(json::parse(R"JSON({"api_version": 2})JSON").as_object());
+        auto ver = configuredParser.parse(boost::json::parse(R"JSON({"api_version": 2})JSON").as_object());
         EXPECT_TRUE(ver);
         EXPECT_EQ(ver.value(), 2u);
     }
     {
-        auto ver = configuredParser.parse(json::parse(R"JSON({"api_version": 10})JSON").as_object());
+        auto ver = configuredParser.parse(boost::json::parse(R"JSON({"api_version": 10})JSON").as_object());
         EXPECT_TRUE(ver);
         EXPECT_EQ(ver.value(), 10u);
     }
     {
-        auto ver = configuredParser.parse(json::parse(R"JSON({"api_version": 5})JSON").as_object());
+        auto ver = configuredParser.parse(boost::json::parse(R"JSON({"api_version": 5})JSON").as_object());
         EXPECT_TRUE(ver);
         EXPECT_EQ(ver.value(), 5u);
     }
     {
-        auto ver = configuredParser.parse(json::parse(R"JSON({})JSON").as_object());
+        auto ver = configuredParser.parse(boost::json::parse(R"JSON({})JSON").as_object());
         EXPECT_TRUE(ver);
         EXPECT_EQ(ver.value(), kDEFAULT_API_VERSION);
     }
     {
-        auto ver = configuredParser.parse(json::parse(R"JSON({"api_version": 11})JSON").as_object());
+        auto ver = configuredParser.parse(boost::json::parse(R"JSON({"api_version": 11})JSON").as_object());
         EXPECT_FALSE(ver);
     }
     {
-        auto ver = configuredParser.parse(json::parse(R"JSON({"api_version": 1})JSON").as_object());
+        auto ver = configuredParser.parse(boost::json::parse(R"JSON({"api_version": 1})JSON").as_object());
         EXPECT_FALSE(ver);
     }
 }
