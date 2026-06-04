@@ -43,11 +43,7 @@
 
 namespace etl::impl {
 
-AsyncGrpcCall::AsyncGrpcCall(
-    uint32_t seq,
-    xrpl::uint256 const& marker,
-    std::optional<xrpl::uint256> const& nextMarker
-)
+AsyncGrpcCall::AsyncGrpcCall(uint32_t seq, xrpl::uint256 const& marker, std::optional<xrpl::uint256> const& nextMarker)
 {
     request_.set_user("ETL");
     request_.mutable_ledger()->set_sequence(seq);

@@ -147,8 +147,9 @@ TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 
 TEST_F(SettingsProviderTest, SecureBundleConfig)
 {
-    auto const cfg =
-        getParseSettingsConfig(boost::json::parse(R"JSON({"database.cassandra.secure_connect_bundle": "bundleData"})JSON"));
+    auto const cfg = getParseSettingsConfig(
+        boost::json::parse(R"JSON({"database.cassandra.secure_connect_bundle": "bundleData"})JSON")
+    );
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();

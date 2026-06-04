@@ -801,13 +801,11 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     auto const issuer = getAccountIdWithString(kACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(
-        rpc::parseBook(xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt)
-            .value()
+        rpc::parseBook(xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt).value()
     );
 
     auto const reversedBook = getBookBase(
-        rpc::parseBook(xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::toCurrency("USD"), issuer, std::nullopt)
-            .value()
+        rpc::parseBook(xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::toCurrency("USD"), issuer, std::nullopt).value()
     );
 
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, kMAX_SEQ, _))
@@ -939,7 +937,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         EXPECT_EQ(output.result->as_object().at("asks").as_array().size(), 10);
         EXPECT_EQ(output.result->as_object().at("bids").as_array()[0].as_object(), boost::json::parse(kEXPECTED_OFFER));
         EXPECT_EQ(
-            output.result->as_object().at("asks").as_array()[0].as_object(), boost::json::parse(kEXPECTED_REVERSED_OFFER)
+            output.result->as_object().at("asks").as_array()[0].as_object(),
+            boost::json::parse(kEXPECTED_REVERSED_OFFER)
         );
     });
 }
@@ -970,13 +969,11 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     auto const issuer = getAccountIdWithString(kACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(
-        rpc::parseBook(xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt)
-            .value()
+        rpc::parseBook(xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt).value()
     );
 
     auto const reversedBook = getBookBase(
-        rpc::parseBook(xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::toCurrency("USD"), issuer, std::nullopt)
-            .value()
+        rpc::parseBook(xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::toCurrency("USD"), issuer, std::nullopt).value()
     );
 
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, kMAX_SEQ, _))
@@ -1080,7 +1077,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("offers").as_array().size(), 10);
-        EXPECT_EQ(output.result->as_object().at("offers").as_array()[0].as_object(), boost::json::parse(kEXPECTED_OFFER));
+        EXPECT_EQ(
+            output.result->as_object().at("offers").as_array()[0].as_object(), boost::json::parse(kEXPECTED_OFFER)
+        );
     });
 }
 

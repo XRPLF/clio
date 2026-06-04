@@ -688,9 +688,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
 
     // return owner index containing 2 indexes
     auto const directory = xrpl::keylet::nftSells(xrpl::uint256{kNFT_ID});
-    auto const ownerDir = createOwnerDirLedgerObject(
-        std::vector{NFTSellOffersHandler::kLIMIT_MIN + 1, xrpl::uint256{kINDEX1}}, kINDEX1
-    );
+    auto const ownerDir =
+        createOwnerDirLedgerObject(std::vector{NFTSellOffersHandler::kLIMIT_MIN + 1, xrpl::uint256{kINDEX1}}, kINDEX1);
 
     ON_CALL(*backend_, doFetchLedgerObject(directory.key, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -733,9 +732,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
 
     // return owner index containing 2 indexes
     auto const directory = xrpl::keylet::nftSells(xrpl::uint256{kNFT_ID});
-    auto const ownerDir = createOwnerDirLedgerObject(
-        std::vector{NFTSellOffersHandler::kLIMIT_MAX + 1, xrpl::uint256{kINDEX1}}, kINDEX1
-    );
+    auto const ownerDir =
+        createOwnerDirLedgerObject(std::vector{NFTSellOffersHandler::kLIMIT_MAX + 1, xrpl::uint256{kINDEX1}}, kINDEX1);
 
     ON_CALL(*backend_, doFetchLedgerObject(directory.key, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));

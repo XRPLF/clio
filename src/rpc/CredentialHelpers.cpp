@@ -82,8 +82,7 @@ parseAuthorizeCredentials(boost::json::array const& jv)
             jo.at(JS(issuer)).is_string(),
             "issuer must be string, should already be checked in AuthorizeCredentialValidator"
         );
-        auto const issuer =
-            xrpl::parseBase58<xrpl::AccountID>(static_cast<std::string>(jo.at(JS(issuer)).as_string()));
+        auto const issuer = xrpl::parseBase58<xrpl::AccountID>(static_cast<std::string>(jo.at(JS(issuer)).as_string()));
         ASSERT(
             issuer.has_value(), "issuer must be present, should already be checked in AuthorizeCredentialValidator."
         );

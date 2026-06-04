@@ -136,12 +136,7 @@ createLegacyFeeSettingLedgerObject(
 }
 
 xrpl::STObject
-createFeeSettingLedgerObject(
-    xrpl::STAmount base,
-    xrpl::STAmount reserveInc,
-    xrpl::STAmount reserveBase,
-    uint32_t flag
-)
+createFeeSettingLedgerObject(xrpl::STAmount base, xrpl::STAmount reserveInc, xrpl::STAmount reserveBase, uint32_t flag)
 {
     xrpl::STObject obj(xrpl::sfFee);
     obj.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltFEE_SETTINGS);
@@ -1102,9 +1097,7 @@ createCancelNftOffersTxWithMetadata(
     tx.setFieldU32(xrpl::sfSequence, seq);
     xrpl::STVector256 offers;
     offers.resize(nftOffers.size());
-    std::ranges::transform(nftOffers, offers.begin(), [&](auto const& nftId) {
-        return xrpl::uint256{nftId.c_str()};
-    });
+    std::ranges::transform(nftOffers, offers.begin(), [&](auto const& nftId) { return xrpl::uint256{nftId.c_str()}; });
     tx.setFieldV256(xrpl::sfNFTokenOffers, offers);
     tx.setFieldVL(xrpl::sfSigningPubKey, kSLICE);
 

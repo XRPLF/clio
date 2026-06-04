@@ -325,8 +325,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
     auto const ammKeylet = xrpl::keylet::amm(ammId);
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
-    auto const ammObj =
-        createAmmObject(kAMM_ACCOUNT2, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kAMM_ACCOUNT2);
+    auto const ammObj = createAmmObject(kAMM_ACCOUNT2, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kAMM_ACCOUNT2);
     accountRoot.setFieldH256(xrpl::sfAMMID, ammId);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));

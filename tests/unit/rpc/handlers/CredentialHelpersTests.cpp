@@ -145,9 +145,7 @@ TEST_F(CredentialHelperTest, GetValidCredentialArray)
     xrpl::STArray expectedAuthCreds;
     xrpl::STObject credential(xrpl::sfCredential);
     credential.setAccountID(xrpl::sfIssuer, getAccountIdWithString(kACCOUNT2));
-    credential.setFieldVL(
-        xrpl::sfCredentialType, xrpl::Blob{std::begin(kCREDENTIAL_TYPE), std::end(kCREDENTIAL_TYPE)}
-    );
+    credential.setFieldVL(xrpl::sfCredentialType, xrpl::Blob{std::begin(kCREDENTIAL_TYPE), std::end(kCREDENTIAL_TYPE)});
     expectedAuthCreds.push_back(std::move(credential));
 
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {

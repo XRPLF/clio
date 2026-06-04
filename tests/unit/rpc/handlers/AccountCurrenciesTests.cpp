@@ -43,7 +43,6 @@ using namespace rpc;
 using namespace data;
 using namespace testing;
 
-
 namespace {
 
 constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
@@ -193,9 +192,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
     auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject(
-        {xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX2}, xrpl::uint256{kINDEX2}}, kINDEX1
-    );
+    auto const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX2}, xrpl::uint256{kINDEX2}}, kINDEX1);
     auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));

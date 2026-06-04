@@ -88,8 +88,7 @@ AccountLinesHandler::addLine(
     bool const lineFreeze = (flags & (viewLowest ? xrpl::lsfLowFreeze : xrpl::lsfHighFreeze)) != 0u;
     bool const lineFreezePeer = (flags & (not viewLowest ? xrpl::lsfLowFreeze : xrpl::lsfHighFreeze)) != 0u;
     bool const lineDeepFreeze = (flags & (viewLowest ? xrpl::lsfLowDeepFreeze : xrpl::lsfHighDeepFreeze)) != 0u;
-    bool const lineDeepFreezePeer =
-        (flags & (not viewLowest ? xrpl::lsfLowDeepFreeze : xrpl::lsfHighDeepFreeze)) != 0u;
+    bool const lineDeepFreezePeer = (flags & (not viewLowest ? xrpl::lsfLowDeepFreeze : xrpl::lsfHighDeepFreeze)) != 0u;
 
     xrpl::STAmount const& saBalance = balance;
     xrpl::STAmount const& saLimit = lineLimit;

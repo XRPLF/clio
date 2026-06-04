@@ -87,9 +87,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, 
         if (not oracleObject)
             continue;
 
-        xrpl::STLedgerEntry const oracleSle{
-            xrpl::SerialIter{oracleObject->data(), oracleObject->size()}, oracleIndex
-        };
+        xrpl::STLedgerEntry const oracleSle{xrpl::SerialIter{oracleObject->data(), oracleObject->size()}, oracleIndex};
 
         tracebackOracleObject(ctx.yield, oracleSle, [&](auto const& node) {
             auto const& series = node.getFieldArray(xrpl::sfPriceDataSeries);
@@ -149,9 +147,8 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, 
         xrpl::STAmount avg{xrpl::noIssue(), 0, 0};
         xrpl::Number sd{0};
         std::uint16_t const size = std::distance(begin, end);
-        avg = std::accumulate(begin, end, avg, [&](xrpl::STAmount const& acc, auto const& it) {
-            return acc + it.first;
-        });
+        avg =
+            std::accumulate(begin, end, avg, [&](xrpl::STAmount const& acc, auto const& it) { return acc + it.first; });
         avg = divide(avg, xrpl::STAmount{xrpl::noIssue(), size, 0}, xrpl::noIssue());
         if (size > 1) {
             sd = std::accumulate(begin, end, sd, [&](xrpl::Number const& acc, auto const& it) {

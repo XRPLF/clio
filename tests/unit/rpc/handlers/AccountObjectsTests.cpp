@@ -1052,8 +1052,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous =
-            xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}).key;
+        auto previous = xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}).key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, previous
         );
@@ -1099,8 +1098,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous =
-            xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}).key;
+        auto previous = xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}).key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, previous
         );
@@ -1152,8 +1150,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous =
-            xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}).key;
+        auto previous = xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}).key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, previous
         );
@@ -1166,9 +1163,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(current, 30, _)).WillOnce(Return(nftpage11.getSerializer().peekData()));
 
-    auto const ownerDir = createOwnerDirLedgerObject(
-        {xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX1}}, kINDEX1
-    );
+    auto const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX1}}, kINDEX1);
     auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
@@ -1224,9 +1220,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
     auto const accountKk = xrpl::keylet::account(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject(
-        {xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX1}}, kINDEX1
-    );
+    auto const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX1}}, kINDEX1);
     auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
@@ -1353,8 +1348,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous =
-            xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}).key;
+        auto previous = xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}).key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, previous
         );

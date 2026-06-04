@@ -427,8 +427,9 @@ TEST_F(CacheLoaderFromFileTest, FailureBackToNormalLoad)
 
 TEST_F(CacheLoaderFromFileTest, DontLoadWhenCacheIsDisabled)
 {
-    auto const disabledCacheCfg =
-        getParseCacheConfig(boost::json::parse(R"JSON({"cache": {"load": "none", "file": {"path": "/tmp/cache.bin"}}})JSON"));
+    auto const disabledCacheCfg = getParseCacheConfig(
+        boost::json::parse(R"JSON({"cache": {"load": "none", "file": {"path": "/tmp/cache.bin"}}})JSON")
+    );
     CacheLoader loaderWithCacheDisabled{disabledCacheCfg, backend_, cache};
 
     EXPECT_CALL(cache, isFull).WillOnce(Return(false));

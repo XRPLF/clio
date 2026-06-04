@@ -549,8 +549,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
     auto repetitions = 50;
     while ((repetitions--) != 0) {
         indexes.emplace_back(kINDEX1);
-        xrpl::STObject const channel =
-            createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+        xrpl::STObject const channel = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
         bbs.push_back(channel.getSerializer().peekData());
     }
     xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
@@ -634,8 +633,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
     auto repetitions = 10;
     while ((repetitions--) != 0) {
         indexes.emplace_back(kINDEX1);
-        xrpl::STObject const channel =
-            createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+        xrpl::STObject const channel = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
         bbs.push_back(channel.getSerializer().peekData());
     }
 
@@ -643,8 +641,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
     repetitions = 20;
     while ((repetitions--) != 0) {
         indexes.emplace_back(kINDEX1);
-        xrpl::STObject const channel =
-            createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT3, 100, 10, 32, kTXN_ID, 28);
+        xrpl::STObject const channel = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT3, 100, 10, 32, kTXN_ID, 28);
         bbs.push_back(channel.getSerializer().peekData());
     }
 

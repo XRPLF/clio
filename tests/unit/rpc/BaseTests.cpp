@@ -47,7 +47,6 @@ using namespace rpc::validation;
 using namespace rpc::meta;
 using namespace rpc::modifiers;
 
-
 class RPCBaseTest : public virtual ::testing::Test {};
 
 TEST_F(RPCBaseTest, CheckTypeString)
@@ -269,7 +268,8 @@ TEST_F(RPCBaseTest, MinValidatorAfterType)
         {"amount3", Type<std::int32_t>{}, Min{std::numeric_limits<int32_t>::min()}},
     };
 
-    auto bigInput = boost::json::parse(R"JSON({ "amount": 9999999999, "amount2": 9999999999, "amount3": -9999999999 })JSON");
+    auto bigInput =
+        boost::json::parse(R"JSON({ "amount": 9999999999, "amount2": 9999999999, "amount3": -9999999999 })JSON");
     ASSERT_TRUE(spec.process(bigInput));  // type check clamps to type's max/min value
 }
 
@@ -297,7 +297,8 @@ TEST_F(RPCBaseTest, MaxValidatorAfterType)
         {"amount3", Type<std::int32_t>{}, Max{std::numeric_limits<int32_t>::min()}},
     };
 
-    auto bigInput = boost::json::parse(R"JSON({ "amount": 9999999999, "amount2": 9999999999, "amount3": -9999999999 })JSON");
+    auto bigInput =
+        boost::json::parse(R"JSON({ "amount": 9999999999, "amount2": 9999999999, "amount3": -9999999999 })JSON");
     ASSERT_TRUE(spec.process(bigInput));  // type check clamps to type's min/max value
 }
 
@@ -423,8 +424,9 @@ TEST_F(RPCBaseTest, WithCustomError)
     );
     ASSERT_TRUE(spec.process(passingInput));
 
-    auto failingInput =
-        boost::json::parse(R"JSON({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B"})JSON");
+    auto failingInput = boost::json::parse(
+        R"JSON({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B"})JSON"
+    );
     auto err = spec.process(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "MyCustomError");
@@ -475,9 +477,10 @@ TEST_F(RPCBaseTest, TimeFormatValidator)
 
 TEST_F(RPCBaseTest, CustomValidator)
 {
-    auto customFormatCheck = CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
-        return value.as_string().size() == 34 ? MaybeError{} : Error{rpc::Status{"Uh oh"}};
-    }};
+    auto customFormatCheck =
+        CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
+            return value.as_string().size() == 34 ? MaybeError{} : Error{rpc::Status{"Uh oh"}};
+        }};
 
     auto spec = RpcSpec{
         {"taker", customFormatCheck},
@@ -543,8 +546,9 @@ TEST_F(RPCBaseTest, AccountValidator)
     failingInput = boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput =
-        boost::json::parse(R"JSON({ "account": "02000000000000000000000000000000000000000000000000000000000000000" })JSON");
+    failingInput = boost::json::parse(
+        R"JSON({ "account": "02000000000000000000000000000000000000000000000000000000000000000" })JSON"
+    );
     ASSERT_FALSE(spec.process(failingInput));
 
     failingInput = boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })JSON");
@@ -553,8 +557,9 @@ TEST_F(RPCBaseTest, AccountValidator)
     auto passingInput = boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" })JSON");
     ASSERT_TRUE(spec.process(passingInput));
 
-    passingInput =
-        boost::json::parse(R"JSON({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })JSON");
+    passingInput = boost::json::parse(
+        R"JSON({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })JSON"
+    );
     ASSERT_TRUE(spec.process(passingInput));
 }
 
@@ -569,8 +574,9 @@ TEST_F(RPCBaseTest, AccountBase58Validator)
     failingInput = boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput =
-        boost::json::parse(R"JSON({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })JSON");
+    failingInput = boost::json::parse(
+        R"JSON({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })JSON"
+    );
     ASSERT_FALSE(spec.process(failingInput));
 
     failingInput = boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })JSON");
@@ -627,8 +633,9 @@ TEST_F(RPCBaseTest, Uint192HexStringValidator)
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "mpt_issuance_idNotString");
 
-    failingInput =
-        boost::json::parse(R"JSON({ "mpt_issuance_id": "0000012F27A9DE73EAA1E8831FA253E19030A17E2D038198983515BC"})JSON");
+    failingInput = boost::json::parse(
+        R"JSON({ "mpt_issuance_id": "0000012F27A9DE73EAA1E8831FA253E19030A17E2D038198983515BC"})JSON"
+    );
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "mpt_issuance_idMalformed");
@@ -637,8 +644,9 @@ TEST_F(RPCBaseTest, Uint192HexStringValidator)
 TEST_F(RPCBaseTest, Uint256HexStringValidator)
 {
     auto const spec = RpcSpec{{"transaction", CustomValidators::uint256HexStringValidator}};
-    auto passingInput =
-        boost::json::parse(R"JSON({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"})JSON");
+    auto passingInput = boost::json::parse(
+        R"JSON({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"})JSON"
+    );
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput = boost::json::parse(R"JSON({ "transaction": 256})JSON");

@@ -115,9 +115,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         out.signerLists = std::vector<xrpl::STLedgerEntry>();
 
         if (signers) {
-            xrpl::STLedgerEntry const sleSigners{
-                xrpl::SerialIter{signers->data(), signers->size()}, signersKey.key
-            };
+            xrpl::STLedgerEntry const sleSigners{xrpl::SerialIter{signers->data(), signers->size()}, signersKey.key};
 
             if (!signersKey.check(sleSigners))
                 return Error{Status{RippledError::RpcDbDeserialization}};

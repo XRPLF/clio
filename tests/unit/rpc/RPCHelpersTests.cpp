@@ -653,9 +653,7 @@ TEST_F(RPCHelpersTest, isDeepFrozen_TrustLineIsNotDeepFrozen)
         .WillByDefault(Return(trustlineFrozen.getSerializer().peekData()));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_FALSE(
-            isDeepFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, xrpl::Currency{kCURRENCY}, account2, yield)
-        );
+        EXPECT_FALSE(isDeepFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, xrpl::Currency{kCURRENCY}, account2, yield));
     });
 }
 

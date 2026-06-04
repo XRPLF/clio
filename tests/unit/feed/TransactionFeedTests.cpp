@@ -1040,8 +1040,7 @@ TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
     auto const kk = xrpl::keylet::account(issueAccount).key;
     ON_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .WillByDefault(testing::Return(line.getSerializer().peekData()));
-    xrpl::STObject const accountRoot =
-        createAccountRootObject(kISSUER, xrpl::lsfGlobalFreeze, 1, 10, 2, kTXN_ID, 3);
+    xrpl::STObject const accountRoot = createAccountRootObject(kISSUER, xrpl::lsfGlobalFreeze, 1, 10, 2, kTXN_ID, 3);
     ON_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
@@ -1233,8 +1232,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
         .WillOnce(testing::Return(true));
 
-    auto const ammObj =
-        createAmmObject(kAMM_ACCOUNT, "XRP", xrpl::toBase58(xrpl::xrpAccount()), kCURRENCY, kISSUER);
+    auto const ammObj = createAmmObject(kAMM_ACCOUNT, "XRP", xrpl::toBase58(xrpl::xrpAccount()), kCURRENCY, kISSUER);
     EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::amm(ammID).key, testing::_, testing::_))
         .WillOnce(testing::Return(ammObj.getSerializer().peekData()));
 

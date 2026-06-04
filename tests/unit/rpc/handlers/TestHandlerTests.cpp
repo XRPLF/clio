@@ -31,7 +31,6 @@ using namespace rpc;
 using namespace rpc::validation;
 using namespace tests::common;
 
-
 class RPCTestHandlerTest : public HandlerBaseTest {};
 
 // example handler tests

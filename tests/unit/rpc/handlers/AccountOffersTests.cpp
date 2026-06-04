@@ -512,9 +512,8 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
     auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject(
-        std::vector{AccountOffersHandler::kLIMIT_MIN + 1, xrpl::uint256{kINDEX1}}, kINDEX1
-    );
+    auto const ownerDir =
+        createOwnerDirLedgerObject(std::vector{AccountOffersHandler::kLIMIT_MIN + 1, xrpl::uint256{kINDEX1}}, kINDEX1);
     auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -569,9 +568,8 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
     auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject(
-        std::vector{AccountOffersHandler::kLIMIT_MAX + 1, xrpl::uint256{kINDEX1}}, kINDEX1
-    );
+    auto const ownerDir =
+        createOwnerDirLedgerObject(std::vector{AccountOffersHandler::kLIMIT_MAX + 1, xrpl::uint256{kINDEX1}}, kINDEX1);
 
     auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kLEDGER_SEQ, _))

@@ -20,17 +20,17 @@
 #include "data/DBHelpers.hpp"
 #include "util/Assert.hpp"
 
-#include <xrpl/protocol/STBase.h>
-#include <xrpl/protocol/STTx.h>
-#include <xrpl/protocol/TxMeta.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STBase.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFormats.h>
+#include <xrpl/protocol/TxMeta.h>
 
 #include <optional>
 #include <string>

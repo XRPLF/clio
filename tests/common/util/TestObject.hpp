@@ -88,12 +88,7 @@ createLegacyFeeSettingLedgerObject(
  * Create a FeeSetting ledger object
  */
 xrpl::STObject
-createFeeSettingLedgerObject(
-    xrpl::STAmount base,
-    xrpl::STAmount reserveInc,
-    xrpl::STAmount reserveBase,
-    uint32_t flag
-);
+createFeeSettingLedgerObject(xrpl::STAmount base, xrpl::STAmount reserveInc, xrpl::STAmount reserveBase, uint32_t flag);
 
 /*
  * Create a Legacy (pre XRPFees amendment) FeeSetting ledger object and return its blob

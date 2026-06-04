@@ -164,10 +164,7 @@ getDeliveredAmount(
 }
 
 bool
-canHaveDeliveredAmount(
-    std::shared_ptr<xrpl::STTx const> const& txn,
-    std::shared_ptr<xrpl::TxMeta const> const& meta
-)
+canHaveDeliveredAmount(std::shared_ptr<xrpl::STTx const> const& txn, std::shared_ptr<xrpl::TxMeta const> const& meta)
 {
     xrpl::TxType const tt{txn->getTxnType()};
     if (tt != xrpl::ttPAYMENT && tt != xrpl::ttCHECK_CASH && tt != xrpl::ttACCOUNT_DELETE)
@@ -938,9 +935,7 @@ isFrozen(
     if (xrpl::isXRP(currency))
         return false;
 
-    if (fetchAndCheckAnyFlagsExists(
-            backend, sequence, xrpl::keylet::account(issuer), {xrpl::lsfGlobalFreeze}, yield
-        ))
+    if (fetchAndCheckAnyFlagsExists(backend, sequence, xrpl::keylet::account(issuer), {xrpl::lsfGlobalFreeze}, yield))
         return true;
 
     auto const trustLineKeylet = xrpl::keylet::line(account, issuer, currency);
@@ -1040,7 +1035,9 @@ accountFunds(
         return amount;
     }
 
-    return accountHolds(backend, amendmentCenter, sequence, id, amount.get<xrpl::Issue>().currency, amount.getIssuer(), true, yield);
+    return accountHolds(
+        backend, amendmentCenter, sequence, id, amount.get<xrpl::Issue>().currency, amount.getIssuer(), true, yield
+    );
 }
 
 xrpl::STAmount
@@ -1283,7 +1280,8 @@ postProcessOrderBook(
                 saTakerGetsFunded = saTakerGets;
             } else {
                 saTakerGetsFunded = saOwnerFundsLimit;
-                offerJson["taker_gets_funded"] = toBoostJson(saTakerGetsFunded.getJson(xrpl::JsonOptions::Values::None));
+                offerJson["taker_gets_funded"] =
+                    toBoostJson(saTakerGetsFunded.getJson(xrpl::JsonOptions::Values::None));
                 offerJson["taker_pays_funded"] = toBoostJson(
                     std::min(saTakerPays, xrpl::multiply(saTakerGetsFunded, dirRate, saTakerPays.get<xrpl::Issue>()))
                         .getJson(xrpl::JsonOptions::Values::None)

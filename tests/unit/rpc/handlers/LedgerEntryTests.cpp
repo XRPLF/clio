@@ -2679,9 +2679,7 @@ generateTestValuesForNormalPathTest()
                 xrpl::keylet::credential(
                     account1,
                     account2,
-                    xrpl::Slice(
-                        xrpl::strUnHex(kCREDENTIAL_TYPE)->data(), xrpl::strUnHex(kCREDENTIAL_TYPE)->size()
-                    )
+                    xrpl::Slice(xrpl::strUnHex(kCREDENTIAL_TYPE)->data(), xrpl::strUnHex(kCREDENTIAL_TYPE)->size())
                 )
                     .key,
             .mockedEntity = createCredentialObject(kACCOUNT, kACCOUNT2, kCREDENTIAL_TYPE)
@@ -2766,8 +2764,7 @@ generateTestValuesForNormalPathTest()
                 kACCOUNT2
             ),
             .expectedIndex =
-                xrpl::keylet::amm(getIssue("XRP", xrpl::toBase58(xrpl::xrpAccount())), getIssue("JPY", kACCOUNT2))
-                    .key,
+                xrpl::keylet::amm(getIssue("XRP", xrpl::toBase58(xrpl::xrpAccount())), getIssue("JPY", kACCOUNT2)).key,
             .mockedEntity = createAmmObject(kACCOUNT, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kACCOUNT2)
         },
         NormalPathTestBundle{
@@ -2930,9 +2927,7 @@ generateTestValuesForNormalPathTest()
                 xrpl::Blob(8, 's'),
                 kRANGE_MAX - 2,
                 xrpl::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                createPriceDataSeries(
-                    {createOraclePriceData(2e4, xrpl::toCurrency("XRP"), xrpl::toCurrency("USD"), 3)}
-                )
+                createPriceDataSeries({createOraclePriceData(2e4, xrpl::toCurrency("XRP"), xrpl::toCurrency("USD"), 3)})
             )
         },
         NormalPathTestBundle{
@@ -2957,9 +2952,7 @@ generateTestValuesForNormalPathTest()
                 xrpl::Blob(8, 's'),
                 kRANGE_MAX - 2,
                 xrpl::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                createPriceDataSeries(
-                    {createOraclePriceData(2e4, xrpl::toCurrency("XRP"), xrpl::toCurrency("USD"), 3)}
-                )
+                createPriceDataSeries({createOraclePriceData(2e4, xrpl::toCurrency("XRP"), xrpl::toCurrency("USD"), 3)})
             )
         },
         NormalPathTestBundle{
@@ -2981,9 +2974,7 @@ generateTestValuesForNormalPathTest()
                 xrpl::Blob(8, 'a'),
                 kRANGE_MAX - 4,
                 xrpl::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                createPriceDataSeries(
-                    {createOraclePriceData(1e3, xrpl::toCurrency("USD"), xrpl::toCurrency("XRP"), 2)}
-                )
+                createPriceDataSeries({createOraclePriceData(1e3, xrpl::toCurrency("USD"), xrpl::toCurrency("XRP"), 2)})
             )
         },
         NormalPathTestBundle{
@@ -3052,8 +3043,7 @@ generateTestValuesForNormalPathTest()
                 kRANGE_MAX
             ),
             .expectedIndex =
-                xrpl::keylet::permissionedDomain(xrpl::parseBase58<xrpl::AccountID>(kACCOUNT).value(), kRANGE_MAX)
-                    .key,
+                xrpl::keylet::permissionedDomain(xrpl::parseBase58<xrpl::AccountID>(kACCOUNT).value(), kRANGE_MAX).key,
             .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, xrpl::uint256{0}, 0)
         },
         NormalPathTestBundle{
@@ -3091,8 +3081,7 @@ generateTestValuesForNormalPathTest()
                 kACCOUNT,
                 kRANGE_MAX
             ),
-            .expectedIndex =
-                xrpl::keylet::vault(xrpl::parseBase58<xrpl::AccountID>(kACCOUNT).value(), kRANGE_MAX).key,
+            .expectedIndex = xrpl::keylet::vault(xrpl::parseBase58<xrpl::AccountID>(kACCOUNT).value(), kRANGE_MAX).key,
             .mockedEntity = createVault(
                 kACCOUNT,
                 kACCOUNT,
@@ -3243,8 +3232,7 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
         0
     );
 
-    auto const vaultKey =
-        xrpl::keylet::vault(xrpl::parseBase58<xrpl::AccountID>(kACCOUNT).value(), kRANGE_MAX).key;
+    auto const vaultKey = xrpl::keylet::vault(xrpl::parseBase58<xrpl::AccountID>(kACCOUNT).value(), kRANGE_MAX).key;
 
     xrpl::STLedgerEntry const sle{
         xrpl::SerialIter{vault.getSerializer().peekData().data(), vault.getSerializer().peekData().size()}, vaultKey

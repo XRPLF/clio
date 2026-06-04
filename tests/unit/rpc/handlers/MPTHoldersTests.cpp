@@ -31,9 +31,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/basics/strHex.h>
 
 #include <functional>
 #include <optional>
@@ -415,8 +415,7 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend_, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
-        *backend_,
-        fetchMPTHolders(xrpl::uint192(kMPT_ID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
+        *backend_, fetchMPTHolders(xrpl::uint192(kMPT_ID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
     )
         .Times(1);
 
@@ -465,8 +464,7 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend_, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
-        *backend_,
-        fetchMPTHolders(xrpl::uint192(kMPT_ID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
+        *backend_, fetchMPTHolders(xrpl::uint192(kMPT_ID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
     )
         .Times(1);
 
@@ -612,8 +610,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
     std::vector<Blob> const mpts = {mptoken1.getSerializer().peekData(), mptoken2.getSerializer().peekData()};
     ON_CALL(*backend_, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
-        *backend_,
-        fetchMPTHolders(xrpl::uint192(kMPT_ID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
+        *backend_, fetchMPTHolders(xrpl::uint192(kMPT_ID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
     )
         .Times(1);
 

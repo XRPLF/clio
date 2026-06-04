@@ -130,8 +130,7 @@ private:
 
             // defensive case that should never be hit
             if (!finalFields.isFieldPresent(xrpl::sfTakerGets) || !finalFields.isFieldPresent(xrpl::sfTakerPays) ||
-                !previousFields.isFieldPresent(xrpl::sfTakerGets) ||
-                !previousFields.isFieldPresent(xrpl::sfTakerPays))
+                !previousFields.isFieldPresent(xrpl::sfTakerGets) || !previousFields.isFieldPresent(xrpl::sfTakerPays))
                 return;
 
             // filter out any offers deleted by explicit offer cancels

@@ -76,8 +76,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
     response.ledgerIndex = lgrInfo.seq;
 
     // if a marker was passed, start at the page specified in marker. Else, start at the max page
-    auto const pageKey =
-        input.marker ? xrpl::uint256{input.marker->c_str()} : xrpl::keylet::nftpageMax(*accountID).key;
+    auto const pageKey = input.marker ? xrpl::uint256{input.marker->c_str()} : xrpl::keylet::nftpageMax(*accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
     if (!blob) {

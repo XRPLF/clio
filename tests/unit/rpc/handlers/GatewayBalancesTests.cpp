@@ -83,8 +83,9 @@ TEST_P(ParameterTest, CheckError)
     auto bundle = GetParam();
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output =
-            handler.process(boost::json::parse(bundle.testJson), Context{.yield = yield, .apiVersion = bundle.apiVersion});
+        auto const output = handler.process(
+            boost::json::parse(bundle.testJson), Context{.yield = yield, .apiVersion = bundle.apiVersion}
+        );
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), bundle.expectedError);
@@ -556,10 +557,7 @@ generateNormalPathTestBundles()
         NormalTestBundle{
             .testName = "HighID",
             .mockedDir = createOwnerDirLedgerObject(
-                {xrpl::uint256{kINDEX2},
-                 xrpl::uint256{kINDEX2},
-                 xrpl::uint256{kINDEX2},
-                 xrpl::uint256{kINDEX2}},
+                {xrpl::uint256{kINDEX2}, xrpl::uint256{kINDEX2}, xrpl::uint256{kINDEX2}, xrpl::uint256{kINDEX2}},
                 kINDEX1
             ),
             .mockedObjects =

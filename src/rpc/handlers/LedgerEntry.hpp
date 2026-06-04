@@ -146,12 +146,10 @@ public:
                     return Error{Status{RippledError::RpcInvalidParams, "malformedAccounts"}};
                 }
 
-                auto const id1 = util::parseBase58Wrapper<xrpl::AccountID>(
-                    boost::json::value_to<std::string>(value.as_array()[0])
-                );
-                auto const id2 = util::parseBase58Wrapper<xrpl::AccountID>(
-                    boost::json::value_to<std::string>(value.as_array()[1])
-                );
+                auto const id1 =
+                    util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(value.as_array()[0]));
+                auto const id2 =
+                    util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(value.as_array()[1]));
 
                 if (!id1 || !id2)
                     return Error{Status{ClioError::RpcMalformedAddress, "malformedAddresses"}};

@@ -254,8 +254,7 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
         .WillByDefault(Return(createLedgerHeader(kLEDGER_HASH, kRANGE_MAX)));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kINDEX1}, kRANGE_MAX, _))
-        .WillByDefault(Return(std::nullopt));
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kINDEX1}, kRANGE_MAX, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
@@ -538,8 +537,7 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(2);
     ON_CALL(*backend_, doFetchSuccessorKey(kFIRST_KEY, kRANGE_MAX, _)).WillByDefault(Return(xrpl::uint256{kINDEX2}));
-    ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kINDEX2}, kRANGE_MAX, _))
-        .WillByDefault(Return(std::nullopt));
+    ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kINDEX2}, kRANGE_MAX, _)).WillByDefault(Return(std::nullopt));
 
     auto const line = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123);
     bbs.push_back(line.getSerializer().peekData());
@@ -630,9 +628,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
         auto const line =
             createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123);
         bbs.push_back(line.getSerializer().peekData());
-        los.emplace_back(
-            LedgerObject{.key = xrpl::uint256{kINDEX2}, .blob = Blob{}}
-        );  // NOLINT(modernize-use-emplace)
+        los.emplace_back(LedgerObject{.key = xrpl::uint256{kINDEX2}, .blob = Blob{}});  // NOLINT(modernize-use-emplace)
     }
     ON_CALL(*backend_, fetchLedgerDiff(kRANGE_MAX, _)).WillByDefault(Return(los));
 

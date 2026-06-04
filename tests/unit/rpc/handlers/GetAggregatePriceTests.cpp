@@ -75,9 +75,7 @@ mockLedgerObject(
         xrpl::Blob(8, 'a'),
         kRANGE_MAX - 4,
         xrpl::uint256{tx},
-        createPriceDataSeries(
-            {createOraclePriceData(price, xrpl::toCurrency("USD"), xrpl::toCurrency("XRP"), scale)}
-        )
+        createPriceDataSeries({createOraclePriceData(price, xrpl::toCurrency("USD"), xrpl::toCurrency("XRP"), scale)})
     );
 
     auto const oracleIndex = xrpl::keylet::oracle(getAccountIdWithString(account), docId).key;
@@ -638,9 +636,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
             123,
             1,
             4321u,
-            createPriceDataSeries(
-                {createOraclePriceData(1e3, xrpl::toCurrency("EUR"), xrpl::toCurrency("XRP"), 2)}
-            ),
+            createPriceDataSeries({createOraclePriceData(1e3, xrpl::toCurrency("EUR"), xrpl::toCurrency("XRP"), 2)}),
             kINDEX,
             true,
             kTX2
@@ -1332,9 +1328,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
             123,
             1,
             4321u,
-            createPriceDataSeries(
-                {createOraclePriceData(1e3, xrpl::toCurrency("JPY"), xrpl::toCurrency("XRP"), 2)}
-            ),
+            createPriceDataSeries({createOraclePriceData(1e3, xrpl::toCurrency("JPY"), xrpl::toCurrency("XRP"), 2)}),
             xrpl::to_string(oracleIndex),
             false,
             kTX1
@@ -1398,9 +1392,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
             123,
             1,
             4321u,
-            createPriceDataSeries(
-                {createOraclePriceData(1e3, xrpl::toCurrency("EUR"), xrpl::toCurrency("XRP"), 2)}
-            ),
+            createPriceDataSeries({createOraclePriceData(1e3, xrpl::toCurrency("EUR"), xrpl::toCurrency("XRP"), 2)}),
             xrpl::to_string(oracleIndex),
             false,
             kTX2
@@ -1413,9 +1405,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
             123,
             1,
             4321u,
-            createPriceDataSeries(
-                {createOraclePriceData(1e3, xrpl::toCurrency("EUR"), xrpl::toCurrency("XRP"), 2)}
-            ),
+            createPriceDataSeries({createOraclePriceData(1e3, xrpl::toCurrency("EUR"), xrpl::toCurrency("XRP"), 2)}),
             xrpl::to_string(oracleIndex),
             false,
             kTX2

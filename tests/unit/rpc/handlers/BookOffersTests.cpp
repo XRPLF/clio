@@ -622,16 +622,13 @@ generateNormalPathBookOffersTestBundles()
     );
 
     auto const getsXRPPaysUSDBook = getBookBase(
-        rpc::parseBook(xrpl::toCurrency("USD"), account, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt)
-            .value()
+        rpc::parseBook(xrpl::toCurrency("USD"), account, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt).value()
     );
     auto const getsXRPPaysUSDBookWithDomain = getBookBase(
-        rpc::parseBook(xrpl::toCurrency("USD"), account, xrpl::xrpCurrency(), xrpl::xrpAccount(), kDOMAIN)
-            .value()
+        rpc::parseBook(xrpl::toCurrency("USD"), account, xrpl::xrpCurrency(), xrpl::xrpAccount(), kDOMAIN).value()
     );
     auto const getsUSDPaysXRPBook = getBookBase(
-        rpc::parseBook(xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::toCurrency("USD"), account, std::nullopt)
-            .value()
+        rpc::parseBook(xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::toCurrency("USD"), account, std::nullopt).value()
     );
 
     auto const getsXRPPaysUSDInputJson = fmt::format(
@@ -949,9 +946,7 @@ generateNormalPathBookOffersTestBundles()
                      createOwnerDirLedgerObject({xrpl::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
                     // gets issuer account object
                     {xrpl::keylet::account(account).key,
-                     createAccountRootObject(
-                         kACCOUNT, xrpl::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2
-                     )
+                     createAccountRootObject(kACCOUNT, xrpl::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2)
                          .getSerializer()
                          .peekData()}
                 },
@@ -1297,9 +1292,7 @@ generateNormalPathBookOffersTestBundles()
                      createOwnerDirLedgerObject({xrpl::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
                     // gets issuer account object, is deep frozen so unfunded
                     {xrpl::keylet::account(account).key,
-                     createAccountRootObject(
-                         kACCOUNT, xrpl::lsfLowDeepFreeze, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2
-                     )
+                     createAccountRootObject(kACCOUNT, xrpl::lsfLowDeepFreeze, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2)
                          .getSerializer()
                          .peekData()},
                 },
@@ -1361,9 +1354,7 @@ generateNormalPathBookOffersTestBundles()
                      createOwnerDirLedgerObject({xrpl::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
                     // gets issuer account object, is deep frozen so unfunded
                     {xrpl::keylet::account(account).key,
-                     createAccountRootObject(
-                         kACCOUNT, xrpl::lsfLowDeepFreeze, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2
-                     )
+                     createAccountRootObject(kACCOUNT, xrpl::lsfLowDeepFreeze, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2)
                          .getSerializer()
                          .peekData()},
                     {xrpl::keylet::line(account2, account, xrpl::toCurrency("USD")).key,
@@ -1532,8 +1523,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(1);
 
     auto const getsXRPPaysUSDBook = getBookBase(
-        rpc::parseBook(xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt)
-            .value()
+        rpc::parseBook(xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt).value()
     );
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
         .WillByDefault(Return(xrpl::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));
@@ -1606,8 +1596,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(1);
 
     auto const getsXRPPaysUSDBook = getBookBase(
-        rpc::parseBook(xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt)
-            .value()
+        rpc::parseBook(xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt).value()
     );
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
         .WillByDefault(Return(xrpl::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));

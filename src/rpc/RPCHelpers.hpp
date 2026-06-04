@@ -839,10 +839,7 @@ parseStringAsUInt(std::string const& value);  // TODO: move to string utils or s
  * @return true if the transaction can have a delivered amount
  */
 bool
-canHaveDeliveredAmount(
-    std::shared_ptr<xrpl::STTx const> const& txn,
-    std::shared_ptr<xrpl::TxMeta const> const& meta
-);
+canHaveDeliveredAmount(std::shared_ptr<xrpl::STTx const> const& txn, std::shared_ptr<xrpl::TxMeta const> const& meta);
 
 /**
  * @brief Get the delivered amount

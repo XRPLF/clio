@@ -78,9 +78,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
         key = expectedkey.value();
     } else if (input.offer) {
-        auto const id = util::parseBase58Wrapper<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.offer->at(JS(account)))
-        );
+        auto const id =
+            util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(input.offer->at(JS(account))));
         key = xrpl::keylet::offer(*id, boost::json::value_to<std::uint32_t>(input.offer->at(JS(seq)))).key;
     } else if (input.rippleStateAccount) {
         auto const id1 = util::parseBase58Wrapper<xrpl::AccountID>(
@@ -94,9 +93,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
         key = xrpl::keylet::line(*id1, *id2, currency).key;
     } else if (input.escrow) {
-        auto const id = util::parseBase58Wrapper<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.escrow->at(JS(owner)))
-        );
+        auto const id =
+            util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(input.escrow->at(JS(owner))));
         key = xrpl::keylet::escrow(*id, util::integralValueAs<uint32_t>(input.escrow->at(JS(seq)))).key;
     } else if (input.depositPreauth) {
         auto const owner = util::parseBase58Wrapper<xrpl::AccountID>(
@@ -139,16 +137,14 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             if (xrpl::isXRP(currency)) {
                 return xrpl::xrpIssue();
             }
-            auto const issuer = util::parseBase58Wrapper<xrpl::AccountID>(
-                boost::json::value_to<std::string>(assetJson.at(JS(issuer)))
-            );
+            auto const issuer =
+                util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(assetJson.at(JS(issuer))));
             return xrpl::Issue{currency, *issuer};
         };
 
-        key = xrpl::keylet::amm(
-                  getIssuerFromJson(input.amm->at(JS(asset))), getIssuerFromJson(input.amm->at(JS(asset2)))
-        )
-                  .key;
+        key =
+            xrpl::keylet::amm(getIssuerFromJson(input.amm->at(JS(asset))), getIssuerFromJson(input.amm->at(JS(asset2))))
+                .key;
     } else if (input.bridge) {
         if (!input.bridgeAccount && !input.chainClaimId && !input.createAccountClaimId)
             return Error{Status{ClioError::RpcMalformedRequest}};
@@ -164,8 +160,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         } else if (input.chainClaimId) {
             key = xrpl::keylet::xChainClaimID(input.bridge->value(), input.chainClaimId.value()).key;
         } else {
-            key = xrpl::keylet::xChainCreateAccountClaimID(input.bridge->value(), input.createAccountClaimId.value())
-                      .key;
+            key =
+                xrpl::keylet::xChainCreateAccountClaimID(input.bridge->value(), input.createAccountClaimId.value()).key;
         }
     } else if (input.oracleNode) {
         key = input.oracleNode.value();
@@ -177,9 +173,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
     } else if (input.mptoken) {
         auto const holder =
             xrpl::parseBase58<xrpl::AccountID>(boost::json::value_to<std::string>(input.mptoken->at(JS(account))));
-        auto const mptIssuanceID = xrpl::uint192{
-            std::string_view(boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id))))
-        };
+        auto const mptIssuanceID =
+            xrpl::uint192{std::string_view(boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id))))};
         key = xrpl::keylet::mptoken(mptIssuanceID, *holder).key;
     } else if (input.permissionedDomain) {
         auto const account = xrpl::parseBase58<xrpl::AccountID>(
@@ -195,9 +190,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
     } else if (input.delegate) {
         auto const account =
             xrpl::parseBase58<xrpl::AccountID>(boost::json::value_to<std::string>(input.delegate->at(JS(account))));
-        auto const authorize = xrpl::parseBase58<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.delegate->at(JS(authorize)))
-        );
+        auto const authorize =
+            xrpl::parseBase58<xrpl::AccountID>(boost::json::value_to<std::string>(input.delegate->at(JS(authorize))));
         key = xrpl::keylet::delegate(*account, *authorize).key;
     } else {
         // Must specify 1 of the following fields to indicate what type
@@ -349,10 +343,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         auto const issuingDoor = *util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(bridgeJson.at(xrpl::sfIssuingChainDoor.getJsonName().cStr()))
         );
-        auto const lockingIssue =
-            parseIssue(bridgeJson.at(xrpl::sfLockingChainIssue.getJsonName().cStr()).as_object());
-        auto const issuingIssue =
-            parseIssue(bridgeJson.at(xrpl::sfIssuingChainIssue.getJsonName().cStr()).as_object());
+        auto const lockingIssue = parseIssue(bridgeJson.at(xrpl::sfLockingChainIssue.getJsonName().cStr()).as_object());
+        auto const issuingIssue = parseIssue(bridgeJson.at(xrpl::sfIssuingChainIssue.getJsonName().cStr()).as_object());
 
         return xrpl::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
     };

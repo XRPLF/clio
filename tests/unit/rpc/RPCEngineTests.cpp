@@ -210,9 +210,9 @@ TEST_P(RPCEngineFlowParameterTest, Test)
 
     if (testBundle.forwarded) {
         EXPECT_CALL(*mockLoadBalancerPtr_, forwardToRippled)
-            .WillOnce(
-                Return(std::expected<boost::json::object, rpc::ClioError>(boost::json::parse(kFORWARD_REPLY).as_object()))
-            );
+            .WillOnce(Return(
+                std::expected<boost::json::object, rpc::ClioError>(boost::json::parse(kFORWARD_REPLY).as_object())
+            ));
         EXPECT_CALL(*handlerProvider, contains).WillOnce(Return(true));
         EXPECT_CALL(*mockCountersPtr_, rpcForwarded(testBundle.method));
     }

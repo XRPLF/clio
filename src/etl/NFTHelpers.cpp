@@ -104,8 +104,7 @@ getNFTokenMintData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
             // However, there will always be NFTs listed in the final fields,
             // as rippled outputs all fields in final fields even if they were
             // not changed.
-            xrpl::STObject const& previousFields =
-                node.peekAtField(xrpl::sfPreviousFields).downcast<xrpl::STObject>();
+            xrpl::STObject const& previousFields = node.peekAtField(xrpl::sfPreviousFields).downcast<xrpl::STObject>();
             if (!previousFields.isFieldPresent(xrpl::sfNFTokens))
                 continue;
 
@@ -160,8 +159,7 @@ getNFTokenBurnData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
     // NFTokenPage that was deleted or modified that contains this
     // tokenID.
     for (xrpl::STObject const& node : txMeta.getNodes()) {
-        if (node.getFieldU16(xrpl::sfLedgerEntryType) != xrpl::ltNFTOKEN_PAGE ||
-            node.getFName() == xrpl::sfCreatedNode)
+        if (node.getFieldU16(xrpl::sfLedgerEntryType) != xrpl::ltNFTOKEN_PAGE || node.getFName() == xrpl::sfCreatedNode)
             continue;
 
         // NFT burn can result in an NFTokenPage being modified to no longer
@@ -175,22 +173,19 @@ getNFTokenBurnData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
         std::optional<xrpl::STArray> prevNFTs;
 
         if (node.isFieldPresent(xrpl::sfPreviousFields)) {
-            xrpl::STObject const& previousFields =
-                node.peekAtField(xrpl::sfPreviousFields).downcast<xrpl::STObject>();
+            xrpl::STObject const& previousFields = node.peekAtField(xrpl::sfPreviousFields).downcast<xrpl::STObject>();
             if (previousFields.isFieldPresent(xrpl::sfNFTokens))
                 prevNFTs = previousFields.getFieldArray(xrpl::sfNFTokens);
         } else if (node.getFName() == xrpl::sfDeletedNode) {
-            prevNFTs =
-                node.peekAtField(xrpl::sfFinalFields).downcast<xrpl::STObject>().getFieldArray(xrpl::sfNFTokens);
+            prevNFTs = node.peekAtField(xrpl::sfFinalFields).downcast<xrpl::STObject>().getFieldArray(xrpl::sfNFTokens);
         }
 
         if (!prevNFTs)
             continue;
 
-        auto const nft =
-            std::find_if(prevNFTs->begin(), prevNFTs->end(), [&tokenID](xrpl::STObject const& candidate) {
-                return candidate.getFieldH256(xrpl::sfNFTokenID) == tokenID;
-            });
+        auto const nft = std::find_if(prevNFTs->begin(), prevNFTs->end(), [&tokenID](xrpl::STObject const& candidate) {
+            return candidate.getFieldH256(xrpl::sfNFTokenID) == tokenID;
+        });
         if (nft != prevNFTs->end()) {
             return std::make_pair(
                 txs,
@@ -224,12 +219,11 @@ getNFTokenAcceptOfferData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
         }
 
         xrpl::uint256 const tokenID = affectedBuyOffer->peekAtField(xrpl::sfFinalFields)
-                                            .downcast<xrpl::STObject>()
-                                            .getFieldH256(xrpl::sfNFTokenID);
+                                          .downcast<xrpl::STObject>()
+                                          .getFieldH256(xrpl::sfNFTokenID);
 
-        xrpl::AccountID const owner = affectedBuyOffer->peekAtField(xrpl::sfFinalFields)
-                                            .downcast<xrpl::STObject>()
-                                            .getAccountID(xrpl::sfOwner);
+        xrpl::AccountID const owner =
+            affectedBuyOffer->peekAtField(xrpl::sfFinalFields).downcast<xrpl::STObject>().getAccountID(xrpl::sfOwner);
         return {
             {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())}, NFTsData(tokenID, owner, txMeta, false)
         };
@@ -246,33 +240,25 @@ getNFTokenAcceptOfferData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
         throw std::runtime_error(msg.str());
     }
 
-    xrpl::uint256 const tokenID = affectedSellOffer->peekAtField(xrpl::sfFinalFields)
-                                        .downcast<xrpl::STObject>()
-                                        .getFieldH256(xrpl::sfNFTokenID);
+    xrpl::uint256 const tokenID =
+        affectedSellOffer->peekAtField(xrpl::sfFinalFields).downcast<xrpl::STObject>().getFieldH256(xrpl::sfNFTokenID);
 
-    xrpl::AccountID const seller = affectedSellOffer->peekAtField(xrpl::sfFinalFields)
-                                         .downcast<xrpl::STObject>()
-                                         .getAccountID(xrpl::sfOwner);
+    xrpl::AccountID const seller =
+        affectedSellOffer->peekAtField(xrpl::sfFinalFields).downcast<xrpl::STObject>().getAccountID(xrpl::sfOwner);
 
     for (xrpl::STObject const& node : txMeta.getNodes()) {
-        if (node.getFieldU16(xrpl::sfLedgerEntryType) != xrpl::ltNFTOKEN_PAGE ||
-            node.getFName() == xrpl::sfDeletedNode)
+        if (node.getFieldU16(xrpl::sfLedgerEntryType) != xrpl::ltNFTOKEN_PAGE || node.getFName() == xrpl::sfDeletedNode)
             continue;
 
-        xrpl::AccountID const nodeOwner =
-            xrpl::AccountID::fromVoid(node.getFieldH256(xrpl::sfLedgerIndex).data());
+        xrpl::AccountID const nodeOwner = xrpl::AccountID::fromVoid(node.getFieldH256(xrpl::sfLedgerIndex).data());
         if (nodeOwner == seller)
             continue;
 
         xrpl::STArray const& nfts = [&node] {
             if (node.getFName() == xrpl::sfCreatedNode) {
-                return node.peekAtField(xrpl::sfNewFields)
-                    .downcast<xrpl::STObject>()
-                    .getFieldArray(xrpl::sfNFTokens);
+                return node.peekAtField(xrpl::sfNewFields).downcast<xrpl::STObject>().getFieldArray(xrpl::sfNFTokens);
             }
-            return node.peekAtField(xrpl::sfFinalFields)
-                .downcast<xrpl::STObject>()
-                .getFieldArray(xrpl::sfNFTokens);
+            return node.peekAtField(xrpl::sfFinalFields).downcast<xrpl::STObject>().getFieldArray(xrpl::sfNFTokens);
         }();
 
         auto const nft = std::ranges::find_if(nfts, [&tokenID](xrpl::STObject const& candidate) {

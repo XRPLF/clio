@@ -131,11 +131,7 @@ class LedgerTypes {
         LedgerTypeAttribute::accountOwnedLedgerType(JS(Credential), JS(credential), xrpl::ltCREDENTIAL),
         LedgerTypeAttribute::accountOwnedLedgerType(JS(Vault), JS(vault), xrpl::ltVAULT),
         LedgerTypeAttribute::chainLedgerType(JS(NegativeUNL), JS(nunl), xrpl::ltNEGATIVE_UNL),
-        LedgerTypeAttribute::deletionBlockerLedgerType(
-            JS(MPTokenIssuance),
-            JS(mpt_issuance),
-            xrpl::ltMPTOKEN_ISSUANCE
-        ),
+        LedgerTypeAttribute::deletionBlockerLedgerType(JS(MPTokenIssuance), JS(mpt_issuance), xrpl::ltMPTOKEN_ISSUANCE),
         LedgerTypeAttribute::deletionBlockerLedgerType(JS(MPToken), JS(mptoken), xrpl::ltMPTOKEN),
         LedgerTypeAttribute::deletionBlockerLedgerType(
             JS(PermissionedDomain),
