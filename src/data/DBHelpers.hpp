@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <utility>
 
 /**
  * @brief Struct used to keep track of what to write to account_transactions/account_tx tables.
@@ -208,9 +207,9 @@ struct MPTHolderData {
  * per-account table, and @ref txType is the canonical mixed-case `TxFormats` name persisted on
  * every row (filtered case-insensitively at read time for the `tx_type` query shapes).
  *
- * @note This type is populated from already-extracted transaction details. It intentionally has no
- * `ripple::TxMeta`-based constructor so the MPT extraction logic can live in one ETL/backfill
- * helper rather than in the storage data model.
+ * @note This type is an aggregate populated from already-extracted transaction details. It
+ * intentionally has no `ripple::TxMeta`-based constructor so the MPT extraction logic can live in
+ * one ETL/backfill helper rather than in the storage data model.
  */
 struct MPTTransactionsData {
     /** @brief The 24-byte MPT issuance ID (same encoding as @ref MPTHolderData::mptID). */
@@ -225,35 +224,6 @@ struct MPTTransactionsData {
     std::uint32_t transactionIndex{};
     /** @brief The hash of the transaction. */
     ripple::uint256 txHash;
-
-    /**
-     * @brief Construct a new MPTTransactionsData object from explicit fields.
-     *
-     * @param mptID The 24-byte MPT issuance ID
-     * @param accounts The accounts affected by the transaction
-     * @param txType The canonical mixed-case `TxFormats` transaction type name
-     * @param ledgerSequence The ledger sequence the transaction was included in
-     * @param transactionIndex The index of the transaction within its ledger
-     * @param txHash The hash of the transaction
-     */
-    MPTTransactionsData(
-        ripple::uint192 const& mptID,
-        boost::container::flat_set<ripple::AccountID> accounts,
-        std::string txType,
-        std::uint32_t ledgerSequence,
-        std::uint32_t transactionIndex,
-        ripple::uint256 const& txHash
-    )
-        : mptID(mptID)
-        , accounts(std::move(accounts))
-        , txType(std::move(txType))
-        , ledgerSequence(ledgerSequence)
-        , transactionIndex(transactionIndex)
-        , txHash(txHash)
-    {
-    }
-
-    MPTTransactionsData() = default;
 };
 
 /**
