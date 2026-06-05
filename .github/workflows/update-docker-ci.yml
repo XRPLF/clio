@@ -77,10 +77,10 @@ jobs:
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/compilers/gcc
           tags: |
-            type=raw,value=amd64-latest
-            type=raw,value=amd64-${{ env.GCC_MAJOR_VERSION }}
-            type=raw,value=amd64-${{ env.GCC_VERSION }}
-            type=raw,value=amd64-${{ github.sha }}
+            type=raw,value=latest
+            type=raw,value=${{ env.GCC_MAJOR_VERSION }}
+            type=raw,value=${{ env.GCC_VERSION }}
+            type=raw,value=${{ github.sha }}
           platforms: linux/amd64
           build_args: |
             GCC_MAJOR_VERSION=${{ env.GCC_MAJOR_VERSION }}
@@ -89,6 +89,7 @@ jobs:
           dockerhub_description: GCC compiler for XRPLF/clio.
 
   gcc-arm64:
+    if: false
     name: Build and push GCC docker image (arm64)
     runs-on: heavy-arm64
     needs: repo
@@ -127,6 +128,7 @@ jobs:
           dockerhub_description: GCC compiler for XRPLF/clio.
 
   gcc-merge:
+    if: false
     name: Merge and push multi-arch GCC docker image
     runs-on: heavy
     needs: [repo, gcc-amd64, gcc-arm64]
@@ -141,11 +143,11 @@ jobs:
           files: "docker/compilers/gcc/**"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Login to GitHub Container Registry
         if: ${{ github.event_name != 'pull_request' }}
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -153,7 +155,7 @@ jobs:
 
       - name: Login to DockerHub
         if: ${{ github.repository_owner == 'XRPLF' && github.event_name != 'pull_request' }}
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PW }}
@@ -174,7 +176,7 @@ jobs:
           }
           push_image ${{ needs.repo.outputs.GHCR_REPO }}/clio-gcc
           if [[ ${{ github.repository_owner }} == 'XRPLF' ]]; then
-            push_image rippleci/clio_clang
+            push_image rippleci/clio_gcc
           fi
 
   clang:
@@ -207,7 +209,8 @@ jobs:
             type=raw,value=latest
             type=raw,value=${{ env.CLANG_MAJOR_VERSION }}
             type=raw,value=${{ github.sha }}
-          platforms: linux/amd64,linux/arm64
+          # platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           build_args: |
             CLANG_MAJOR_VERSION=${{ env.CLANG_MAJOR_VERSION }}
           dockerhub_repo: ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio_clang' || '' }}
@@ -216,7 +219,7 @@ jobs:
   tools-amd64:
     name: Build and push tools docker image (amd64)
     runs-on: heavy
-    needs: [repo, gcc-merge]
+    needs: [repo, gcc-amd64]
 
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -237,17 +240,18 @@ jobs:
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/tools
           tags: |
-            type=raw,value=amd64-latest
-            type=raw,value=amd64-${{ github.sha }}
+            type=raw,value=latest
+            type=raw,value=${{ github.sha }}
           platforms: linux/amd64
           build_args: |
             GHCR_REPO=${{ needs.repo.outputs.GHCR_REPO }}
             GCC_VERSION=${{ env.GCC_VERSION }}
 
   tools-arm64:
+    if: false
     name: Build and push tools docker image (arm64)
     runs-on: heavy-arm64
-    needs: [repo, gcc-merge]
+    needs: [repo, gcc-amd64]
 
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -276,6 +280,7 @@ jobs:
             GCC_VERSION=${{ env.GCC_VERSION }}
 
   tools-merge:
+    if: false
     name: Merge and push multi-arch tools docker image
     runs-on: heavy
     needs: [repo, tools-amd64, tools-arm64]
@@ -290,11 +295,11 @@ jobs:
           files: "docker/tools/**"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Login to GitHub Container Registry
         if: ${{ github.event_name != 'pull_request' }}
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -313,7 +318,7 @@ jobs:
   pre-commit:
     name: Build and push pre-commit docker image
     runs-on: heavy
-    needs: [repo, tools-merge]
+    needs: [repo, tools-amd64]
 
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -328,14 +333,15 @@ jobs:
           tags: |
             type=raw,value=latest
             type=raw,value=${{ github.sha }}
-          platforms: linux/amd64,linux/arm64
+          # platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           build_args: |
             GHCR_REPO=${{ needs.repo.outputs.GHCR_REPO }}
 
   ci:
     name: Build and push CI docker image
     runs-on: heavy
-    needs: [repo, gcc-merge, clang, tools-merge]
+    needs: [repo, gcc-amd64, clang, tools-amd64]
 
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -354,7 +360,8 @@ jobs:
             type=raw,value=latest
             type=raw,value=gcc_${{ env.GCC_MAJOR_VERSION }}_clang_${{ env.CLANG_MAJOR_VERSION }}
             type=raw,value=${{ github.sha }}
-          platforms: linux/amd64,linux/arm64
+          # platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           build_args: |
             GHCR_REPO=${{ needs.repo.outputs.GHCR_REPO }}
             CLANG_MAJOR_VERSION=${{ env.CLANG_MAJOR_VERSION }}

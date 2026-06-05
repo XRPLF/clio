@@ -63,7 +63,7 @@ RUN pip install -q --no-cache-dir \
 # Install LLVM tools
 ARG LLVM_TOOLS_VERSION=20
 
-RUN echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-${LLVM_TOOLS_VERSION} main" >> /etc/apt/sources.list \
+RUN echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-${LLVM_TOOLS_VERSION} main" >> /etc/apt/sources.list \
     && wget --progress=dot:giga -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 
 RUN apt-get update \
