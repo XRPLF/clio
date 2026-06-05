@@ -164,12 +164,15 @@ TEST_P(ChannelSpawnTest, MultipleSendersOneReceiver)
         {
             auto localSender = std::move(sender);
             for (auto senderId = 0uz; senderId < kNUM_SENDERS; ++senderId) {
-                util::spawn(executor, [senderCopy = localSender, senderId](boost::asio::yield_context yield) mutable {
-                    for (auto i = 0uz; i < kVALUES_PER_SENDER; ++i) {
-                        if (not senderCopy.asyncSend(generateValue(senderId, i), yield))
-                            break;
+                auto senderCopy = localSender;  // gcc-15 is not happy if it is done in lambda capture list
+                util::spawn(
+                    executor, [senderCopy = std::move(senderCopy), senderId](boost::asio::yield_context yield) mutable {
+                        for (auto i = 0uz; i < kVALUES_PER_SENDER; ++i) {
+                            if (not senderCopy.asyncSend(generateValue(senderId, i), yield))
+                                break;
+                        }
                     }
-                });
+                );
             }
         }
 
