@@ -21,7 +21,7 @@ jobs:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696
+      image: ghcr.io/xrplf/clio-ci:6bb4953f1643b999781609ca79d5ec467289c996
 
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -69,7 +69,7 @@ jobs:
     needs: build
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696
+      image: ghcr.io/xrplf/clio-ci:6bb4953f1643b999781609ca79d5ec467289c996
 
     steps:
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0

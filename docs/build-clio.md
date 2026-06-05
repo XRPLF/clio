@@ -175,7 +175,7 @@ Open the `index.html` file in your browser to see the documentation pages.
 It is also possible to build Clio using [Docker](https://www.docker.com/) if you don't want to install all the dependencies on your machine.
 
 ```sh
-docker run -it ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696
+docker run -it ghcr.io/xrplf/clio-ci:6bb4953f1643b999781609ca79d5ec467289c996
 git clone https://github.com/XRPLF/clio
 cd clio
 ```

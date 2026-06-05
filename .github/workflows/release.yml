@@ -29,7 +29,7 @@ jobs:
             conan_profile: gcc
             build_type: Release
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:6bb4953f1643b999781609ca79d5ec467289c996" }'
 
     uses: ./.github/workflows/reusable-build-test.yml
     with:
@@ -51,7 +51,7 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:6bb4953f1643b999781609ca79d5ec467289c996" }'
       conan_profile: gcc
       build_type: Release
       download_ccache: false
