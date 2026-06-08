@@ -17,6 +17,7 @@ namespace data::cassandra {
 
 /**
  * @brief Manages the DB schema and provides access to prepared statements.
+ * Testing workflow run
  */
 template <SomeSettingsProvider SettingsProviderType>
 class CassandraSchema : public Schema<SettingsProvider> {
