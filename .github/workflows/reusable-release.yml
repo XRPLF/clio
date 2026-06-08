@@ -46,7 +46,7 @@ jobs:
   release:
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:6bb4953f1643b999781609ca79d5ec467289c996
+      image: ghcr.io/xrplf/clio-ci:94da8459ddc30e2f0d88a98cba63a57b2cda3031
     env:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ github.token }}

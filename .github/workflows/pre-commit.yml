@@ -11,4 +11,4 @@ jobs:
     uses: XRPLF/actions/.github/workflows/pre-commit.yml@282890f46d6921249d5659dd38babcb0bd8aef48
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-pre-commit:6bb4953f1643b999781609ca79d5ec467289c996" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-pre-commit:94da8459ddc30e2f0d88a98cba63a57b2cda3031" }'
