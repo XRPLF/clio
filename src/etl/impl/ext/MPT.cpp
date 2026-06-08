@@ -49,8 +49,8 @@ MPTExt::writeMPTHoldersFromTransactions(model::LedgerData const& data)
     std::vector<MPTHolderData> holders;
 
     for (auto const& tx : data.transactions) {
-        if (auto const mptHolder = getMPTHolderFromTx(tx.meta, tx.sttx); mptHolder.has_value())
-            holders.push_back(*mptHolder);
+        auto const mptHolders = getMPTHolderFromTx(tx.meta, tx.sttx);
+        holders.insert(holders.end(), mptHolders.begin(), mptHolders.end());
     }
 
     if (not holders.empty())

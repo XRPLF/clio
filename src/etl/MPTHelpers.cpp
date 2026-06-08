@@ -15,41 +15,34 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace etl {
 
-/**
- * @brief Get the MPToken created from a transaction
- *
- * @param txMeta Transaction metadata
- * @return MPT and holder account pair
- */
-std::optional<MPTHolderData>
-getMPTokenAuthorize(ripple::TxMeta const& txMeta)
+std::vector<MPTHolderData>
+getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const&)
 {
+    if (txMeta.getResultTER() != ripple::tesSUCCESS)
+        return {};
+
+    std::vector<MPTHolderData> holders;
+
     for (ripple::STObject const& node : txMeta.getNodes()) {
         if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltMPTOKEN)
             continue;
 
         if (node.getFName() == ripple::sfCreatedNode) {
             auto const& newMPT = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
-            return MPTHolderData{
-                .mptID = newMPT[ripple::sfMPTokenIssuanceID],
-                .holder = newMPT.getAccountID(ripple::sfAccount)
-            };
+            holders.push_back(
+                MPTHolderData{
+                    .mptID = newMPT[ripple::sfMPTokenIssuanceID],
+                    .holder = newMPT.getAccountID(ripple::sfAccount)
+                }
+            );
         }
     }
-    return {};
-}
 
-std::optional<MPTHolderData>
-getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
-{
-    if (txMeta.getResultTER() != ripple::tesSUCCESS ||
-        sttx.getTxnType() != ripple::TxType::ttMPTOKEN_AUTHORIZE)
-        return {};
-
-    return getMPTokenAuthorize(txMeta);
+    return holders;
 }
 
 std::optional<MPTHolderData>

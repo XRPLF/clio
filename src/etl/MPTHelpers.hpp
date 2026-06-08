@@ -6,6 +6,10 @@
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>
 
+#include <optional>
+#include <string>
+#include <vector>
+
 namespace etl {
 
 /**
@@ -13,9 +17,9 @@ namespace etl {
  *
  * @param txMeta Transaction metadata
  * @param sttx The transaction
- * @return The MPTIssuanceID and holder pair as a optional
+ * @return The MPTIssuanceID and holder pairs created by the transaction
  */
-std::optional<MPTHolderData>
+std::vector<MPTHolderData>
 getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 
 /**

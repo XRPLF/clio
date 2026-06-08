@@ -8,9 +8,20 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STArray.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFormats.h>
+#include <xrpl/protocol/TxMeta.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <algorithm>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -25,6 +36,8 @@ constinit auto const kSeq = 123u;
 constinit auto const kLedgerHash =
     "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constinit auto const kHolderAccount = "rK1EX542EgA9m948JrJRaEzwLVEhqWvnr9";
+constinit auto const kHolderAccount2 = "rnd1nHuzceyQDqnLH8urWNr4QBKt4v7WVk";
+constinit auto const kMptIssuanceID = "000004C463C52827307480341125DA0577DEFC38405B0E3E";
 
 constinit auto const kTxnHex =
     "120039220000000024002DBD1A201B002DBDA36840000000000000017321EDECF25C029811CAD07AFD616EB75E3803"
@@ -55,17 +68,90 @@ constinit auto const kHash2 = "6005B465CBBF7FA8E41AC0C0CD38491026D9411FCB7BA46E2
 constinit auto const kHash3 = "6005B465CBBF7FA8E41AC0C0CD38491026D9411FCB7BA46E2AEBB3AF7654261D";
 
 auto
+createTransactionFromObjects(
+    ripple::STObject const& txObj,
+    ripple::STObject const& metaObj,
+    ripple::TxType type
+)
+{
+    auto const txBlob = txObj.getSerializer().peekData();
+    auto const metaBlob = metaObj.getSerializer().peekData();
+
+    ripple::SerialIter txIter{txBlob.data(), txBlob.size()};
+    ripple::uint256 const id{kHash};
+
+    return etl::model::Transaction{
+        .raw = "",
+        .metaRaw = "",
+        .sttx = ripple::STTx{txIter},
+        .meta = ripple::TxMeta{id, kSeq, metaBlob},
+        .id = id,
+        .key = std::string{kHash},
+        .type = type
+    };
+}
+
+ripple::STObject
+createNewMPTokenNode(std::string_view holder)
+{
+    ripple::STObject newFields(ripple::sfNewFields);
+    newFields.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN);
+    newFields[ripple::sfMPTokenIssuanceID] = ripple::uint192{kMptIssuanceID};
+    newFields.setAccountID(ripple::sfAccount, getAccountIdWithString(holder));
+
+    ripple::STObject createdNode(ripple::sfCreatedNode);
+    createdNode.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN);
+    createdNode.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{});
+    createdNode.emplace_back(std::move(newFields));
+    return createdNode;
+}
+
+ripple::STObject
+createPaymentMetaWithNewMPTokens()
+{
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+
+    ripple::STArray affectedNodes(ripple::sfAffectedNodes);
+    affectedNodes.push_back(createNewMPTokenNode(kHolderAccount));
+    affectedNodes.push_back(createNewMPTokenNode(kHolderAccount2));
+    metaObj.setFieldArray(ripple::sfAffectedNodes, affectedNodes);
+
+    return metaObj;
+}
+
+auto
+createPaymentWithMultipleHoldersTestData()
+{
+    auto transactions = std::vector{createTransactionFromObjects(
+        createPaymentTransactionObject(kHolderAccount, kHolderAccount2, 1, 1, 1),
+        createPaymentMetaWithNewMPTokens(),
+        ripple::TxType::ttPAYMENT
+    )};
+
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
+    return etl::model::LedgerData{
+        .transactions = std::move(transactions),
+        .objects = {},
+        .successors = {},
+        .edgeKeys = {},
+        .header = header,
+        .rawHeader = {},
+        .seq = kSeq
+    };
+}
+
+auto
 createTestData()
 {
     auto transactions = std::vector{
-        util::createTransaction(
-            ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE
-        ),  // not AUTHORIZE so will not be written
+        util::createTransaction(ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE
+        ),  // metadata does not create an MPT holder
         util::createTransaction(ripple::TxType::ttMPTOKEN_AUTHORIZE, kHash, kTxnMeta, kTxnHex),
-        util::createTransaction(ripple::TxType::ttAMM_CREATE),  // not MPT - will be filtered
-        util::createTransaction(
-            ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE
-        ),  // not unique - will be filtered
+        util::createTransaction(ripple::TxType::ttAMM_CREATE),  // metadata is not MPT
+        util::createTransaction(ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE
+        ),  // metadata does not create an MPT holder
     };
 
     auto const header = createLedgerHeader(kLedgerHash, kSeq);
@@ -113,7 +199,7 @@ TEST_F(MPTExtTests, OnLedgerDataFiltersAndWritesMPTs)
     auto const data = createTestData();
 
     EXPECT_CALL(*backend_, writeMPTHolders).WillOnce([](auto const& holders) {
-        EXPECT_EQ(holders.size(), 1);  // Only AUTHORIZE is written in the end
+        EXPECT_EQ(holders.size(), 1);  // Only metadata creating an MPToken is written
     });
 
     ext_.onLedgerData(data);
@@ -124,7 +210,7 @@ TEST_F(MPTExtTests, OnInitialDataFiltersAndWritesMPTs)
     auto const data = createTestData();
 
     EXPECT_CALL(*backend_, writeMPTHolders).WillOnce([](auto const& holders) {
-        EXPECT_EQ(holders.size(), 1);  // Only AUTHORIZE is written in the end
+        EXPECT_EQ(holders.size(), 1);  // Only metadata creating an MPToken is written
     });
 
     ext_.onInitialData(data);
@@ -153,6 +239,32 @@ TEST_F(MPTExtTests, OnInitialDataWithMultipleHolders)
         EXPECT_TRUE(std::ranges::all_of(holders, [&expectedAccount](auto const& data) {
             return data.holder == expectedAccount;
         }));
+    });
+
+    ext_.onInitialData(data);
+}
+
+TEST_F(MPTExtTests, OnInitialDataWritesAllMPTsCreatedByPayment)
+{
+    auto const data = createPaymentWithMultipleHoldersTestData();
+    auto const expectedMptID = ripple::uint192{kMptIssuanceID};
+    auto const expectedAccount = getAccountIdWithString(kHolderAccount);
+    auto const expectedAccount2 = getAccountIdWithString(kHolderAccount2);
+
+    EXPECT_CALL(*backend_, writeMPTHolders).WillOnce([&](auto const& holders) {
+        EXPECT_THAT(
+            holders,
+            UnorderedElementsAre(
+                AllOf(
+                    Field(&MPTHolderData::mptID, expectedMptID),
+                    Field(&MPTHolderData::holder, expectedAccount)
+                ),
+                AllOf(
+                    Field(&MPTHolderData::mptID, expectedMptID),
+                    Field(&MPTHolderData::holder, expectedAccount2)
+                )
+            )
+        );
     });
 
     ext_.onInitialData(data);
