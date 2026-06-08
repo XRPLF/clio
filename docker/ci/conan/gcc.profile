@@ -9,3 +9,5 @@ os=Linux
 
 [conf]
 tools.build:compiler_executables={"c": "/usr/bin/gcc-15", "cpp": "/usr/bin/g++-15"}
+user.package:libc_version=2.32
+tools.info.package_id:confs+=["user.package:libc_version"]
