@@ -1107,7 +1107,7 @@ protected:
     /**
      * @brief Shared implementation of the two MPT transaction-index fetchers.
      *
-     * Mirrors @ref fetchNFTTransactions: binds the cursor/limit onto an already partition-bound
+     * Mirrors `fetchNFTTransactions`: binds the cursor/limit onto an already partition-bound
      * statement, reads `(hash, seq_idx, tx_type)` index rows, then hydrates the blobs via
      * @ref fetchTransactions. The forward path uses an inclusive `seq_idx >=`, so the returned
      * cursor's transaction index is advanced by one (matching the NFT history convention).

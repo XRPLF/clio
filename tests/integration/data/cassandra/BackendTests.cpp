@@ -1472,8 +1472,8 @@ TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
 // round-trip, fanout, and tx_type coverage in the same real-backend suite.
 // ====================================================================================
 struct BackendCassandraMPTTest : BackendCassandraTest {
-    static constexpr auto kTX_TYPE_A = "Payment";
-    static constexpr auto kTX_TYPE_B = "MPTokenAuthorize";
+    static constexpr auto kTxTypeA = "Payment";
+    static constexpr auto kTxTypeB = "MPTokenAuthorize";
 
     // A real 24-byte (48 hex char) MPT issuance id.
     static ripple::uint192
@@ -1557,7 +1557,14 @@ TEST_F(BackendCassandraMPTTest, RoundTripBothShapesAndTxTypeFilter)
             EXPECT_EQ(txns[0].ledgerSequence, seq);
         };
 
-        MPTTransactionsData const record{mptId, {account, secondAccount}, kTX_TYPE_A, seq, 1, hash};
+        MPTTransactionsData const record{
+            .mptID = mptId,
+            .accounts = {account, secondAccount},
+            .txType = kTxTypeA,
+            .ledgerSequence = seq,
+            .transactionIndex = 1,
+            .txHash = hash
+        };
         backend_->writeMPTTransactions({record});
         backend_->writeAccountMPTTransactions({record});
         backend_->waitForWritesToFinish();
@@ -1586,7 +1593,7 @@ TEST_F(BackendCassandraMPTTest, RoundTripBothShapesAndTxTypeFilter)
             EXPECT_FALSE(cursor);
         }
         // Issuance-wide shape, tx_type filter that matches case-insensitively ("payment"
-        // vs the stored canonical "Payment" -- kTX_TYPE_A).
+        // vs the stored canonical "Payment" -- kTxTypeA).
         {
             auto [txns, cursor] =
                 backend_->fetchMPTTransactions(mptId, "payment", 100, false, {}, yield);
@@ -1605,12 +1612,12 @@ TEST_F(BackendCassandraMPTTest, RoundTripBothShapesAndTxTypeFilter)
         // tx_type filter that does not match -> empty, on both shapes.
         {
             auto [txns, cursor] =
-                backend_->fetchMPTTransactions(mptId, kTX_TYPE_B, 100, false, {}, yield);
+                backend_->fetchMPTTransactions(mptId, kTxTypeB, 100, false, {}, yield);
             EXPECT_EQ(txns.size(), 0);
         }
         {
             auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
-                mptId, account, kTX_TYPE_B, 100, false, {}, yield
+                mptId, account, kTxTypeB, 100, false, {}, yield
             );
             EXPECT_EQ(txns.size(), 0);
         }
@@ -1641,7 +1648,13 @@ TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
             auto const hash = makeHash(i);
             hashes.push_back(hash);
             writeTxBlob(hash, seq);
-            MPTTransactionsData const record{mptId, {}, kTX_TYPE_A, seq, i, hash};
+            MPTTransactionsData const record{
+                .mptID = mptId,
+                .txType = kTxTypeA,
+                .ledgerSequence = seq,
+                .transactionIndex = i,
+                .txHash = hash
+            };
             backend_->writeMPTTransactions({record});
         }
         backend_->waitForWritesToFinish();
@@ -1696,7 +1709,13 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 setupLedgerRange(seq);
                 auto const hash = makeHash(i);
                 writeTxBlob(hash, seq);
-                MPTTransactionsData const record{mptId, {}, kTX_TYPE_A, seq, i, hash};
+                MPTTransactionsData const record{
+                    .mptID = mptId,
+                    .txType = kTxTypeA,
+                    .ledgerSequence = seq,
+                    .transactionIndex = i,
+                    .txHash = hash
+                };
                 backend_->writeMPTTransactions({record});
                 expected.insert(expectedBlob(i));
             }
@@ -1759,7 +1778,13 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 setupLedgerRange(seq);
                 auto const hash = makeHash(i);
                 writeTxBlob(hash, seq);
-                MPTTransactionsData const record{mptIdB, {}, kTX_TYPE_A, seq, i, hash};
+                MPTTransactionsData const record{
+                    .mptID = mptIdB,
+                    .txType = kTxTypeA,
+                    .ledgerSequence = seq,
+                    .transactionIndex = i,
+                    .txHash = hash
+                };
                 backend_->writeMPTTransactions({record});
                 expectedB.insert(expectedBlob(i));
             }
@@ -1817,9 +1842,27 @@ TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
         writeTxBlob(h1, seq);
         writeTxBlob(h3, seq);
 
-        backend_->writeMPTTransactions({MPTTransactionsData{mptId, {}, kTX_TYPE_A, seq, 1, h1}});
-        backend_->writeMPTTransactions({MPTTransactionsData{mptId, {}, kTX_TYPE_A, seq, 2, h2}});
-        backend_->writeMPTTransactions({MPTTransactionsData{mptId, {}, kTX_TYPE_A, seq, 3, h3}});
+        backend_->writeMPTTransactions({MPTTransactionsData{
+            .mptID = mptId,
+            .txType = kTxTypeA,
+            .ledgerSequence = seq,
+            .transactionIndex = 1,
+            .txHash = h1
+        }});
+        backend_->writeMPTTransactions({MPTTransactionsData{
+            .mptID = mptId,
+            .txType = kTxTypeA,
+            .ledgerSequence = seq,
+            .transactionIndex = 2,
+            .txHash = h2
+        }});
+        backend_->writeMPTTransactions({MPTTransactionsData{
+            .mptID = mptId,
+            .txType = kTxTypeA,
+            .ledgerSequence = seq,
+            .transactionIndex = 3,
+            .txHash = h3
+        }});
         backend_->waitForWritesToFinish();
 
         auto [txns, cursor] =
@@ -1859,8 +1902,14 @@ TEST_F(BackendCassandraMPTTest, TxTypeFilterMarkerRidesRawPageBoundary)
             setupLedgerRange(seq);
             auto const hash = makeHash(i);
             writeTxBlob(hash, seq);
-            auto const txType = (i % 4 == 0) ? kTX_TYPE_B : kTX_TYPE_A;
-            backend_->writeMPTTransactions({MPTTransactionsData{mptId, {}, txType, seq, i, hash}});
+            auto const txType = (i % 4 == 0) ? kTxTypeB : kTxTypeA;
+            backend_->writeMPTTransactions({MPTTransactionsData{
+                .mptID = mptId,
+                .txType = txType,
+                .ledgerSequence = seq,
+                .transactionIndex = i,
+                .txHash = hash
+            }});
             if (i % 4 == 0)
                 expectedTypeB.insert(expectedBlob(i));
         }
@@ -1877,9 +1926,8 @@ TEST_F(BackendCassandraMPTTest, TxTypeFilterMarkerRidesRawPageBoundary)
             std::size_t pages = 0;
             bool sawShortPageWithCursor = false;
             do {
-                auto [txns, retCursor] = backend_->fetchMPTTransactions(
-                    mptId, kTX_TYPE_B, limit, forward, cursor, yield
-                );
+                auto [txns, retCursor] =
+                    backend_->fetchMPTTransactions(mptId, kTxTypeB, limit, forward, cursor, yield);
                 ++pages;
                 ASSERT_LE(pages, 4u) << "filtered paging did not terminate";
                 // The filter only ever removes rows, so a page never exceeds the raw limit.
@@ -1911,7 +1959,7 @@ TEST_F(BackendCassandraMPTTest, TxTypeFilterMarkerRidesRawPageBoundary)
 }
 
 struct BackendCassandraNodeMessageTest : BackendCassandraTest {
-    boost::uuids::random_generator generateUuid{};
+    boost::uuids::random_generator generateUuid;
 };
 
 TEST_F(BackendCassandraNodeMessageTest, UpdateFetch)

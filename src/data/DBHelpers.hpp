@@ -212,7 +212,7 @@ struct MPTHolderData {
  * one ETL/backfill helper rather than in the storage data model.
  */
 struct MPTTransactionsData {
-    /** @brief The 24-byte MPT issuance ID (same encoding as @ref MPTHolderData::mptID). */
+    /** @brief The 24-byte MPT issuance ID (same encoding as `MPTHolderData::mptID`). */
     ripple::uint192 mptID;
     /** @brief The accounts affected by the transaction (drives the per-account table). */
     boost::container::flat_set<ripple::AccountID> accounts;
