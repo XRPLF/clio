@@ -1966,7 +1966,11 @@ TEST_F(BackendCassandraMPTTest, TxTypeFilterMarkerRidesRawPageBoundary)
 }
 
 struct BackendCassandraNodeMessageTest : BackendCassandraTest {
-    boost::uuids::random_generator generateUuid;
+    static boost::uuids::uuid
+    generateUuid()
+    {
+        return boost::uuids::random_generator{}();
+    }
 };
 
 TEST_F(BackendCassandraNodeMessageTest, UpdateFetch)
