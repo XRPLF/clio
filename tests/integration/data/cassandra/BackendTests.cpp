@@ -1650,6 +1650,7 @@ TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
             writeTxBlob(hash, seq);
             MPTTransactionsData const record{
                 .mptID = mptId,
+                .accounts = {},
                 .txType = kTxTypeA,
                 .ledgerSequence = seq,
                 .transactionIndex = i,
@@ -1711,6 +1712,7 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 writeTxBlob(hash, seq);
                 MPTTransactionsData const record{
                     .mptID = mptId,
+                    .accounts = {},
                     .txType = kTxTypeA,
                     .ledgerSequence = seq,
                     .transactionIndex = i,
@@ -1780,6 +1782,7 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 writeTxBlob(hash, seq);
                 MPTTransactionsData const record{
                     .mptID = mptIdB,
+                    .accounts = {},
                     .txType = kTxTypeA,
                     .ledgerSequence = seq,
                     .transactionIndex = i,
@@ -1844,6 +1847,7 @@ TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
 
         backend_->writeMPTTransactions({MPTTransactionsData{
             .mptID = mptId,
+            .accounts = {},
             .txType = kTxTypeA,
             .ledgerSequence = seq,
             .transactionIndex = 1,
@@ -1851,6 +1855,7 @@ TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
         }});
         backend_->writeMPTTransactions({MPTTransactionsData{
             .mptID = mptId,
+            .accounts = {},
             .txType = kTxTypeA,
             .ledgerSequence = seq,
             .transactionIndex = 2,
@@ -1858,6 +1863,7 @@ TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
         }});
         backend_->writeMPTTransactions({MPTTransactionsData{
             .mptID = mptId,
+            .accounts = {},
             .txType = kTxTypeA,
             .ledgerSequence = seq,
             .transactionIndex = 3,
@@ -1905,6 +1911,7 @@ TEST_F(BackendCassandraMPTTest, TxTypeFilterMarkerRidesRawPageBoundary)
             auto const txType = (i % 4 == 0) ? kTxTypeB : kTxTypeA;
             backend_->writeMPTTransactions({MPTTransactionsData{
                 .mptID = mptId,
+                .accounts = {},
                 .txType = txType,
                 .ledgerSequence = seq,
                 .transactionIndex = i,
