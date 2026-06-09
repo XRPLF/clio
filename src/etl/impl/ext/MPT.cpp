@@ -50,7 +50,7 @@ MPTExt::writeMPTHoldersFromTransactions(model::LedgerData const& data)
 
     for (auto const& tx : data.transactions) {
         auto const mptHolders = getMPTHolderFromTx(tx.meta, tx.sttx);
-        holders.insert(holders.end(), mptHolders.begin(), mptHolders.end());
+        holders.append_range(mptHolders);
     }
 
     if (not holders.empty())

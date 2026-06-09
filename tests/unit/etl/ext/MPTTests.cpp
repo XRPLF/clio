@@ -108,10 +108,10 @@ createNewMPTokenNode(std::string_view holder)
 }
 
 ripple::STObject
-createPaymentMetaWithNewMPTokens()
+createPaymentMetaWithNewMPTokens(ripple::TER result = ripple::tesSUCCESS)
 {
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU8(ripple::sfTransactionResult, TERtoInt(result));
     metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
 
     ripple::STArray affectedNodes(ripple::sfAffectedNodes);
@@ -123,13 +123,35 @@ createPaymentMetaWithNewMPTokens()
 }
 
 auto
-createPaymentWithMultipleHoldersTestData()
+createPaymentWithMultipleHoldersTestData(ripple::TER result = ripple::tesSUCCESS)
 {
     auto transactions = std::vector{createTransactionFromObjects(
         createPaymentTransactionObject(kHolderAccount, kHolderAccount2, 1, 1, 1),
-        createPaymentMetaWithNewMPTokens(),
+        createPaymentMetaWithNewMPTokens(result),
         ripple::TxType::ttPAYMENT
     )};
+
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
+    return etl::model::LedgerData{
+        .transactions = std::move(transactions),
+        .objects = {},
+        .successors = {},
+        .edgeKeys = {},
+        .header = header,
+        .rawHeader = {},
+        .seq = kSeq
+    };
+}
+
+auto
+createTestDataWithoutMPToken()
+{
+    auto transactions = std::vector{
+        util::createTransaction(
+            ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE
+        ),  // metadata does not create an MPT holder
+        util::createTransaction(ripple::TxType::ttAMM_CREATE),  // metadata is not MPT
+    };
 
     auto const header = createLedgerHeader(kLedgerHash, kSeq);
     return etl::model::LedgerData{
@@ -243,6 +265,24 @@ TEST_F(MPTExtTests, OnInitialDataWithMultipleHolders)
             return data.holder == expectedAccount;
         }));
     });
+
+    ext_.onInitialData(data);
+}
+
+TEST_F(MPTExtTests, OnInitialDataDoesNotWriteFailedMPTokenCreations)
+{
+    auto const data = createPaymentWithMultipleHoldersTestData(ripple::tecINCOMPLETE);
+
+    EXPECT_CALL(*backend_, writeMPTHolders).Times(0);
+
+    ext_.onInitialData(data);
+}
+
+TEST_F(MPTExtTests, OnInitialDataDoesNotWriteWithoutCreatedMPToken)
+{
+    auto const data = createTestDataWithoutMPToken();
+
+    EXPECT_CALL(*backend_, writeMPTHolders).Times(0);
 
     ext_.onInitialData(data);
 }

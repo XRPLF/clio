@@ -17,7 +17,8 @@ namespace etl {
  *
  * @param txMeta Transaction metadata
  * @param sttx The transaction
- * @return The MPTIssuanceID and holder pairs created by the transaction
+ * @return The MPTIssuanceID and holder pairs created by the transaction; empty if the transaction
+ * failed or created no MPToken.
  */
 std::vector<MPTHolderData>
 getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
