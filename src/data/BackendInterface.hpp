@@ -409,14 +409,20 @@ public:
     ) const = 0;
 
     /**
-     * @brief Fetches all transactions for a specific MPTokenIssuance.
+     * @brief Fetches transactions for a particular MPTokenIssuance ID.
      *
-     * @param mptIssuanceID The 24-byte MPTokenIssuance ID
-     * @param limit The maximum number of transactions per result page
-     * @param forward Whether to fetch the page forwards or backwards from the given cursor
-     * @param cursorIn The cursor to resume fetching from
-     * @param yield The coroutine context
-     * @return Results and a cursor to resume from
+     * Returns one page of transactions for this issuance, newest-first (or oldest-first when
+     * @p forward is set). Each row of the mptoken_issuance_transactions table holds only a
+     * transaction hash and its ledger position, not the transaction itself or its type. So the
+     * query cannot filter by type. When a type filter is requested, the handler looks up each full
+     * transaction by hash and drops rows whose type does not match, the same way account_tx does.
+     *
+     * @param mptIssuanceID The 24-byte MPTokenIssuance ID.
+     * @param limit The maximum number of transactions per result page.
+     * @param forward Whether to fetch the page forwards or backwards from the given cursor.
+     * @param cursorIn The cursor to resume fetching from.
+     * @param yield The coroutine context.
+     * @return Results and a cursor to resume from.
      */
     virtual TransactionsAndCursor
     fetchMPTokenIssuanceTransactions(
@@ -428,15 +434,23 @@ public:
     ) const = 0;
 
     /**
-     * @brief Fetches all transactions for a specific MPTokenIssuance involving a specific account.
+     * @brief Fetches transactions for a particular MPTokenIssuance ID involving a particular
+     * account.
      *
-     * @param mptIssuanceID The 24-byte MPTokenIssuance ID
-     * @param account The account that must be affected by the transaction
-     * @param limit The maximum number of transactions per result page
-     * @param forward Whether to fetch the page forwards or backwards from the given cursor
-     * @param cursorIn The cursor to resume fetching from
-     * @param yield The coroutine context
-     * @return Results and a cursor to resume from
+     * Returns one page of transactions for this issuance and account, newest-first (or oldest-first
+     * when @p forward is set). Each row of the account_mptoken_issuance_transactions table holds
+     * only a transaction hash and its ledger position, not the transaction itself or its type. So
+     * the query cannot filter by type. When a type filter is requested, the handler looks up each
+     * full transaction by hash and drops rows whose type does not match, the same way account_tx
+     * does.
+     *
+     * @param mptIssuanceID The 24-byte MPTokenIssuance ID.
+     * @param account The account that must be affected by the transaction.
+     * @param limit The maximum number of transactions per result page.
+     * @param forward Whether to fetch the page forwards or backwards from the given cursor.
+     * @param cursorIn The cursor to resume fetching from.
+     * @param yield The coroutine context.
+     * @return Results and a cursor to resume from.
      */
     virtual TransactionsAndCursor
     fetchAccountMPTokenIssuanceTransactions(
@@ -769,7 +783,7 @@ public:
      * @brief Write MPTokenIssuance transaction index rows to the `mptoken_issuance_transactions`
      * table.
      *
-     * @param data A vector of MPTokenIssuanceTransactionsData objects
+     * @param data A vector of MPTokenIssuanceTransactionsData objects.
      */
     virtual void
     writeMPTokenIssuanceTransactions(std::vector<MPTokenIssuanceTransactionsData> const& data) = 0;
@@ -780,7 +794,7 @@ public:
      *
      * One row is written per affected account in each record.
      *
-     * @param data A vector of MPTokenIssuanceTransactionsData objects
+     * @param data A vector of MPTokenIssuanceTransactionsData objects.
      */
     virtual void
     writeAccountMPTokenIssuanceTransactions(

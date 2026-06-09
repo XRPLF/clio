@@ -200,10 +200,10 @@ struct MPTHolderData {
 };
 
 /**
- * @brief Represents a link from a transaction to an MPTokenIssuance that it touched.
+ * @brief Represents a transaction link for an MPTokenIssuance.
  *
- * Gets written to the mptoken_issuance_transactions and account_mptoken_issuance_transactions
- * tables and the like.
+ * Writing one of these records inserts into two tables:
+ * mptoken_issuance_transactions and account_mptoken_issuance_transactions.
  */
 struct MPTokenIssuanceTransactionsData {
     ripple::uint192 mptIssuanceID;

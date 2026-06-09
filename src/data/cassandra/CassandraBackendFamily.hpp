@@ -500,7 +500,7 @@ public:
 
             return schema_->selectMPTokenIssuanceTx.bind(mptIssuanceID);
         }();
-        return doFetchMPTokenIssuanceTransactions(statement, 1, limit, forward, cursorIn, yield);
+        return fetchMPTokenIssuanceTransactionsImpl(statement, 1, limit, forward, cursorIn, yield);
     }
 
     TransactionsAndCursor
@@ -519,7 +519,7 @@ public:
 
             return schema_->selectAccountMPTokenIssuanceTx.bind(mptIssuanceID, account);
         }();
-        return doFetchMPTokenIssuanceTransactions(statement, 2, limit, forward, cursorIn, yield);
+        return fetchMPTokenIssuanceTransactionsImpl(statement, 2, limit, forward, cursorIn, yield);
     }
 
     MPTHoldersAndCursor
@@ -1106,22 +1106,21 @@ protected:
     /**
      * @brief Shared implementation of the two MPTokenIssuance transaction-index fetchers.
      *
-     * Mirrors `fetchNFTTransactions`: binds the cursor/limit onto an already partition-bound
-     * statement, reads `(hash, seq_idx)` index rows, then hydrates the blobs via
-     * @ref fetchTransactions. The forward path uses an inclusive `seq_idx >=`, so the returned
-     * cursor's transaction index is advanced by one (matching the NFT history convention).
+     * @note The forward path queries with an inclusive seq_idx >=,
+     * so the returned cursor's transaction index is advanced
+     * by one to avoid re-reading the last row on the next page.
      *
-     * @param statement The statement already bound with the partition-key columns
+     * @param statement The statement already bound with the partition-key columns.
      * @param cursorIdx The bind index for the `seq_idx` cursor tuple (the `LIMIT` binds at
-     * `cursorIdx + 1`)
-     * @param limit The maximum number of transactions per result page
-     * @param forward Whether the page is fetched forwards or backwards
-     * @param cursorIn The cursor to resume fetching from
-     * @param yield The coroutine context
-     * @return Results and a cursor to resume from
+     * `cursorIdx + 1`).
+     * @param limit The maximum number of transactions per result page.
+     * @param forward Whether the page is fetched forwards or backwards.
+     * @param cursorIn The cursor to resume fetching from.
+     * @param yield The coroutine context.
+     * @return Results and a cursor to resume from.
      */
     TransactionsAndCursor
-    doFetchMPTokenIssuanceTransactions(
+    fetchMPTokenIssuanceTransactionsImpl(
         Statement const& statement,
         std::size_t const cursorIdx,
         std::uint32_t const limit,
@@ -1135,7 +1134,7 @@ protected:
             return {.txns = {}, .cursor = {}};
 
         auto cursor = cursorIn;
-        if (cursor) {
+        if (cursor.has_value()) {
             statement.bindAt(cursorIdx, cursor->asTuple());
         } else {
             // Forward uses the nft_history-style inclusive lower bound; reverse starts just past

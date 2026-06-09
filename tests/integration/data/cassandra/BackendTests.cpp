@@ -1462,20 +1462,7 @@ TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
     });
 }
 
-// ====================================================================================
-// MPTokenIssuance transaction-history index round-trip tests
-//
-// These exercise the MPTokenIssuance index tables / fetchers against real Cassandra/Scylla, which a
-// mock
-// cannot validate (CLUSTERING ORDER BY DESC, the `<` vs `>=` boundary, the forward
-// `++transactionIndex` fix-up, and the tuple<bigint,bigint><->uint32 round-trip). The deep
-// pagination tests focus on the issuance-wide table; this first test keeps account-table
-// round-trip and fanout coverage in the same real-backend suite. Transaction-type filtering is
-// not a backend concern (it is applied post-hydration in the handler, like account_tx), so it is
-// not exercised here.
-// ====================================================================================
 struct BackendCassandraMPTokenIssuanceTest : BackendCassandraTest {
-    // A real 24-byte (48 hex char) MPTokenIssuance id.
     static ripple::uint192
     makeMptIssuanceId()
     {
@@ -1517,7 +1504,6 @@ struct BackendCassandraMPTokenIssuanceTest : BackendCassandraTest {
         ASSERT_TRUE(rng.has_value());
     }
 
-    // Writes a real Transactions-table row keyed by `hash` (so hydration finds a blob).
     void
     writeTxBlob(ripple::uint256 const& hash, std::uint32_t seq)
     {
@@ -1546,7 +1532,7 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, RoundTripBothShapes)
         auto const expectedTxBlob = "tx_" + ripple::strHex(hash);
         auto const expectedMetaBlob = "meta_" + ripple::strHex(hash);
 
-        auto expectHydratedSingle = [&](auto const& txns) {
+        auto expectFetchedSingle = [&](auto const& txns) {
             ASSERT_EQ(txns.size(), 1);
             EXPECT_EQ(
                 std::string(txns[0].transaction.begin(), txns[0].transaction.end()), expectedTxBlob
@@ -1568,30 +1554,27 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, RoundTripBothShapes)
         backend_->writeAccountMPTokenIssuanceTransactions({record});
         backend_->waitForWritesToFinish();
 
-        // Issuance-wide shape.
         {
             auto [txns, cursor] =
                 backend_->fetchMPTokenIssuanceTransactions(mptIssuanceId, 100, false, {}, yield);
-            expectHydratedSingle(txns);
+            expectFetchedSingle(txns);
             EXPECT_FALSE(cursor);
         }
-        // Account shape.
         {
             auto [txns, cursor] = backend_->fetchAccountMPTokenIssuanceTransactions(
                 mptIssuanceId, account, 100, false, {}, yield
             );
-            expectHydratedSingle(txns);
+            expectFetchedSingle(txns);
             EXPECT_FALSE(cursor);
         }
-        // Account fanout writes one row per affected account.
+        // Both affected accounts are indexed: one row was written per account.
         {
             auto [txns, cursor] = backend_->fetchAccountMPTokenIssuanceTransactions(
                 mptIssuanceId, secondAccount, 100, false, {}, yield
             );
-            expectHydratedSingle(txns);
+            expectFetchedSingle(txns);
             EXPECT_FALSE(cursor);
         }
-        // unseen account -> empty
         {
             auto [txns, cursor] = backend_->fetchAccountMPTokenIssuanceTransactions(
                 mptIssuanceId, makeAccount(0x99), 100, false, {}, yield
@@ -1607,8 +1590,8 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, DescendingOrderForwardAndReverse)
         auto const mptIssuanceId = makeMptIssuanceId();
         std::uint32_t const baseSeq = 200;
 
-        // Three txns spanning three distinct ledgers, so the full (ledger, tx_index)
-        // tuple ordering is exercised rather than tx_index alone.
+        // Three txns in three different ledgers, so ordering is checked across ledgers,
+        // not just by transaction index within one ledger.
         std::vector<ripple::uint256> hashes;
         std::vector<std::uint32_t> seqs;
         for (std::uint8_t i = 1; i <= 3; ++i) {
@@ -1629,8 +1612,6 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, DescendingOrderForwardAndReverse)
         }
         backend_->waitForWritesToFinish();
 
-        // The blob stored for hash h is "tx_" + strHex(h); map a returned tx back to its
-        // originating row's hash so ordering can be checked exactly.
         auto txBlobToString = [](data::TransactionAndMetadata const& tx) {
             return std::string(tx.transaction.begin(), tx.transaction.end());
         };
@@ -1670,8 +1651,8 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, MarkerPaginationRoundTrip)
         };
         auto expectedBlob = [&](std::uint8_t i) { return "tx_" + ripple::strHex(makeHash(i)); };
 
-        // Writes `total` rows, each in its own ledger (distinct seq) and at distinct tx_index,
-        // so the full (ledger, tx_index) tuple ordering is paged over.
+        // Writes `total` rows, each in its own ledger and at a distinct transaction index,
+        // so paging covers ordering across both.
         auto setup = [&](std::uint8_t total) {
             std::set<std::string> expected;
             for (std::uint8_t i = 1; i <= total; ++i) {
@@ -1730,14 +1711,11 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, MarkerPaginationRoundTrip)
             pageThrough(true, 10, expected);
         }
 
-        // Case B (Finding #3): total an exact multiple of the limit (20 rows, limit 10).
-        // The last full page returns a cursor; the subsequent fetch must return an empty page
-        // (the `not results.hasRows()` early-return path) and end the loop -- no infinite loop
-        // and no spurious trailing duplicate.
+        // Case B: total is an exact multiple of the limit (20 rows, limit 10).
+        // The last full page still returns a cursor, so the next fetch must return an empty page
+        // and end the loop -- no infinite loop and no spurious trailing duplicate.
         {
-            // Reuse the same mptIssuanceId but a fresh issuance space would require a new id;
-            // instead verify the exact-multiple boundary on a dedicated mptIssuanceId so rows from
-            // case A do not bleed in.
+            // Use a dedicated issuance id so rows from case A do not bleed in.
             ripple::uint192 mptIssuanceIdB;
             EXPECT_TRUE(
                 mptIssuanceIdB.parseHex("00000002BE223A7216F1B07AE9C36F107879B6E9D3A3C1B0")
