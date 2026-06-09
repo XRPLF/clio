@@ -1463,9 +1463,10 @@ TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
 }
 
 // ====================================================================================
-// MPT transaction-history index round-trip tests
+// MPTokenIssuance transaction-history index round-trip tests
 //
-// These exercise the MPT index tables / fetchers against real Cassandra/Scylla, which a mock
+// These exercise the MPTokenIssuance index tables / fetchers against real Cassandra/Scylla, which a
+// mock
 // cannot validate (CLUSTERING ORDER BY DESC, the `<` vs `>=` boundary, the forward
 // `++transactionIndex` fix-up, and the tuple<bigint,bigint><->uint32 round-trip). The deep
 // pagination tests focus on the issuance-wide table; this first test keeps account-table
@@ -1473,14 +1474,14 @@ TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
 // not a backend concern (it is applied post-hydration in the handler, like account_tx), so it is
 // not exercised here.
 // ====================================================================================
-struct BackendCassandraMPTTest : BackendCassandraTest {
-    // A real 24-byte (48 hex char) MPT issuance id.
+struct BackendCassandraMPTokenIssuanceTest : BackendCassandraTest {
+    // A real 24-byte (48 hex char) MPTokenIssuance id.
     static ripple::uint192
-    makeMptId()
+    makeMptIssuanceId()
     {
-        ripple::uint192 mptId;
-        EXPECT_TRUE(mptId.parseHex("00000001AE123A7216F1B07AE9C36F107879B6E9D3A3C1B0"));
-        return mptId;
+        ripple::uint192 mptIssuanceId;
+        EXPECT_TRUE(mptIssuanceId.parseHex("00000001AE123A7216F1B07AE9C36F107879B6E9D3A3C1B0"));
+        return mptIssuanceId;
     }
 
     static ripple::AccountID
@@ -1530,10 +1531,10 @@ struct BackendCassandraMPTTest : BackendCassandraTest {
     }
 };
 
-TEST_F(BackendCassandraMPTTest, RoundTripBothShapes)
+TEST_F(BackendCassandraMPTokenIssuanceTest, RoundTripBothShapes)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const mptId = makeMptId();
+        auto const mptIssuanceId = makeMptIssuanceId();
         auto const account = makeAccount(0x42);
         auto const secondAccount = makeAccount(0x43);
         std::uint32_t const seq = 100;
@@ -1556,51 +1557,54 @@ TEST_F(BackendCassandraMPTTest, RoundTripBothShapes)
             EXPECT_EQ(txns[0].ledgerSequence, seq);
         };
 
-        MPTTransactionsData const record{
-            .mptID = mptId,
+        MPTokenIssuanceTransactionsData const record{
+            .mptIssuanceID = mptIssuanceId,
             .accounts = {account, secondAccount},
             .ledgerSequence = seq,
             .transactionIndex = 1,
             .txHash = hash
         };
-        backend_->writeMPTTransactions({record});
-        backend_->writeAccountMPTTransactions({record});
+        backend_->writeMPTokenIssuanceTransactions({record});
+        backend_->writeAccountMPTokenIssuanceTransactions({record});
         backend_->waitForWritesToFinish();
 
         // Issuance-wide shape.
         {
-            auto [txns, cursor] = backend_->fetchMPTTransactions(mptId, 100, false, {}, yield);
+            auto [txns, cursor] =
+                backend_->fetchMPTokenIssuanceTransactions(mptIssuanceId, 100, false, {}, yield);
             expectHydratedSingle(txns);
             EXPECT_FALSE(cursor);
         }
         // Account shape.
         {
-            auto [txns, cursor] =
-                backend_->fetchAccountMPTTransactions(mptId, account, 100, false, {}, yield);
+            auto [txns, cursor] = backend_->fetchAccountMPTokenIssuanceTransactions(
+                mptIssuanceId, account, 100, false, {}, yield
+            );
             expectHydratedSingle(txns);
             EXPECT_FALSE(cursor);
         }
         // Account fanout writes one row per affected account.
         {
-            auto [txns, cursor] =
-                backend_->fetchAccountMPTTransactions(mptId, secondAccount, 100, false, {}, yield);
+            auto [txns, cursor] = backend_->fetchAccountMPTokenIssuanceTransactions(
+                mptIssuanceId, secondAccount, 100, false, {}, yield
+            );
             expectHydratedSingle(txns);
             EXPECT_FALSE(cursor);
         }
         // unseen account -> empty
         {
-            auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
-                mptId, makeAccount(0x99), 100, false, {}, yield
+            auto [txns, cursor] = backend_->fetchAccountMPTokenIssuanceTransactions(
+                mptIssuanceId, makeAccount(0x99), 100, false, {}, yield
             );
             EXPECT_EQ(txns.size(), 0);
         }
     });
 }
 
-TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
+TEST_F(BackendCassandraMPTokenIssuanceTest, DescendingOrderForwardAndReverse)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const mptId = makeMptId();
+        auto const mptIssuanceId = makeMptIssuanceId();
         std::uint32_t const baseSeq = 200;
 
         // Three txns spanning three distinct ledgers, so the full (ledger, tx_index)
@@ -1614,14 +1618,14 @@ TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
             auto const hash = makeHash(i);
             hashes.push_back(hash);
             writeTxBlob(hash, seq);
-            MPTTransactionsData const record{
-                .mptID = mptId,
+            MPTokenIssuanceTransactionsData const record{
+                .mptIssuanceID = mptIssuanceId,
                 .accounts = {},
                 .ledgerSequence = seq,
                 .transactionIndex = i,
                 .txHash = hash
             };
-            backend_->writeMPTTransactions({record});
+            backend_->writeMPTokenIssuanceTransactions({record});
         }
         backend_->waitForWritesToFinish();
 
@@ -1634,7 +1638,8 @@ TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
 
         // Reverse (forward=false): newest first -> rows 3, 2, 1.
         {
-            auto [txns, cursor] = backend_->fetchMPTTransactions(mptId, 100, false, {}, yield);
+            auto [txns, cursor] =
+                backend_->fetchMPTokenIssuanceTransactions(mptIssuanceId, 100, false, {}, yield);
             ASSERT_EQ(txns.size(), 3);
             EXPECT_FALSE(cursor);
             EXPECT_EQ(txBlobToString(txns[0]), expectedBlob(3));
@@ -1643,7 +1648,8 @@ TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
         }
         // Forward (forward=true): oldest first -> rows 1, 2, 3 (the reverse order).
         {
-            auto [txns, cursor] = backend_->fetchMPTTransactions(mptId, 100, true, {}, yield);
+            auto [txns, cursor] =
+                backend_->fetchMPTokenIssuanceTransactions(mptIssuanceId, 100, true, {}, yield);
             ASSERT_EQ(txns.size(), 3);
             EXPECT_FALSE(cursor);
             EXPECT_EQ(txBlobToString(txns[0]), expectedBlob(1));
@@ -1653,10 +1659,10 @@ TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
     });
 }
 
-TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
+TEST_F(BackendCassandraMPTokenIssuanceTest, MarkerPaginationRoundTrip)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const mptId = makeMptId();
+        auto const mptIssuanceId = makeMptIssuanceId();
         std::uint32_t const baseSeq = 300;
 
         auto txBlobToString = [](data::TransactionAndMetadata const& tx) {
@@ -1673,14 +1679,14 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 setupLedgerRange(seq);
                 auto const hash = makeHash(i);
                 writeTxBlob(hash, seq);
-                MPTTransactionsData const record{
-                    .mptID = mptId,
+                MPTokenIssuanceTransactionsData const record{
+                    .mptIssuanceID = mptIssuanceId,
                     .accounts = {},
                     .ledgerSequence = seq,
                     .transactionIndex = i,
                     .txHash = hash
                 };
-                backend_->writeMPTTransactions({record});
+                backend_->writeMPTokenIssuanceTransactions({record});
                 expected.insert(expectedBlob(i));
             }
             backend_->waitForWritesToFinish();
@@ -1696,8 +1702,9 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 std::optional<data::TransactionsCursor> cursor;
                 std::size_t pages = 0;
                 do {
-                    auto [txns, retCursor] =
-                        backend_->fetchMPTTransactions(mptId, limit, forward, cursor, yield);
+                    auto [txns, retCursor] = backend_->fetchMPTokenIssuanceTransactions(
+                        mptIssuanceId, limit, forward, cursor, yield
+                    );
                     ++pages;
                     // Guard against an infinite loop from a non-advancing cursor.
                     ASSERT_LE(pages, expected.size() + 2);
@@ -1728,11 +1735,13 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
         // (the `not results.hasRows()` early-return path) and end the loop -- no infinite loop
         // and no spurious trailing duplicate.
         {
-            // Reuse the same mptId but a fresh issuance space would require a new id; instead
-            // verify the exact-multiple boundary on a dedicated mptId so rows from case A do
-            // not bleed in.
-            ripple::uint192 mptIdB;
-            EXPECT_TRUE(mptIdB.parseHex("00000002BE223A7216F1B07AE9C36F107879B6E9D3A3C1B0"));
+            // Reuse the same mptIssuanceId but a fresh issuance space would require a new id;
+            // instead verify the exact-multiple boundary on a dedicated mptIssuanceId so rows from
+            // case A do not bleed in.
+            ripple::uint192 mptIssuanceIdB;
+            EXPECT_TRUE(
+                mptIssuanceIdB.parseHex("00000002BE223A7216F1B07AE9C36F107879B6E9D3A3C1B0")
+            );
             std::set<std::string> expectedB;
             for (std::uint8_t i = 1; i <= 20; ++i) {
                 // Continue the ledger sequence contiguously after case A (which ended at
@@ -1741,14 +1750,14 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 setupLedgerRange(seq);
                 auto const hash = makeHash(i);
                 writeTxBlob(hash, seq);
-                MPTTransactionsData const record{
-                    .mptID = mptIdB,
+                MPTokenIssuanceTransactionsData const record{
+                    .mptIssuanceID = mptIssuanceIdB,
                     .accounts = {},
                     .ledgerSequence = seq,
                     .transactionIndex = i,
                     .txHash = hash
                 };
-                backend_->writeMPTTransactions({record});
+                backend_->writeMPTokenIssuanceTransactions({record});
                 expectedB.insert(expectedBlob(i));
             }
             backend_->waitForWritesToFinish();
@@ -1760,8 +1769,9 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 std::size_t pages = 0;
                 bool sawEmptyTerminator = false;
                 do {
-                    auto [txns, retCursor] =
-                        backend_->fetchMPTTransactions(mptIdB, limit, forward, cursor, yield);
+                    auto [txns, retCursor] = backend_->fetchMPTokenIssuanceTransactions(
+                        mptIssuanceIdB, limit, forward, cursor, yield
+                    );
                     ++pages;
                     ASSERT_LE(pages, 4u) << "exact-multiple paging did not terminate cleanly";
                     if (txns.empty()) {
@@ -1790,10 +1800,10 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
     });
 }
 
-TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
+TEST_F(BackendCassandraMPTokenIssuanceTest, MissingBlobYieldsInPositionEmptyRecord)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const mptId = makeMptId();
+        auto const mptIssuanceId = makeMptIssuanceId();
         std::uint32_t const seq = 400;
         setupLedgerRange(seq);
 
@@ -1804,22 +1814,22 @@ TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
         writeTxBlob(h1, seq);
         writeTxBlob(h3, seq);
 
-        backend_->writeMPTTransactions({MPTTransactionsData{
-            .mptID = mptId,
+        backend_->writeMPTokenIssuanceTransactions({MPTokenIssuanceTransactionsData{
+            .mptIssuanceID = mptIssuanceId,
             .accounts = {},
             .ledgerSequence = seq,
             .transactionIndex = 1,
             .txHash = h1
         }});
-        backend_->writeMPTTransactions({MPTTransactionsData{
-            .mptID = mptId,
+        backend_->writeMPTokenIssuanceTransactions({MPTokenIssuanceTransactionsData{
+            .mptIssuanceID = mptIssuanceId,
             .accounts = {},
             .ledgerSequence = seq,
             .transactionIndex = 2,
             .txHash = h2
         }});
-        backend_->writeMPTTransactions({MPTTransactionsData{
-            .mptID = mptId,
+        backend_->writeMPTokenIssuanceTransactions({MPTokenIssuanceTransactionsData{
+            .mptIssuanceID = mptIssuanceId,
             .accounts = {},
             .ledgerSequence = seq,
             .transactionIndex = 3,
@@ -1827,7 +1837,8 @@ TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
         }});
         backend_->waitForWritesToFinish();
 
-        auto [txns, cursor] = backend_->fetchMPTTransactions(mptId, 100, false, {}, yield);
+        auto [txns, cursor] =
+            backend_->fetchMPTokenIssuanceTransactions(mptIssuanceId, 100, false, {}, yield);
         // The page is NOT shortened: the missing blob yields an in-position empty record.
         ASSERT_EQ(txns.size(), 3);
         EXPECT_FALSE(cursor);

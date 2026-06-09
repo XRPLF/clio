@@ -200,27 +200,22 @@ struct MPTHolderData {
 };
 
 /**
- * @brief Represents a link from a transaction to an MPT issuance that it touched.
+ * @brief Represents a link from a transaction to an MPTokenIssuance that it touched.
  *
- * A single instance drives writes to both MPT transaction index tables
- * (`mpt_transactions` and `account_mpt_transactions`). The @ref accounts set fans out the
- * per-account table. The transaction type is not stored: the `tx_type` query shapes filter it
- * post-hydration in the handler (off the hydrated transaction blob), exactly as `account_tx`.
+ * A single instance drives writes to both MPTokenIssuance transaction index tables
+ * (mptoken_issuance_transactions and account_mptoken_issuance_transactions). The accounts set fans
+ * out the per-account table. The transaction type is not stored: the tx_type query shapes filter it
+ * post-hydration in the handler, exactly as account_tx.
  *
  * @note This type is an aggregate populated from already-extracted transaction details. It
- * intentionally has no `ripple::TxMeta`-based constructor so the MPT extraction logic can live in
- * one ETL/backfill helper rather than in the storage data model.
+ * intentionally has no ripple::TxMeta-based constructor so the MPTokenIssuance extraction logic can
+ * live in one ETL/backfill helper rather than in the storage data model.
  */
-struct MPTTransactionsData {
-    /** @brief The 24-byte MPT issuance ID (same encoding as `MPTHolderData::mptID`). */
-    ripple::uint192 mptID;
-    /** @brief The accounts affected by the transaction (drives the per-account table). */
+struct MPTokenIssuanceTransactionsData {
+    ripple::uint192 mptIssuanceID;
     boost::container::flat_set<ripple::AccountID> accounts;
-    /** @brief The ledger sequence the transaction was included in. */
     std::uint32_t ledgerSequence{};
-    /** @brief The index of the transaction within its ledger. */
     std::uint32_t transactionIndex{};
-    /** @brief The hash of the transaction. */
     ripple::uint256 txHash;
 };
 

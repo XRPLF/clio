@@ -486,26 +486,26 @@ public:
     }
 
     TransactionsAndCursor
-    fetchMPTTransactions(
-        ripple::uint192 const& mptID,
+    fetchMPTokenIssuanceTransactions(
+        ripple::uint192 const& mptIssuanceID,
         std::uint32_t const limit,
         bool const forward,
         std::optional<TransactionsCursor> const& cursorIn,
         boost::asio::yield_context yield
     ) const override
     {
-        auto const statement = [this, forward, &mptID]() {
+        auto const statement = [this, forward, &mptIssuanceID]() {
             if (forward)
-                return schema_->selectMPTTxForward.bind(mptID);
+                return schema_->selectMPTokenIssuanceTxForward.bind(mptIssuanceID);
 
-            return schema_->selectMPTTx.bind(mptID);
+            return schema_->selectMPTokenIssuanceTx.bind(mptIssuanceID);
         }();
-        return fetchMPTTransactionsImpl(statement, 1, limit, forward, cursorIn, yield);
+        return doFetchMPTokenIssuanceTransactions(statement, 1, limit, forward, cursorIn, yield);
     }
 
     TransactionsAndCursor
-    fetchAccountMPTTransactions(
-        ripple::uint192 const& mptID,
+    fetchAccountMPTokenIssuanceTransactions(
+        ripple::uint192 const& mptIssuanceID,
         ripple::AccountID const& account,
         std::uint32_t const limit,
         bool const forward,
@@ -513,13 +513,13 @@ public:
         boost::asio::yield_context yield
     ) const override
     {
-        auto const statement = [this, forward, &mptID, &account]() {
+        auto const statement = [this, forward, &mptIssuanceID, &account]() {
             if (forward)
-                return schema_->selectAccountMPTTxForward.bind(mptID, account);
+                return schema_->selectAccountMPTokenIssuanceTxForward.bind(mptIssuanceID, account);
 
-            return schema_->selectAccountMPTTx.bind(mptID, account);
+            return schema_->selectAccountMPTokenIssuanceTx.bind(mptIssuanceID, account);
         }();
-        return fetchMPTTransactionsImpl(statement, 2, limit, forward, cursorIn, yield);
+        return doFetchMPTokenIssuanceTransactions(statement, 2, limit, forward, cursorIn, yield);
     }
 
     MPTHoldersAndCursor
@@ -915,14 +915,16 @@ public:
     }
 
     void
-    writeMPTTransactions(std::vector<MPTTransactionsData> const& data) override
+    writeMPTokenIssuanceTransactions(
+        std::vector<MPTokenIssuanceTransactionsData> const& data
+    ) override
     {
         std::vector<Statement> statements;
         statements.reserve(data.size());
 
         std::ranges::transform(data, std::back_inserter(statements), [this](auto const& record) {
-            return schema_->insertMPTTx.bind(
-                record.mptID,
+            return schema_->insertMPTokenIssuanceTx.bind(
+                record.mptIssuanceID,
                 std::make_tuple(record.ledgerSequence, record.transactionIndex),
                 record.txHash
             );
@@ -932,7 +934,9 @@ public:
     }
 
     void
-    writeAccountMPTTransactions(std::vector<MPTTransactionsData> const& data) override
+    writeAccountMPTokenIssuanceTransactions(
+        std::vector<MPTokenIssuanceTransactionsData> const& data
+    ) override
     {
         std::size_t numStatements = 0u;
         for (auto const& record : data)
@@ -946,8 +950,8 @@ public:
                 record.accounts,
                 std::back_inserter(statements),
                 [this, &record](auto const& account) {
-                    return schema_->insertAccountMPTTx.bind(
-                        record.mptID,
+                    return schema_->insertAccountMPTokenIssuanceTx.bind(
+                        record.mptIssuanceID,
                         account,
                         std::make_tuple(record.ledgerSequence, record.transactionIndex),
                         record.txHash
@@ -1100,7 +1104,7 @@ protected:
     }
 
     /**
-     * @brief Shared implementation of the two MPT transaction-index fetchers.
+     * @brief Shared implementation of the two MPTokenIssuance transaction-index fetchers.
      *
      * Mirrors `fetchNFTTransactions`: binds the cursor/limit onto an already partition-bound
      * statement, reads `(hash, seq_idx)` index rows, then hydrates the blobs via
@@ -1117,7 +1121,7 @@ protected:
      * @return Results and a cursor to resume from
      */
     TransactionsAndCursor
-    fetchMPTTransactionsImpl(
+    doFetchMPTokenIssuanceTransactions(
         Statement const& statement,
         std::size_t const cursorIdx,
         std::uint32_t const limit,
@@ -1170,7 +1174,7 @@ protected:
         }
 
         auto txns = fetchTransactions(hashes, yield);
-        LOG(log_.debug()) << "MPT Txns = " << txns.size();
+        LOG(log_.debug()) << "MPTokenIssuance Txns = " << txns.size();
 
         if (txns.size() == limit) {
             LOG(log_.debug()) << "Returning cursor";

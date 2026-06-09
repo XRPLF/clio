@@ -409,13 +409,13 @@ public:
     ) const = 0;
 
     /**
-     * @brief Fetches transactions that touched a given MPT issuance.
+     * @brief Fetches transactions that touched a given MPTokenIssuance.
      *
      * Returns one page of the issuance-wide index, newest-first (or oldest-first when @p forward).
      * Type filtering, when requested, is applied post-hydration in the handler off the hydrated
      * transaction blob, exactly as `account_tx` (the index stores no transaction type).
      *
-     * @param mptID The 24-byte MPT issuance ID
+     * @param mptIssuanceID The 24-byte MPTokenIssuance ID
      * @param limit The maximum number of transactions per result page
      * @param forward Whether to fetch the page forwards or backwards from the given cursor
      * @param cursorIn The cursor to resume fetching from
@@ -423,8 +423,8 @@ public:
      * @return Results and a cursor to resume from
      */
     virtual TransactionsAndCursor
-    fetchMPTTransactions(
-        ripple::uint192 const& mptID,
+    fetchMPTokenIssuanceTransactions(
+        ripple::uint192 const& mptIssuanceID,
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -432,13 +432,14 @@ public:
     ) const = 0;
 
     /**
-     * @brief Fetches transactions that touched a given MPT issuance and involved a given account.
+     * @brief Fetches transactions that touched a given MPTokenIssuance and involved a given
+     * account.
      *
      * Returns one page of the per-account index, newest-first (or oldest-first when @p forward).
      * Type filtering, when requested, is applied post-hydration in the handler off the hydrated
      * transaction blob, exactly as `account_tx` (the index stores no transaction type).
      *
-     * @param mptID The 24-byte MPT issuance ID
+     * @param mptIssuanceID The 24-byte MPTokenIssuance ID
      * @param account The account that must be affected by the transaction
      * @param limit The maximum number of transactions per result page
      * @param forward Whether to fetch the page forwards or backwards from the given cursor
@@ -447,8 +448,8 @@ public:
      * @return Results and a cursor to resume from
      */
     virtual TransactionsAndCursor
-    fetchAccountMPTTransactions(
-        ripple::uint192 const& mptID,
+    fetchAccountMPTokenIssuanceTransactions(
+        ripple::uint192 const& mptIssuanceID,
         ripple::AccountID const& account,
         std::uint32_t limit,
         bool forward,
@@ -774,22 +775,26 @@ public:
     writeNFTTransactions(std::vector<NFTTransactionsData> const& data) = 0;
 
     /**
-     * @brief Write MPT transaction index rows to the `mpt_transactions` table.
+     * @brief Write MPTokenIssuance transaction index rows to the `mptoken_issuance_transactions`
+     * table.
      *
-     * @param data A vector of MPTTransactionsData objects
+     * @param data A vector of MPTokenIssuanceTransactionsData objects
      */
     virtual void
-    writeMPTTransactions(std::vector<MPTTransactionsData> const& data) = 0;
+    writeMPTokenIssuanceTransactions(std::vector<MPTokenIssuanceTransactionsData> const& data) = 0;
 
     /**
-     * @brief Write MPT transaction index rows to the `account_mpt_transactions` table.
+     * @brief Write MPTokenIssuance transaction index rows to the
+     * `account_mptoken_issuance_transactions` table.
      *
      * One row is written per affected account in each record.
      *
-     * @param data A vector of MPTTransactionsData objects
+     * @param data A vector of MPTokenIssuanceTransactionsData objects
      */
     virtual void
-    writeAccountMPTTransactions(std::vector<MPTTransactionsData> const& data) = 0;
+    writeAccountMPTokenIssuanceTransactions(
+        std::vector<MPTokenIssuanceTransactionsData> const& data
+    ) = 0;
 
     /**
      * @brief Write accounts that started holding onto a MPT.

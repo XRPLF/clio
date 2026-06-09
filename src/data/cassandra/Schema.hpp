@@ -278,14 +278,14 @@ public:
                 R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
-                     mpt_id blob,
+        mptoken_issuance_id blob,
                     seq_idx tuple<bigint, bigint>,
                        hash blob,
-                     PRIMARY KEY (mpt_id, seq_idx)
+                     PRIMARY KEY (mptoken_issuance_id, seq_idx)
                   )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "mpt_transactions")
+                qualifiedTableName(settingsProvider_.get(), "mptoken_issuance_transactions")
             )
         );
 
@@ -294,15 +294,15 @@ public:
                 R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
-                     mpt_id blob,
+        mptoken_issuance_id blob,
                     account blob,
                     seq_idx tuple<bigint, bigint>,
                        hash blob,
-                     PRIMARY KEY ((mpt_id, account), seq_idx)
+                     PRIMARY KEY ((mptoken_issuance_id, account), seq_idx)
                   )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "account_mpt_transactions")
+                qualifiedTableName(settingsProvider_.get(), "account_mptoken_issuance_transactions")
             )
         );
 
@@ -507,28 +507,30 @@ public:
             );
         }();
 
-        PreparedStatement insertMPTTx = [this]() {
+        PreparedStatement insertMPTokenIssuanceTx = [this]() {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
                 INSERT INTO {}
-                       (mpt_id, seq_idx, hash)
+                       (mptoken_issuance_id, seq_idx, hash)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "mpt_transactions")
+                    qualifiedTableName(settingsProvider_.get(), "mptoken_issuance_transactions")
                 )
             );
         }();
 
-        PreparedStatement insertAccountMPTTx = [this]() {
+        PreparedStatement insertAccountMPTokenIssuanceTx = [this]() {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
                 INSERT INTO {}
-                       (mpt_id, account, seq_idx, hash)
+                       (mptoken_issuance_id, account, seq_idx, hash)
                 VALUES (?, ?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_mpt_transactions")
+                    qualifiedTableName(
+                        settingsProvider_.get(), "account_mptoken_issuance_transactions"
+                    )
                 )
             );
         }();
@@ -799,68 +801,72 @@ public:
             );
         }();
 
-        PreparedStatement selectMPTTx = [this]() {
+        PreparedStatement selectMPTokenIssuanceTx = [this]() {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
                 SELECT hash, seq_idx
                   FROM {}
-                 WHERE mpt_id = ?
+                 WHERE mptoken_issuance_id = ?
                    AND seq_idx < ?
               ORDER BY seq_idx DESC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "mpt_transactions")
+                    qualifiedTableName(settingsProvider_.get(), "mptoken_issuance_transactions")
                 )
             );
         }();
 
-        PreparedStatement selectMPTTxForward = [this]() {
+        PreparedStatement selectMPTokenIssuanceTxForward = [this]() {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
                 SELECT hash, seq_idx
                   FROM {}
-                 WHERE mpt_id = ?
+                 WHERE mptoken_issuance_id = ?
                    AND seq_idx >= ?
               ORDER BY seq_idx ASC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "mpt_transactions")
+                    qualifiedTableName(settingsProvider_.get(), "mptoken_issuance_transactions")
                 )
             );
         }();
 
-        PreparedStatement selectAccountMPTTx = [this]() {
+        PreparedStatement selectAccountMPTokenIssuanceTx = [this]() {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
                 SELECT hash, seq_idx
                   FROM {}
-                 WHERE mpt_id = ?
+                 WHERE mptoken_issuance_id = ?
                    AND account = ?
                    AND seq_idx < ?
               ORDER BY seq_idx DESC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_mpt_transactions")
+                    qualifiedTableName(
+                        settingsProvider_.get(), "account_mptoken_issuance_transactions"
+                    )
                 )
             );
         }();
 
-        PreparedStatement selectAccountMPTTxForward = [this]() {
+        PreparedStatement selectAccountMPTokenIssuanceTxForward = [this]() {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
                 SELECT hash, seq_idx
                   FROM {}
-                 WHERE mpt_id = ?
+                 WHERE mptoken_issuance_id = ?
                    AND account = ?
                    AND seq_idx >= ?
               ORDER BY seq_idx ASC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_mpt_transactions")
+                    qualifiedTableName(
+                        settingsProvider_.get(), "account_mptoken_issuance_transactions"
+                    )
                 )
             );
         }();
