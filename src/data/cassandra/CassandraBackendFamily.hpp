@@ -14,7 +14,6 @@
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/uuid/string_generator.hpp>
@@ -489,7 +488,6 @@ public:
     TransactionsAndCursor
     fetchMPTTransactions(
         ripple::uint192 const& mptID,
-        std::optional<std::string> const& txType,
         std::uint32_t const limit,
         bool const forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -502,14 +500,13 @@ public:
 
             return schema_->selectMPTTx.bind(mptID);
         }();
-        return fetchMPTTransactionsImpl(statement, 1, txType, limit, forward, cursorIn, yield);
+        return fetchMPTTransactionsImpl(statement, 1, limit, forward, cursorIn, yield);
     }
 
     TransactionsAndCursor
     fetchAccountMPTTransactions(
         ripple::uint192 const& mptID,
         ripple::AccountID const& account,
-        std::optional<std::string> const& txType,
         std::uint32_t const limit,
         bool const forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -522,7 +519,7 @@ public:
 
             return schema_->selectAccountMPTTx.bind(mptID, account);
         }();
-        return fetchMPTTransactionsImpl(statement, 2, txType, limit, forward, cursorIn, yield);
+        return fetchMPTTransactionsImpl(statement, 2, limit, forward, cursorIn, yield);
     }
 
     MPTHoldersAndCursor
@@ -927,8 +924,7 @@ public:
             return schema_->insertMPTTx.bind(
                 record.mptID,
                 std::make_tuple(record.ledgerSequence, record.transactionIndex),
-                record.txHash,
-                Text{record.txType}
+                record.txHash
             );
         });
 
@@ -954,8 +950,7 @@ public:
                         record.mptID,
                         account,
                         std::make_tuple(record.ledgerSequence, record.transactionIndex),
-                        record.txHash,
-                        Text{record.txType}
+                        record.txHash
                     );
                 }
             );
@@ -1108,19 +1103,13 @@ protected:
      * @brief Shared implementation of the two MPT transaction-index fetchers.
      *
      * Mirrors `fetchNFTTransactions`: binds the cursor/limit onto an already partition-bound
-     * statement, reads `(hash, seq_idx, tx_type)` index rows, then hydrates the blobs via
+     * statement, reads `(hash, seq_idx)` index rows, then hydrates the blobs via
      * @ref fetchTransactions. The forward path uses an inclusive `seq_idx >=`, so the returned
      * cursor's transaction index is advanced by one (matching the NFT history convention).
-     *
-     * When @p txType is set, index rows whose stored type does not match (case-insensitively) are
-     * dropped before hydration, so filtered-out rows cost no blob fetch. The returned cursor tracks
-     * the raw index page boundary (the last row read from the partition) independent of the filter,
-     * so a filtered page may return fewer than @p limit transactions while still paging correctly.
      *
      * @param statement The statement already bound with the partition-key columns
      * @param cursorIdx The bind index for the `seq_idx` cursor tuple (the `LIMIT` binds at
      * `cursorIdx + 1`)
-     * @param txType Optional `TxFormats` transaction type name to filter on (case-insensitive)
      * @param limit The maximum number of transactions per result page
      * @param forward Whether the page is fetched forwards or backwards
      * @param cursorIn The cursor to resume fetching from
@@ -1131,7 +1120,6 @@ protected:
     fetchMPTTransactionsImpl(
         Statement const& statement,
         std::size_t const cursorIdx,
-        std::optional<std::string> const& txType,
         std::uint32_t const limit,
         bool const forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -1163,18 +1151,14 @@ protected:
         }
 
         std::vector<ripple::uint256> hashes = {};
-        // The marker rides the raw index page boundary, so the full page must be counted even
-        // when the tx_type filter drops some rows from the hydrated result.
-        auto const rawRowCount = results.numRows();
-        auto remaining = rawRowCount;
-        LOG(log_.info()) << "num_rows = " << rawRowCount;
+        auto numRows = results.numRows();
+        LOG(log_.info()) << "num_rows = " << numRows;
 
-        for (auto const& [hash, data, rowTxType] :
-             extract<ripple::uint256, std::tuple<uint32_t, uint32_t>, std::string>(results)) {
-            if (not txType.has_value() || boost::iequals(rowTxType, *txType))
-                hashes.push_back(hash);
+        for (auto const& [hash, data] :
+             extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
+            hashes.push_back(hash);
 
-            if (--remaining == 0) {
+            if (--numRows == 0) {
                 LOG(log_.debug()) << "Setting cursor";
                 cursor = data;
 
@@ -1188,9 +1172,7 @@ protected:
         auto txns = fetchTransactions(hashes, yield);
         LOG(log_.debug()) << "MPT Txns = " << txns.size();
 
-        // Return a cursor only when the raw partition page was full (a short page means the
-        // partition is exhausted), regardless of how many rows the tx_type filter removed.
-        if (rawRowCount == limit) {
+        if (txns.size() == limit) {
             LOG(log_.debug()) << "Returning cursor";
             return {std::move(txns), cursor};
         }

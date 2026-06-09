@@ -204,8 +204,8 @@ struct MPTHolderData {
  *
  * A single instance drives writes to both MPT transaction index tables
  * (`mpt_transactions` and `account_mpt_transactions`). The @ref accounts set fans out the
- * per-account table, and @ref txType is the canonical mixed-case `TxFormats` name persisted on
- * every row (filtered case-insensitively at read time for the `tx_type` query shapes).
+ * per-account table. The transaction type is not stored: the `tx_type` query shapes filter it
+ * post-hydration in the handler (off the hydrated transaction blob), exactly as `account_tx`.
  *
  * @note This type is an aggregate populated from already-extracted transaction details. It
  * intentionally has no `ripple::TxMeta`-based constructor so the MPT extraction logic can live in
@@ -216,8 +216,6 @@ struct MPTTransactionsData {
     ripple::uint192 mptID;
     /** @brief The accounts affected by the transaction (drives the per-account table). */
     boost::container::flat_set<ripple::AccountID> accounts;
-    /** @brief The canonical mixed-case `TxFormats` transaction type name (e.g. "Payment"). */
-    std::string txType;
     /** @brief The ledger sequence the transaction was included in. */
     std::uint32_t ledgerSequence{};
     /** @brief The index of the transaction within its ledger. */

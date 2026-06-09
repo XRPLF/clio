@@ -1469,12 +1469,11 @@ TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
 // cannot validate (CLUSTERING ORDER BY DESC, the `<` vs `>=` boundary, the forward
 // `++transactionIndex` fix-up, and the tuple<bigint,bigint><->uint32 round-trip). The deep
 // pagination tests focus on the issuance-wide table; this first test keeps account-table
-// round-trip, fanout, and tx_type coverage in the same real-backend suite.
+// round-trip and fanout coverage in the same real-backend suite. Transaction-type filtering is
+// not a backend concern (it is applied post-hydration in the handler, like account_tx), so it is
+// not exercised here.
 // ====================================================================================
 struct BackendCassandraMPTTest : BackendCassandraTest {
-    static constexpr auto kTxTypeA = "Payment";
-    static constexpr auto kTxTypeB = "MPTokenAuthorize";
-
     // A real 24-byte (48 hex char) MPT issuance id.
     static ripple::uint192
     makeMptId()
@@ -1531,7 +1530,7 @@ struct BackendCassandraMPTTest : BackendCassandraTest {
     }
 };
 
-TEST_F(BackendCassandraMPTTest, RoundTripBothShapesAndTxTypeFilter)
+TEST_F(BackendCassandraMPTTest, RoundTripBothShapes)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const mptId = makeMptId();
@@ -1560,7 +1559,6 @@ TEST_F(BackendCassandraMPTTest, RoundTripBothShapesAndTxTypeFilter)
         MPTTransactionsData const record{
             .mptID = mptId,
             .accounts = {account, secondAccount},
-            .txType = kTxTypeA,
             .ledgerSequence = seq,
             .transactionIndex = 1,
             .txHash = hash
@@ -1569,62 +1567,30 @@ TEST_F(BackendCassandraMPTTest, RoundTripBothShapesAndTxTypeFilter)
         backend_->writeAccountMPTTransactions({record});
         backend_->waitForWritesToFinish();
 
-        // Issuance-wide shape, unfiltered.
+        // Issuance-wide shape.
         {
-            auto [txns, cursor] =
-                backend_->fetchMPTTransactions(mptId, std::nullopt, 100, false, {}, yield);
+            auto [txns, cursor] = backend_->fetchMPTTransactions(mptId, 100, false, {}, yield);
             expectHydratedSingle(txns);
             EXPECT_FALSE(cursor);
         }
-        // Account shape, unfiltered.
+        // Account shape.
         {
-            auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
-                mptId, account, std::nullopt, 100, false, {}, yield
-            );
+            auto [txns, cursor] =
+                backend_->fetchAccountMPTTransactions(mptId, account, 100, false, {}, yield);
             expectHydratedSingle(txns);
             EXPECT_FALSE(cursor);
         }
         // Account fanout writes one row per affected account.
         {
-            auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
-                mptId, secondAccount, std::nullopt, 100, false, {}, yield
-            );
-            expectHydratedSingle(txns);
-            EXPECT_FALSE(cursor);
-        }
-        // Issuance-wide shape, tx_type filter that matches case-insensitively ("payment"
-        // vs the stored canonical "Payment" -- kTxTypeA).
-        {
             auto [txns, cursor] =
-                backend_->fetchMPTTransactions(mptId, "payment", 100, false, {}, yield);
+                backend_->fetchAccountMPTTransactions(mptId, secondAccount, 100, false, {}, yield);
             expectHydratedSingle(txns);
             EXPECT_FALSE(cursor);
-        }
-        // Account shape, tx_type filter that matches case-insensitively too.
-        {
-            auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
-                mptId, account, "payment", 100, false, {}, yield
-            );
-            expectHydratedSingle(txns);
-            EXPECT_FALSE(cursor);
-        }
-
-        // tx_type filter that does not match -> empty, on both shapes.
-        {
-            auto [txns, cursor] =
-                backend_->fetchMPTTransactions(mptId, kTxTypeB, 100, false, {}, yield);
-            EXPECT_EQ(txns.size(), 0);
-        }
-        {
-            auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
-                mptId, account, kTxTypeB, 100, false, {}, yield
-            );
-            EXPECT_EQ(txns.size(), 0);
         }
         // unseen account -> empty
         {
             auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
-                mptId, makeAccount(0x99), std::nullopt, 100, false, {}, yield
+                mptId, makeAccount(0x99), 100, false, {}, yield
             );
             EXPECT_EQ(txns.size(), 0);
         }
@@ -1651,7 +1617,6 @@ TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
             MPTTransactionsData const record{
                 .mptID = mptId,
                 .accounts = {},
-                .txType = kTxTypeA,
                 .ledgerSequence = seq,
                 .transactionIndex = i,
                 .txHash = hash
@@ -1669,8 +1634,7 @@ TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
 
         // Reverse (forward=false): newest first -> rows 3, 2, 1.
         {
-            auto [txns, cursor] =
-                backend_->fetchMPTTransactions(mptId, std::nullopt, 100, false, {}, yield);
+            auto [txns, cursor] = backend_->fetchMPTTransactions(mptId, 100, false, {}, yield);
             ASSERT_EQ(txns.size(), 3);
             EXPECT_FALSE(cursor);
             EXPECT_EQ(txBlobToString(txns[0]), expectedBlob(3));
@@ -1679,8 +1643,7 @@ TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
         }
         // Forward (forward=true): oldest first -> rows 1, 2, 3 (the reverse order).
         {
-            auto [txns, cursor] =
-                backend_->fetchMPTTransactions(mptId, std::nullopt, 100, true, {}, yield);
+            auto [txns, cursor] = backend_->fetchMPTTransactions(mptId, 100, true, {}, yield);
             ASSERT_EQ(txns.size(), 3);
             EXPECT_FALSE(cursor);
             EXPECT_EQ(txBlobToString(txns[0]), expectedBlob(1));
@@ -1713,7 +1676,6 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 MPTTransactionsData const record{
                     .mptID = mptId,
                     .accounts = {},
-                    .txType = kTxTypeA,
                     .ledgerSequence = seq,
                     .transactionIndex = i,
                     .txHash = hash
@@ -1734,9 +1696,8 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 std::optional<data::TransactionsCursor> cursor;
                 std::size_t pages = 0;
                 do {
-                    auto [txns, retCursor] = backend_->fetchMPTTransactions(
-                        mptId, std::nullopt, limit, forward, cursor, yield
-                    );
+                    auto [txns, retCursor] =
+                        backend_->fetchMPTTransactions(mptId, limit, forward, cursor, yield);
                     ++pages;
                     // Guard against an infinite loop from a non-advancing cursor.
                     ASSERT_LE(pages, expected.size() + 2);
@@ -1783,7 +1744,6 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 MPTTransactionsData const record{
                     .mptID = mptIdB,
                     .accounts = {},
-                    .txType = kTxTypeA,
                     .ledgerSequence = seq,
                     .transactionIndex = i,
                     .txHash = hash
@@ -1800,9 +1760,8 @@ TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
                 std::size_t pages = 0;
                 bool sawEmptyTerminator = false;
                 do {
-                    auto [txns, retCursor] = backend_->fetchMPTTransactions(
-                        mptIdB, std::nullopt, limit, forward, cursor, yield
-                    );
+                    auto [txns, retCursor] =
+                        backend_->fetchMPTTransactions(mptIdB, limit, forward, cursor, yield);
                     ++pages;
                     ASSERT_LE(pages, 4u) << "exact-multiple paging did not terminate cleanly";
                     if (txns.empty()) {
@@ -1848,7 +1807,6 @@ TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
         backend_->writeMPTTransactions({MPTTransactionsData{
             .mptID = mptId,
             .accounts = {},
-            .txType = kTxTypeA,
             .ledgerSequence = seq,
             .transactionIndex = 1,
             .txHash = h1
@@ -1856,7 +1814,6 @@ TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
         backend_->writeMPTTransactions({MPTTransactionsData{
             .mptID = mptId,
             .accounts = {},
-            .txType = kTxTypeA,
             .ledgerSequence = seq,
             .transactionIndex = 2,
             .txHash = h2
@@ -1864,15 +1821,13 @@ TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
         backend_->writeMPTTransactions({MPTTransactionsData{
             .mptID = mptId,
             .accounts = {},
-            .txType = kTxTypeA,
             .ledgerSequence = seq,
             .transactionIndex = 3,
             .txHash = h3
         }});
         backend_->waitForWritesToFinish();
 
-        auto [txns, cursor] =
-            backend_->fetchMPTTransactions(mptId, std::nullopt, 100, false, {}, yield);
+        auto [txns, cursor] = backend_->fetchMPTTransactions(mptId, 100, false, {}, yield);
         // The page is NOT shortened: the missing blob yields an in-position empty record.
         ASSERT_EQ(txns.size(), 3);
         EXPECT_FALSE(cursor);
@@ -1881,87 +1836,6 @@ TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
         EXPECT_EQ(txns[1], data::TransactionAndMetadata{});
         EXPECT_NE(txns[0], data::TransactionAndMetadata{});
         EXPECT_NE(txns[2], data::TransactionAndMetadata{});
-    });
-}
-
-// A selective tx_type filter must drop non-matching rows from the hydrated page while the
-// returned cursor keeps tracking the raw index page boundary. So a full raw page (== limit) that
-// contains only a few matching rows still returns a cursor (fewer than `limit` txns), and paging
-// drains every matching row exactly once before a short raw page ends the scan.
-TEST_F(BackendCassandraMPTTest, TxTypeFilterMarkerRidesRawPageBoundary)
-{
-    runSpawn([this](boost::asio::yield_context yield) {
-        ripple::uint192 mptId;
-        ASSERT_TRUE(mptId.parseHex("00000003CE323A7216F1B07AE9C36F107879B6E9D3A3C1B0"));
-        std::uint32_t const baseSeq = 500;
-
-        auto expectedBlob = [&](std::uint8_t i) { return "tx_" + ripple::strHex(makeHash(i)); };
-        auto txBlobToString = [](data::TransactionAndMetadata const& tx) {
-            return std::string(tx.transaction.begin(), tx.transaction.end());
-        };
-
-        // 12 rows; every 4th (i = 4, 8, 12) is the rare type B, the rest type A.
-        constexpr std::uint8_t kTotal = 12;
-        std::set<std::string> expectedTypeB;
-        for (std::uint8_t i = 1; i <= kTotal; ++i) {
-            auto const seq = baseSeq + i;
-            setupLedgerRange(seq);
-            auto const hash = makeHash(i);
-            writeTxBlob(hash, seq);
-            auto const txType = (i % 4 == 0) ? kTxTypeB : kTxTypeA;
-            backend_->writeMPTTransactions({MPTTransactionsData{
-                .mptID = mptId,
-                .accounts = {},
-                .txType = txType,
-                .ledgerSequence = seq,
-                .transactionIndex = i,
-                .txHash = hash
-            }});
-            if (i % 4 == 0)
-                expectedTypeB.insert(expectedBlob(i));
-        }
-        backend_->waitForWritesToFinish();
-        ASSERT_EQ(expectedTypeB.size(), 3u);
-
-        // Drain the rare type B with a limit larger than the number of matches per page. The
-        // matching SET is direction-independent, so the same invariants hold for forward (which
-        // also exercises the inclusive `>=` + ++transactionIndex cursor fix-up) and reverse.
-        auto drain = [&](bool forward) {
-            std::vector<std::string> seen;
-            std::optional<data::TransactionsCursor> cursor;
-            std::uint32_t const limit = 5;
-            std::size_t pages = 0;
-            bool sawShortPageWithCursor = false;
-            do {
-                auto [txns, retCursor] =
-                    backend_->fetchMPTTransactions(mptId, kTxTypeB, limit, forward, cursor, yield);
-                ++pages;
-                ASSERT_LE(pages, 4u) << "filtered paging did not terminate";
-                // The filter only ever removes rows, so a page never exceeds the raw limit.
-                EXPECT_LE(txns.size(), limit);
-                // A cursor with fewer than `limit` hydrated txns proves the marker rode the raw
-                // page boundary rather than the filtered count.
-                if (retCursor && txns.size() < limit)
-                    sawShortPageWithCursor = true;
-                for (auto const& tx : txns)
-                    seen.push_back(txBlobToString(tx));
-                cursor = retCursor;
-            } while (cursor);
-
-            EXPECT_TRUE(sawShortPageWithCursor)
-                << "a full raw page with few matches should still return a cursor (forward="
-                << forward << ")";
-
-            // Only type B rows came back, each exactly once, with no type A leakage.
-            std::set<std::string> const seenSet(seen.begin(), seen.end());
-            EXPECT_EQ(seen.size(), seenSet.size())
-                << "filtered paging returned duplicates (forward=" << forward << ")";
-            EXPECT_EQ(seenSet, expectedTypeB)
-                << "filter leaked non-matching rows or dropped matches (forward=" << forward << ")";
-        };
-
-        drain(false);
-        drain(true);
     });
 }
 

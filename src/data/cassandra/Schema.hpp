@@ -281,7 +281,6 @@ public:
                      mpt_id blob,
                     seq_idx tuple<bigint, bigint>,
                        hash blob,
-                    tx_type text,
                      PRIMARY KEY (mpt_id, seq_idx)
                   )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
@@ -299,7 +298,6 @@ public:
                     account blob,
                     seq_idx tuple<bigint, bigint>,
                        hash blob,
-                    tx_type text,
                      PRIMARY KEY ((mpt_id, account), seq_idx)
                   )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
@@ -514,8 +512,8 @@ public:
                 fmt::format(
                     R"(
                 INSERT INTO {}
-                       (mpt_id, seq_idx, hash, tx_type)
-                VALUES (?, ?, ?, ?)
+                       (mpt_id, seq_idx, hash)
+                VALUES (?, ?, ?)
                 )",
                     qualifiedTableName(settingsProvider_.get(), "mpt_transactions")
                 )
@@ -527,8 +525,8 @@ public:
                 fmt::format(
                     R"(
                 INSERT INTO {}
-                       (mpt_id, account, seq_idx, hash, tx_type)
-                VALUES (?, ?, ?, ?, ?)
+                       (mpt_id, account, seq_idx, hash)
+                VALUES (?, ?, ?, ?)
                 )",
                     qualifiedTableName(settingsProvider_.get(), "account_mpt_transactions")
                 )
@@ -805,7 +803,7 @@ public:
             return handle_.get().prepare(
                 fmt::format(
                     R"(
-                SELECT hash, seq_idx, tx_type
+                SELECT hash, seq_idx
                   FROM {}
                  WHERE mpt_id = ?
                    AND seq_idx < ?
@@ -821,7 +819,7 @@ public:
             return handle_.get().prepare(
                 fmt::format(
                     R"(
-                SELECT hash, seq_idx, tx_type
+                SELECT hash, seq_idx
                   FROM {}
                  WHERE mpt_id = ?
                    AND seq_idx >= ?
@@ -837,7 +835,7 @@ public:
             return handle_.get().prepare(
                 fmt::format(
                     R"(
-                SELECT hash, seq_idx, tx_type
+                SELECT hash, seq_idx
                   FROM {}
                  WHERE mpt_id = ?
                    AND account = ?
@@ -854,7 +852,7 @@ public:
             return handle_.get().prepare(
                 fmt::format(
                     R"(
-                SELECT hash, seq_idx, tx_type
+                SELECT hash, seq_idx
                   FROM {}
                  WHERE mpt_id = ?
                    AND account = ?

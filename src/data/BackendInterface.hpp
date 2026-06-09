@@ -409,15 +409,13 @@ public:
     ) const = 0;
 
     /**
-     * @brief Fetches transactions that touched a given MPT issuance, optionally filtered by type.
+     * @brief Fetches transactions that touched a given MPT issuance.
      *
-     * When @p txType is set, index rows whose stored type does not match (case-insensitively) are
-     * dropped before the transaction blobs are hydrated, so filtered-out rows cost no extra fetch.
-     * The returned cursor tracks the raw index page boundary independent of the filter, so a
-     * filtered page may return fewer than @p limit transactions while still paging correctly.
+     * Returns one page of the issuance-wide index, newest-first (or oldest-first when @p forward).
+     * Type filtering, when requested, is applied post-hydration in the handler off the hydrated
+     * transaction blob, exactly as `account_tx` (the index stores no transaction type).
      *
      * @param mptID The 24-byte MPT issuance ID
-     * @param txType Optional `TxFormats` transaction type name to filter on (case-insensitive)
      * @param limit The maximum number of transactions per result page
      * @param forward Whether to fetch the page forwards or backwards from the given cursor
      * @param cursorIn The cursor to resume fetching from
@@ -427,7 +425,6 @@ public:
     virtual TransactionsAndCursor
     fetchMPTTransactions(
         ripple::uint192 const& mptID,
-        std::optional<std::string> const& txType,
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -435,17 +432,14 @@ public:
     ) const = 0;
 
     /**
-     * @brief Fetches transactions that touched a given MPT issuance and involved a given account,
-     * optionally filtered by type.
+     * @brief Fetches transactions that touched a given MPT issuance and involved a given account.
      *
-     * When @p txType is set, index rows whose stored type does not match (case-insensitively) are
-     * dropped before the transaction blobs are hydrated, so filtered-out rows cost no extra fetch.
-     * The returned cursor tracks the raw index page boundary independent of the filter, so a
-     * filtered page may return fewer than @p limit transactions while still paging correctly.
+     * Returns one page of the per-account index, newest-first (or oldest-first when @p forward).
+     * Type filtering, when requested, is applied post-hydration in the handler off the hydrated
+     * transaction blob, exactly as `account_tx` (the index stores no transaction type).
      *
      * @param mptID The 24-byte MPT issuance ID
      * @param account The account that must be affected by the transaction
-     * @param txType Optional `TxFormats` transaction type name to filter on (case-insensitive)
      * @param limit The maximum number of transactions per result page
      * @param forward Whether to fetch the page forwards or backwards from the given cursor
      * @param cursorIn The cursor to resume fetching from
@@ -456,7 +450,6 @@ public:
     fetchAccountMPTTransactions(
         ripple::uint192 const& mptID,
         ripple::AccountID const& account,
-        std::optional<std::string> const& txType,
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& cursorIn,
