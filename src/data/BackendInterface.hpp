@@ -409,11 +409,7 @@ public:
     ) const = 0;
 
     /**
-     * @brief Fetches transactions that touched a given MPTokenIssuance.
-     *
-     * Returns one page of the issuance-wide index, newest-first (or oldest-first when @p forward).
-     * Type filtering, when requested, is applied post-hydration in the handler off the hydrated
-     * transaction blob, exactly as `account_tx` (the index stores no transaction type).
+     * @brief Fetches all transactions for a specific MPTokenIssuance.
      *
      * @param mptIssuanceID The 24-byte MPTokenIssuance ID
      * @param limit The maximum number of transactions per result page
@@ -432,12 +428,7 @@ public:
     ) const = 0;
 
     /**
-     * @brief Fetches transactions that touched a given MPTokenIssuance and involved a given
-     * account.
-     *
-     * Returns one page of the per-account index, newest-first (or oldest-first when @p forward).
-     * Type filtering, when requested, is applied post-hydration in the handler off the hydrated
-     * transaction blob, exactly as `account_tx` (the index stores no transaction type).
+     * @brief Fetches all transactions for a specific MPTokenIssuance involving a specific account.
      *
      * @param mptIssuanceID The 24-byte MPTokenIssuance ID
      * @param account The account that must be affected by the transaction

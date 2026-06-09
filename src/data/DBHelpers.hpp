@@ -202,14 +202,8 @@ struct MPTHolderData {
 /**
  * @brief Represents a link from a transaction to an MPTokenIssuance that it touched.
  *
- * A single instance drives writes to both MPTokenIssuance transaction index tables
- * (mptoken_issuance_transactions and account_mptoken_issuance_transactions). The accounts set fans
- * out the per-account table. The transaction type is not stored: the tx_type query shapes filter it
- * post-hydration in the handler, exactly as account_tx.
- *
- * @note This type is an aggregate populated from already-extracted transaction details. It
- * intentionally has no ripple::TxMeta-based constructor so the MPTokenIssuance extraction logic can
- * live in one ETL/backfill helper rather than in the storage data model.
+ * Gets written to the mptoken_issuance_transactions and account_mptoken_issuance_transactions
+ * tables and the like.
  */
 struct MPTokenIssuanceTransactionsData {
     ripple::uint192 mptIssuanceID;
