@@ -1,3 +1,4 @@
+#include "data/DBHelpers.hpp"
 #include "etl/Models.hpp"
 #include "etl/impl/ext/MPT.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -8,6 +9,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STArray.h>
@@ -17,7 +19,6 @@
 #include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/TxMeta.h>
-#include <xrpl/protocol/UintTypes.h>
 
 #include <algorithm>
 #include <string>
@@ -146,11 +147,13 @@ auto
 createTestData()
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE
+        util::createTransaction(
+            ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE
         ),  // metadata does not create an MPT holder
         util::createTransaction(ripple::TxType::ttMPTOKEN_AUTHORIZE, kHash, kTxnMeta, kTxnHex),
         util::createTransaction(ripple::TxType::ttAMM_CREATE),  // metadata is not MPT
-        util::createTransaction(ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE
+        util::createTransaction(
+            ripple::TxType::ttMPTOKEN_ISSUANCE_CREATE
         ),  // metadata does not create an MPT holder
     };
 

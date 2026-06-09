@@ -11,7 +11,6 @@
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TER.h>
-#include <xrpl/protocol/TxFormats.h>
 
 #include <optional>
 #include <string>
