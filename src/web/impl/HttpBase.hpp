@@ -43,8 +43,10 @@
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
+#include <boost/beast/http/message_fwd.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/string_body_fwd.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/core/ignore_unused.hpp>
@@ -139,6 +141,7 @@ class HttpBase : public ConnectionBase {
     SendLambda sender_;
     std::shared_ptr<AdminVerificationStrategy> adminVerification_;
     std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
+    bool isProxyConnection_ = false;
 
 protected:
     boost::beast::flat_buffer buffer_;
@@ -239,6 +242,23 @@ public:
         if (ec)
             return httpFail(ec, "read");
 
+        auto const updateClientIp = [&](std::string newIp) {
+            if (newIp == clientIp_)
+                return;
+            LOG(log_.info()) << tag() << "Detected a forwarded request from proxy. Resolved client ip: " << newIp;
+            dosGuard_.get().decrement(clientIp_);
+            clientIp_ = std::move(newIp);
+            dosGuard_.get().increment(clientIp_);
+        };
+
+        if (isProxyConnection_) {
+            if (auto resolvedIp = ProxyIpResolver::extractClientIp(req_); resolvedIp.has_value())
+                updateClientIp(std::move(*resolvedIp));
+        } else if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_); resolvedIp.has_value()) {
+            updateClientIp(std::move(*resolvedIp));
+            isProxyConnection_ = true;
+        }
+
         if (req_.method() == http::verb::get and req_.target() == "/health")
             return sender_(httpResponse(http::status::ok, "text/html", kHEALTH_CHECK_HTML));
 
@@ -247,14 +267,6 @@ public:
                 return sender_(httpResponse(http::status::ok, "text/html", kCACHE_CHECK_LOADED_HTML));
 
             return sender_(httpResponse(http::status::service_unavailable, "text/html", kCACHE_CHECK_NOT_LOADED_HTML));
-        }
-
-        if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_); resolvedIp != clientIp_) {
-            LOG(log_.info()) << tag() << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
-                             << ". Resolved client ip: " << resolvedIp;
-            dosGuard_.get().decrement(clientIp_);
-            clientIp_ = std::move(resolvedIp);
-            dosGuard_.get().increment(clientIp_);
         }
 
         // Update isAdmin property of the connection
