@@ -1,10 +1,12 @@
 #include "data/DBHelpers.hpp"
 #include "util/Assert.hpp"
 
+#include <boost/container/flat_set.hpp>
 #include <ripple/protocol/STBase.h>
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
@@ -42,6 +44,83 @@ getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const&)
     }
 
     return holders;
+}
+
+namespace {
+
+/**
+ * @brief Derive the MPTokenIssuanceID from an affected node in transaction metadata
+ *
+ * @param node An entry of the metadata's AffectedNodes array
+ * @return The 192-bit issuance ID if the node is an MPTokenIssuance or MPToken object
+ */
+std::optional<ripple::uint192>
+getMPTokenIssuanceIDFromNode(ripple::STObject const& node)
+{
+    auto const entryType = node.getFieldU16(ripple::sfLedgerEntryType);
+    if (entryType != ripple::ltMPTOKEN && entryType != ripple::ltMPTOKEN_ISSUANCE)
+        return {};
+
+    auto const& fieldsName =
+        node.getFName() == ripple::sfCreatedNode ? ripple::sfNewFields : ripple::sfFinalFields;
+    if (not node.isFieldPresent(fieldsName))
+        return {};
+
+    auto const& fields = node.peekAtField(fieldsName).downcast<ripple::STObject>();
+
+    if (entryType == ripple::ltMPTOKEN) {
+        if (not fields.isFieldPresent(ripple::sfMPTokenIssuanceID))
+            return {};
+
+        return fields[ripple::sfMPTokenIssuanceID];
+    }
+
+    // MPTokenIssuance objects carry no sfMPTokenIssuanceID, and the node's ledger key is a
+    // one-way hash that does not embed the ID, so reconstruct it from sfSequence and sfIssuer
+    if (not fields.isFieldPresent(ripple::sfSequence) ||
+        not fields.isFieldPresent(ripple::sfIssuer))
+        return {};
+
+    return ripple::makeMptID(
+        fields.getFieldU32(ripple::sfSequence), fields.getAccountID(ripple::sfIssuer)
+    );
+}
+
+}  // namespace
+
+std::vector<MPTokenIssuanceTransactionsData>
+getMPTokenIssuanceTxsFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
+{
+    if (txMeta.getResultTER() != ripple::tesSUCCESS)
+        return {};
+
+    // flat_set dedups issuances per (mptoken_issuance_id, seq_idx); the accounts flat_set below
+    // dedups per (mptoken_issuance_id, account, seq_idx)
+    boost::container::flat_set<ripple::uint192> issuanceIDs;
+    for (ripple::STObject const& node : txMeta.getNodes()) {
+        if (auto const issuanceID = getMPTokenIssuanceIDFromNode(node); issuanceID.has_value())
+            issuanceIDs.insert(*issuanceID);
+    }
+
+    if (issuanceIDs.empty())
+        return {};
+
+    auto const accounts = txMeta.getAffectedAccounts();
+
+    std::vector<MPTokenIssuanceTransactionsData> result;
+    result.reserve(issuanceIDs.size());
+    for (auto const& issuanceID : issuanceIDs) {
+        result.push_back(
+            MPTokenIssuanceTransactionsData{
+                .mptIssuanceID = issuanceID,
+                .accounts = accounts,
+                .ledgerSequence = txMeta.getLgrSeq(),
+                .transactionIndex = txMeta.getIndex(),
+                .txHash = sttx.getTransactionID()
+            }
+        );
+    }
+    return result;
 }
 
 std::optional<MPTHolderData>
