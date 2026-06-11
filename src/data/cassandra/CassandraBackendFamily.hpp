@@ -77,6 +77,9 @@ protected:
     // TODO: move to interface level
     mutable FetchLedgerCacheType ledgerCache_{};
 
+    static constexpr std::size_t kMPTokenIssuanceTxCursorBindIndex = 1;
+    static constexpr std::size_t kAccountMPTokenIssuanceTxCursorBindIndex = 2;
+
 public:
     /**
      * @brief Create a new cassandra/scylla backend instance.
@@ -500,7 +503,9 @@ public:
 
             return schema_->selectMPTokenIssuanceTx.bind(mptIssuanceID);
         }();
-        return fetchMPTokenIssuanceTransactionsImpl(statement, 1, limit, forward, cursorIn, yield);
+        return fetchMPTokenIssuanceTransactionsImpl(
+            statement, kMPTokenIssuanceTxCursorBindIndex, limit, forward, cursorIn, yield
+        );
     }
 
     TransactionsAndCursor
@@ -519,7 +524,9 @@ public:
 
             return schema_->selectAccountMPTokenIssuanceTx.bind(mptIssuanceID, account);
         }();
-        return fetchMPTokenIssuanceTransactionsImpl(statement, 2, limit, forward, cursorIn, yield);
+        return fetchMPTokenIssuanceTransactionsImpl(
+            statement, kAccountMPTokenIssuanceTxCursorBindIndex, limit, forward, cursorIn, yield
+        );
     }
 
     MPTHoldersAndCursor
@@ -1155,7 +1162,6 @@ protected:
 
         std::vector<ripple::uint256> hashes = {};
         auto numRows = results.numRows();
-        LOG(log_.info()) << "num_rows = " << numRows;
 
         for (auto const& [hash, data] :
              extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results)) {

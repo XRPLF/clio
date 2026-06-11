@@ -202,7 +202,7 @@ struct MPTHolderData {
 /**
  * @brief Represents a transaction link for an MPTokenIssuance.
  *
- * Writing one of these records inserts into two tables:
+ * @note Writing one of these records inserts into two tables:
  * mptoken_issuance_transactions and account_mptoken_issuance_transactions.
  */
 struct MPTokenIssuanceTransactionsData {

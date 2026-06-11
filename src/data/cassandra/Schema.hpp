@@ -278,9 +278,9 @@ public:
                 R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
-        mptoken_issuance_id blob,
-                    seq_idx tuple<bigint, bigint>,
-                       hash blob,
+         mptoken_issuance_id blob,
+                     seq_idx tuple<bigint, bigint>,
+                        hash blob,
                      PRIMARY KEY (mptoken_issuance_id, seq_idx)
                   )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
@@ -294,10 +294,10 @@ public:
                 R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
-        mptoken_issuance_id blob,
-                    account blob,
-                    seq_idx tuple<bigint, bigint>,
-                       hash blob,
+         mptoken_issuance_id blob,
+                     account blob,
+                     seq_idx tuple<bigint, bigint>,
+                        hash blob,
                      PRIMARY KEY ((mptoken_issuance_id, account), seq_idx)
                   )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
@@ -311,9 +311,9 @@ public:
                 R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
-                    mpt_id blob,
-                    holder blob,
-                   PRIMARY KEY (mpt_id, holder)
+                      mpt_id blob,
+                      holder blob,
+                     PRIMARY KEY (mpt_id, holder)
                   )
              WITH CLUSTERING ORDER BY (holder ASC)
             )",

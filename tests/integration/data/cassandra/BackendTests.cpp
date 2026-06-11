@@ -33,6 +33,7 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/Serializer.h>
@@ -1466,25 +1467,19 @@ struct BackendCassandraMPTokenIssuanceTest : BackendCassandraTest {
     static ripple::uint192
     makeMptIssuanceId()
     {
-        ripple::uint192 mptIssuanceId;
-        EXPECT_TRUE(mptIssuanceId.parseHex("00000001AE123A7216F1B07AE9C36F107879B6E9D3A3C1B0"));
-        return mptIssuanceId;
+        return ripple::makeMptID(1, makeAccount(0x01));
     }
 
     static ripple::AccountID
     makeAccount(std::uint8_t seed)
     {
-        ripple::AccountID account;
-        account.begin()[0] = seed;
-        return account;
+        return ripple::AccountID{seed};
     }
 
     static ripple::uint256
     makeHash(std::uint8_t seed)
     {
-        ripple::uint256 hash;
-        hash.begin()[0] = seed;
-        return hash;
+        return ripple::uint256{seed};
     }
 
     // Writes a single ledger so that fetchLedgerRange() is populated, which the fetchers
@@ -1517,7 +1512,7 @@ struct BackendCassandraMPTokenIssuanceTest : BackendCassandraTest {
     }
 };
 
-TEST_F(BackendCassandraMPTokenIssuanceTest, RoundTripBothShapes)
+TEST_F(BackendCassandraMPTokenIssuanceTest, RoundTripIssuanceAndAccountIndexes)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const mptIssuanceId = makeMptIssuanceId();
@@ -1580,6 +1575,48 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, RoundTripBothShapes)
                 mptIssuanceId, makeAccount(0x99), 100, false, {}, yield
             );
             EXPECT_EQ(txns.size(), 0);
+        }
+        {
+            auto const secondHash = makeHash(0x02);
+            writeTxBlob(secondHash, seq);
+            auto const expectedSecondTxBlob = "tx_" + ripple::strHex(secondHash);
+            auto const expectedSecondMetaBlob = "meta_" + ripple::strHex(secondHash);
+            auto expectFetchedSecond = [&](auto const& txns) {
+                ASSERT_EQ(txns.size(), 1);
+                EXPECT_EQ(
+                    std::string(txns[0].transaction.begin(), txns[0].transaction.end()),
+                    expectedSecondTxBlob
+                );
+                EXPECT_EQ(
+                    std::string(txns[0].metadata.begin(), txns[0].metadata.end()),
+                    expectedSecondMetaBlob
+                );
+                EXPECT_EQ(txns[0].ledgerSequence, seq);
+            };
+            MPTokenIssuanceTransactionsData const secondRecord{
+                .mptIssuanceID = mptIssuanceId,
+                .accounts = {account},
+                .ledgerSequence = seq,
+                .transactionIndex = 2,
+                .txHash = secondHash
+            };
+            backend_->writeMPTokenIssuanceTransactions({secondRecord});
+            backend_->writeAccountMPTokenIssuanceTransactions({secondRecord});
+            backend_->waitForWritesToFinish();
+
+            {
+                auto [txns, cursor] =
+                    backend_->fetchMPTokenIssuanceTransactions(mptIssuanceId, 1, false, {}, yield);
+                expectFetchedSecond(txns);
+                EXPECT_TRUE(cursor);
+            }
+            {
+                auto [txns, cursor] = backend_->fetchAccountMPTokenIssuanceTransactions(
+                    mptIssuanceId, account, 1, false, {}, yield
+                );
+                expectFetchedSecond(txns);
+                EXPECT_TRUE(cursor);
+            }
         }
     });
 }
@@ -1646,69 +1683,106 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, MarkerPaginationRoundTrip)
         auto const mptIssuanceId = makeMptIssuanceId();
         std::uint32_t const baseSeq = 300;
 
+        enum class ExpectedPaginationEnd { PartialPage, EmptyPage };
+
         auto txBlobToString = [](data::TransactionAndMetadata const& tx) {
             return std::string(tx.transaction.begin(), tx.transaction.end());
         };
         auto expectedBlob = [&](std::uint8_t i) { return "tx_" + ripple::strHex(makeHash(i)); };
+        auto expectSeenInOrder = [](std::vector<std::string> const& seen,
+                                    bool forward,
+                                    std::set<std::string> const& expected) {
+            std::vector<std::string> expectedOrder(expected.begin(), expected.end());
+            if (not forward)
+                std::ranges::reverse(expectedOrder);
+
+            EXPECT_EQ(seen, expectedOrder)
+                << "pagination returned rows out of order for forward=" << forward;
+        };
 
         // Writes `total` rows, each in its own ledger and at a distinct transaction index,
         // so paging covers ordering across both.
-        auto setup = [&](std::uint8_t total) {
-            std::set<std::string> expected;
-            for (std::uint8_t i = 1; i <= total; ++i) {
-                auto const seq = baseSeq + i;
-                setupLedgerRange(seq);
-                auto const hash = makeHash(i);
-                writeTxBlob(hash, seq);
-                MPTokenIssuanceTransactionsData const record{
-                    .mptIssuanceID = mptIssuanceId,
-                    .accounts = {},
-                    .ledgerSequence = seq,
-                    .transactionIndex = i,
-                    .txHash = hash
-                };
-                backend_->writeMPTokenIssuanceTransactions({record});
-                expected.insert(expectedBlob(i));
-            }
-            backend_->waitForWritesToFinish();
-            return expected;
-        };
-
-        // Page through every row; assert the union of pages equals `expected` exactly:
-        // every row seen exactly once (no duplicates from a repeated cursor row, no gaps from
-        // a dropped row). Each full page (one that returns a cursor) must be exactly `limit`.
-        auto pageThrough =
-            [&](bool forward, std::uint32_t limit, std::set<std::string> const& expected) {
-                std::vector<std::string> seen;
-                std::optional<data::TransactionsCursor> cursor;
-                std::size_t pages = 0;
-                do {
-                    auto [txns, retCursor] = backend_->fetchMPTokenIssuanceTransactions(
-                        mptIssuanceId, limit, forward, cursor, yield
-                    );
-                    ++pages;
-                    // Guard against an infinite loop from a non-advancing cursor.
-                    ASSERT_LE(pages, expected.size() + 2);
-                    if (retCursor)
-                        EXPECT_EQ(txns.size(), limit);
-                    for (auto const& tx : txns)
-                        seen.push_back(txBlobToString(tx));
-                    cursor = retCursor;
-                } while (cursor);
-
-                // No duplicates.
-                std::set<std::string> const seenSet(seen.begin(), seen.end());
-                EXPECT_EQ(seen.size(), seenSet.size()) << "pagination returned duplicate rows";
-                // No gaps: union equals the full expected set.
-                EXPECT_EQ(seenSet, expected) << "pagination dropped or repeated rows";
-                EXPECT_EQ(seen.size(), expected.size());
+        auto setup =
+            [&](ripple::uint192 const& issuanceId, std::uint8_t total, std::uint32_t firstSeq) {
+                std::set<std::string> expected;
+                for (std::uint8_t i = 1; i <= total; ++i) {
+                    auto const seq = firstSeq + i - 1;
+                    setupLedgerRange(seq);
+                    auto const hash = makeHash(i);
+                    writeTxBlob(hash, seq);
+                    MPTokenIssuanceTransactionsData const record{
+                        .mptIssuanceID = issuanceId,
+                        .accounts = {},
+                        .ledgerSequence = seq,
+                        .transactionIndex = i,
+                        .txHash = hash
+                    };
+                    backend_->writeMPTokenIssuanceTransactions({record});
+                    expected.insert(expectedBlob(i));
+                }
+                backend_->waitForWritesToFinish();
+                return expected;
             };
+
+        // Page through every row; assert page order plus that the union of pages equals `expected`
+        // exactly: every row seen exactly once (no duplicates from a repeated cursor row, no gaps
+        // from a dropped row). Each full page (one that returns a cursor) must be exactly `limit`.
+        auto pageThrough = [&](ripple::uint192 const& issuanceId,
+                               bool forward,
+                               std::uint32_t limit,
+                               std::set<std::string> const& expected,
+                               ExpectedPaginationEnd expectedEnd) {
+            ASSERT_NE(limit, 0u);
+            auto const limitSize = static_cast<std::size_t>(limit);
+
+            std::vector<std::string> seen;
+            std::optional<data::TransactionsCursor> cursor;
+            std::size_t pages = 0;
+            auto const maxPages = (expected.size() / limitSize) + 2;
+            bool sawEmptyTerminator = false;
+            do {
+                auto [txns, retCursor] = backend_->fetchMPTokenIssuanceTransactions(
+                    issuanceId, limit, forward, cursor, yield
+                );
+                ++pages;
+                // Guard against an infinite loop from a non-advancing cursor.
+                ASSERT_LE(pages, maxPages)
+                    << "pagination did not terminate cleanly for forward=" << forward;
+                if (txns.empty()) {
+                    sawEmptyTerminator = true;
+                    EXPECT_FALSE(retCursor);
+                } else {
+                    EXPECT_LE(txns.size(), limitSize);
+                    if (retCursor)
+                        EXPECT_EQ(txns.size(), limitSize);
+                }
+                for (auto const& tx : txns)
+                    seen.push_back(txBlobToString(tx));
+                cursor = retCursor;
+            } while (cursor);
+
+            if (expectedEnd == ExpectedPaginationEnd::EmptyPage) {
+                EXPECT_TRUE(sawEmptyTerminator)
+                    << "expected a trailing empty page after the last full page's cursor";
+            } else {
+                EXPECT_FALSE(sawEmptyTerminator)
+                    << "did not expect a trailing empty pagination page";
+            }
+
+            // No duplicates.
+            std::set<std::string> const seenSet(seen.begin(), seen.end());
+            EXPECT_EQ(seen.size(), seenSet.size()) << "pagination returned duplicate rows";
+            // No gaps: union equals the full expected set.
+            EXPECT_EQ(seenSet, expected) << "pagination dropped or repeated rows";
+            EXPECT_EQ(seen.size(), expected.size());
+            expectSeenInOrder(seen, forward, expected);
+        };
 
         // Case A: total not a multiple of the limit (25 rows, limit 10 -> 10,10,5).
         {
-            auto const expected = setup(25);
-            pageThrough(false, 10, expected);
-            pageThrough(true, 10, expected);
+            auto const expected = setup(mptIssuanceId, 25, baseSeq + 1);
+            pageThrough(mptIssuanceId, false, 10, expected, ExpectedPaginationEnd::PartialPage);
+            pageThrough(mptIssuanceId, true, 10, expected, ExpectedPaginationEnd::PartialPage);
         }
 
         // Case B: total is an exact multiple of the limit (20 rows, limit 10).
@@ -1720,60 +1794,12 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, MarkerPaginationRoundTrip)
             EXPECT_TRUE(
                 mptIssuanceIdB.parseHex("00000002BE223A7216F1B07AE9C36F107879B6E9D3A3C1B0")
             );
-            std::set<std::string> expectedB;
-            for (std::uint8_t i = 1; i <= 20; ++i) {
-                // Continue the ledger sequence contiguously after case A (which ended at
-                // baseSeq + 25); the backend's finishWrites enforces contiguous ledgers.
-                auto const seq = baseSeq + 25 + i;
-                setupLedgerRange(seq);
-                auto const hash = makeHash(i);
-                writeTxBlob(hash, seq);
-                MPTokenIssuanceTransactionsData const record{
-                    .mptIssuanceID = mptIssuanceIdB,
-                    .accounts = {},
-                    .ledgerSequence = seq,
-                    .transactionIndex = i,
-                    .txHash = hash
-                };
-                backend_->writeMPTokenIssuanceTransactions({record});
-                expectedB.insert(expectedBlob(i));
-            }
-            backend_->waitForWritesToFinish();
+            // Continue the ledger sequence contiguously after case A (which ended at
+            // baseSeq + 25); the backend's finishWrites enforces contiguous ledgers.
+            auto const expectedB = setup(mptIssuanceIdB, 20, baseSeq + 26);
 
-            auto pageThroughB = [&](bool forward) {
-                std::vector<std::string> seen;
-                std::optional<data::TransactionsCursor> cursor;
-                std::uint32_t const limit = 10;
-                std::size_t pages = 0;
-                bool sawEmptyTerminator = false;
-                do {
-                    auto [txns, retCursor] = backend_->fetchMPTokenIssuanceTransactions(
-                        mptIssuanceIdB, limit, forward, cursor, yield
-                    );
-                    ++pages;
-                    ASSERT_LE(pages, 4u) << "exact-multiple paging did not terminate cleanly";
-                    if (txns.empty()) {
-                        // Terminal empty page reached after the last full page returned a cursor.
-                        sawEmptyTerminator = true;
-                        EXPECT_FALSE(retCursor);
-                    } else {
-                        for (auto const& tx : txns)
-                            seen.push_back(txBlobToString(tx));
-                    }
-                    cursor = retCursor;
-                } while (cursor);
-
-                EXPECT_TRUE(sawEmptyTerminator)
-                    << "expected a trailing empty page after the last full page's cursor";
-                std::set<std::string> const seenSet(seen.begin(), seen.end());
-                EXPECT_EQ(seen.size(), seenSet.size())
-                    << "exact-multiple paging returned duplicates";
-                EXPECT_EQ(seenSet, expectedB);
-                EXPECT_EQ(seen.size(), 20u);
-            };
-
-            pageThroughB(false);
-            pageThroughB(true);
+            pageThrough(mptIssuanceIdB, false, 10, expectedB, ExpectedPaginationEnd::EmptyPage);
+            pageThrough(mptIssuanceIdB, true, 10, expectedB, ExpectedPaginationEnd::EmptyPage);
         }
     });
 }
