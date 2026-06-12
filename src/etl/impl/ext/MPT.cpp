@@ -20,8 +20,9 @@ namespace etl::impl {
 
 namespace {
 
-// Worst-case fanout per transaction is M + M*A index rows for M touched issuances and A affected
-// accounts; anything past this bound is unexpected and worth flagging
+// A single transaction writes at most M + M*A index rows: M rows for the distinct issuances, plus
+// one row for each issuance paired with each of its A affected accounts. Exceeding this bound is
+// unexpected and worth flagging.
 constexpr std::size_t kMaxExpectedIndexRowsPerTx = 1000;
 
 }  // namespace

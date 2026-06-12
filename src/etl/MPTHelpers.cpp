@@ -94,8 +94,8 @@ getMPTokenIssuanceTxsFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
     if (txMeta.getResultTER() != xrpl::tesSUCCESS)
         return {};
 
-    // flat_set dedups issuances per (mptoken_issuance_id, seq_idx); the accounts flat_set below
-    // dedups per (mptoken_issuance_id, account, seq_idx)
+    // Collect each distinct issuance only once per transaction; the same set of affected accounts
+    // is attached to every record produced below.
     boost::container::flat_set<xrpl::uint192> issuanceIDs;
     for (xrpl::STObject const& node : txMeta.getNodes()) {
         if (auto const issuanceID = getMPTokenIssuanceIDFromNode(node); issuanceID.has_value())

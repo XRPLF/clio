@@ -36,15 +36,15 @@ getMPTHolderFromObj(std::string const& key, std::string const& blob);
 /**
  * @brief Pull MPT issuance transaction index data from a transaction.
  *
- * Scans the transaction's metadata for affected MPTokenIssuance/MPToken ledger objects (no
- * transaction-type allowlist) and produces one record per distinct touched issuance, each carrying
- * the full set of affected accounts. Only tesSUCCESS transactions are indexed. Used by live ETL
- * and reused by the historical backfill migrator.
+ * Scans the transaction's metadata for affected MPTokenIssuance/MPToken ledger objects, regardless
+ * of transaction type, and produces one record per distinct issuance, each carrying the full set of
+ * affected accounts. Only successful (tesSUCCESS) transactions are indexed. Used by live ETL and
+ * reused by the historical backfill migrator.
  *
  * @param txMeta Transaction metadata
  * @param sttx The transaction
- * @return One record per distinct MPT issuance touched by the transaction; empty if the
- * transaction did not succeed or touched no MPT issuances
+ * @return One record per distinct MPT issuance affected by the transaction; empty if the
+ * transaction did not succeed or did not affect any MPT issuance
  */
 std::vector<MPTokenIssuanceTransactionsData>
 getMPTokenIssuanceTxsFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
