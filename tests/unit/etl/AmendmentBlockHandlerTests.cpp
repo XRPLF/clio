@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <cstddef>
 #include <semaphore>
 
 using namespace etl::impl;

@@ -15,7 +15,6 @@
 
 #include <chrono>
 #include <cstdint>
-#include <ctime>
 #include <memory>
 #include <stdexcept>
 #include <string>

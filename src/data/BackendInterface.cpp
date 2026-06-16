@@ -223,7 +223,7 @@ BackendInterface::fetchBookOffers(
                           << " blob = " << ripple::strHex(objs[i])
                           << " ledgerSequence = " << ledgerSequence;
         ASSERT(!objs[i].empty(), "Ledger object can't be empty");
-        page.offers.push_back({keys[i], objs[i]});
+        page.offers.push_back({.key=keys[i], .blob=objs[i]});
     }
     auto end = std::chrono::system_clock::now();
     LOG(log_.debug()) << "Fetching " << std::to_string(keys.size()) << " offers took "
@@ -328,7 +328,7 @@ BackendInterface::fetchLedgerPage(
     auto objects = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < objects.size(); ++i) {
         if (!objects[i].empty()) {
-            page.objects.push_back({keys[i], std::move(objects[i])});
+            page.objects.push_back({.key=keys[i], .blob=std::move(objects[i])});
         } else if (!outOfOrder) {
             LOG(log_.error()) << "Deleted or non-existent object in successor table. key = "
                               << ripple::strHex(keys[i]) << " - seq = " << ledgerSequence;

@@ -7,7 +7,6 @@
 #include "util/config/ConfigDefinition.hpp"
 
 #include <chrono>
-#include <ctime>
 #include <memory>
 #include <utility>
 

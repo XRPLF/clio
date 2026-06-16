@@ -119,7 +119,7 @@ public:
     /**
      * @return true if outstanding read requests allowance is exhausted; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isTooBusy() const
     {
         bool const result = numReadRequestsOutstanding_ >= maxReadRequestsOutstanding_;
@@ -495,7 +495,7 @@ public:
     /**
      * @brief Get statistics about the backend.
      */
-    boost::json::object
+    [[nodiscard]] boost::json::object
     stats() const
     {
         return counters_->report();
@@ -536,13 +536,13 @@ private:
         }
     }
 
-    bool
+    [[nodiscard]] bool
     canAddWriteRequest() const
     {
         return numWriteRequestsOutstanding_ < maxWriteRequestsOutstanding_;
     }
 
-    bool
+    [[nodiscard]] bool
     finishedAllWriteRequests() const
     {
         return numWriteRequestsOutstanding_ == 0;

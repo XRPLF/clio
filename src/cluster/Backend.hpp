@@ -119,7 +119,7 @@ public:
      *
      * @return The UUID of this node.
      */
-    ClioNode::CUuid
+    [[nodiscard]] ClioNode::CUuid
     selfId() const;
 
 private:

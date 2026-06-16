@@ -6,7 +6,6 @@
 
 #include <boost/beast/http/field.hpp>
 
-#include <cstring>
 #include <memory>
 #include <optional>
 #include <string>

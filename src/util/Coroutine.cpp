@@ -7,7 +7,6 @@
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 
-#include <cstddef>
 #include <memory>
 #include <utility>
 

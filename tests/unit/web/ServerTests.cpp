@@ -712,7 +712,7 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
         boost::json::parse(jsonServerConfigWithBothAdminPasswordAndLocalAdmin)
     )};
 
-    MockLedgerCache cache;
+    MockLedgerCache const cache;
     auto const result = web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache);
     EXPECT_FALSE(result.has_value());
 }
@@ -736,7 +736,7 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
         boost::json::parse(jsonServerConfigWithNoAdminPasswordAndLocalAdminFalse)
     )};
 
-    MockLedgerCache cache;
+    MockLedgerCache const cache;
     auto const result = web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache);
     EXPECT_FALSE(result.has_value());
 }

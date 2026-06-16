@@ -91,7 +91,7 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
         for (size_t i = 0; i < objs.size(); ++i) {
             auto& obj = objs[i];
             if (!obj.empty())
-                results.push_back({keys[i], std::move(obj)});
+                results.push_back({.key=keys[i], .blob=std::move(obj)});
         }
 
         if (*(input.diffMarker) > lgrInfo.seq)

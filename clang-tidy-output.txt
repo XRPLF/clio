@@ -1,0 +1,1229 @@
+Running clang-tidy in 32 threads for 400 files out of 400 in compilation database ...
+[  1/400][1.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp16blj39o.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/StringHash.cpp
+[  2/400][4.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpoy0yvy3n.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/StringHashTests.cpp
+[  3/400][4.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpvxwwvfjk.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/ProfilerTests.cpp
+[  4/400][4.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp13rcej20.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/TimeUtils.cpp
+[  5/400][5.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpf2o8ibqe.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/ng/impl/ErrorHandling.cpp
+[  6/400][5.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpebeqj9in.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/Shasum.cpp
+[  7/400][6.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0xjsb8i6.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/config/ArrayView.cpp
+[  8/400][5.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp79zlzcjm.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/prometheus/OStreamTests.cpp
+[  9/400][6.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0i1ed98f.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/impl/OutputFileTests.cpp
+[ 10/400][1.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpge9m90ct.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/prometheus/Label.cpp
+[ 11/400][7.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp05x5j8ks.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/cassandra/SettingsProviderTests.cpp
+[ 12/400][8.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdhajlz26.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/log/LogServiceInitTests.cpp
+[ 13/400][8.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpcwe2eips.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/cassandra/impl/Future.cpp
+[ 14/400][9.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp8jynwxau.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/StopHelperTests.cpp
+[ 15/400][5.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2_kncmyo.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/BatchingTests.cpp
+[ 16/400][10.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpeb_s6ngm.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/common/MetaProcessors.cpp
+[ 17/400][10.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp3c5u7xdk.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/data/cassandra/BaseTests.cpp
+[ 18/400][11.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpojjvq_30.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/LedgerUtilsTests.cpp
+[ 19/400][11.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpngommpgk.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/common/TypesTests.cpp
+[ 20/400][12.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmplh18y1sf.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/ng/SubscriptionContext.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/web/ng/SubscriptionContext.hpp:106:5: error: function 'apiSubversion' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  106 |     uint32_t
+      |     ^
+      |     [[nodiscard]] 
+
+[ 21/400][13.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqlhwjc5c.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/impl/ErrorHandlingTests.cpp
+[ 22/400][6.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmplsjnh8vl.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/prometheus/CounterTests.cpp
+/__w/clio/clio/src/util/Atomic.hpp:79:5: error: function 'value' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   79 |     ValueType
+      |     ^
+      |     [[nodiscard]] 
+
+[ 23/400][13.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpkvm83ukf.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/common/SpecsTests.cpp
+[ 24/400][7.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpjndi07ei.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/async/AnyStopTokenTests.cpp
+[ 25/400][6.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpso50050y.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/config/ConfigConstraints.cpp
+[ 26/400][5.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpe956y0lx.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/requests/impl/SslContext.cpp
+[ 27/400][16.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpry4x33ne.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/StringUtils.cpp
+[ 28/400][17.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp1d9c9zwu.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/DepositAuthorized.cpp
+/__w/clio/clio/src/rpc/handlers/DepositAuthorized.cpp:27:1: error: included header memory is not used directly [misc-include-cleaner,-warnings-as-errors]
+   27 | #include <memory>
+      | ^~~~~~~~~~~~~~~~~
+   28 | #include <string>
+
+[ 29/400][7.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp83_od5ne.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/ng/impl/ServerSslContext.cpp
+[ 30/400][17.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmphfqrjcjw.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AMMInfo.cpp
+[ 31/400][17.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpaihiz9f3.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/BookChanges.cpp
+[ 32/400][17.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2r99if06.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/common/Validators.cpp
+/__w/clio/clio/src/rpc/common/Validators.cpp:23:1: error: included header ctime is not used directly [misc-include-cleaner,-warnings-as-errors]
+   23 | #include <ctime>
+      | ^~~~~~~~~~~~~~~~
+   24 | #include <stdexcept>
+
+[ 33/400][4.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpfjjwz9mk.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/ng/Request.cpp
+[ 34/400][6.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpzgvi5wbi.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/CoroutineGroup.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[ 35/400][7.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp48o9vaj9.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/config/ConfigFileJsonTests.cpp
+[ 36/400][12.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp5ddforg2.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/LedgerCache.cpp
+[ 37/400][11.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpb1oz6r5c.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/ext/Cache.cpp
+[ 38/400][2.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp9h_y6gws.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/TerminationHandler.cpp
+[ 39/400][10.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpwrftd4w9.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/AccountUtilsTests.cpp
+[ 40/400][3.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpappoe0l7.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/Assert.cpp
+[ 41/400][17.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpyje_cnzx.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/cluster/ClusterCommunicationService.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/cluster/ClusterCommunicationService.cpp:10:1: error: included header ctime is not used directly [misc-include-cleaner,-warnings-as-errors]
+   10 | #include <ctime>
+      | ^~~~~~~~~~~~~~~~
+   11 | #include <memory>
+
+[ 42/400][24.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmphfzgd8sg.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/migration/MigrationManagerBaseTests.cpp
+[ 43/400][24.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpcd_f0jj7.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/CredentialHelpersTests.cpp
+[ 44/400][25.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpx1j6ej11.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/BackendInterfaceTests.cpp
+[ 45/400][25.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpsyod3kug.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/migration/cassandra/ExampleTransactionsMigrator.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[ 46/400][7.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpbrrwd_pz.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/log/Logger.cpp
+[ 47/400][25.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgnnasfjo.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/VersionHandlerTests.cpp
+[ 48/400][13.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxpc0xstm.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/benchmarks/util/async/ExecutionContextBenchmarks.cpp
+[ 49/400][26.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpamy_ysl9.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/cluster/BackendTests.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+
+[ 50/400][26.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp28_4qq8l.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/common/impl/HandlerProviderTests.cpp
+[ 51/400][11.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpcjy2mvha.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/TestObject.cpp
+[ 52/400][18.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp21ocy_ax.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/LedgerEntry.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[ 53/400][25.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpcoib9erm.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/PingTests.cpp
+[ 54/400][9.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpj_x6kgrg.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/LedgerHeaderCache.cpp
+[ 55/400][12.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpfewc3k7r.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/CountersTests.cpp
+[ 56/400][30.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmprejm58xi.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/feed/ProposedTransactionFeedTests.cpp
+[ 57/400][6.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpri6zi7nv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/CacheLoaderSettings.cpp
+[ 58/400][17.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpyluyf_nv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/LedgerCacheTests.cpp
+[ 59/400][4.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpn5bc2fgj.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/prometheus/MetricBase.cpp
+[ 60/400][6.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqny0fc2v.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/ShasumTests.cpp
+[ 61/400][3.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2ml9gurb.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/Errors.cpp
+[ 62/400][24.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpx1272w9d.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/CursorFromAccountProviderTests.cpp
+[ 63/400][7.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp18iiju4v.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/config/ValueViewTests.cpp
+[ 64/400][28.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpydyp2amc.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/LoadingTests.cpp
+[ 65/400][29.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpk90ru0uy.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/LedgerTests.cpp
+[ 66/400][9.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6rg_j22q.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/util/CassandraDBHelper.cpp
+[ 67/400][17.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0wo4_qqy.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/Subscribe.cpp
+[ 68/400][17.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmphn4f_bdg.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/NoRippleCheck.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[ 69/400][16.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpg7l3oov2.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/BaseTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[ 70/400][5.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdghbbhl7.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/impl/OutputFile.cpp
+[ 71/400][18.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqmmq12n9.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/cluster/CacheLoaderDeciderTests.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+
+[ 72/400][11.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmplz4pks61.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/BlockingCacheTests.cpp
+[ 73/400][26.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6_sqbanv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/TestHandlerTests.cpp
+[ 74/400][24.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpd9e12wgf.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/TaskManagerTests.cpp
+[ 75/400][25.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp09tef6ga.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/CursorFromFixDiffNumProviderTests.cpp
+[ 76/400][20.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmps61u6vrz.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/ExtractionTests.cpp
+[ 77/400][16.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpek5qjqk6.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/Loading.cpp
+[ 78/400][26.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpb30be_q4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/common/impl/HandlerProvider.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[ 79/400][15.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0olobicc.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/async/AsyncExecutionContextTests.cpp
+[ 80/400][7.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp4jfo4ufm.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/dosguard/WeightsTests.cpp
+[ 81/400][7.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmprryu0en1.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/StopHelper.cpp
+[ 82/400][23.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7ta1nmwq.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/migration/cassandra/impl/TransactionsAdapter.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[ 83/400][4.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6wepe0c5.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/CallWithTimeout.cpp
+/__w/clio/clio/tests/common/util/CallWithTimeout.cpp:6:1: error: included header cstdlib is not used directly [misc-include-cleaner,-warnings-as-errors]
+    6 | #include <cstdlib>
+      | ^~~~~~~~~~~~~~~~~~
+    7 | #include <functional>
+
+[ 84/400][9.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpj2n5vywd.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/WithTimeout.cpp
+[ 85/400][6.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpajuudx7h.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/prometheus/MetricBuilderTests.cpp
+[ 86/400][5.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7vujmr5z.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/common/CheckersTests.cpp
+[ 87/400][18.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2cectn5m.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/feed/impl/ProposedTransactionFeed.cpp
+[ 88/400][10.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpwcja3igh.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/dosguard/DOSGuardTests.cpp
+[ 89/400][6.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpmkhzu8vr.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/prometheus/BoolTests.cpp
+/__w/clio/clio/src/util/Atomic.hpp:79:5: error: function 'value' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   79 |     ValueType
+      |     ^
+      |     [[nodiscard]] 
+
+[ 90/400][4.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmptpgritnq.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/cassandra/impl/Cluster.cpp
+[ 91/400][5.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxzpdu5_6.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/log/PrettyPathTests.cpp
+[ 92/400][17.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxvyj1hnt.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/VaultInfo.cpp
+[ 93/400][9.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp5ky9d5ft.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ng/impl/ServerSslContextTests.cpp
+[ 94/400][17.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpi4p_8hgs.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/NFTHistory.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[ 95/400][31.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpb6dbt4pv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/RPCEngineTests.cpp
+[ 96/400][17.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpplzx9pil.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/NFTInfo.cpp
+[ 97/400][17.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxoh7kof9.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/Ledger.cpp
+[ 98/400][7.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpu7wcfwul.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/CacheLoaderSettingsTests.cpp
+[ 99/400][14.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp12t8ew4u.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/WriterState.cpp
+[100/400][8.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp_pzr1l5g.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/config/ObjectViewTests.cpp
+[101/400][10.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpifftm2ow.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/LedgerUtils.cpp
+[102/400][27.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp92bkufqa.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/ext/MPTTests.cpp
+[103/400][16.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp90x7xwx0.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/LedgerRange.cpp
+[104/400][29.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp8conkvd8.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/MonitorTests.cpp
+/__w/clio/clio/tests/unit/etl/MonitorTests.cpp:14:1: error: included header cstddef is not used directly [misc-include-cleaner,-warnings-as-errors]
+   14 | #include <cstddef>
+      | ^~~~~~~~~~~~~~~~~~
+   15 | #include <cstdint>
+
+[105/400][9.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxann8xsr.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/config/ClioConfigDefinitionTests.cpp
+[106/400][27.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0wkjr5i9.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/LedgerIndexTests.cpp
+/__w/clio/clio/tests/unit/rpc/handlers/LedgerIndexTests.cpp:15:1: error: included header cstdlib is not used directly [misc-include-cleaner,-warnings-as-errors]
+   15 | #include <cstdlib>
+      | ^~~~~~~~~~~~~~~~~~
+   16 | #include <string>
+
+[107/400][11.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp1d85g3cu.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/BackendCountersTests.cpp
+[108/400][28.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6jv6vbpd.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/BookChangesTests.cpp
+[109/400][17.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0b5cdq3m.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/GatewayBalances.cpp
+[110/400][16.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp89yl3z2v.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/ext/NFT.cpp
+[111/400][28.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmprjv8ad5s.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/VaultInfoTests.cpp
+[112/400][29.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2vp5np9q.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/ServerInfoTests.cpp
+[113/400][30.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpwp6earff.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/feed/BookChangesFeedTests.cpp
+[114/400][4.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpvzs0wfr1.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/TestGlobals.cpp
+[115/400][5.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpu1zfwza5.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/ResponseExpirationCacheTests.cpp
+[116/400][18.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpsf1mrnlv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/AsyncGrpcCall.cpp
+[117/400][30.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpku2akw2n.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/feed/TransactionFeedTests.cpp
+[118/400][7.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmplqa09its.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/Taggable.cpp
+[119/400][5.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp976fkb7f.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/cluster/impl/FallbackRecoveryTimer.cpp
+[120/400][15.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp5aopqym_.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/impl/LedgerCacheFileTests.cpp
+[121/400][28.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpk_t6_o40.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/NFTsByIssuerTest.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[122/400][17.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp26kuuedc.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/Monitor.cpp
+/__w/clio/clio/src/etl/impl/Monitor.cpp:13:1: error: included header cstddef is not used directly [misc-include-cleaner,-warnings-as-errors]
+   13 | #include <cstddef>
+      | ^~~~~~~~~~~~~~~~~~
+   14 | #include <cstdint>
+
+[123/400][28.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpctcb88qv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/LedgerDataTests.cpp
+[124/400][31.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqy4zsg_k.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/SubscribeTests.cpp
+[125/400][28.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpn9y3mjgp.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/GatewayBalancesTests.cpp
+[126/400][18.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpx2ko8h3i.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/BinaryTestObject.cpp
+[127/400][4.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpj246ul_s.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/prometheus/LabelTests.cpp
+[128/400][27.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpg6bm381y.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/SubscriptionSourceTests.cpp
+/__w/clio/clio/tests/unit/etl/SubscriptionSourceTests.cpp:19:1: error: included header cstdlib is not used directly [misc-include-cleaner,-warnings-as-errors]
+   19 | #include <cstdlib>
+      | ^~~~~~~~~~~~~~~~~~
+   20 | #include <optional>
+
+[129/400][24.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpvpomf66d.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/RegistryTests.cpp
+[130/400][19.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpl4n7tz89.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/GrpcSource.cpp
+[131/400][17.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpmmxsplp6.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AccountMPTokenIssuances.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[132/400][11.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmptvha7hoj.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/LedgerCacheLoadingState.cpp
+[133/400][22.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpw3qx0ug8.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/migration/cassandra/impl/ObjectsAdapter.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[134/400][18.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxn7jy9of.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/SchedulingTests.cpp
+[135/400][0.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmppotl9ani.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/benchmarks/Playground.cpp
+[136/400][19.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmphfd421z1.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/requests/WsConnection.cpp
+[137/400][10.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp8c870nuo.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/AmendmentBlockHandler.cpp
+[138/400][21.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpz5e6zv35.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/LoadBalancer.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[139/400][5.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpne_9ric2.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/common/impl/APIVersionParser.cpp
+[140/400][28.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgwn2gpxj.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/GetAggregatePriceTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[141/400][4.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpns4bmo94.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/ScopeGuardTests.cpp
+[142/400][22.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpo59x_rcb.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/GrpcSourceTests.cpp
+[143/400][28.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6x4ja1n3.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/ext/SuccessorTests.cpp
+[144/400][15.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpmzj5rhm2.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/cluster/ClioNode.cpp
+[145/400][0.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7ca3kj43.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/Playground.cpp
+[146/400][18.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpnjujjw3a.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AccountObjects.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[147/400][7.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpjwuozhh6.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/TxUtilTests.cpp
+[148/400][16.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmppcmtmgvt.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/app/CliArgsTests.cpp
+/__w/clio/clio/tests/unit/app/CliArgsTests.cpp:212:29: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  212 |     EXPECT_TRUE(fileContent.find("# Clio Config Description") != std::string::npos);
+      |                             ^
+/__w/clio/clio/tests/unit/app/CliArgsTests.cpp:214:21: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  214 |         fileContent.find(
+      |                     ^
+/__w/clio/clio/tests/unit/app/CliArgsTests.cpp:219:29: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  219 |     EXPECT_TRUE(fileContent.find("## Configuration Details") != std::string::npos);
+      |                             ^
+
+[149/400][7.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp1zn78u3n.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/prometheus/Prometheus.cpp
+[150/400][6.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpb5i0lth6.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/dosguard/Weights.cpp
+[151/400][1.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp__5cncuf.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/cassandra/impl/SslContext.cpp
+[152/400][7.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp35xzw2lk.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/ObservableValueAtomicTest.cpp
+[153/400][3.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpw4w425j0.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/test_data/SslCert.cpp
+[154/400][12.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpj_54uc7j.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/requests/RequestBuilder.cpp
+[155/400][7.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpmcgsm7f9.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/TxUtils.cpp
+[156/400][12.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpcz89gx7p.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/requests/RequestBuilderTests.cpp
+[157/400][17.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpr6u5xlqd.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/BookOffers.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[158/400][11.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp3dudghos.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/NFTHelpers.cpp
+[159/400][9.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp051o5_n_.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/cassandra/Handle.cpp
+[160/400][19.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7j6o3co8.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/main/Main.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[161/400][0.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmprp_u0ce7.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/build/Build.cpp
+[162/400][19.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpko4ceyu4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/CorruptionDetectorTests.cpp
+[163/400][19.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp8uh_m8c4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/cluster/WriterDeciderTests.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+
+[164/400][9.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0wqoulv7.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/cassandra/impl/Batch.cpp
+[165/400][16.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmptpe5rico.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/BackendInterface.cpp
+/__w/clio/clio/src/data/BackendInterface.cpp:226:31: error: use designated initializer list to initialize 'value_type' (aka 'data::LedgerObject') [modernize-use-designated-initializers,-warnings-as-errors]
+  226 |         page.offers.push_back({keys[i], objs[i]});
+      |                               ^~~~~~~~~~~~~~~~~~
+      |                                .key=    .blob=
+/__w/clio/clio/src/data/Types.hpp:22:1: note: aggregate type is defined here
+   22 | struct LedgerObject {
+      | ^
+/__w/clio/clio/src/data/BackendInterface.cpp:331:36: error: use designated initializer list to initialize 'value_type' (aka 'data::LedgerObject') [modernize-use-designated-initializers,-warnings-as-errors]
+  331 |             page.objects.push_back({keys[i], std::move(objects[i])});
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                     .key=    .blob=
+/__w/clio/clio/src/data/Types.hpp:22:1: note: aggregate type is defined here
+   22 | struct LedgerObject {
+      | ^
+
+[166/400][12.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmphasgu88n.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/ForwardingSourceTests.cpp
+[167/400][5.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpbktgr75z.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/Retry.cpp
+[168/400][30.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpg0t4r94b.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/migration/MigrationInspectorFactoryTests.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[169/400][5.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmppj4u53in.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ng/RequestTests.cpp
+[170/400][25.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgy2kttzc.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/cluster/ClusterCommunicationServiceTests.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+
+[171/400][8.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpbv4a7tgs.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/config/ArrayViewTests.cpp
+[172/400][4.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpoyaxmgn3.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/prometheus/OStream.cpp
+[173/400][26.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp_oojojvw.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/TransactionEntryTests.cpp
+[174/400][6.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpkbgko69l.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/cassandra/SettingsProvider.cpp
+[175/400][5.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpuo84yb12.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/requests/SslContextTests.cpp
+[176/400][10.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpi3w94tif.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/MPTHelpers.cpp
+[177/400][15.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7rl0povc.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/migration/MigrationManagerFactoryTests.cpp
+[178/400][18.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpt9cpl1oc.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/cluster/Backend.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+
+[179/400][13.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpttspnycx.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/SubscriptionContextTests.cpp
+/__w/clio/clio/src/web/SubscriptionContext.hpp:77:5: error: function 'apiSubversion' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   77 |     uint32_t
+      |     ^
+      |     [[nodiscard]] 
+
+[180/400][17.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpvbaiztok.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/cluster/CacheLoaderDecider.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+
+[181/400][8.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp102jefuw.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/log/LoggerTests.cpp
+[182/400][8.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp1qbohkzm.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/ForwardingSource.cpp
+[183/400][17.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7ctfxb7u.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/NFTsByIssuer.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[184/400][10.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp_ap30gex.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/Random.cpp
+[185/400][25.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp15bxtuwt.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/CursorFromDiffProviderTests.cpp
+[186/400][16.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp_kbd3xx0.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/Unsubscribe.cpp
+[187/400][20.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2lglg5iz.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ng/ServerTests.cpp
+[188/400][16.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp4xf84_1p.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/ext/Core.cpp
+[189/400][22.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0dhvrttu.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/migration/cassandra/ExampleLedgerMigrator.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[190/400][28.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdh4t23aa.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/NFTBuyOffersTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[191/400][6.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmprloti6ne.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/ETLHelpers.cpp
+[192/400][29.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmppdw2z_ky.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/RPCHelpersTests.cpp
+[193/400][17.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpyf1grss3.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/app/WebHandlers.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[194/400][17.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdl45s0bb.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/LedgerData.cpp
+/__w/clio/clio/src/rpc/handlers/LedgerData.cpp:94:35: error: use designated initializer list to initialize 'value_type' (aka 'data::LedgerObject') [modernize-use-designated-initializers,-warnings-as-errors]
+   94 |                 results.push_back({keys[i], std::move(obj)});
+      |                                   ^~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                    .key=    .blob=
+/__w/clio/clio/src/data/Types.hpp:22:1: note: aggregate type is defined here
+   22 | struct LedgerObject {
+      | ^
+
+[195/400][16.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpz_jmpgn4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ng/SubscriptionContextTests.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/web/ng/SubscriptionContext.hpp:106:5: error: function 'apiSubversion' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  106 |     uint32_t
+      |     ^
+      |     [[nodiscard]] 
+
+[196/400][8.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpp6182mqv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/ng/Connection.cpp
+[197/400][1.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp5431f94n.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/benchmarks/Main.cpp
+[198/400][18.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpu615s38b.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/Extraction.cpp
+/__w/clio/clio/src/etl/impl/Extraction.cpp:21:1: error: included header cstddef is not used directly [misc-include-cleaner,-warnings-as-errors]
+   21 | #include <cstddef>
+      | ^~~~~~~~~~~~~~~~~~
+   22 | #include <cstdint>
+/__w/clio/clio/src/etl/impl/Extraction.cpp:24:1: error: included header memory is not used directly [misc-include-cleaner,-warnings-as-errors]
+   24 | #include <memory>
+      | ^~~~~~~~~~~~~~~~~
+   25 | #include <optional>
+
+[199/400][5.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpkynmre7y.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/prometheus/MetricBuilder.cpp
+/__w/clio/clio/src/util/Atomic.hpp:79:5: error: function 'value' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   79 |     ValueType
+      |     ^
+      |     [[nodiscard]] 
+
+[200/400][16.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpkwb44460.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/ETLState.cpp
+[201/400][5.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpnbhm14ia.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/AssignRandomPort.cpp
+[202/400][17.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdumdnk68.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AccountCurrencies.cpp
+[203/400][5.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpcq4cp5te.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/NetworkValidatedLedgers.cpp
+[204/400][5.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2l_w_n5h.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/impl/InputFile.cpp
+[205/400][4.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpx7o_garq.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/ResponseExpirationCache.cpp
+[206/400][6.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpsqy38jjp.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/config/ObjectView.cpp
+[207/400][20.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpy77q7740.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/SubscriptionSource.cpp
+[208/400][17.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6fwmfy_f.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/Feature.cpp
+[209/400][6.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpnu7zybsq.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/cluster/FallbackRecoveryTimerTests.cpp
+[210/400][0.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpmv4q09bg.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/migration/MigratorStatus.cpp
+[211/400][34.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpyy42b0cy.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ng/RPCServerHandlerTests.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[212/400][27.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp5kp_9nwp.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/app/StopperTests.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[213/400][20.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpvq8s9m4k.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ng/impl/WsConnectionTests.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[214/400][37.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpekua2sxd.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/RPCHelpers.cpp
+[215/400][4.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp35bpxlm1.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/Random.cpp
+[216/400][30.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpnecr9xq_.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AccountTxTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[217/400][11.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0a7ucohm.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/NFTHelpersTests.cpp
+[218/400][12.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpalg4xee6.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/TestWsServer.cpp
+[219/400][8.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpkpyy90by.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/cassandra/impl/Result.cpp
+[220/400][7.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp5z89585f.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/APIVersionTests.cpp
+[221/400][6.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmph7aola_j.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/config/ConfigFileJson.cpp
+[222/400][5.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpawvbhi_l.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/MockAssert.cpp
+[223/400][23.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpwnngf6aa.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/ext/CacheTests.cpp
+[224/400][13.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxl_s3at8.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/prometheus/HttpTests.cpp
+[225/400][3.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqy5d7wlo.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/migration/MigratorStatusTests.cpp
+[226/400][8.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgmn7hhgk.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/RetryTests.cpp
+[227/400][9.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6hk8t545.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/dosguard/DOSGuard.cpp
+[228/400][14.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp1c7u90jv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/app/CliArgs.cpp
+[229/400][3.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpcuoosag1.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/log/PrettyPath.cpp
+[230/400][9.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgyymi_59.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/ObservableValueTest.cpp
+[231/400][27.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxvocb752.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AccountOffersTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[232/400][21.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp_3zc26vv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/feed/SubscriptionManager.cpp
+[233/400][9.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmputbg3_g3.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/CoroutineGroupTests.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[234/400][5.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpamwy9j46.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/ErrorTests.cpp
+[235/400][10.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgbfgrw7w.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/common/Specs.cpp
+[236/400][18.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxgmyegnr.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/feed/impl/TransactionFeed.cpp
+[237/400][7.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp1tli3z59.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/Resolver.cpp
+[238/400][12.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpg2vw27ke.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/requests/WsConnectionTests.cpp
+[239/400][4.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpeh_r19za.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/MoveTrackerTests.cpp
+[240/400][8.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpkl1chccd.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/Counters.cpp
+[241/400][28.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpwo3gjtzl.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AccountInfoTests.cpp
+[242/400][28.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp58x4lvw7.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/FeatureTests.cpp
+[243/400][12.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp82fav797.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/SystemStateTests.cpp
+/__w/clio/clio/tests/unit/etl/SystemStateTests.cpp:13:1: error: included header memory is not used directly [misc-include-cleaner,-warnings-as-errors]
+   13 | #include <memory>
+      | ^~~~~~~~~~~~~~~~~
+   14 | 
+
+[244/400][25.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6b86smgy.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/app/WebHandlersTests.cpp
+[245/400][5.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2p2uqfgt.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/cassandra/impl/Tuple.cpp
+[246/400][25.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpnbtlucj9.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/AmendmentCenterTests.cpp
+[247/400][24.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp30c_9x3f.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/SourceImplTests.cpp
+[248/400][14.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp_z5aa43c.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/ng/impl/ConnectionHandler.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/web/ng/SubscriptionContext.hpp:106:5: error: function 'apiSubversion' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  106 |     uint32_t
+      |     ^
+      |     [[nodiscard]] 
+
+[249/400][7.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpo1mm95gg.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ng/impl/ErrorHandlingTests.cpp
+[250/400][5.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmplsin71gb.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/TimeUtilsTests.cpp
+[251/400][15.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmps6j8v1hw.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/LedgerCacheSaverTests.cpp
+[252/400][28.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpv2q1kxg4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/ng/Server.cpp
+[253/400][12.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgkiaqfji.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/impl/LedgerCacheFile.cpp
+[254/400][17.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpsske2bv1.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/MPTHolders.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[255/400][26.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmppazlx3hj.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/ETLService.cpp
+/__w/clio/clio/src/etl/ETLService.hpp:182:5: error: function 'getInfo' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  182 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:185:5: error: function 'isAmendmentBlocked' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  185 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:188:5: error: function 'isCorruptionDetected' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  188 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:191:5: error: function 'getETLState' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  191 |     std::optional<ETLState>
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:194:5: error: function 'lastCloseAgeSeconds' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  194 |     std::uint32_t
+      |     ^
+      |     [[nodiscard]] 
+
+[256/400][16.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0dzo8sh1.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/LedgerIndex.cpp
+[257/400][9.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpo52mslpz.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ProxyIpResolverTests.cpp
+[258/400][28.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgu4mwyq4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AMMInfoTests.cpp
+[259/400][30.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgcrec1bl.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/RPCServerHandlerTests.cpp
+[260/400][24.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmplfjum3bi.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ng/impl/ConnectionHandlerTests.cpp
+[261/400][38.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpyndhpd0u.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/data/cassandra/BackendTests.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[262/400][13.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpx0hmi8g3.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/migration/cassandra/FullTableScannerTests.cpp
+[263/400][8.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2z8bmkj6.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/ng/Response.cpp
+[264/400][17.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp9_gsfu6c.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/TaskManager.cpp
+[265/400][10.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp4pxk161e.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/cassandra/LedgerHeaderCacheTests.cpp
+[266/400][8.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp1uxjkis7.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/SignalsHandler.cpp
+[267/400][5.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7la55gh8.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/LoggerFixtures.cpp
+[268/400][10.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp3nu2yjbt.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/CoroutineTest.cpp
+[269/400][3.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpj80sc750.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/Main.cpp
+[270/400][17.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpjtpuql9_.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/cluster/WriterDecider.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+
+[271/400][9.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpm10i8ooa.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/cluster/RepeatedTaskTests.cpp
+[272/400][25.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpe82ub6gs.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/ext/NFTTests.cpp
+[273/400][18.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpfjbkgan5.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/AmendmentBlockHandlerTests.cpp
+/__w/clio/clio/tests/unit/etl/AmendmentBlockHandlerTests.cpp:11:1: error: included header cstddef is not used directly [misc-include-cleaner,-warnings-as-errors]
+   11 | #include <cstddef>
+      | ^~~~~~~~~~~~~~~~~~
+   12 | #include <semaphore>
+
+[274/400][23.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp92wj0rxl.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/cassandra/ExecutionStrategyTests.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[275/400][8.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpz4w_cb58.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/ProxyIpResolver.cpp
+[276/400][27.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpf0qcr31e.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/ForwardingProxyTests.cpp
+[277/400][17.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgpgwlfjs.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AccountOffers.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[278/400][9.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdvepdqjt.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/async/AnyStrandTests.cpp
+[279/400][13.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpomq9hrva.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/migration/MigrationApplication.cpp
+[280/400][7.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpz7rapvaq.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/app/VerifyConfigTests.cpp
+[281/400][7.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp73b1apxt.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/benchmarks/util/log/LoggerBenchmark.cpp
+[282/400][16.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpyv13e8_a.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/cluster/Metrics.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+
+[283/400][6.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpn813awn5.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/BackendCounters.cpp
+[284/400][0.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpaazy_pix.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/RPCCenter.cpp
+[285/400][15.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpr0l1oo_r.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/ext/MPT.cpp
+[286/400][22.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp53bx3pcz.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/migration/impl/MigrationManagerFactory.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[287/400][29.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpuzlnqsv4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/feed/SingleFeedBaseTests.cpp
+[288/400][28.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7tdm8bft.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/MPTHoldersTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[289/400][17.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0xibren2.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AccountLines.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[290/400][4.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpuokm57tx.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/prometheus/MetricsFamily.cpp
+[291/400][19.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp72ujho97.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/app/Stopper.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[292/400][9.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdo9qe9nd.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/WorkQueue.cpp
+[293/400][10.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpedoz4_lc.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/TestHttpClient.cpp
+[294/400][9.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpq5h783kl.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/RepeatTests.cpp
+[295/400][20.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpmh885udd.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/cluster/MetricsTests.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+
+[296/400][26.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpo0zsst32.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/LedgerRangeTests.cpp
+[297/400][12.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp4vma80ik.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/Factories.cpp
+[298/400][25.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpoamxaz76.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/migration/MigratorRegisterTests.cpp
+[299/400][12.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdyidh8jw.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/TestWebSocketClient.cpp
+[300/400][5.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0saa_1uc.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/AssertTests.cpp
+[301/400][32.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpjdn41mzg.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/feed/SubscriptionManagerTests.cpp
+[302/400][17.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpd4ssuzyx.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/NFTSellOffers.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[303/400][5.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpvihohyfb.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/JsonUtilTests.cpp
+[304/400][15.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpvwnpytea.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/cassandra/AsyncExecutorTests.cpp
+[305/400][20.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpl5ada2u6.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ng/impl/HttpConnectionTests.cpp
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[306/400][20.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpaagv1uep.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/Source.cpp
+[307/400][6.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxqxyk9vh.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/config/ConfigDefinition.cpp
+[308/400][18.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6aoijsht.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/cluster/ClioNodeTests.cpp
+/__w/clio/clio/tests/unit/cluster/ClioNodeTests.cpp:18:1: error: included header ctime is not used directly [misc-include-cleaner,-warnings-as-errors]
+   18 | #include <ctime>
+      | ^~~~~~~~~~~~~~~~
+   19 | #include <memory>
+
+[309/400][27.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp48rr9htx.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/NFTInfoTests.cpp
+[310/400][11.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpzw_u92mj.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/dosguard/WhitelistHandlerTests.cpp
+[311/400][19.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpwiegd7qy.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/ETLStateTests.cpp
+[312/400][17.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmppn2xp7nv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/AmendmentCenter.cpp
+[313/400][7.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpmjmus8xb.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/config/ArrayTests.cpp
+[314/400][9.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpyli_nehj.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/cassandra/RetryPolicyTests.cpp
+[315/400][9.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7iwbuzrl.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/benchmarks/rpc/WorkQueueBenchmarks.cpp
+[316/400][17.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpgia5tp3p.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AccountTx.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[317/400][12.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpsvb43qwi.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/WorkQueueTests.cpp
+[318/400][10.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpjfjab3k4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/dosguard/IntervalSweepHandlerTests.cpp
+[319/400][6.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqldj0nz4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/prometheus/GaugeTests.cpp
+/__w/clio/clio/src/util/Atomic.hpp:79:5: error: function 'value' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   79 |     ValueType
+      |     ^
+      |     [[nodiscard]] 
+
+[320/400][3.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpx38vvhap.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/migration/cassandra/DBRawData.cpp
+[321/400][17.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmprf4a3kfw.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/TransactionEntry.cpp
+[322/400][34.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpmrjrt1ev.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AllHandlerTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[323/400][10.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdzr3ll4w.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/dosguard/WhitelistHandler.cpp
+[324/400][5.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp119nhu90.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/migration/cassandra/SpecTests.cpp
+[325/400][17.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmphbsyfhgi.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AccountChannels.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[326/400][18.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp337ubapj.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AccountInfo.cpp
+[327/400][5.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpkkhe3yqq.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/config/ValueView.cpp
+[328/400][9.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpib31s4qh.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/AdminVerificationTests.cpp
+[329/400][16.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpjvom33yl.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/CredentialHelpers.cpp
+[330/400][8.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqqq3phes.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/async/AnyOperationTests.cpp
+[331/400][28.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6cd70cek.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/NFTHistoryTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[332/400][25.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp_xf2sy23.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/ext/CoreTests.cpp
+[333/400][6.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2mjtn47a.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/SpawnTests.cpp
+[334/400][7.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdt748bhv.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/prometheus/Http.cpp
+[335/400][28.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmplzcx2jui.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/NFTSellOffersTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[336/400][20.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpd18rf0gq.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/migration/SpecTests.cpp
+[337/400][17.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpcjlas1fr.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/LedgerCacheLoadingStateTests.cpp
+[338/400][33.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpbedc66mn.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/LoadBalancerTests.cpp
+[339/400][21.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp3zph8gbe.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/migration/cassandra/ExampleDropTableMigrator.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[340/400][9.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmply89hjxm.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/feed/impl/SingleFeedBase.cpp
+[341/400][28.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxkb24b1p.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AccountMPTokensTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[342/400][6.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0k0137d6.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/prometheus/HistogramTests.cpp
+[343/400][11.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpk5hbeul3.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/SubscriptionContext.cpp
+/__w/clio/clio/src/web/SubscriptionContext.hpp:77:5: error: function 'apiSubversion' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   77 |     uint32_t
+      |     ^
+      |     [[nodiscard]] 
+
+[344/400][4.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp1jyfir2u.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/BytesConverterTests.cpp
+[345/400][4.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp_zbxpn6t.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/requests/Types.cpp
+[346/400][6.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp4m6cra4d.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/Coroutine.cpp
+/__w/clio/clio/src/util/Coroutine.cpp:10:1: error: included header cstddef is not used directly [misc-include-cleaner,-warnings-as-errors]
+   10 | #include <cstddef>
+      | ^~~~~~~~~~~~~~~~~~
+   11 | #include <memory>
+
+[347/400][38.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp3zy0qbaz.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/ETLServiceTests.cpp
+/__w/clio/clio/src/etl/ETLService.hpp:182:5: error: function 'getInfo' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  182 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:185:5: error: function 'isAmendmentBlocked' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  185 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:188:5: error: function 'isCorruptionDetected' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  188 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:191:5: error: function 'getETLState' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  191 |     std::optional<ETLState>
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:194:5: error: function 'lastCloseAgeSeconds' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  194 |     std::uint32_t
+      |     ^
+      |     [[nodiscard]] 
+
+[348/400][19.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpr4va1z3t.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/WriterStateTests.cpp
+[349/400][2.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmptarot1ir.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/config/Types.cpp
+[350/400][4.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7tnxib5w.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/ConceptsTests.cpp
+[351/400][31.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp99p9_66s.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/LedgerPublisherTests.cpp
+[352/400][25.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpvu56x9og.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/migration/MigrationInspectorBaseTests.cpp
+[353/400][8.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqu8o8ins.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/dosguard/IntervalSweepHandler.cpp
+[354/400][13.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpl3ho58wk.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/NetworkValidatedLedgersTests.cpp
+/__w/clio/clio/tests/unit/etl/NetworkValidatedLedgersTests.cpp:9:1: error: included header cstddef is not used directly [misc-include-cleaner,-warnings-as-errors]
+    9 | #include <cstddef>
+      | ^~~~~~~~~~~~~~~~~~
+   10 | #include <cstdint>
+
+[355/400][5.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp1tfn1f8c.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/JsonBoolTests.cpp
+[356/400][5.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpost94gns.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/RandomTests.cpp
+[357/400][5.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmphz23b5w_.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/config/Array.cpp
+[358/400][5.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpz16vmd8d.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/util/Repeat.cpp
+[359/400][28.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdfxfkkid.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AccountNFTsTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[360/400][6.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxwjvjp7m.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/prometheus/MetricsFamilyTests.cpp
+[361/400][16.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpxemq9k4w.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AccountMPTokens.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[362/400][12.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0d2sjdxr.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/async/AnyExecutionContextTests.cpp
+[363/400][27.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmptyjdrfmh.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/NoRippleCheckTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[364/400][13.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmphppf4b2g.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ng/ResponseTests.cpp
+[365/400][16.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpdeqhm21u.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/NFTBuyOffers.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[366/400][11.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpwfir3j4a.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/feed/TrackableSignalTests.cpp
+[367/400][9.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmplidisp_m.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/common/util/TestHttpServer.cpp
+[368/400][9.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpb7wzg3vx.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/web/AdminVerificationStrategy.cpp
+/__w/clio/clio/src/web/AdminVerificationStrategy.cpp:9:1: error: included header cstring is not used directly [misc-include-cleaner,-warnings-as-errors]
+    9 | #include <cstring>
+      | ^~~~~~~~~~~~~~~~~~
+   10 | #include <memory>
+
+[369/400][28.4s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp6zevv4iw.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AccountChannelsTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[370/400][30.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpu3_7rato.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/BookOffersTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[371/400][17.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp32id90n2.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/feed/impl/LedgerFeed.cpp
+[372/400][60.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpf7_f47se.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/web/ServerTests.cpp
+/__w/clio/clio/src/web/SubscriptionContext.hpp:77:5: error: function 'apiSubversion' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   77 |     uint32_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/tests/unit/web/ServerTests.cpp:715:5: error: variable 'cache' of type 'MockLedgerCache' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  715 |     MockLedgerCache cache;
+      |     ^
+      |                     const 
+/__w/clio/clio/tests/unit/web/ServerTests.cpp:739:5: error: variable 'cache' of type 'MockLedgerCache' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  739 |     MockLedgerCache cache;
+      |     ^
+      |                     const 
+
+[373/400][10.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpx7os1df4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/ChannelTests.cpp
+[374/400][27.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpua206x4o.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/DefaultProcessorTests.cpp
+[375/400][3.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2q30thbs.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/Main.cpp
+[376/400][28.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp5g7r9rc8.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/feed/ForwardFeedTests.cpp
+/__w/clio/clio/tests/unit/feed/ForwardFeedTests.cpp:10:1: error: included header memory is not used directly [misc-include-cleaner,-warnings-as-errors]
+   10 | #include <memory>
+      | ^~~~~~~~~~~~~~~~~
+   11 | 
+
+[377/400][9.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpo3qve4f0.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/SignalsHandlerTests.cpp
+[378/400][25.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpkp9mafxw.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AccountCurrenciesTests.cpp
+[379/400][6.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqv4qiuvu.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/data/impl/InputFileTests.cpp
+[380/400][29.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpcsrw9sb0.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/LedgerEntryTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[381/400][30.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpo8zkrpfl.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/feed/LedgerFeedTests.cpp
+[382/400][8.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp3nrmguz7.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/util/config/ConfigValueTests.cpp
+[383/400][24.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmph6hyckwf.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/RandomTests.cpp
+[384/400][24.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmparen_ty4.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/migration/cassandra/CassandraMigrationManagerTests.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[385/400][12.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmplo4sn0up.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/data/LedgerCacheSaver.cpp
+[386/400][14.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqv8fvpox.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/AccountNFTs.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[387/400][30.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp0n6c_ic_.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/etl/CacheLoaderTests.cpp
+[388/400][27.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpom58onlo.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AccountObjectsTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[389/400][15.8s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp7zzncd4v.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/GetAggregatePrice.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[390/400][11.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpu3tcnh4c.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/AMMHelpers.cpp
+[391/400][11.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpe4b42hex.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/rpc/handlers/NFTOffersCommon.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[392/400][12.7s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpi4bqxor7.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/etl/impl/ext/Successor.cpp
+[393/400][22.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpd26zif1k.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/migration/cassandra/ExampleObjectsMigrator.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[394/400][23.9s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp33qug6te.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/DepositAuthorizedTests.cpp
+[395/400][25.3s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpoulzcoz9.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/UnsubscribeTests.cpp
+[396/400][46.2s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp4_al3m4y.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/src/app/ClioApplication.cpp
+/__w/clio/clio/src/cluster/Backend.hpp:122:5: error: function 'selfId' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     ClioNode::CUuid
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:182:5: error: function 'getInfo' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  182 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:185:5: error: function 'isAmendmentBlocked' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  185 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:188:5: error: function 'isCorruptionDetected' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  188 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:191:5: error: function 'getETLState' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  191 |     std::optional<ETLState>
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/etl/ETLService.hpp:194:5: error: function 'lastCloseAgeSeconds' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  194 |     std::uint32_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:82:5: error: function 'size' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   82 |     size_t
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/util/CoroutineGroup.hpp:90:5: error: function 'isFull' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   90 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/web/SubscriptionContext.hpp:77:5: error: function 'apiSubversion' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+   77 |     uint32_t
+      |     ^
+      |     [[nodiscard]] 
+
+[397/400][22.6s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmp2zjc80hz.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/integration/data/BackendFactoryTests.cpp
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:122:5: error: function 'isTooBusy' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  122 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:498:5: error: function 'stats' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  498 |     boost::json::object
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:539:5: error: function 'canAddWriteRequest' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  539 |     bool
+      |     ^
+      |     [[nodiscard]] 
+/__w/clio/clio/src/data/cassandra/impl/ExecutionStrategy.hpp:545:5: error: function 'finishedAllWriteRequests' should be marked [[nodiscard]] [modernize-use-nodiscard,-warnings-as-errors]
+  545 |     bool
+      |     ^
+      |     [[nodiscard]] 
+
+[398/400][20.5s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpqky0413r.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/TxTests.cpp
+[399/400][23.0s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmplzx4qcus.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AccountMPTokenIssuancesTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+[400/400][24.1s] /nix/ci-env/bin/clang-tidy -export-fixes /tmp/tmpbwjba89t/tmpe558fklb.yaml -p=build -quiet --allow-no-checks /__w/clio/clio/tests/unit/rpc/handlers/AccountLinesTests.cpp
+/__w/clio/clio/src/rpc/common/Modifiers.hpp:112:20: error: use 'contains' to check for membership [readability-container-contains,-warnings-as-errors]
+  112 |         if (strInt.find('.') != std::string::npos)
+      |                    ^~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                    contains '.')
+
+Applying fixes ...

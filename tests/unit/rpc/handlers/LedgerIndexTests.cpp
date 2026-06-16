@@ -12,7 +12,6 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
-#include <cstdlib>
 #include <string>
 #include <vector>
 

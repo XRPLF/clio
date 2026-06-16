@@ -109,7 +109,7 @@ struct ToNumber final {
             return {};  // ignore for non-string types
 
         auto const strInt = boost::json::value_to<std::string>(value.as_object().at(key));
-        if (strInt.find('.') != std::string::npos)
+        if (strInt.contains('.'))
             return Error{Status{RippledError::rpcINVALID_PARAMS}};  // maybe a float
 
         try {

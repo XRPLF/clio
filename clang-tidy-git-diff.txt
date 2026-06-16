@@ -1,0 +1,406 @@
+diff --git a/src/cluster/Backend.hpp b/src/cluster/Backend.hpp
+index d83643b..d82d3a3 100644
+--- a/src/cluster/Backend.hpp
++++ b/src/cluster/Backend.hpp
+@@ -119,7 +119,7 @@ public:
+      *
+      * @return The UUID of this node.
+      */
+-    ClioNode::CUuid
++    [[nodiscard]] ClioNode::CUuid
+     selfId() const;
+ 
+ private:
+diff --git a/src/cluster/ClusterCommunicationService.cpp b/src/cluster/ClusterCommunicationService.cpp
+index 0ad1320..dc30bb0 100644
+--- a/src/cluster/ClusterCommunicationService.cpp
++++ b/src/cluster/ClusterCommunicationService.cpp
+@@ -7,7 +7,6 @@
+ #include "util/config/ConfigDefinition.hpp"
+ 
+ #include <chrono>
+-#include <ctime>
+ #include <memory>
+ #include <utility>
+ 
+diff --git a/src/data/BackendInterface.cpp b/src/data/BackendInterface.cpp
+index 7f84df2..eb389a1 100644
+--- a/src/data/BackendInterface.cpp
++++ b/src/data/BackendInterface.cpp
+@@ -223,7 +223,7 @@ BackendInterface::fetchBookOffers(
+                           << " blob = " << ripple::strHex(objs[i])
+                           << " ledgerSequence = " << ledgerSequence;
+         ASSERT(!objs[i].empty(), "Ledger object can't be empty");
+-        page.offers.push_back({keys[i], objs[i]});
++        page.offers.push_back({.key=keys[i], .blob=objs[i]});
+     }
+     auto end = std::chrono::system_clock::now();
+     LOG(log_.debug()) << "Fetching " << std::to_string(keys.size()) << " offers took "
+@@ -328,7 +328,7 @@ BackendInterface::fetchLedgerPage(
+     auto objects = fetchLedgerObjects(keys, ledgerSequence, yield);
+     for (size_t i = 0; i < objects.size(); ++i) {
+         if (!objects[i].empty()) {
+-            page.objects.push_back({keys[i], std::move(objects[i])});
++            page.objects.push_back({.key=keys[i], .blob=std::move(objects[i])});
+         } else if (!outOfOrder) {
+             LOG(log_.error()) << "Deleted or non-existent object in successor table. key = "
+                               << ripple::strHex(keys[i]) << " - seq = " << ledgerSequence;
+diff --git a/src/data/cassandra/impl/ExecutionStrategy.hpp b/src/data/cassandra/impl/ExecutionStrategy.hpp
+index fb874c2..8251287 100644
+--- a/src/data/cassandra/impl/ExecutionStrategy.hpp
++++ b/src/data/cassandra/impl/ExecutionStrategy.hpp
+@@ -119,7 +119,7 @@ public:
+     /**
+      * @return true if outstanding read requests allowance is exhausted; false otherwise
+      */
+-    bool
++    [[nodiscard]] bool
+     isTooBusy() const
+     {
+         bool const result = numReadRequestsOutstanding_ >= maxReadRequestsOutstanding_;
+@@ -495,7 +495,7 @@ public:
+     /**
+      * @brief Get statistics about the backend.
+      */
+-    boost::json::object
++    [[nodiscard]] boost::json::object
+     stats() const
+     {
+         return counters_->report();
+@@ -536,13 +536,13 @@ private:
+         }
+     }
+ 
+-    bool
++    [[nodiscard]] bool
+     canAddWriteRequest() const
+     {
+         return numWriteRequestsOutstanding_ < maxWriteRequestsOutstanding_;
+     }
+ 
+-    bool
++    [[nodiscard]] bool
+     finishedAllWriteRequests() const
+     {
+         return numWriteRequestsOutstanding_ == 0;
+diff --git a/src/etl/ETLService.hpp b/src/etl/ETLService.hpp
+index 0303943..1259220 100644
+--- a/src/etl/ETLService.hpp
++++ b/src/etl/ETLService.hpp
+@@ -179,19 +179,19 @@ public:
+     void
+     stop() override;
+ 
+-    boost::json::object
++    [[nodiscard]] boost::json::object
+     getInfo() const override;
+ 
+-    bool
++    [[nodiscard]] bool
+     isAmendmentBlocked() const override;
+ 
+-    bool
++    [[nodiscard]] bool
+     isCorruptionDetected() const override;
+ 
+-    std::optional<ETLState>
++    [[nodiscard]] std::optional<ETLState>
+     getETLState() const override;
+ 
+-    std::uint32_t
++    [[nodiscard]] std::uint32_t
+     lastCloseAgeSeconds() const override;
+ 
+ private:
+diff --git a/src/etl/impl/Extraction.cpp b/src/etl/impl/Extraction.cpp
+index cf29a35..6a46493 100644
+--- a/src/etl/impl/Extraction.cpp
++++ b/src/etl/impl/Extraction.cpp
+@@ -18,10 +18,8 @@
+ 
+ #include <algorithm>
+ #include <chrono>
+-#include <cstddef>
+ #include <cstdint>
+ #include <iterator>
+-#include <memory>
+ #include <optional>
+ #include <ranges>
+ #include <string>
+diff --git a/src/etl/impl/Monitor.cpp b/src/etl/impl/Monitor.cpp
+index b89c365..229731d 100644
+--- a/src/etl/impl/Monitor.cpp
++++ b/src/etl/impl/Monitor.cpp
+@@ -10,7 +10,6 @@
+ 
+ #include <algorithm>
+ #include <chrono>
+-#include <cstddef>
+ #include <cstdint>
+ #include <functional>
+ #include <memory>
+diff --git a/src/rpc/common/Modifiers.hpp b/src/rpc/common/Modifiers.hpp
+index 33262cf..739cd72 100644
+--- a/src/rpc/common/Modifiers.hpp
++++ b/src/rpc/common/Modifiers.hpp
+@@ -109,7 +109,7 @@ struct ToNumber final {
+             return {};  // ignore for non-string types
+ 
+         auto const strInt = boost::json::value_to<std::string>(value.as_object().at(key));
+-        if (strInt.find('.') != std::string::npos)
++        if (strInt.contains('.'))
+             return Error{Status{RippledError::rpcINVALID_PARAMS}};  // maybe a float
+ 
+         try {
+diff --git a/src/rpc/common/Validators.cpp b/src/rpc/common/Validators.cpp
+index cb83f2a..ec9ab07 100644
+--- a/src/rpc/common/Validators.cpp
++++ b/src/rpc/common/Validators.cpp
+@@ -20,7 +20,6 @@
+ 
+ #include <charconv>
+ #include <cstdint>
+-#include <ctime>
+ #include <stdexcept>
+ #include <string>
+ #include <string_view>
+diff --git a/src/rpc/handlers/DepositAuthorized.cpp b/src/rpc/handlers/DepositAuthorized.cpp
+index 15bb3ba..c29354c 100644
+--- a/src/rpc/handlers/DepositAuthorized.cpp
++++ b/src/rpc/handlers/DepositAuthorized.cpp
+@@ -24,7 +24,6 @@
+ #include <xrpl/protocol/Serializer.h>
+ #include <xrpl/protocol/jss.h>
+ 
+-#include <memory>
+ #include <string>
+ #include <utility>
+ 
+diff --git a/src/rpc/handlers/LedgerData.cpp b/src/rpc/handlers/LedgerData.cpp
+index 6d4bee0..cdeadf3 100644
+--- a/src/rpc/handlers/LedgerData.cpp
++++ b/src/rpc/handlers/LedgerData.cpp
+@@ -91,7 +91,7 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
+         for (size_t i = 0; i < objs.size(); ++i) {
+             auto& obj = objs[i];
+             if (!obj.empty())
+-                results.push_back({keys[i], std::move(obj)});
++                results.push_back({.key=keys[i], .blob=std::move(obj)});
+         }
+ 
+         if (*(input.diffMarker) > lgrInfo.seq)
+diff --git a/src/util/Atomic.hpp b/src/util/Atomic.hpp
+index b2b1553..9062af5 100644
+--- a/src/util/Atomic.hpp
++++ b/src/util/Atomic.hpp
+@@ -76,7 +76,7 @@ public:
+      *
+      * @return The current value
+      */
+-    ValueType
++    [[nodiscard]] ValueType
+     value() const
+     {
+         return value_;
+diff --git a/src/util/Coroutine.cpp b/src/util/Coroutine.cpp
+index 067fb50..a1d4c66 100644
+--- a/src/util/Coroutine.cpp
++++ b/src/util/Coroutine.cpp
+@@ -7,7 +7,6 @@
+ #include <boost/asio/post.hpp>
+ #include <boost/asio/spawn.hpp>
+ 
+-#include <cstddef>
+ #include <memory>
+ #include <utility>
+ 
+diff --git a/src/util/CoroutineGroup.hpp b/src/util/CoroutineGroup.hpp
+index a392957..0691eb8 100644
+--- a/src/util/CoroutineGroup.hpp
++++ b/src/util/CoroutineGroup.hpp
+@@ -79,7 +79,7 @@ public:
+      *
+      * @return size_t The number of coroutines in the group
+      */
+-    size_t
++    [[nodiscard]] size_t
+     size() const;
+ 
+     /**
+@@ -87,7 +87,7 @@ public:
+      *
+      * @return true If the group is full false otherwise
+      */
+-    bool
++    [[nodiscard]] bool
+     isFull() const;
+ 
+ private:
+diff --git a/src/web/AdminVerificationStrategy.cpp b/src/web/AdminVerificationStrategy.cpp
+index 382e6ac..fdb1cd4 100644
+--- a/src/web/AdminVerificationStrategy.cpp
++++ b/src/web/AdminVerificationStrategy.cpp
+@@ -6,7 +6,6 @@
+ 
+ #include <boost/beast/http/field.hpp>
+ 
+-#include <cstring>
+ #include <memory>
+ #include <optional>
+ #include <string>
+diff --git a/src/web/SubscriptionContext.hpp b/src/web/SubscriptionContext.hpp
+index a95c819..8f2716a 100644
+--- a/src/web/SubscriptionContext.hpp
++++ b/src/web/SubscriptionContext.hpp
+@@ -74,7 +74,7 @@ public:
+      *
+      * @return The API subversion.
+      */
+-    uint32_t
++    [[nodiscard]] uint32_t
+     apiSubversion() const override;
+ };
+ 
+diff --git a/src/web/ng/SubscriptionContext.hpp b/src/web/ng/SubscriptionContext.hpp
+index dc793b6..54be023 100644
+--- a/src/web/ng/SubscriptionContext.hpp
++++ b/src/web/ng/SubscriptionContext.hpp
+@@ -103,7 +103,7 @@ public:
+      *
+      * @return The API subversion.
+      */
+-    uint32_t
++    [[nodiscard]] uint32_t
+     apiSubversion() const override;
+ 
+     /**
+diff --git a/tests/common/util/CallWithTimeout.cpp b/tests/common/util/CallWithTimeout.cpp
+index 7805187..a31e11a 100644
+--- a/tests/common/util/CallWithTimeout.cpp
++++ b/tests/common/util/CallWithTimeout.cpp
+@@ -3,7 +3,6 @@
+ #include <gtest/gtest.h>
+ 
+ #include <chrono>
+-#include <cstdlib>
+ #include <functional>
+ #include <future>
+ #include <thread>
+diff --git a/tests/unit/cluster/ClioNodeTests.cpp b/tests/unit/cluster/ClioNodeTests.cpp
+index ea4e23c..43e7352 100644
+--- a/tests/unit/cluster/ClioNodeTests.cpp
++++ b/tests/unit/cluster/ClioNodeTests.cpp
+@@ -15,7 +15,6 @@
+ 
+ #include <chrono>
+ #include <cstdint>
+-#include <ctime>
+ #include <memory>
+ #include <stdexcept>
+ #include <string>
+diff --git a/tests/unit/etl/AmendmentBlockHandlerTests.cpp b/tests/unit/etl/AmendmentBlockHandlerTests.cpp
+index c4fd376..336dcf6 100644
+--- a/tests/unit/etl/AmendmentBlockHandlerTests.cpp
++++ b/tests/unit/etl/AmendmentBlockHandlerTests.cpp
+@@ -8,7 +8,6 @@
+ #include <gtest/gtest.h>
+ 
+ #include <chrono>
+-#include <cstddef>
+ #include <semaphore>
+ 
+ using namespace etl::impl;
+diff --git a/tests/unit/etl/MonitorTests.cpp b/tests/unit/etl/MonitorTests.cpp
+index f88aa5b..bd3e556 100644
+--- a/tests/unit/etl/MonitorTests.cpp
++++ b/tests/unit/etl/MonitorTests.cpp
+@@ -11,7 +11,6 @@
+ #include <gtest/gtest.h>
+ 
+ #include <chrono>
+-#include <cstddef>
+ #include <cstdint>
+ #include <functional>
+ #include <optional>
+diff --git a/tests/unit/etl/NetworkValidatedLedgersTests.cpp b/tests/unit/etl/NetworkValidatedLedgersTests.cpp
+index 8874343..101cc18 100644
+--- a/tests/unit/etl/NetworkValidatedLedgersTests.cpp
++++ b/tests/unit/etl/NetworkValidatedLedgersTests.cpp
+@@ -6,7 +6,6 @@
+ #include <gmock/gmock.h>
+ #include <gtest/gtest.h>
+ 
+-#include <cstddef>
+ #include <cstdint>
+ #include <memory>
+ 
+diff --git a/tests/unit/etl/SubscriptionSourceTests.cpp b/tests/unit/etl/SubscriptionSourceTests.cpp
+index 03f6db6..71c5beb 100644
+--- a/tests/unit/etl/SubscriptionSourceTests.cpp
++++ b/tests/unit/etl/SubscriptionSourceTests.cpp
+@@ -16,7 +16,6 @@
+ 
+ #include <chrono>
+ #include <cstdint>
+-#include <cstdlib>
+ #include <optional>
+ #include <string>
+ #include <thread>
+diff --git a/tests/unit/etl/SystemStateTests.cpp b/tests/unit/etl/SystemStateTests.cpp
+index af99a50..aac8739 100644
+--- a/tests/unit/etl/SystemStateTests.cpp
++++ b/tests/unit/etl/SystemStateTests.cpp
+@@ -10,7 +10,6 @@
+ #include <fmt/format.h>
+ #include <gtest/gtest.h>
+ 
+-#include <memory>
+ 
+ using namespace etl;
+ using namespace util::config;
+diff --git a/tests/unit/feed/ForwardFeedTests.cpp b/tests/unit/feed/ForwardFeedTests.cpp
+index 0f149f5..4b07e88 100644
+--- a/tests/unit/feed/ForwardFeedTests.cpp
++++ b/tests/unit/feed/ForwardFeedTests.cpp
+@@ -7,7 +7,6 @@
+ #include <gmock/gmock.h>
+ #include <gtest/gtest.h>
+ 
+-#include <memory>
+ 
+ using namespace feed::impl;
+ namespace json = boost::json;
+diff --git a/tests/unit/rpc/handlers/LedgerIndexTests.cpp b/tests/unit/rpc/handlers/LedgerIndexTests.cpp
+index 2e530e5..b83f22b 100644
+--- a/tests/unit/rpc/handlers/LedgerIndexTests.cpp
++++ b/tests/unit/rpc/handlers/LedgerIndexTests.cpp
+@@ -12,7 +12,6 @@
+ #include <gtest/gtest.h>
+ 
+ #include <cstdint>
+-#include <cstdlib>
+ #include <string>
+ #include <vector>
+ 
+diff --git a/tests/unit/web/ServerTests.cpp b/tests/unit/web/ServerTests.cpp
+index 326b2be..544d204 100644
+--- a/tests/unit/web/ServerTests.cpp
++++ b/tests/unit/web/ServerTests.cpp
+@@ -712,7 +712,7 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
+         boost::json::parse(jsonServerConfigWithBothAdminPasswordAndLocalAdmin)
+     )};
+ 
+-    MockLedgerCache cache;
++    MockLedgerCache const cache;
+     auto const result = web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache);
+     EXPECT_FALSE(result.has_value());
+ }
+@@ -736,7 +736,7 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
+         boost::json::parse(jsonServerConfigWithNoAdminPasswordAndLocalAdminFalse)
+     )};
+ 
+-    MockLedgerCache cache;
++    MockLedgerCache const cache;
+     auto const result = web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache);
+     EXPECT_FALSE(result.has_value());
+ }

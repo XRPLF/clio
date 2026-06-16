@@ -11,7 +11,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <optional>
