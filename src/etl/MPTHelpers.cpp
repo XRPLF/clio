@@ -8,7 +8,10 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/MPTIssue.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STIssue.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/Serializer.h>
@@ -48,6 +51,8 @@ getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const&)
 
 namespace {
 
+using MPTokenIssuanceIDs = boost::container::flat_set<ripple::uint192>;
+
 /**
  * @brief Derive the MPTokenIssuanceID from an affected node in transaction metadata
  *
@@ -86,21 +91,54 @@ getMPTokenIssuanceIDFromNode(ripple::STObject const& node)
     );
 }
 
+void
+addMPTokenIssuanceIDFromAmount(MPTokenIssuanceIDs& issuanceIDs, ripple::STAmount const& amount)
+{
+    if (amount.holds<ripple::MPTIssue>())
+        issuanceIDs.insert(amount.get<ripple::MPTIssue>().getMptID());
+}
+
+void
+addMPTokenIssuanceIDFromIssue(MPTokenIssuanceIDs& issuanceIDs, ripple::STIssue const& issue)
+{
+    if (issue.holds<ripple::MPTIssue>())
+        issuanceIDs.insert(issue.value().get<ripple::MPTIssue>().getMptID());
+}
+
+void
+addMPTokenIssuanceIDsFromTx(MPTokenIssuanceIDs& issuanceIDs, ripple::STTx const& sttx)
+{
+    if (sttx.isFieldPresent(ripple::sfMPTokenIssuanceID))
+        issuanceIDs.insert(sttx.getFieldH192(ripple::sfMPTokenIssuanceID));
+
+    for (ripple::STBase const& field : sttx) {
+        switch (field.getSType()) {
+            case ripple::STI_AMOUNT:
+                addMPTokenIssuanceIDFromAmount(issuanceIDs, field.downcast<ripple::STAmount>());
+                break;
+            case ripple::STI_ISSUE:
+                addMPTokenIssuanceIDFromIssue(issuanceIDs, field.downcast<ripple::STIssue>());
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 }  // namespace
 
 std::vector<MPTokenIssuanceTransactionsData>
 getMPTokenIssuanceTxsFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
-    if (txMeta.getResultTER() != ripple::tesSUCCESS)
-        return {};
-
     // Collect each distinct issuance only once per transaction; the same set of affected accounts
     // is attached to every record produced below.
-    boost::container::flat_set<ripple::uint192> issuanceIDs;
+    MPTokenIssuanceIDs issuanceIDs;
     for (ripple::STObject const& node : txMeta.getNodes()) {
         if (auto const issuanceID = getMPTokenIssuanceIDFromNode(node); issuanceID.has_value())
             issuanceIDs.insert(*issuanceID);
     }
+
+    addMPTokenIssuanceIDsFromTx(issuanceIDs, sttx);
 
     if (issuanceIDs.empty())
         return {};

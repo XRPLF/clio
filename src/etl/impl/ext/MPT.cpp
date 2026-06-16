@@ -18,15 +18,6 @@
 
 namespace etl::impl {
 
-namespace {
-
-// A single transaction writes at most M + M*A index rows: M rows for the distinct issuances, plus
-// one row for each issuance paired with each of its A affected accounts. Exceeding this bound is
-// unexpected and worth flagging.
-constexpr std::size_t kMaxExpectedIndexRowsPerTx = 1000;
-
-}  // namespace
-
 MPTExt::MPTExt(std::shared_ptr<BackendInterface> backend) : backend_(std::move(backend))
 {
 }
@@ -60,6 +51,7 @@ MPTExt::writeMPTDataFromTransactions(model::LedgerData const& data)
     std::vector<MPTHolderData> holders;
     std::vector<MPTokenIssuanceTransactionsData> issuanceTxs;
     std::size_t indexRowsWritten = 0;
+    static constexpr std::size_t kIndexRowsPerTxWarningThreshold = 1000;
 
     for (auto const& tx : data.transactions) {
         auto const mptHolders = getMPTHolderFromTx(tx.meta, tx.sttx);
@@ -71,10 +63,11 @@ MPTExt::writeMPTDataFromTransactions(model::LedgerData const& data)
         for (auto const& record : txIndexData)
             txIndexRows += 1 + record.accounts.size();
 
-        if (txIndexRows > kMaxExpectedIndexRowsPerTx) {
+        if (txIndexRows > kIndexRowsPerTxWarningThreshold) {
             LOG(log_.warn()) << "MPT issuance tx index fanout of " << txIndexRows
-                             << " rows exceeds the expected bound of " << kMaxExpectedIndexRowsPerTx
-                             << " for tx " << ripple::strHex(tx.id);
+                             << " rows exceeds the expected bound of "
+                             << kIndexRowsPerTxWarningThreshold << " for tx "
+                             << ripple::strHex(tx.id);
         }
 
         indexRowsWritten += txIndexRows;

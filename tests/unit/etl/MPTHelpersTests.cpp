@@ -8,6 +8,8 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/MPTAmount.h>
+#include <xrpl/protocol/MPTIssue.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STArray.h>
@@ -156,6 +158,42 @@ createTx(ripple::TxType type)
     return ripple::STTx{ripple::SerialIter{serialized.slice()}};
 }
 
+ripple::STTx
+createPaymentTxWithMPTAmount(ripple::uint192 const& issuanceID)
+{
+    ripple::STObject obj(ripple::sfTransaction);
+    obj.setFieldU16(ripple::sfTransactionType, ripple::ttPAYMENT);
+    obj.setAccountID(ripple::sfAccount, getAccountIdWithString(kAccount));
+    obj.setFieldAmount(
+        ripple::sfAmount, ripple::STAmount(ripple::MPTAmount{100}, ripple::MPTIssue{issuanceID})
+    );
+    obj.setFieldAmount(ripple::sfFee, ripple::STAmount(10, false));
+    obj.setAccountID(ripple::sfDestination, getAccountIdWithString(kAccount2));
+    obj.setFieldU32(ripple::sfSequence, 1);
+    obj.setFieldVL(ripple::sfSigningPubKey, kSlice);
+
+    auto const serialized = obj.getSerializer();
+    return ripple::STTx{ripple::SerialIter{serialized.slice()}};
+}
+
+ripple::STTx
+createAMMDepositTxWithMPTIssue(ripple::uint192 const& issuanceID)
+{
+    ripple::STObject obj(ripple::sfTransaction);
+    obj.setFieldU16(ripple::sfTransactionType, ripple::ttAMM_DEPOSIT);
+    obj.setAccountID(ripple::sfAccount, getAccountIdWithString(kAccount));
+    obj.setFieldAmount(ripple::sfFee, ripple::STAmount(10, false));
+    obj.setFieldU32(ripple::sfSequence, 1);
+    obj.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    obj.setFieldIssue(
+        ripple::sfAsset, ripple::STIssue{ripple::sfAsset, ripple::MPTIssue{issuanceID}}
+    );
+    obj.setFieldIssue(ripple::sfAsset2, ripple::STIssue{ripple::sfAsset2, ripple::xrpIssue()});
+
+    auto const serialized = obj.getSerializer();
+    return ripple::STTx{ripple::SerialIter{serialized.slice()}};
+}
+
 }  // namespace
 
 struct MPTHelpersTest : virtual public ::testing::Test {
@@ -174,15 +212,50 @@ protected:
     }
 };
 
-TEST_F(MPTHelpersTest, FailedTxProducesNoRecords)
+TEST_F(MPTHelpersTest, FailedTxWithoutIssuanceReferenceProducesNoRecords)
 {
     std::vector<ripple::STObject> nodes;
-    nodes.push_back(createMPTokenNode(ripple::sfCreatedNode, defaultIssuanceID(), kAccount));
     auto const txMeta = createTxMeta(std::move(nodes), ripple::tecINCOMPLETE);
 
     auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, createTx(ripple::ttPAYMENT));
 
     EXPECT_TRUE(records.empty());
+}
+
+TEST_F(MPTHelpersTest, FailedTxWithTopLevelIssuanceIDProducesRecord)
+{
+    auto const txMeta = createTxMeta({}, ripple::tecINCOMPLETE);
+    auto const sttx = createTx(ripple::ttMPTOKEN_ISSUANCE_SET);
+
+    auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
+
+    ASSERT_EQ(records.size(), 1);
+    EXPECT_EQ(records[0].mptIssuanceID, defaultIssuanceID());
+    verifyCommonFields(records[0], sttx, txMeta);
+}
+
+TEST_F(MPTHelpersTest, FailedTxWithMPTAmountProducesRecord)
+{
+    auto const txMeta = createTxMeta({}, ripple::tecINCOMPLETE);
+    auto const sttx = createPaymentTxWithMPTAmount(defaultIssuanceID());
+
+    auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
+
+    ASSERT_EQ(records.size(), 1);
+    EXPECT_EQ(records[0].mptIssuanceID, defaultIssuanceID());
+    verifyCommonFields(records[0], sttx, txMeta);
+}
+
+TEST_F(MPTHelpersTest, FailedTxWithMPTIssueProducesRecord)
+{
+    auto const txMeta = createTxMeta({}, ripple::tecINCOMPLETE);
+    auto const sttx = createAMMDepositTxWithMPTIssue(defaultIssuanceID());
+
+    auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
+
+    ASSERT_EQ(records.size(), 1);
+    EXPECT_EQ(records[0].mptIssuanceID, defaultIssuanceID());
+    verifyCommonFields(records[0], sttx, txMeta);
 }
 
 TEST_F(MPTHelpersTest, IssuanceCreateProducesRecordWithReconstructedID)
