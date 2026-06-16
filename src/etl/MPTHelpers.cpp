@@ -5,8 +5,11 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/MPTIssue.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STBase.h>
+#include <xrpl/protocol/STIssue.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STTx.h>
@@ -48,6 +51,8 @@ getMPTHolderFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const&)
 
 namespace {
 
+using MPTokenIssuanceIDs = boost::container::flat_set<xrpl::uint192>;
+
 /**
  * @brief Derive the MPTokenIssuanceID from an affected node in transaction metadata
  *
@@ -86,21 +91,54 @@ getMPTokenIssuanceIDFromNode(xrpl::STObject const& node)
     );
 }
 
+void
+addMPTokenIssuanceIDFromAmount(MPTokenIssuanceIDs& issuanceIDs, xrpl::STAmount const& amount)
+{
+    if (amount.holds<xrpl::MPTIssue>())
+        issuanceIDs.insert(amount.get<xrpl::MPTIssue>().getMptID());
+}
+
+void
+addMPTokenIssuanceIDFromIssue(MPTokenIssuanceIDs& issuanceIDs, xrpl::STIssue const& issue)
+{
+    if (issue.holds<xrpl::MPTIssue>())
+        issuanceIDs.insert(issue.value().get<xrpl::MPTIssue>().getMptID());
+}
+
+void
+addMPTokenIssuanceIDsFromTx(MPTokenIssuanceIDs& issuanceIDs, xrpl::STTx const& sttx)
+{
+    if (sttx.isFieldPresent(xrpl::sfMPTokenIssuanceID))
+        issuanceIDs.insert(sttx.getFieldH192(xrpl::sfMPTokenIssuanceID));
+
+    for (xrpl::STBase const& field : sttx) {
+        switch (field.getSType()) {
+            case xrpl::STI_AMOUNT:
+                addMPTokenIssuanceIDFromAmount(issuanceIDs, field.downcast<xrpl::STAmount>());
+                break;
+            case xrpl::STI_ISSUE:
+                addMPTokenIssuanceIDFromIssue(issuanceIDs, field.downcast<xrpl::STIssue>());
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 }  // namespace
 
 std::vector<MPTokenIssuanceTransactionsData>
 getMPTokenIssuanceTxsFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
 {
-    if (txMeta.getResultTER() != xrpl::tesSUCCESS)
-        return {};
-
     // Collect each distinct issuance only once per transaction; the same set of affected accounts
     // is attached to every record produced below.
-    boost::container::flat_set<xrpl::uint192> issuanceIDs;
+    MPTokenIssuanceIDs issuanceIDs;
     for (xrpl::STObject const& node : txMeta.getNodes()) {
         if (auto const issuanceID = getMPTokenIssuanceIDFromNode(node); issuanceID.has_value())
             issuanceIDs.insert(*issuanceID);
     }
+
+    addMPTokenIssuanceIDsFromTx(issuanceIDs, sttx);
 
     if (issuanceIDs.empty())
         return {};

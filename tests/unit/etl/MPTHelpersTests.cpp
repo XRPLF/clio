@@ -8,6 +8,8 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/MPTAmount.h>
+#include <xrpl/protocol/MPTIssue.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STArray.h>
@@ -156,6 +158,42 @@ createTx(xrpl::TxType type)
     return xrpl::STTx{xrpl::SerialIter{serialized.slice()}};
 }
 
+xrpl::STTx
+createPaymentTxWithMPTAmount(xrpl::uint192 const& issuanceID)
+{
+    xrpl::STObject obj(xrpl::sfTransaction);
+    obj.setFieldU16(xrpl::sfTransactionType, xrpl::ttPAYMENT);
+    obj.setAccountID(xrpl::sfAccount, getAccountIdWithString(kAccount));
+    obj.setFieldAmount(
+        xrpl::sfAmount, xrpl::STAmount(xrpl::MPTAmount{100}, xrpl::MPTIssue{issuanceID})
+    );
+    obj.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10, false));
+    obj.setAccountID(xrpl::sfDestination, getAccountIdWithString(kAccount2));
+    obj.setFieldU32(xrpl::sfSequence, 1);
+    obj.setFieldVL(xrpl::sfSigningPubKey, kSlice);
+
+    auto const serialized = obj.getSerializer();
+    return xrpl::STTx{xrpl::SerialIter{serialized.slice()}};
+}
+
+xrpl::STTx
+createAMMDepositTxWithMPTIssue(xrpl::uint192 const& issuanceID)
+{
+    xrpl::STObject obj(xrpl::sfTransaction);
+    obj.setFieldU16(xrpl::sfTransactionType, xrpl::ttAMM_DEPOSIT);
+    obj.setAccountID(xrpl::sfAccount, getAccountIdWithString(kAccount));
+    obj.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10, false));
+    obj.setFieldU32(xrpl::sfSequence, 1);
+    obj.setFieldVL(xrpl::sfSigningPubKey, kSlice);
+    obj.setFieldIssue(
+        xrpl::sfAsset, xrpl::STIssue{xrpl::sfAsset, xrpl::MPTIssue{issuanceID}}
+    );
+    obj.setFieldIssue(xrpl::sfAsset2, xrpl::STIssue{xrpl::sfAsset2, xrpl::xrpIssue()});
+
+    auto const serialized = obj.getSerializer();
+    return xrpl::STTx{xrpl::SerialIter{serialized.slice()}};
+}
+
 }  // namespace
 
 struct MPTHelpersTest : virtual public ::testing::Test {
@@ -174,15 +212,50 @@ protected:
     }
 };
 
-TEST_F(MPTHelpersTest, FailedTxProducesNoRecords)
+TEST_F(MPTHelpersTest, FailedTxWithoutIssuanceReferenceProducesNoRecords)
 {
     std::vector<xrpl::STObject> nodes;
-    nodes.push_back(createMPTokenNode(xrpl::sfCreatedNode, defaultIssuanceID(), kAccount));
     auto const txMeta = createTxMeta(std::move(nodes), xrpl::tecINCOMPLETE);
 
     auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, createTx(xrpl::ttPAYMENT));
 
     EXPECT_TRUE(records.empty());
+}
+
+TEST_F(MPTHelpersTest, FailedTxWithTopLevelIssuanceIDProducesRecord)
+{
+    auto const txMeta = createTxMeta({}, xrpl::tecINCOMPLETE);
+    auto const sttx = createTx(xrpl::ttMPTOKEN_ISSUANCE_SET);
+
+    auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
+
+    ASSERT_EQ(records.size(), 1);
+    EXPECT_EQ(records[0].mptIssuanceID, defaultIssuanceID());
+    verifyCommonFields(records[0], sttx, txMeta);
+}
+
+TEST_F(MPTHelpersTest, FailedTxWithMPTAmountProducesRecord)
+{
+    auto const txMeta = createTxMeta({}, xrpl::tecINCOMPLETE);
+    auto const sttx = createPaymentTxWithMPTAmount(defaultIssuanceID());
+
+    auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
+
+    ASSERT_EQ(records.size(), 1);
+    EXPECT_EQ(records[0].mptIssuanceID, defaultIssuanceID());
+    verifyCommonFields(records[0], sttx, txMeta);
+}
+
+TEST_F(MPTHelpersTest, FailedTxWithMPTIssueProducesRecord)
+{
+    auto const txMeta = createTxMeta({}, xrpl::tecINCOMPLETE);
+    auto const sttx = createAMMDepositTxWithMPTIssue(defaultIssuanceID());
+
+    auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
+
+    ASSERT_EQ(records.size(), 1);
+    EXPECT_EQ(records[0].mptIssuanceID, defaultIssuanceID());
+    verifyCommonFields(records[0], sttx, txMeta);
 }
 
 TEST_F(MPTHelpersTest, IssuanceCreateProducesRecordWithReconstructedID)
