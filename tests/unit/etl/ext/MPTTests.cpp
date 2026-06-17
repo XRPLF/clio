@@ -75,7 +75,7 @@ constinit auto const kHash = "6005B465CBBF7FA8E41AC0C0CD38491026D9411FCB7BA46E2A
 constinit auto const kHash2 = "6005B465CBBF7FA8E41AC0C0CD38491026D9411FCB7BA46E2AEBB3AF7654261C";
 constinit auto const kHash3 = "6005B465CBBF7FA8E41AC0C0CD38491026D9411FCB7BA46E2AEBB3AF7654261D";
 
-// The issuance ID carried by the ltMPTOKEN CreatedNode inside kTxnMeta
+// The issuance ID carried by the ltMPTOKEN CreatedNode in kTxnMeta.
 constinit auto const kIssuanceID = "002DBD1817E0AF9FDE4F9978B8FCD8A5063630B5737DA605";
 
 constinit auto const kAccount = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
@@ -125,8 +125,7 @@ createMPTokenIssuanceNode(std::uint32_t seq, std::string_view issuer)
     return node;
 }
 
-// One Payment transaction touching two distinct issuances (one of them twice) with three affected
-// accounts to exercise the fanout/dedup path of writeMPTDataFromTransactions
+// One Payment transaction touching two distinct issuances with three affected accounts.
 etl::model::Transaction
 createMultiIssuanceTransaction()
 {
@@ -153,7 +152,7 @@ createMultiIssuanceTransaction()
     xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
     affectedNodes.push_back(createMPTokenNode(issuanceA, kAccount));
     affectedNodes.push_back(createMPTokenNode(issuanceB, kAccount2));
-    affectedNodes.push_back(createMPTokenIssuanceNode(1, kHolderAccount));  // dedups to issuanceA
+    affectedNodes.push_back(createMPTokenIssuanceNode(1, kHolderAccount));  // issuanceA again
     metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
 
     auto const txMeta =
@@ -270,8 +269,7 @@ createTestDataWithoutMPToken()
 auto
 createTestData()
 {
-    // Only the AUTHORIZE transaction carries metadata with MPT affected nodes; the others use the
-    // default meta (NFT page nodes), so they produce neither holder nor issuance-tx records
+    // Only the AUTHORIZE transaction carries metadata with MPT affected nodes.
     auto transactions = std::vector{
         util::createTransaction(
             xrpl::TxType::ttMPTOKEN_ISSUANCE_CREATE
@@ -295,8 +293,7 @@ createTestData()
     };
 }
 
-// Same AUTHORIZE fixture as kTxnMeta but with a distinct transaction index, so that records from
-// different transactions in one ledger carry distinct (ledgerSequence, transactionIndex) keys
+// Same AUTHORIZE fixture as kTxnMeta, with a distinct transaction index.
 etl::model::Transaction
 createAuthorizeTransactionWithIndex(std::string const& hashStr, std::uint32_t txIndex)
 {
@@ -360,7 +357,7 @@ TEST_F(MPTExtTests, OnLedgerDataFiltersAndWritesMPTs)
 
     ext_.onLedgerData(data);
 
-    // Only the AUTHORIZE transaction's metadata touches an MPT object
+    // Only the AUTHORIZE fixture touches an MPT object.
     ASSERT_EQ(issuanceTxs.size(), 1);
     EXPECT_EQ(issuanceTxs[0].mptIssuanceID, xrpl::uint192(kIssuanceID));
     EXPECT_FALSE(issuanceTxs[0].accounts.empty());
@@ -384,7 +381,7 @@ TEST_F(MPTExtTests, OnInitialDataFiltersAndWritesMPTs)
 
     ext_.onInitialData(data);
 
-    // Only the AUTHORIZE transaction's metadata touches an MPT object
+    // Only the AUTHORIZE fixture touches an MPT object.
     ASSERT_EQ(issuanceTxs.size(), 1);
     EXPECT_EQ(issuanceTxs[0].mptIssuanceID, xrpl::uint192(kIssuanceID));
     EXPECT_FALSE(issuanceTxs[0].accounts.empty());
@@ -408,10 +405,10 @@ TEST_F(MPTExtTests, OnInitialDataWithMultipleHolders)
     auto const data = createMultipleHoldersTestData();
 
     EXPECT_CALL(*backend_, writeMPTHolders).WillOnce([](auto const& holders) {
-        EXPECT_EQ(holders.size(), 3);  // Expect all three AUTHORIZE transactions
+        EXPECT_EQ(holders.size(), 3);  // All three AUTHORIZE transactions
 
         auto const expectedAccount =
-            rpc::accountFromStringStrict(kHolderAccount);  // Expect all three to be the same
+            rpc::accountFromStringStrict(kHolderAccount);  // Same holder in each fixture
         EXPECT_TRUE(std::ranges::all_of(holders, [&expectedAccount](auto const& data) {
             return data.holder == expectedAccount;
         }));
@@ -425,8 +422,7 @@ TEST_F(MPTExtTests, OnInitialDataWithMultipleHolders)
 
     ext_.onInitialData(data);
 
-    // One record per AUTHORIZE transaction; all reference the same issuance but carry distinct
-    // transaction indices, so each maps to a distinct (mptoken_issuance_id, seq_idx) row
+    // One record per AUTHORIZE transaction; each has a distinct transaction index.
     ASSERT_EQ(issuanceTxs.size(), 3);
     EXPECT_TRUE(std::ranges::all_of(issuanceTxs, [](auto const& record) {
         return record.mptIssuanceID == xrpl::uint192(kIssuanceID);
@@ -487,9 +483,7 @@ TEST_F(MPTExtTests, OnLedgerDataDedupsMultiIssuanceFanout)
 
     ext_.onLedgerData(data);
 
-    // The single transaction touches issuanceA twice (MPToken + MPTokenIssuance node) and
-    // issuanceB once, so exactly two deduped records must be written; each carries all three
-    // affected accounts, which is the unit-level input of the per-account fanout in the backend
+    // issuanceA is touched twice, issuanceB once; each record carries the full account set.
     auto const issuanceA = xrpl::makeMptID(1, getAccountIdWithString(kHolderAccount));
     auto const issuanceB = xrpl::makeMptID(2, getAccountIdWithString(kHolderAccount));
 

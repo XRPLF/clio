@@ -317,8 +317,8 @@ TEST_F(MPTHelpersTest, AuthorizeProducesRecordFromMPTokenNode)
 
 TEST_F(MPTHelpersTest, DedupsAcrossMPTokenAndIssuanceNodes)
 {
-    // Both nodes resolve to the same issuance ID: the MPToken node carries it verbatim while the
-    // MPTokenIssuance node requires reconstruction via makeMptID
+    // Both nodes resolve to the same issuance ID: the MPToken node carries it directly while the
+    // MPTokenIssuance node requires reconstruction via makeMptID.
     std::vector<xrpl::STObject> nodes;
     nodes.push_back(createMPTokenNode(xrpl::sfCreatedNode, defaultIssuanceID(), kAccount));
     nodes.push_back(createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
@@ -340,7 +340,7 @@ TEST_F(MPTHelpersTest, MultipleIssuancesFanOutAndDedup)
     auto const issuanceB = xrpl::makeMptID(2, getAccountIdWithString(kIssuer));
     ASSERT_LT(issuanceA, issuanceB);
 
-    // Two distinct issuances; issuanceA is touched twice and must be deduped
+    // issuanceA is touched twice and should produce only one index record.
     std::vector<xrpl::STObject> nodes;
     nodes.push_back(createMPTokenNode(xrpl::sfCreatedNode, issuanceB, kAccount));
     nodes.push_back(createMPTokenNode(xrpl::sfModifiedNode, issuanceA, kAccount2));
@@ -381,7 +381,7 @@ TEST_F(MPTHelpersTest, IndexesMPTNodesRegardlessOfTransactionType)
 
 TEST_F(MPTHelpersTest, MPTNodeWithoutFieldsProducesNoRecords)
 {
-    // A ModifiedNode carrying no FinalFields must be skipped, not crash
+    // A ModifiedNode carrying no FinalFields must be skipped without crashing.
     xrpl::STObject node(xrpl::sfModifiedNode);
     node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
     node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
