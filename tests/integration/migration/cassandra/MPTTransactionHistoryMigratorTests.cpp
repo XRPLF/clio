@@ -1,10 +1,12 @@
-#include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/LedgerCache.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/Handle.hpp"
+#include "data/cassandra/Schema.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
 #include "etl/MPTHelpers.hpp"
+#include "etl/Models.hpp"
+#include "etl/impl/ext/MPT.hpp"
 #include "migration/MigrationManagerInterface.hpp"
 #include "migration/MigratiorStatus.hpp"
 #include "migration/cassandra/CassandraMigrationBackend.hpp"
@@ -25,6 +27,7 @@
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
@@ -38,12 +41,13 @@
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/TxMeta.h>
 
-#include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <set>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -68,6 +72,8 @@ constexpr auto kMigratorName = migration::cassandra::MPTTransactionHistoryMigrat
 constexpr auto kIssuer = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
 constexpr auto kHolder = "rK1EX542EgA9m948JrJRaEzwLVEhqWvnr9";
 constexpr auto kHolder2 = "rnd1nHuzceyQDqnLH8urWNr4QBKt4v7WVk";
+constexpr auto kObserver = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto kUnknownAccount = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 
 constexpr std::uint32_t kLedgerSeq = 100;
 constexpr std::uint32_t kIssuanceSeq = 7;
@@ -81,88 +87,116 @@ constexpr auto kRawHeader =
     "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
 
 // An MPToken holder node carrying the issuance ID directly (the sfMPTokenIssuanceID path).
-ripple::STObject
-createMPTokenNode(ripple::uint192 const& issuanceID, std::string_view holder)
+xrpl::STObject
+createMPTokenNode(xrpl::uint192 const& issuanceID, std::string_view holder)
 {
-    ripple::STObject fields(ripple::sfFinalFields);
-    fields.setAccountID(ripple::sfAccount, getAccountIdWithString(holder));
-    fields[ripple::sfMPTokenIssuanceID] = issuanceID;
+    xrpl::STObject fields(xrpl::sfFinalFields);
+    fields.setAccountID(xrpl::sfAccount, getAccountIdWithString(holder));
+    fields[xrpl::sfMPTokenIssuanceID] = issuanceID;
 
-    ripple::STObject node(ripple::sfModifiedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN);
-    node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{});
-    node.emplace_back(std::move(fields));
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
+    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
+    node.set(std::move(fields));
     return node;
 }
 
 // An MPTokenIssuance node whose ID must be reconstructed from sfSequence + sfIssuer.
-ripple::STObject
+xrpl::STObject
 createMPTokenIssuanceNode(std::uint32_t seq, std::string_view issuer)
 {
-    ripple::STObject fields(ripple::sfFinalFields);
-    fields.setFieldU32(ripple::sfSequence, seq);
-    fields.setAccountID(ripple::sfIssuer, getAccountIdWithString(issuer));
+    xrpl::STObject fields(xrpl::sfFinalFields);
+    fields.setFieldU32(xrpl::sfSequence, seq);
+    fields.setAccountID(xrpl::sfIssuer, getAccountIdWithString(issuer));
 
-    ripple::STObject node(ripple::sfModifiedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN_ISSUANCE);
-    node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{});
-    node.emplace_back(std::move(fields));
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
+    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
+    node.set(std::move(fields));
     return node;
 }
 
 // A single Payment whose metadata touches two distinct issuances and three affected accounts,
 // exercising the multi-issuance fan-out and per-account indexing.
-std::pair<ripple::STTx, ripple::TxMeta>
+std::pair<xrpl::STTx, xrpl::TxMeta>
 makeMultiIssuancePayment(std::uint32_t ledgerSeq, std::uint32_t txIndex)
 {
-    ripple::Slice const signingKey("test", 4);
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttPAYMENT);
-    tx.setAccountID(ripple::sfAccount, getAccountIdWithString(kHolder));
-    tx.setFieldAmount(ripple::sfAmount, ripple::STAmount(100, false));
-    tx.setFieldAmount(ripple::sfFee, ripple::STAmount(10, false));
-    tx.setAccountID(ripple::sfDestination, getAccountIdWithString(kHolder2));
-    tx.setFieldU32(ripple::sfSequence, 1);
-    tx.setFieldVL(ripple::sfSigningPubKey, signingKey);
+    xrpl::Slice const signingKey("test", 4);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttPAYMENT);
+    tx.setAccountID(xrpl::sfAccount, getAccountIdWithString(kHolder));
+    tx.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(100, false));
+    tx.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10, false));
+    tx.setAccountID(xrpl::sfDestination, getAccountIdWithString(kHolder2));
+    tx.setFieldU32(xrpl::sfSequence, 1);
+    tx.setFieldVL(xrpl::sfSigningPubKey, signingKey);
 
     auto const serialized = tx.getSerializer();
-    ripple::STTx const sttx{ripple::SerialIter{serialized.slice()}};
+    xrpl::STTx const sttx{xrpl::SerialIter{serialized.slice()}};
 
-    auto const issuanceA = ripple::makeMptID(1, getAccountIdWithString(kHolder));
-    auto const issuanceB = ripple::makeMptID(2, getAccountIdWithString(kHolder));
+    auto const issuanceA = xrpl::makeMptID(1, getAccountIdWithString(kHolder));
+    auto const issuanceB = xrpl::makeMptID(2, getAccountIdWithString(kHolder));
 
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, txIndex);
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, txIndex);
 
-    ripple::STArray affectedNodes(ripple::sfAffectedNodes);
+    xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
     affectedNodes.push_back(createMPTokenNode(issuanceA, kHolder));
     affectedNodes.push_back(createMPTokenNode(issuanceB, kHolder2));
+    affectedNodes.push_back(createMPTokenNode(issuanceA, kObserver));
     affectedNodes.push_back(createMPTokenIssuanceNode(1, kHolder));  // resolves to issuanceA
-    metaObj.setFieldArray(ripple::sfAffectedNodes, affectedNodes);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
 
-    ripple::TxMeta const txMeta{
+    xrpl::TxMeta const txMeta{
         sttx.getTransactionID(), ledgerSeq, metaObj.getSerializer().peekData()
     };
     return {sttx, txMeta};
 }
 
 std::string
-blobToString(ripple::Blob const& blob)
+blobToString(xrpl::Blob const& blob)
 {
     return {reinterpret_cast<char const*>(blob.data()), blob.size()};
 }
 
-// Whether any returned transaction (re-fetched by hash) matches the given transaction ID.
-bool
-containsTx(std::vector<data::TransactionAndMetadata> const& txns, ripple::uint256 const& id)
+// A failed transaction with a top-level sfMPTokenIssuanceID exercises parity for records derived
+// from the transaction body rather than successful metadata nodes.
+std::pair<xrpl::STTx, xrpl::TxMeta>
+makeFailedExplicitMPTReferenceTx(
+    xrpl::uint192 const& issuanceID,
+    std::uint32_t ledgerSeq,
+    std::uint32_t txIndex
+)
 {
-    return std::ranges::any_of(txns, [&](auto const& tx) {
-        if (tx.transaction.empty())
-            return false;
-        ripple::SerialIter it{tx.transaction.data(), tx.transaction.size()};
-        return ripple::STTx{it}.getTransactionID() == id;
-    });
+    xrpl::Slice const signingKey("test", 4);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttMPTOKEN_ISSUANCE_SET);
+    tx.setAccountID(xrpl::sfAccount, getAccountIdWithString(kIssuer));
+    tx[xrpl::sfMPTokenIssuanceID] = issuanceID;
+    tx.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10, false));
+    tx.setFieldU32(xrpl::sfSequence, 2);
+    tx.setFieldVL(xrpl::sfSigningPubKey, signingKey);
+
+    auto const serialized = tx.getSerializer();
+    xrpl::STTx const sttx{xrpl::SerialIter{serialized.slice()}};
+
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tecINCOMPLETE);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, txIndex);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, xrpl::STArray{xrpl::sfAffectedNodes});
+
+    xrpl::TxMeta const txMeta{
+        sttx.getTransactionID(), ledgerSeq, metaObj.getSerializer().peekData()
+    };
+    return {sttx, txMeta};
+}
+
+template <class UInt>
+std::string
+uintToString(UInt const& value)
+{
+    return {reinterpret_cast<char const*>(value.data()), value.size()};
 }
 
 }  // namespace
@@ -233,12 +267,24 @@ protected:
     std::shared_ptr<migration::cassandra::CassandraMigrationBackend> backend_;
     std::shared_ptr<migration::MigrationManagerInterface> manager_;
 
+    using SeqIdx = std::tuple<std::uint32_t, std::uint32_t>;
+    using IssuanceRow = std::tuple<std::string, SeqIdx, std::string>;
+    using AccountRow = std::tuple<std::string, std::string, SeqIdx, std::string>;
+
+    struct RawIndexRows {
+        std::set<IssuanceRow> issuance;
+        std::set<AccountRow> account;
+
+        bool
+        operator==(RawIndexRows const&) const = default;
+    };
+
     // Seed a single-ledger range so index fetches resolve a valid sequence range.
     void
     setupLedgerRange(std::uint32_t seq)
     {
         std::string rawHeaderBlob = hexStringToBinaryString(kRawHeader);
-        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
+        xrpl::LedgerHeader lgrInfo = util::deserializeHeader(xrpl::makeSlice(rawHeaderBlob));
         lgrInfo.seq = seq;
         backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         backend_->writeSuccessor(
@@ -249,7 +295,7 @@ protected:
 
     // Write a (sttx, txMeta) pair into the transactions table at the given ledger sequence.
     void
-    seedTransaction(ripple::STTx const& sttx, ripple::TxMeta const& txMeta, std::uint32_t seq)
+    seedTransaction(xrpl::STTx const& sttx, xrpl::TxMeta const& txMeta, std::uint32_t seq)
     {
         backend_->writeTransaction(
             uint256ToString(sttx.getTransactionID()),
@@ -260,31 +306,113 @@ protected:
         );
     }
 
-    // Assert every record the extractor produces is present in both index tables.
-    void
-    expectIndexed(std::vector<MPTokenIssuanceTransactionsData> const& expected)
+    static etl::model::Transaction
+    makeModelTx(xrpl::STTx const& sttx, xrpl::TxMeta const& txMeta)
     {
-        for (auto const& rec : expected) {
-            auto const issuanceRes = data::synchronous([&](auto yield) {
-                return backend_->fetchMPTokenIssuanceTransactions(
-                    rec.mptIssuanceID, 1000, false, {}, yield
-                );
-            });
-            EXPECT_TRUE(containsTx(issuanceRes.txns, rec.txHash))
-                << "missing mptoken_issuance_transactions row for "
-                << ripple::to_string(rec.mptIssuanceID);
+        auto raw = blobToString(sttx.getSerializer().peekData());
+        auto metaRaw = blobToString(txMeta.getAsObject().getSerializer().peekData());
+        auto const txID = sttx.getTransactionID();
 
-            for (auto const& account : rec.accounts) {
-                auto const accountRes = data::synchronous([&](auto yield) {
-                    return backend_->fetchAccountMPTokenIssuanceTransactions(
-                        rec.mptIssuanceID, account, 1000, false, {}, yield
-                    );
-                });
-                EXPECT_TRUE(containsTx(accountRes.txns, rec.txHash))
-                    << "missing account_mptoken_issuance_transactions row for "
-                    << ripple::to_string(rec.mptIssuanceID);
+        return etl::model::Transaction{
+            .raw = std::move(raw),
+            .metaRaw = std::move(metaRaw),
+            .sttx = sttx,
+            .meta = txMeta,
+            .id = txID,
+            .key = uintToString(txID),
+            .type = sttx.getTxnType()
+        };
+    }
+
+    static RawIndexRows
+    expectedRowsFrom(std::vector<MPTokenIssuanceTransactionsData> const& expected)
+    {
+        RawIndexRows rows;
+        for (auto const& rec : expected) {
+            auto const issuanceID = uintToString(rec.mptIssuanceID);
+            auto const txHash = uintToString(rec.txHash);
+            auto const seqIdx = SeqIdx{rec.ledgerSequence, rec.transactionIndex};
+            rows.issuance.emplace(issuanceID, seqIdx, txHash);
+
+            for (auto const& account : rec.accounts)
+                rows.account.emplace(issuanceID, uintToString(account), seqIdx, txHash);
+        }
+
+        return rows;
+    }
+
+    static void
+    appendExpected(RawIndexRows& target, std::vector<MPTokenIssuanceTransactionsData> const& data)
+    {
+        auto rows = expectedRowsFrom(data);
+        target.issuance.insert(rows.issuance.begin(), rows.issuance.end());
+        target.account.insert(rows.account.begin(), rows.account.end());
+    }
+
+    RawIndexRows
+    readRawIndexRows()
+    {
+        RawIndexRows rows;
+        auto const cfg = cfg_.getObject("database.cassandra");
+        auto const settings = SettingsProvider{cfg};
+        Handle const handle{TestGlobals::instance().backendHost};
+        auto const connected = handle.connect();
+        EXPECT_TRUE(connected);
+        if (not connected)
+            return rows;
+
+        auto const issuanceRes = handle.execute(
+            "SELECT mptoken_issuance_id, seq_idx, hash FROM " +
+            qualifiedTableName(settings, "mptoken_issuance_transactions")
+        );
+        EXPECT_TRUE(issuanceRes);
+        if (issuanceRes) {
+            for (auto const& [issuanceID, seqIdx, txHash] :
+                 extract<std::vector<unsigned char>, SeqIdx, xrpl::uint256>(*issuanceRes)) {
+                rows.issuance.emplace(blobToString(issuanceID), seqIdx, uintToString(txHash));
             }
         }
+
+        auto const accountRes = handle.execute(
+            "SELECT mptoken_issuance_id, account, seq_idx, hash FROM " +
+            qualifiedTableName(settings, "account_mptoken_issuance_transactions")
+        );
+        EXPECT_TRUE(accountRes);
+        if (accountRes) {
+            for (auto const& [issuanceID, account, seqIdx, txHash] :
+                 extract<std::vector<unsigned char>, xrpl::AccountID, SeqIdx, xrpl::uint256>(
+                     *accountRes
+                 )) {
+                rows.account.emplace(
+                    blobToString(issuanceID), uintToString(account), seqIdx, uintToString(txHash)
+                );
+            }
+        }
+
+        return rows;
+    }
+
+    void
+    truncateIndexTables()
+    {
+        auto const cfg = cfg_.getObject("database.cassandra");
+        auto const settings = SettingsProvider{cfg};
+        Handle const handle{TestGlobals::instance().backendHost};
+        ASSERT_TRUE(handle.connect());
+        ASSERT_TRUE(handle.execute(
+            "TRUNCATE " + qualifiedTableName(settings, "mptoken_issuance_transactions")
+        ));
+        ASSERT_TRUE(handle.execute(
+            "TRUNCATE " + qualifiedTableName(settings, "account_mptoken_issuance_transactions")
+        ));
+    }
+
+    void
+    expectRawRowsEqual(RawIndexRows const& expected)
+    {
+        auto const actual = readRawIndexRows();
+        EXPECT_EQ(actual.issuance, expected.issuance);
+        EXPECT_EQ(actual.account, expected.account);
     }
 };
 
@@ -304,10 +432,10 @@ TEST_F(MPTTransactionHistoryMigratorTest, BackfillIndexesAllShapes)
     setupLedgerRange(kLedgerSeq);
 
     auto const createData = createMPTIssuanceCreateTxWithMetadata(kIssuer, 2, kIssuanceSeq);
-    ripple::STTx const createTx{
-        ripple::SerialIter{createData.transaction.data(), createData.transaction.size()}
+    xrpl::STTx const createTx{
+        xrpl::SerialIter{createData.transaction.data(), createData.transaction.size()}
     };
-    ripple::TxMeta const createMeta{createTx.getTransactionID(), kLedgerSeq, createData.metadata};
+    xrpl::TxMeta const createMeta{createTx.getTransactionID(), kLedgerSeq, createData.metadata};
     seedTransaction(createTx, createMeta, kLedgerSeq);
 
     auto const [payTx, payMeta] = makeMultiIssuancePayment(kLedgerSeq, 1);
@@ -319,6 +447,12 @@ TEST_F(MPTTransactionHistoryMigratorTest, BackfillIndexesAllShapes)
     auto const expectedPay = etl::getMPTokenIssuanceTxsFromTx(payMeta, payTx);
     ASSERT_EQ(expectedCreate.size(), 1u);
     ASSERT_EQ(expectedPay.size(), 2u);
+    for (auto const& rec : expectedPay) {
+        ASSERT_EQ(rec.accounts.size(), 3u);
+        EXPECT_TRUE(rec.accounts.contains(getAccountIdWithString(kHolder)));
+        EXPECT_TRUE(rec.accounts.contains(getAccountIdWithString(kHolder2)));
+        EXPECT_TRUE(rec.accounts.contains(getAccountIdWithString(kObserver)));
+    }
 
     EXPECT_EQ(
         manager_->getMigratorStatusByName(kMigratorName), MigratorStatus::Status::NotMigrated
@@ -326,24 +460,18 @@ TEST_F(MPTTransactionHistoryMigratorTest, BackfillIndexesAllShapes)
     manager_->runMigration(kMigratorName);
     EXPECT_EQ(manager_->getMigratorStatusByName(kMigratorName), MigratorStatus::Status::Migrated);
 
-    expectIndexed(expectedCreate);
-    expectIndexed(expectedPay);
+    RawIndexRows expected;
+    appendExpected(expected, expectedCreate);
+    appendExpected(expected, expectedPay);
+    expectRawRowsEqual(expected);
 
     // An account that never appears in any metadata has no rows.
-    auto const unknown = data::synchronous([&](auto yield) {
-        return backend_->fetchAccountMPTokenIssuanceTransactions(
-            expectedPay.front().mptIssuanceID,
-            getAccountIdWithString(kIssuer),
-            1000,
-            false,
-            {},
-            yield
-        );
-    });
-    EXPECT_FALSE(containsTx(unknown.txns, payTx.getTransactionID()));
+    auto actual = readRawIndexRows();
+    for (auto const& row : actual.account)
+        EXPECT_NE(std::get<1>(row), uintToString(getAccountIdWithString(kUnknownAccount)));
 }
 
-// Rerunning the migrator rewrites identical deterministic-key rows, so row counts are unchanged.
+// Rerunning the migrator rewrites identical deterministic-key rows, so exact rows are unchanged.
 TEST_F(MPTTransactionHistoryMigratorTest, RerunIsIdempotent)
 {
     setupLedgerRange(kLedgerSeq);
@@ -352,24 +480,13 @@ TEST_F(MPTTransactionHistoryMigratorTest, RerunIsIdempotent)
     seedTransaction(payTx, payMeta, kLedgerSeq);
     backend_->waitForWritesToFinish();
 
-    auto const issuanceA = ripple::makeMptID(1, getAccountIdWithString(kHolder));
-
-    auto const countRows = [&]() {
-        return data::synchronous(
-                   [&](auto yield) {
-                       return backend_->fetchMPTokenIssuanceTransactions(
-                           issuanceA, 1000, false, {}, yield
-                       );
-                   }
-        ).txns.size();
-    };
+    manager_->runMigration(kMigratorName);
+    auto const afterFirst = readRawIndexRows();
+    EXPECT_FALSE(afterFirst.issuance.empty());
+    EXPECT_FALSE(afterFirst.account.empty());
 
     manager_->runMigration(kMigratorName);
-    auto const afterFirst = countRows();
-    EXPECT_GT(afterFirst, 0u);
-
-    manager_->runMigration(kMigratorName);
-    EXPECT_EQ(countRows(), afterFirst);
+    EXPECT_EQ(readRawIndexRows(), afterFirst);
     EXPECT_EQ(manager_->getMigratorStatusByName(kMigratorName), MigratorStatus::Status::Migrated);
 }
 
@@ -380,4 +497,50 @@ TEST_F(MPTTransactionHistoryMigratorTest, EmptyTableRunsCleanly)
 
     manager_->runMigration(kMigratorName);
     EXPECT_EQ(manager_->getMigratorStatusByName(kMigratorName), MigratorStatus::Status::Migrated);
+    expectRawRowsEqual({});
+}
+
+// Backfill and live ETL produce identical rows for the same transactions, including a failed
+// transaction whose only MPT reference is in the transaction body.
+TEST_F(MPTTransactionHistoryMigratorTest, BackfillMatchesLiveETLRows)
+{
+    setupLedgerRange(kLedgerSeq);
+
+    auto const [payTx, payMeta] = makeMultiIssuancePayment(kLedgerSeq, 1);
+    auto const [failedTx, failedMeta] = makeFailedExplicitMPTReferenceTx(
+        xrpl::makeMptID(kIssuanceSeq, getAccountIdWithString(kIssuer)), kLedgerSeq, 2
+    );
+
+    seedTransaction(payTx, payMeta, kLedgerSeq);
+    seedTransaction(failedTx, failedMeta, kLedgerSeq);
+    backend_->waitForWritesToFinish();
+
+    auto const expectedFailed =
+        expectedRowsFrom(etl::getMPTokenIssuanceTxsFromTx(failedMeta, failedTx));
+    ASSERT_EQ(expectedFailed.issuance.size(), 1u);
+
+    etl::impl::MPTExt liveExt{backend_};
+    liveExt.onLedgerData(
+        etl::model::LedgerData{
+            .transactions = {makeModelTx(payTx, payMeta), makeModelTx(failedTx, failedMeta)},
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = xrpl::LedgerHeader{},
+            .rawHeader = {},
+            .seq = kLedgerSeq
+        }
+    );
+    backend_->waitForWritesToFinish();
+
+    auto const liveRows = readRawIndexRows();
+    EXPECT_FALSE(liveRows.issuance.empty());
+    EXPECT_FALSE(liveRows.account.empty());
+    EXPECT_TRUE(liveRows.issuance.contains(*expectedFailed.issuance.begin()));
+
+    truncateIndexTables();
+    expectRawRowsEqual({});
+
+    manager_->runMigration(kMigratorName);
+    EXPECT_EQ(readRawIndexRows(), liveRows);
 }

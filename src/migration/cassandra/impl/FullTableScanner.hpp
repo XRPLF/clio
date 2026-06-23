@@ -55,6 +55,46 @@ concept CanReadByTokenRange =
  */
 template <CanReadByTokenRange TableAdapter>
 class FullTableScanner {
+public:
+    /**
+     * @brief The full table scanner settings.
+     */
+    struct FullTableScannerSettings {
+        std::uint32_t ctxThreadsNum;  ///< number of threads used in the execution context
+        std::uint32_t jobsNum;  ///< number of coroutines to run, it is the number of concurrent
+                                ///< database reads
+        std::uint32_t cursorsPerJob;  ///< number of cursors per coroutine
+    };
+
+private:
+    [[nodiscard]] static std::uint32_t
+    validatedCtxThreadsNum(FullTableScannerSettings const& settings)
+    {
+        ASSERT(
+            settings.ctxThreadsNum > 0,
+            "ctxThreadsNum for full table scanner must be greater than 0"
+        );
+        return settings.ctxThreadsNum;
+    }
+
+    [[nodiscard]] static std::size_t
+    computeCursorsNum(FullTableScannerSettings const& settings)
+    {
+        ASSERT(settings.jobsNum > 0, "jobsNum for full table scanner must be greater than 0");
+        ASSERT(
+            settings.cursorsPerJob > 0,
+            "cursorsPerJob for full table scanner must be greater than 0"
+        );
+
+        auto const cursorsNum =
+            static_cast<std::uint64_t>(settings.jobsNum) * settings.cursorsPerJob;
+        ASSERT(
+            cursorsNum <= std::numeric_limits<std::uint32_t>::max(),
+            "jobsNum * cursorsPerJob for full table scanner must fit in uint32_t"
+        );
+        return static_cast<std::size_t>(cursorsNum);
+    }
+
     /**
      * @brief The helper to generate the token ranges.
      */
@@ -123,16 +163,6 @@ class FullTableScanner {
 
 public:
     /**
-     * @brief The full table scanner settings.
-     */
-    struct FullTableScannerSettings {
-        std::uint32_t ctxThreadsNum;  ///< number of threads used in the execution context
-        std::uint32_t jobsNum;  ///< number of coroutines to run, it is the number of concurrent
-                                ///< database reads
-        std::uint32_t cursorsPerJob;  ///< number of cursors per coroutine
-    };
-
-    /**
      * @brief Construct a new Full Table Scanner object, it will run in a sync or async context
      * according to the parameter. The scan process will immediately start.
      *
@@ -142,33 +172,29 @@ public:
      */
     template <typename ExecutionContextType = util::async::CoroExecutionContext>
     FullTableScanner(FullTableScannerSettings settings, TableAdapter&& reader)
-        : ctx_(ExecutionContextType(settings.ctxThreadsNum))
-        , cursorsNum_(settings.jobsNum * settings.cursorsPerJob)
+        : ctx_(ExecutionContextType(validatedCtxThreadsNum(settings)))
+        , cursorsNum_(computeCursorsNum(settings))
         , queue_{cursorsNum_}
         , reader_{std::move(reader)}
     {
-        ASSERT(settings.jobsNum > 0, "jobsNum for full table scanner must be greater than 0");
-        ASSERT(
-            settings.cursorsPerJob > 0,
-            "cursorsPerJob for full table scanner must be greater than 0"
-        );
-
-        auto const cursors = TokenRangesProvider{cursorsNum_}.getRanges();
+        auto const cursors =
+            TokenRangesProvider{static_cast<std::uint32_t>(cursorsNum_)}.getRanges();
         std::ranges::for_each(cursors, [this](auto const& cursor) { queue_.push(cursor); });
         load(settings.jobsNum);
     }
 
     /**
-     * @brief Wait for all workers to finish, propagating any worker failure.
+     * @brief Wait once for all workers to finish, propagating any worker failure.
      *
      * Inspects each worker's result rather than discarding it, so a failed token-range read (or any
      * exception thrown while scanning) surfaces here instead of being silently dropped. Every
-     * worker is awaited before throwing, so all are joined regardless of failure.
+     * worker is awaited before throwing, so all are joined regardless of failure. This consumes the
+     * worker operations and must only be called once.
      *
      * @throws std::runtime_error if any worker reported an error, so the migration fails closed.
      */
     void
-    wait()
+    waitForAllAndThrowOnError()
     {
         std::vector<std::string> errors;
         for (auto& task : tasks_) {

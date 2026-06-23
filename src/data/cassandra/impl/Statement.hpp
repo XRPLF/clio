@@ -3,6 +3,7 @@
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/Collection.hpp"
 #include "data/cassandra/impl/ManagedObject.hpp"
+#include "data/cassandra/impl/Result.hpp"
 #include "data/cassandra/impl/Tuple.hpp"
 #include "util/UnsupportedType.hpp"
 
@@ -66,6 +67,30 @@ public:
     }
 
     /**
+     * @brief Set the Cassandra driver page size for this statement.
+     *
+     * @param pageSize Number of rows per driver page
+     */
+    void
+    setPagingSize(std::int32_t const pageSize) const
+    {
+        auto const rc = cass_statement_set_paging_size(*this, pageSize);
+        throwErrorIfNeeded(rc, "Set paging size");
+    }
+
+    /**
+     * @brief Continue this statement from the paging state in a previous result.
+     *
+     * @param result Previous page result
+     */
+    void
+    setPagingState(Result const& result) const
+    {
+        auto const rc = cass_statement_set_paging_state(*this, result);
+        throwErrorIfNeeded(rc, "Set paging state");
+    }
+
+    /**
      * @brief Binds an argument to a specific index.
      *
      * @param idx The index of the argument
@@ -76,12 +101,8 @@ public:
     bindAt(std::size_t const idx, Type&& value) const
     {
         using std::to_string;
-        auto throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
-            if (rc != CASS_OK) {
-                throw std::logic_error(
-                    fmt::format("[{}] at idx {}: {}", label, idx, cass_error_desc(rc))
-                );
-            }
+        auto throwBindingErrorIfNeeded = [idx](CassError rc, std::string_view label) {
+            throwErrorIfNeeded(rc, fmt::format("{} at idx {}", label, idx));
         };
 
         auto bindBytes = [this, idx](auto const* data, size_t size) {
@@ -100,53 +121,63 @@ public:
             std::is_same_v<DecayedType, xrpl::uint256> || std::is_same_v<DecayedType, xrpl::uint192>
         ) {
             auto const rc = bindBytes(value.data(), value.size());
-            throwErrorIfNeeded(rc, "Bind xrpl::base_uint");
+            throwBindingErrorIfNeeded(rc, "Bind xrpl::base_uint");
         } else if constexpr (std::is_same_v<DecayedType, xrpl::AccountID>) {
             auto const rc = bindBytes(value.data(), value.size());
-            throwErrorIfNeeded(rc, "Bind xrpl::AccountID");
+            throwBindingErrorIfNeeded(rc, "Bind xrpl::AccountID");
         } else if constexpr (std::is_same_v<DecayedType, UCharVectorType>) {
             auto const rc = bindBytes(value.data(), value.size());
-            throwErrorIfNeeded(rc, "Bind vector<unsigned char>");
+            throwBindingErrorIfNeeded(rc, "Bind vector<unsigned char>");
         } else if constexpr (std::is_convertible_v<DecayedType, std::string>) {
             // reinterpret_cast is needed here :'(
             auto const rc =
                 bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
-            throwErrorIfNeeded(rc, "Bind string (as bytes)");
+            throwBindingErrorIfNeeded(rc, "Bind string (as bytes)");
         } else if constexpr (std::is_convertible_v<DecayedType, Text>) {
             auto const rc =
                 cass_statement_bind_string_n(*this, idx, value.text.c_str(), value.text.size());
-            throwErrorIfNeeded(rc, "Bind string (as TEXT)");
+            throwBindingErrorIfNeeded(rc, "Bind string (as TEXT)");
         } else if constexpr (
             std::is_same_v<DecayedType, UintTupleType> ||
             std::is_same_v<DecayedType, UintByteTupleType>
         ) {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
-            throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, xrpl::uint256>");
+            throwBindingErrorIfNeeded(
+                rc, "Bind tuple<uint32, uint32> or <uint32_t, xrpl::uint256>"
+            );
         } else if constexpr (std::is_same_v<DecayedType, ByteVectorType>) {
             auto const rc =
                 cass_statement_bind_collection(*this, idx, Collection{std::forward<Type>(value)});
-            throwErrorIfNeeded(rc, "Bind collection");
+            throwBindingErrorIfNeeded(rc, "Bind collection");
         } else if constexpr (std::is_same_v<DecayedType, bool>) {
             auto const rc = cass_statement_bind_bool(*this, idx, value ? cass_true : cass_false);
-            throwErrorIfNeeded(rc, "Bind bool");
+            throwBindingErrorIfNeeded(rc, "Bind bool");
         } else if constexpr (std::is_same_v<DecayedType, Limit>) {
             auto const rc = cass_statement_bind_int32(*this, idx, value.limit);
-            throwErrorIfNeeded(rc, "Bind limit (int32)");
+            throwBindingErrorIfNeeded(rc, "Bind limit (int32)");
         } else if constexpr (std::is_convertible_v<DecayedType, boost::uuids::uuid>) {
             auto const uuidStr = boost::uuids::to_string(value);
             CassUuid cassUuid;
             auto rc = cass_uuid_from_string(uuidStr.c_str(), &cassUuid);
-            throwErrorIfNeeded(rc, "CassUuid from string");
+            throwBindingErrorIfNeeded(rc, "CassUuid from string");
             rc = cass_statement_bind_uuid(*this, idx, cassUuid);
-            throwErrorIfNeeded(rc, "Bind boost::uuid");
+            throwBindingErrorIfNeeded(rc, "Bind boost::uuid");
             // clio only uses bigint (int64_t) so we convert any incoming type
         } else if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
             auto const rc = cass_statement_bind_int64(*this, idx, value);
-            throwErrorIfNeeded(rc, "Bind int64");
+            throwBindingErrorIfNeeded(rc, "Bind int64");
         } else {
             // type not supported for binding
             static_assert(util::Unsupported<DecayedType>);
         }
+    }
+
+private:
+    static void
+    throwErrorIfNeeded(CassError const rc, std::string_view const label)
+    {
+        if (rc != CASS_OK)
+            throw std::logic_error(fmt::format("[{}]: {}", label, cass_error_desc(rc)));
     }
 };
 

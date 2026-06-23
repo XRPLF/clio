@@ -43,6 +43,6 @@ ExampleTransactionsMigrator::runMigration(
             }
         )
     );
-    scanner.wait();
+    scanner.waitForAllAndThrowOnError();
     count = hashSet.lock()->size();
 }
