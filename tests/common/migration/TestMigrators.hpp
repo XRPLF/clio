@@ -4,6 +4,7 @@
 #include "util/config/ObjectView.hpp"
 
 #include <memory>
+#include <stdexcept>
 
 struct SimpleTestMigrator {
     using Backend = MockMigrationBackend;
@@ -24,6 +25,18 @@ struct SimpleTestMigrator2 {
     static void
     runMigration(std::shared_ptr<MockMigrationBackend>, util::config::ObjectView const&)
     {
+    }
+};
+
+struct ThrowingTestMigrator {
+    using Backend = MockMigrationBackend;
+    static constexpr auto kName = "ThrowingTestMigrator";
+    static constexpr auto kDescription = "A migrator whose run fails";
+
+    static void
+    runMigration(std::shared_ptr<MockMigrationBackend>, util::config::ObjectView const&)
+    {
+        throw std::runtime_error("migration failed");
     }
 };
 

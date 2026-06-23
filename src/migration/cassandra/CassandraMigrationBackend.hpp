@@ -8,8 +8,10 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <fmt/core.h>
 
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -70,9 +72,20 @@ public:
 
         auto const res = this->executor_.read(yield, statement);
         if (not res) {
+            // Fail closed: a swallowed read error would leave a gap in the scanned data while the
+            // migrator is still marked Migrated. Throwing aborts the migration so its status stays
+            // NotMigrated and the operator can rerun.
             LOG(log_.error()) << "Could not fetch data from table: " << TableDesc::kTableName
                               << " range: " << start << " - " << end << ";" << res.error();
-            return;
+            throw std::runtime_error(
+                fmt::format(
+                    "Migration scan failed to read table '{}' in token range [{}, {}]: {}",
+                    TableDesc::kTableName,
+                    start,
+                    end,
+                    res.error().message()
+                )
+            );
         }
 
         auto const& results = res.value();

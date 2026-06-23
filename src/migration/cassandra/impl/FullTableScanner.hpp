@@ -7,12 +7,15 @@
 #include "util/async/context/BasicExecutionContext.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <fmt/core.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <ranges>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace migration::cassandra::impl {
@@ -156,13 +159,32 @@ public:
     }
 
     /**
-     * @brief Wait for all workers to finish.
+     * @brief Wait for all workers to finish, propagating any worker failure.
+     *
+     * Inspects each worker's result rather than discarding it, so a failed token-range read (or any
+     * exception thrown while scanning) surfaces here instead of being silently dropped. Every
+     * worker is awaited before throwing, so all are joined regardless of failure.
+     *
+     * @throws std::runtime_error if any worker reported an error, so the migration fails closed.
      */
     void
     wait()
     {
+        std::vector<std::string> errors;
         for (auto& task : tasks_) {
-            task.wait();
+            if (auto const result = task.get(); not result.has_value())
+                errors.push_back(result.error().message);
+        }
+
+        if (not errors.empty()) {
+            throw std::runtime_error(
+                fmt::format(
+                    "Full table scan failed: {} of {} workers reported errors; first error: {}",
+                    errors.size(),
+                    tasks_.size(),
+                    errors.front()
+                )
+            );
         }
     }
 };

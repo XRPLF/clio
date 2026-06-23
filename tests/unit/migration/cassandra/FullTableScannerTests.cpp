@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <functional>
 #include <limits>
+#include <stdexcept>
+#include <string>
 
 namespace {
 
@@ -106,4 +108,38 @@ TEST_F(FullTableScannerTests, RangeSizeIsOne)
         {.ctxThreadsNum = 2, .jobsNum = 1, .cursorsPerJob = 1}, TestScannerAdapter(mockCallback)
     );
     scanner.wait();
+}
+
+TEST_F(FullTableScannerTests, WaitPropagatesWorkerError)
+{
+    testing::MockFunction<
+        void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)>
+        mockCallback;
+    EXPECT_CALL(mockCallback, Call(testing::_, testing::_))
+        .WillRepeatedly(testing::Throw(std::runtime_error("scan failure")));
+    auto scanner = migration::cassandra::impl::FullTableScanner<TestScannerAdapter>(
+        {.ctxThreadsNum = 1, .jobsNum = 1, .cursorsPerJob = 1}, TestScannerAdapter(mockCallback)
+    );
+    EXPECT_THROW(scanner.wait(), std::runtime_error);
+}
+
+TEST_F(FullTableScannerTests, WaitReportsPartialFailure)
+{
+    // Two ranges across two workers; exactly one read fails. wait() must still throw and report the
+    // failed-worker count.
+    testing::MockFunction<
+        void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)>
+        mockCallback;
+    EXPECT_CALL(mockCallback, Call(testing::_, testing::_))
+        .WillOnce(testing::Throw(std::runtime_error("scan failure")))
+        .WillRepeatedly(testing::Return());
+    auto scanner = migration::cassandra::impl::FullTableScanner<TestScannerAdapter>(
+        {.ctxThreadsNum = 2, .jobsNum = 2, .cursorsPerJob = 1}, TestScannerAdapter(mockCallback)
+    );
+    try {
+        scanner.wait();
+        FAIL() << "expected wait() to throw";
+    } catch (std::runtime_error const& e) {
+        EXPECT_THAT(std::string{e.what()}, testing::HasSubstr("1 of 2 workers"));
+    }
 }

@@ -5,7 +5,6 @@
 #include "util/OverloadSet.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/prometheus/Prometheus.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -23,8 +22,6 @@ MigratorApplication::MigratorApplication(
 )
     : cmd_(std::move(command))
 {
-    PrometheusService::init(config);
-
     auto expectedMigrationManager = migration::impl::makeMigrationManager(config, cache_);
 
     if (not expectedMigrationManager) {

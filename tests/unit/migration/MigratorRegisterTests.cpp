@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 
@@ -252,6 +253,32 @@ TEST_F(MultipleMigratorRegisterTests, MigrateNormalMigrator)
     EXPECT_NO_THROW(
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         migratorRegister->runMigrator("SimpleTestMigrator", gCfg.getObject("migration"))
+    );
+}
+
+using ThrowingMigratorRegister =
+    migration::impl::MigratorsRegister<MockMigrationBackend, ThrowingTestMigrator>;
+
+struct ThrowingMigratorRegisterTests : public util::prometheus::WithMockPrometheus,
+                                       public MockMigrationBackendTest {
+    std::optional<ThrowingMigratorRegister> migratorRegister;
+
+    ThrowingMigratorRegisterTests()
+    {
+        migratorRegister.emplace(backend_);
+    }
+};
+
+// A migrator that fails its run must propagate the error and leave status unwritten (NotMigrated),
+// so a partial migration is never recorded as complete.
+TEST_F(ThrowingMigratorRegisterTests, FailedMigrationDoesNotMarkMigrated)
+{
+    EXPECT_CALL(*backend_, writeMigratorStatus(testing::_, testing::_)).Times(0);
+    ASSERT_TRUE(migratorRegister.has_value());
+    EXPECT_THROW(
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        migratorRegister->runMigrator("ThrowingTestMigrator", gCfg.getObject("migration")),
+        std::runtime_error
     );
 }
 
