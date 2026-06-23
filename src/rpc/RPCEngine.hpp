@@ -141,7 +141,7 @@ public:
         }
 
         if (not ctx.isAdmin and responseCache_) {
-            if (auto res = responseCache_->get(ctx.method); res.has_value())
+            if (auto res = responseCache_->get(ctx.method, ctx.params); res.has_value())
                 return Result{*std::move(res)};
         }
 
@@ -174,7 +174,7 @@ public:
             if (not v) {
                 notifyErrored(ctx.method);
             } else if (not ctx.isAdmin and responseCache_) {
-                responseCache_->put(ctx.method, v.result->as_object());
+                responseCache_->put(ctx.method, ctx.params, v.result->as_object());
             }
 
             return Result{std::move(v)};

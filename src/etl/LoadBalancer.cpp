@@ -277,7 +277,7 @@ LoadBalancer::forwardToRippled(
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
     if (shouldUseCache(isAdmin)) {
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        if (auto cachedResponse = forwardingCache_->get(cmd); cachedResponse) {
+        if (auto cachedResponse = forwardingCache_->get(cmd, request); cachedResponse) {
             forwardingCounters_.cacheHit.get() += 1;
             return *std::move(cachedResponse);
         }
@@ -312,7 +312,7 @@ LoadBalancer::forwardToRippled(
 
     if (response) {
         if (shouldUseCache(isAdmin) and not response->contains("error"))
-            forwardingCache_->put(cmd, *response);  // NOLINT(bugprone-unchecked-optional-access)
+            forwardingCache_->put(cmd, request, *response);  // NOLINT(bugprone-unchecked-optional-access)
         return *std::move(response);
     }
 
