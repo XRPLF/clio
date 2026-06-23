@@ -117,7 +117,9 @@ public:
      * @param response The response to store
      */
     void
-    put(std::string const& cmd, boost::json::object const& request, boost::json::object const& response);
+    put(std::string const& cmd,
+        boost::json::object const& request,
+        boost::json::object const& response);
 
     /**
      * @brief Invalidate all entries in the cache
