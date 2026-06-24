@@ -585,7 +585,8 @@ TEST_F(RPCSubscribeHandlerTest, EmptyResponse)
             SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
         };
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
-        auto const output = handler.process(boost::json::parse(R"JSON({})JSON"), Context{yield, session_});
+        auto const output =
+            handler.process(boost::json::parse(R"JSON({})JSON"), Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
     });
@@ -806,22 +807,14 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 
     auto const getsXRPPaysUSDBook = getBookBase(
         rpc::parseBook(
-            xrpl::toCurrency("USD"),
-            issuer,
-            xrpl::xrpCurrency(),
-            xrpl::xrpAccount(),
-            std::nullopt
+            xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt
         )
             .value()
     );
 
     auto const reversedBook = getBookBase(
         rpc::parseBook(
-            xrpl::xrpCurrency(),
-            xrpl::xrpAccount(),
-            xrpl::toCurrency("USD"),
-            issuer,
-            std::nullopt
+            xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::toCurrency("USD"), issuer, std::nullopt
         )
             .value()
     );
@@ -867,9 +860,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     // issuer account root
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(
-            xrpl::keylet::account(getAccountIdWithString(kAccount)).key, kMaxSeq, _
-        )
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, kMaxSeq, _)
     )
         .WillByDefault(Return(
             createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2).getSerializer().peekData()
@@ -1011,22 +1002,14 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 
     auto const getsXRPPaysUSDBook = getBookBase(
         rpc::parseBook(
-            xrpl::toCurrency("USD"),
-            issuer,
-            xrpl::xrpCurrency(),
-            xrpl::xrpAccount(),
-            std::nullopt
+            xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt
         )
             .value()
     );
 
     auto const reversedBook = getBookBase(
         rpc::parseBook(
-            xrpl::xrpCurrency(),
-            xrpl::xrpAccount(),
-            xrpl::toCurrency("USD"),
-            issuer,
-            std::nullopt
+            xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::toCurrency("USD"), issuer, std::nullopt
         )
             .value()
     );
@@ -1071,9 +1054,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     // issuer account root
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(
-            xrpl::keylet::account(getAccountIdWithString(kAccount)).key, kMaxSeq, _
-        )
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, kMaxSeq, _)
     )
         .WillByDefault(Return(
             createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2).getSerializer().peekData()

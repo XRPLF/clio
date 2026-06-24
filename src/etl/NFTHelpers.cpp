@@ -67,8 +67,8 @@ getNFTokenMintData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
 
         if (node.getFName() == xrpl::sfCreatedNode) {
             xrpl::STArray const& toAddNFTs = node.peekAtField(xrpl::sfNewFields)
-                                                   .downcast<xrpl::STObject>()
-                                                   .getFieldArray(xrpl::sfNFTokens);
+                                                 .downcast<xrpl::STObject>()
+                                                 .getFieldArray(xrpl::sfNFTokens);
             std::ranges::transform(
                 toAddNFTs,
 
@@ -102,8 +102,8 @@ getNFTokenMintData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
             );
 
             xrpl::STArray const& toAddFinalNFTs = node.peekAtField(xrpl::sfFinalFields)
-                                                        .downcast<xrpl::STObject>()
-                                                        .getFieldArray(xrpl::sfNFTokens);
+                                                      .downcast<xrpl::STObject>()
+                                                      .getFieldArray(xrpl::sfNFTokens);
             std::ranges::transform(
                 toAddFinalNFTs,
 
@@ -219,12 +219,12 @@ getNFTokenAcceptOfferData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
         }
 
         xrpl::uint256 const tokenID = affectedBuyOffer->peekAtField(xrpl::sfFinalFields)
-                                            .downcast<xrpl::STObject>()
-                                            .getFieldH256(xrpl::sfNFTokenID);
+                                          .downcast<xrpl::STObject>()
+                                          .getFieldH256(xrpl::sfNFTokenID);
 
         xrpl::AccountID const owner = affectedBuyOffer->peekAtField(xrpl::sfFinalFields)
-                                            .downcast<xrpl::STObject>()
-                                            .getAccountID(xrpl::sfOwner);
+                                          .downcast<xrpl::STObject>()
+                                          .getAccountID(xrpl::sfOwner);
         return {
             {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())},
             NFTsData(tokenID, owner, txMeta, false)
@@ -245,12 +245,12 @@ getNFTokenAcceptOfferData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
     }
 
     xrpl::uint256 const tokenID = affectedSellOffer->peekAtField(xrpl::sfFinalFields)
-                                        .downcast<xrpl::STObject>()
-                                        .getFieldH256(xrpl::sfNFTokenID);
+                                      .downcast<xrpl::STObject>()
+                                      .getFieldH256(xrpl::sfNFTokenID);
 
     xrpl::AccountID const seller = affectedSellOffer->peekAtField(xrpl::sfFinalFields)
-                                         .downcast<xrpl::STObject>()
-                                         .getAccountID(xrpl::sfOwner);
+                                       .downcast<xrpl::STObject>()
+                                       .getAccountID(xrpl::sfOwner);
 
     for (xrpl::STObject const& node : txMeta.getNodes()) {
         if (node.getFieldU16(xrpl::sfLedgerEntryType) != xrpl::ltNFTOKEN_PAGE ||
@@ -302,8 +302,8 @@ getNFTokenCancelOfferData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
             continue;
 
         xrpl::uint256 const tokenID = node.peekAtField(xrpl::sfFinalFields)
-                                            .downcast<xrpl::STObject>()
-                                            .getFieldH256(xrpl::sfNFTokenID);
+                                          .downcast<xrpl::STObject>()
+                                          .getFieldH256(xrpl::sfNFTokenID);
         txs.emplace_back(tokenID, txMeta, sttx.getTransactionID());
     }
 

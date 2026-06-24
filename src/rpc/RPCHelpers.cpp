@@ -186,8 +186,7 @@ deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs)
     static util::Logger const log{"RPC"};  // NOLINT(readability-identifier-naming)
 
     try {
-        std::pair<std::shared_ptr<xrpl::STTx const>, std::shared_ptr<xrpl::STObject const>>
-            result;
+        std::pair<std::shared_ptr<xrpl::STTx const>, std::shared_ptr<xrpl::STObject const>> result;
         {
             xrpl::SerialIter s{blobs.transaction.data(), blobs.transaction.size()};
             result.first = std::make_shared<xrpl::STTx const>(s);
@@ -874,9 +873,8 @@ parseRippleLibSeed(boost::json::value const& value)
     if (!value.is_string())
         return {};
 
-    auto const result = xrpl::decodeBase58Token(
-        boost::json::value_to<std::string>(value), xrpl::TokenType::None
-    );
+    auto const result =
+        xrpl::decodeBase58Token(boost::json::value_to<std::string>(value), xrpl::TokenType::None);
 
     static constexpr std::size_t kSeedSize = 18;
     static constexpr std::array<std::uint8_t, 2> kSeedPrefix = {0xE1, 0x4B};
@@ -999,11 +997,7 @@ isDeepFrozen(
     auto const trustLineKeylet = xrpl::keylet::line(account, issuer, currency);
 
     return fetchAndCheckAnyFlagsExists(
-        backend,
-        sequence,
-        trustLineKeylet,
-        {xrpl::lsfHighDeepFreeze, xrpl::lsfLowDeepFreeze},
-        yield
+        backend, sequence, trustLineKeylet, {xrpl::lsfHighDeepFreeze, xrpl::lsfLowDeepFreeze}, yield
     );
 }
 
@@ -1255,7 +1249,8 @@ postProcessOrderBook(
 
     std::map<xrpl::AccountID, xrpl::STAmount> umBalance;
 
-    bool const globalFreeze = isGlobalFrozen(backend, ledgerSequence, book.out.getIssuer(), yield) ||
+    bool const globalFreeze =
+        isGlobalFrozen(backend, ledgerSequence, book.out.getIssuer(), yield) ||
         isGlobalFrozen(backend, ledgerSequence, book.in.getIssuer(), yield);
 
     auto rate = transferRate(backend, ledgerSequence, book.out.getIssuer(), yield);
@@ -1465,9 +1460,7 @@ parseBook(boost::json::object const& request)
         return std::unexpected{Status{RippledError::RpcSrcCurMalformed}};
 
     xrpl::Currency getCurrency;
-    if (!xrpl::toCurrency(
-            getCurrency, boost::json::value_to<std::string>(takerGets["currency"])
-        ))
+    if (!xrpl::toCurrency(getCurrency, boost::json::value_to<std::string>(takerGets["currency"])))
         return std::unexpected{Status{RippledError::RpcDstAmtMalformed}};
 
     xrpl::AccountID payIssuer;
@@ -1478,9 +1471,7 @@ parseBook(boost::json::object const& request)
             };
         }
 
-        if (!xrpl::toIssuer(
-                payIssuer, boost::json::value_to<std::string>(takerPays.at("issuer"))
-            ))
+        if (!xrpl::toIssuer(payIssuer, boost::json::value_to<std::string>(takerPays.at("issuer"))))
             return std::unexpected{Status{RippledError::RpcSrcIsrMalformed}};
 
         if (payIssuer == xrpl::noAccount())
@@ -1504,9 +1495,7 @@ parseBook(boost::json::object const& request)
     }
 
     if ((!isXRP(payCurrency)) && (!takerPays.contains("issuer"))) {
-        return std::unexpected{
-            Status{RippledError::RpcSrcIsrMalformed, "Missing non-XRP issuer."}
-        };
+        return std::unexpected{Status{RippledError::RpcSrcIsrMalformed, "Missing non-XRP issuer."}};
     }
 
     xrpl::AccountID getIssuer;
@@ -1561,7 +1550,9 @@ parseBook(boost::json::object const& request)
         domainID = dom;
     }
 
-    return xrpl::Book{xrpl::Issue{payCurrency, payIssuer}, xrpl::Issue{getCurrency, getIssuer}, domainID};
+    return xrpl::Book{
+        xrpl::Issue{payCurrency, payIssuer}, xrpl::Issue{getCurrency, getIssuer}, domainID
+    };
 }
 
 std::expected<xrpl::AccountID, Status>

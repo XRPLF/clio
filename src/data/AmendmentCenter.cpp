@@ -217,8 +217,7 @@ std::optional<std::vector<xrpl::uint256>>
 AmendmentCenter::fetchAmendmentsList(boost::asio::yield_context yield, uint32_t seq) const
 {
     // the amendments should always be present on the ledger
-    auto const amendments =
-        backend_->fetchLedgerObject(xrpl::keylet::amendments().key, seq, yield);
+    auto const amendments = backend_->fetchLedgerObject(xrpl::keylet::amendments().key, seq, yield);
     if (not amendments.has_value())
         throw std::runtime_error("Amendments ledger object must be present in the database");
 

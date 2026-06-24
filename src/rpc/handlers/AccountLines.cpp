@@ -69,8 +69,7 @@ AccountLinesHandler::addLine(
         (flags & (viewLowest ? xrpl::lsfLowNoRipple : xrpl::lsfHighNoRipple)) != 0u;
     bool const lineNoRipplePeer =
         (flags & (not viewLowest ? xrpl::lsfLowNoRipple : xrpl::lsfHighNoRipple)) != 0u;
-    bool const lineFreeze =
-        (flags & (viewLowest ? xrpl::lsfLowFreeze : xrpl::lsfHighFreeze)) != 0u;
+    bool const lineFreeze = (flags & (viewLowest ? xrpl::lsfLowFreeze : xrpl::lsfHighFreeze)) != 0u;
     bool const lineFreezePeer =
         (flags & (not viewLowest ? xrpl::lsfLowFreeze : xrpl::lsfHighFreeze)) != 0u;
     bool const lineDeepFreeze =

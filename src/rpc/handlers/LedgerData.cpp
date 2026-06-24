@@ -198,9 +198,8 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
 
     if (jsonObject.contains(JS(marker))) {
         if (jsonObject.at(JS(marker)).is_string()) {
-            input.marker = xrpl::uint256{
-                boost::json::value_to<std::string>(jsonObject.at(JS(marker))).data()
-            };
+            input.marker =
+                xrpl::uint256{boost::json::value_to<std::string>(jsonObject.at(JS(marker))).data()};
         } else {
             input.diffMarker = util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)));
         }

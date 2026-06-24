@@ -190,8 +190,7 @@ public:
         auto numRows = results.numRows();
         LOG(log_.info()) << "num_rows = " << numRows;
 
-        for (auto [hash, data] :
-             extract<xrpl::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
+        for (auto [hash, data] : extract<xrpl::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
             hashes.push_back(hash);
             if (--numRows == 0) {
                 LOG(log_.debug()) << "Setting cursor";
@@ -393,8 +392,7 @@ public:
         if (not res)
             return std::nullopt;
 
-        if (auto const maybeRow = res->template get<uint32_t, xrpl::AccountID, bool>();
-            maybeRow) {
+        if (auto const maybeRow = res->template get<uint32_t, xrpl::AccountID, bool>(); maybeRow) {
             auto [seq, owner, isBurned] = *maybeRow;
             auto result = std::make_optional<NFT>(tokenID, seq, owner, isBurned);
 
@@ -471,8 +469,7 @@ public:
         auto numRows = results.numRows();
         LOG(log_.info()) << "num_rows = " << numRows;
 
-        for (auto [hash, data] :
-             extract<xrpl::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
+        for (auto [hash, data] : extract<xrpl::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
             hashes.push_back(hash);
             if (--numRows == 0) {
                 LOG(log_.debug()) << "Setting cursor";

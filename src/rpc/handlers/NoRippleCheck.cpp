@@ -147,10 +147,12 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
                     output.problems.emplace_back(problem);
 
                     if (input.transactions) {
-                        xrpl::STAmount limitAmount(ownedItem.getFieldAmount(
-                            bLow ? xrpl::sfLowLimit : xrpl::sfHighLimit
-                        ));
-                        limitAmount.setIssue(xrpl::Issue{limitAmount.get<xrpl::Issue>().currency, peer});
+                        xrpl::STAmount limitAmount(
+                            ownedItem.getFieldAmount(bLow ? xrpl::sfLowLimit : xrpl::sfHighLimit)
+                        );
+                        limitAmount.setIssue(
+                            xrpl::Issue{limitAmount.get<xrpl::Issue>().currency, peer}
+                        );
 
                         auto tx = getBaseTx(*accountID, accountSeq++);
 

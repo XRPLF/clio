@@ -1097,10 +1097,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = xrpl::keylet::nftpage(
-                            xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}
-        )
-                            .key;
+        auto previous =
+            xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()})
+                .key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
@@ -1147,10 +1146,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = xrpl::keylet::nftpage(
-                            xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}
-        )
-                            .key;
+        auto previous =
+            xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()})
+                .key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
@@ -1203,18 +1201,15 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     std::string first{kIndex1};
-    auto current = xrpl::keylet::nftpage(
-                       xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}
-    )
-                       .key;
+    auto current =
+        xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}).key;
     auto const marker = current;
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = xrpl::keylet::nftpage(
-                            xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}
-        )
-                            .key;
+        auto previous =
+            xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()})
+                .key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
@@ -1423,18 +1418,15 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     std::string first{kIndex1};
-    auto current = xrpl::keylet::nftpage(
-                       xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}
-    )
-                       .key;
+    auto current =
+        xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}).key;
     auto const marker = current;
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = xrpl::keylet::nftpage(
-                            xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()}
-        )
-                            .key;
+        auto previous =
+            xrpl::keylet::nftpage(xrpl::keylet::nftpageMin(account), xrpl::uint256{first.c_str()})
+                .key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );

@@ -442,8 +442,7 @@ genTransactions(uint32_t seq1, uint32_t seq2)
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = seq1;
-    xrpl::STObject const metaObj =
-        createPaymentTransactionMetaObject(kAccount, kAccount2, 22, 23);
+    xrpl::STObject const metaObj = createPaymentTransactionMetaObject(kAccount, kAccount2, 22, 23);
     trans1.metadata = metaObj.getSerializer().peekData();
     trans1.date = 1;
     transactions.push_back(trans1);
@@ -452,8 +451,7 @@ genTransactions(uint32_t seq1, uint32_t seq2)
     xrpl::STObject const obj2 = createPaymentTransactionObject(kAccount, kAccount2, 1, 1, 32);
     trans2.transaction = obj.getSerializer().peekData();
     trans2.ledgerSequence = seq2;
-    xrpl::STObject const metaObj2 =
-        createPaymentTransactionMetaObject(kAccount, kAccount2, 22, 23);
+    xrpl::STObject const metaObj2 = createPaymentTransactionMetaObject(kAccount, kAccount2, 22, 23);
     trans2.metadata = metaObj2.getSerializer().peekData();
     trans2.date = 2;
     transactions.push_back(trans2);

@@ -97,8 +97,7 @@ public:
         using ByteVectorType = std::vector<xrpl::uint256>;
 
         if constexpr (
-            std::is_same_v<DecayedType, xrpl::uint256> ||
-            std::is_same_v<DecayedType, xrpl::uint192>
+            std::is_same_v<DecayedType, xrpl::uint256> || std::is_same_v<DecayedType, xrpl::uint192>
         ) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind xrpl::base_uint");

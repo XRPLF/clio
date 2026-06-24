@@ -69,10 +69,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         );
 
         // NOLINTBEGIN(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::offer(
-                  *id, boost::json::value_to<std::uint32_t>(input.offer->at(JS(seq)))
-        )
-                  .key;
+        key =
+            xrpl::keylet::offer(*id, boost::json::value_to<std::uint32_t>(input.offer->at(JS(seq))))
+                .key;
         // NOLINTEND(bugprone-unchecked-optional-access)
     } else if (input.rippleStateAccount) {
         auto const id1 =
@@ -406,12 +405,10 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
             *util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(
                 bridgeJson.at(xrpl::sfIssuingChainDoor.getJsonName().cStr())
             ));
-        auto const lockingIssue = parseIssue(
-            bridgeJson.at(xrpl::sfLockingChainIssue.getJsonName().cStr()).as_object()
-        );
-        auto const issuingIssue = parseIssue(
-            bridgeJson.at(xrpl::sfIssuingChainIssue.getJsonName().cStr()).as_object()
-        );
+        auto const lockingIssue =
+            parseIssue(bridgeJson.at(xrpl::sfLockingChainIssue.getJsonName().cStr()).as_object());
+        auto const issuingIssue =
+            parseIssue(bridgeJson.at(xrpl::sfIssuingChainIssue.getJsonName().cStr()).as_object());
 
         return xrpl::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
     };

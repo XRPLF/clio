@@ -67,7 +67,8 @@ TEST_P(ParameterTest, CheckError)
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            boost::json::parse(bundle.testJson), Context{.yield = yield, .apiVersion = bundle.apiVersion}
+            boost::json::parse(bundle.testJson),
+            Context{.yield = yield, .apiVersion = bundle.apiVersion}
         );
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -623,8 +624,7 @@ generateNormalPathTestBundles()
         NormalTestBundle{
             .testName = "HotWalletArray",
             .mockedDir = createOwnerDirLedgerObject(
-                {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}},
-                kIndex1
+                {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
             ),
             .mockedObjects =
                 std::vector{
@@ -795,8 +795,7 @@ generateEscrowTestBundles()
         EscrowTestBundle{
             .testName = "EscrowMixedCurrencies",
             .mockedDir = createOwnerDirLedgerObject(
-                {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}},
-                kIndex1
+                {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
             ),
             .mockedObjects = std::vector{escrow1, escrow2, escrow3},
             .expectedJson = fmt::format(

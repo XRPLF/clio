@@ -335,7 +335,8 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = boost::json::parse(fmt::format(R"JSON({{"ledger_hash": "{}" }})JSON", kIndex1));
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"ledger_hash": "{}" }})JSON", kIndex1));
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));

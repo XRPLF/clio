@@ -146,9 +146,7 @@ fetchCredentialArray(
 
         auto credential = xrpl::STObject::makeInnerObject(xrpl::sfCredential);
         credential.setAccountID(xrpl::sfIssuer, sleCred.getAccountID(xrpl::sfIssuer));
-        credential.setFieldVL(
-            xrpl::sfCredentialType, sleCred.getFieldVL(xrpl::sfCredentialType)
-        );
+        credential.setFieldVL(xrpl::sfCredentialType, sleCred.getFieldVL(xrpl::sfCredentialType));
         authCreds.push_back(std::move(credential));
     }
 

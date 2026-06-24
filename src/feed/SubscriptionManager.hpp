@@ -168,10 +168,7 @@ public:
      * @param subscriber
      */
     void
-    subProposedAccount(
-        xrpl::AccountID const& account,
-        SubscriberSharedPtr const& subscriber
-    ) final;
+    subProposedAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the proposed transactions feed for particular account.

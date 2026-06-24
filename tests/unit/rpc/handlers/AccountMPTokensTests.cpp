@@ -390,7 +390,8 @@ TEST_F(RPCAccountMPTokensHandlerTest, DefaultParameters)
             kTokenOuT1,
             kTokenOuT2
         );
-        auto const input = boost::json::parse(fmt::format(R"JSON({{"account": "{}"}})JSON", kAccount));
+        auto const input =
+            boost::json::parse(fmt::format(R"JSON({{"account": "{}"}})JSON", kAccount));
         auto const handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);

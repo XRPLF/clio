@@ -182,7 +182,8 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
                 ammAuctionTimeSlot(lgrInfo.parentCloseTime.time_since_epoch().count(), auctionSlot);
 
             auction[JS(time_interval)] = timeSlot ? *timeSlot : xrpl::kAuctionSlotTimeIntervals;
-            auction[JS(price)] = toBoostJson(auctionSlot[sfPrice].getJson(JsonOptions::Values::None));
+            auction[JS(price)] =
+                toBoostJson(auctionSlot[sfPrice].getJson(JsonOptions::Values::None));
             auction[JS(discounted_fee)] = auctionSlot[sfDiscountedFee];
             auction[JS(account)] = to_string(auctionSlot.getAccountID(sfAccount));
             auction[JS(expiration)] =

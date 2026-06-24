@@ -187,9 +187,7 @@ SuccessorExt::writeSuccessors(uint32_t seq) const
             // make sure the base is not an actual object
             if (not cache_.get().get(base, seq)) {
                 auto succ = cache_.get().getSuccessor(base, seq);
-                ASSERT(
-                    succ.has_value(), "Book base {} must have a successor", xrpl::strHex(base)
-                );
+                ASSERT(succ.has_value(), "Book base {} must have a successor", xrpl::strHex(base));
 
                 if (succ->key == cur->key)  // NOLINT(bugprone-unchecked-optional-access)
                     backend_->writeSuccessor(uint256ToString(base), seq, uint256ToString(cur->key));

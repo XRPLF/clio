@@ -190,8 +190,7 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    xrpl::STObject const metaObj =
-        createMetaDataForBookChange(kCurrency, kIssuer, 22, 1, 3, 3, 1);
+    xrpl::STObject const metaObj = createMetaDataForBookChange(kCurrency, kIssuer, 22, 1, 3, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 

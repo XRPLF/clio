@@ -96,10 +96,7 @@ TransactionFeed::subProposed(SubscriberSharedPtr const& subscriber)
 }
 
 void
-TransactionFeed::subProposed(
-    xrpl::AccountID const& account,
-    SubscriberSharedPtr const& subscriber
-)
+TransactionFeed::subProposed(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     auto const added = accountProposedSignal_.connectTrackableSlot(
         subscriber, account, TransactionSlot(*this, subscriber)

@@ -22,8 +22,7 @@ namespace migration::cassandra::impl {
  */
 struct TableTransactionsDesc {
     // hash, date, ledger_seq, metadata, transaction
-    using Row =
-        std::tuple<xrpl::uint256, std::uint64_t, std::uint32_t, xrpl::Blob, xrpl::Blob>;
+    using Row = std::tuple<xrpl::uint256, std::uint64_t, std::uint32_t, xrpl::Blob, xrpl::Blob>;
     static constexpr char const* kPartitionKey = "hash";
     static constexpr char const* kTableName = "transactions";
 };

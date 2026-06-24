@@ -151,8 +151,7 @@ TEST_F(BackendCassandraTest, Basic)
             "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
 
         std::string rawHeaderBlob = hexStringToBinaryString(rawHeader);
-        xrpl::LedgerHeader const lgrInfo =
-            util::deserializeHeader(xrpl::makeSlice(rawHeaderBlob));
+        xrpl::LedgerHeader const lgrInfo = util::deserializeHeader(xrpl::makeSlice(rawHeaderBlob));
 
         backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         backend_->writeSuccessor(
@@ -415,7 +414,9 @@ TEST_F(BackendCassandraTest, Basic)
 
             xrpl::uint256 hash256;
             EXPECT_TRUE(hash256.parseHex(hashHex));
-            xrpl::TxMeta const txMeta{hash256, lgrInfoNext.seq, xrpl::Blob{metaBlob.begin(), metaBlob.end()}};
+            xrpl::TxMeta const txMeta{
+                hash256, lgrInfoNext.seq, xrpl::Blob{metaBlob.begin(), metaBlob.end()}
+            };
             auto accountsSet = txMeta.getAffectedAccounts();
             for (auto& a : accountsSet) {
                 affectedAccounts.push_back(a);
@@ -425,7 +426,11 @@ TEST_F(BackendCassandraTest, Basic)
 
             xrpl::uint256 nftHash256;
             EXPECT_TRUE(nftHash256.parseHex(nftTxnHashHex));
-            xrpl::TxMeta const nftTxMeta{nftHash256, lgrInfoNext.seq, xrpl::Blob{nftTxnMetaBlob.begin(), nftTxnMetaBlob.end()}};
+            xrpl::TxMeta const nftTxMeta{
+                nftHash256,
+                lgrInfoNext.seq,
+                xrpl::Blob{nftTxnMetaBlob.begin(), nftTxnMetaBlob.end()}
+            };
             xrpl::SerialIter it{nftTxnBlob.data(), nftTxnBlob.size()};
             xrpl::STTx const sttx{it};
             auto const [parsedNFTTxsRef, parsedNFT] = etl::getNFTDataFromTx(nftTxMeta, sttx);
@@ -979,8 +984,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         std::string rawHeaderBlob = hexStringToBinaryString(kRawheader);
         std::string accountBlob = hexStringToBinaryString(accountHex);
         std::string const accountIndexBlob = hexStringToBinaryString(accountIndexHex);
-        xrpl::LedgerHeader const lgrInfo =
-            util::deserializeHeader(xrpl::makeSlice(rawHeaderBlob));
+        xrpl::LedgerHeader const lgrInfo = util::deserializeHeader(xrpl::makeSlice(rawHeaderBlob));
 
         backend_->startWrites();
         backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
@@ -1423,8 +1427,7 @@ TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
 {
     runSpawn([&](boost::asio::yield_context yield) {
         auto rawHeaderBlob = hexStringToBinaryString(kRawheader);
-        xrpl::LedgerHeader const lgrInfo =
-            util::deserializeHeader(xrpl::makeSlice(rawHeaderBlob));
+        xrpl::LedgerHeader const lgrInfo = util::deserializeHeader(xrpl::makeSlice(rawHeaderBlob));
 
         backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         auto const testLedgerSeq = lgrInfo.seq;
@@ -1504,11 +1507,7 @@ struct BackendCassandraMPTokenIssuanceTest : BackendCassandraTest {
     writeTxBlob(xrpl::uint256 const& hash, std::uint32_t seq)
     {
         backend_->writeTransaction(
-            uint256ToString(hash),
-            seq,
-            0,
-            "tx_" + xrpl::strHex(hash),
-            "meta_" + xrpl::strHex(hash)
+            uint256ToString(hash), seq, 0, "tx_" + xrpl::strHex(hash), "meta_" + xrpl::strHex(hash)
         );
     }
 };

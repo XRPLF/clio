@@ -89,8 +89,7 @@ GetAggregatePriceHandler::process(
                     [&](xrpl::STObject const& o) -> bool {
                         return o.getFieldCurrency(xrpl::sfBaseAsset).getText() ==
                             input.baseAsset and
-                            o.getFieldCurrency(xrpl::sfQuoteAsset).getText() ==
-                            input.quoteAsset and
+                            o.getFieldCurrency(xrpl::sfQuoteAsset).getText() == input.quoteAsset and
                             o.isFieldPresent(xrpl::sfAssetPrice);
                     }
                 );

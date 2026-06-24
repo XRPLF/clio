@@ -2929,11 +2929,11 @@ generateTestValuesForNormalPathTest()
                 "JPY",
                 kAccount2
             ),
-            .expectedIndex = xrpl::keylet::amm(
-                                 getIssue("XRP", xrpl::toBase58(xrpl::xrpAccount())),
-                                 getIssue("JPY", kAccount2)
-            )
-                                 .key,
+            .expectedIndex =
+                xrpl::keylet::amm(
+                    getIssue("XRP", xrpl::toBase58(xrpl::xrpAccount())), getIssue("JPY", kAccount2)
+                )
+                    .key,
             .mockedEntity = createAmmObject(
                 kAccount, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kAccount2
             )
@@ -3208,9 +3208,8 @@ generateTestValuesForNormalPathTest()
                 kIndex1
             ),
             .expectedIndex = xrpl::uint256(kIndex1),
-            .mockedEntity = createPermissionedDomainObject(
-                kAccount, kIndex1, kRangeMax, 0, xrpl::uint256{0}, 0
-            )
+            .mockedEntity =
+                createPermissionedDomainObject(kAccount, kIndex1, kRangeMax, 0, xrpl::uint256{0}, 0)
         },
         NormalPathTestBundle{
             .testName = "PermissionedDomainViaObject",
@@ -3231,9 +3230,8 @@ generateTestValuesForNormalPathTest()
                                  kRangeMax
             )
                                  .key,
-            .mockedEntity = createPermissionedDomainObject(
-                kAccount, kIndex1, kRangeMax, 0, xrpl::uint256{0}, 0
-            )
+            .mockedEntity =
+                createPermissionedDomainObject(kAccount, kIndex1, kRangeMax, 0, xrpl::uint256{0}, 0)
         },
         NormalPathTestBundle{
             .testName = "CreateVaultObjectByHexString",
@@ -4152,9 +4150,7 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = createMptIssuanceObject(kAccount, 2, "metadata");
-    EXPECT_CALL(
-        *backend_, doFetchLedgerObject(xrpl::keylet::mptIssuance(mptId).key, kRangeMax, _)
-    )
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::mptIssuance(mptId).key, kRangeMax, _))
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {

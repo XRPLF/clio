@@ -82,7 +82,8 @@ TEST_P(RPCBookOffersParameterTest, CheckError)
     auto bundle = GetParam();
     auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(boost::json::parse(bundle.testJson), Context{.yield = yield});
+        auto const output =
+            handler.process(boost::json::parse(bundle.testJson), Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), bundle.expectedError);
@@ -546,7 +547,8 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
 
     auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const output = handler.process(boost::json::parse(bundle.inputJson), Context{.yield = yield});
+        auto const output =
+            handler.process(boost::json::parse(bundle.inputJson), Context{.yield = yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), boost::json::parse(bundle.expectedJson));
     });
@@ -609,31 +611,19 @@ generateNormalPathBookOffersTestBundles()
 
     auto const getsXRPPaysUSDBook = getBookBase(
         rpc::parseBook(
-            xrpl::toCurrency("USD"),
-            account,
-            xrpl::xrpCurrency(),
-            xrpl::xrpAccount(),
-            std::nullopt
+            xrpl::toCurrency("USD"), account, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt
         )
             .value()
     );
     auto const getsXRPPaysUSDBookWithDomain = getBookBase(
         rpc::parseBook(
-            xrpl::toCurrency("USD"),
-            account,
-            xrpl::xrpCurrency(),
-            xrpl::xrpAccount(),
-            kDomain
+            xrpl::toCurrency("USD"), account, xrpl::xrpCurrency(), xrpl::xrpAccount(), kDomain
         )
             .value()
     );
     auto const getsUSDPaysXRPBook = getBookBase(
         rpc::parseBook(
-            xrpl::xrpCurrency(),
-            xrpl::xrpAccount(),
-            xrpl::toCurrency("USD"),
-            account,
-            std::nullopt
+            xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::toCurrency("USD"), account, std::nullopt
         )
             .value()
     );
@@ -846,9 +836,7 @@ generateNormalPathBookOffersTestBundles()
                          .peekData()},
                     // pays issuer account object
                     {xrpl::keylet::account(account).key,
-                     createAccountRootObject(
-                         kAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2
-                     )
+                     createAccountRootObject(kAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2)
                          .getSerializer()
                          .peekData()}
                 },
@@ -911,9 +899,7 @@ generateNormalPathBookOffersTestBundles()
                          .peekData()},
                     // pays issuer account object
                     {xrpl::keylet::account(account).key,
-                     createAccountRootObject(
-                         kAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2
-                     )
+                     createAccountRootObject(kAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2)
                          .getSerializer()
                          .peekData()}
                 },
@@ -1575,11 +1561,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
 
     auto const getsXRPPaysUSDBook = getBookBase(
         rpc::parseBook(
-            xrpl::toCurrency("USD"),
-            issuer,
-            xrpl::xrpCurrency(),
-            xrpl::xrpAccount(),
-            std::nullopt
+            xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt
         )
             .value()
     );
@@ -1664,11 +1646,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
 
     auto const getsXRPPaysUSDBook = getBookBase(
         rpc::parseBook(
-            xrpl::toCurrency("USD"),
-            issuer,
-            xrpl::xrpCurrency(),
-            xrpl::xrpAccount(),
-            std::nullopt
+            xrpl::toCurrency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt
         )
             .value()
     );

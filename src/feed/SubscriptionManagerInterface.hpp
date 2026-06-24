@@ -86,10 +86,7 @@ public:
      * @param subscriber
      */
     virtual void
-    unsubProposedAccount(
-        xrpl::AccountID const& account,
-        SubscriberSharedPtr const& subscriber
-    ) = 0;
+    unsubProposedAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber) = 0;
 
     /**
      * @brief Forward the proposed transactions feed.

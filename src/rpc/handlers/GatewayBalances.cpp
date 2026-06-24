@@ -143,7 +143,9 @@ GatewayBalancesHandler::process(
                         bal -= balance;
                     } catch (std::runtime_error const& e) {
                         bal = xrpl::STAmount(
-                            bal.get<xrpl::Issue>(), xrpl::STAmount::kMaxValue, xrpl::STAmount::kMaxOffset
+                            bal.get<xrpl::Issue>(),
+                            xrpl::STAmount::kMaxValue,
+                            xrpl::STAmount::kMaxOffset
                         );
                     }
                 }
@@ -190,26 +192,25 @@ tag_invoke(
         obj[JS(obligations)] = std::move(obligations);
     }
 
-    auto const toJson =
-        [](std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> const& balances) {
-            boost::json::object balancesObj;
+    auto const toJson = [](std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> const& balances) {
+        boost::json::object balancesObj;
 
-            if (not balances.empty()) {
-                for (auto const& [accId, accBalances] : balances) {
-                    boost::json::array arr;
-                    for (auto const& balance : accBalances) {
-                        boost::json::object entry;
-                        entry[JS(currency)] = xrpl::to_string(balance.get<xrpl::Issue>().currency);
-                        entry[JS(value)] = balance.getText();
-                        arr.push_back(std::move(entry));
-                    }
-
-                    balancesObj[xrpl::to_string(accId)] = std::move(arr);
+        if (not balances.empty()) {
+            for (auto const& [accId, accBalances] : balances) {
+                boost::json::array arr;
+                for (auto const& balance : accBalances) {
+                    boost::json::object entry;
+                    entry[JS(currency)] = xrpl::to_string(balance.get<xrpl::Issue>().currency);
+                    entry[JS(value)] = balance.getText();
+                    arr.push_back(std::move(entry));
                 }
-            }
 
-            return balancesObj;
-        };
+                balancesObj[xrpl::to_string(accId)] = std::move(arr);
+            }
+        }
+
+        return balancesObj;
+    };
 
     if (auto balances = toJson(output.hotBalances); !balances.empty())
         obj[JS(balances)] = balances;

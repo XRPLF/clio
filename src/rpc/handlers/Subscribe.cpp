@@ -52,9 +52,7 @@ SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
     static auto const kBooksValidator = validation::CustomValidator{
         [](boost::json::value const& value, std::string_view key) -> MaybeError {
             if (!value.is_array()) {
-                return Error{
-                    Status{RippledError::RpcInvalidParams, std::string(key) + "NotArray"}
-                };
+                return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotArray"}};
             }
 
             for (auto const& book : value.as_array()) {

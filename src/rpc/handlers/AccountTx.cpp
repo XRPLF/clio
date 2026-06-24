@@ -75,9 +75,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
     if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger) {
         if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin)) {
-            return Error{
-                Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}
-            };
+            return Error{Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
         }
 
         if (!input.ledgerIndexMax && !input.ledgerIndexMin) {

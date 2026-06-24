@@ -639,8 +639,7 @@ TEST_F(RPCHelpersTest, isDeepFrozen_TrustLineIsDeepFrozen)
     auto const account2 = getAccountIdWithString(kAccount2);
 
     // create a trustline between account and account2 and is deep frozen
-    auto const trustLineKey =
-        xrpl::keylet::line(account, account2, xrpl::Currency{kCurrency}).key;
+    auto const trustLineKey = xrpl::keylet::line(account, account2, xrpl::Currency{kCurrency}).key;
     auto const trustlineDeepFrozen = createRippleStateLedgerObject(
         "USD", kAccount, 8, kAccount, 1000, kAccount2, 2000, kIndex1, 2, xrpl::lsfLowDeepFreeze
     );
@@ -661,8 +660,7 @@ TEST_F(RPCHelpersTest, isDeepFrozen_TrustLineIsNotDeepFrozen)
     auto const account2 = getAccountIdWithString(kAccount2);
 
     // create a trustline between account and account2 that is frozen (NOT DeepFrozen)
-    auto const trustLineKey =
-        xrpl::keylet::line(account, account2, xrpl::Currency{kCurrency}).key;
+    auto const trustLineKey = xrpl::keylet::line(account, account2, xrpl::Currency{kCurrency}).key;
     auto const trustlineFrozen = createRippleStateLedgerObject(
         "USD", kAccount, 8, kAccount, 1000, kAccount2, 2000, kIndex1, 2, xrpl::lsfLowFreeze
     );
@@ -682,8 +680,7 @@ TEST_F(RPCHelpersTest, isDeepFrozen_IssuerAndAccountIsSameWillNotBeDeepFrozen)
     auto const account = getAccountIdWithString(kAccount);
     auto const issuer = getAccountIdWithString(kAccount2);
 
-    auto const trustLineKey =
-        xrpl::keylet::line(account, issuer, xrpl::Currency{kCurrency}).key;
+    auto const trustLineKey = xrpl::keylet::line(account, issuer, xrpl::Currency{kCurrency}).key;
     auto const trustlineDeepFrozen = createRippleStateLedgerObject(
         "USD", kAccount, 8, kAccount, 1000, kAccount2, 2000, kIndex1, 2, xrpl::lsfLowDeepFreeze
     );
@@ -712,9 +709,9 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerAccountIsGlobalFrozen)
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_TRUE(isFrozen(
-            *backend_, kLedgerSeqObject, account, xrpl::Currency{kCurrency}, issuer, yield
-        ));
+        EXPECT_TRUE(
+            isFrozen(*backend_, kLedgerSeqObject, account, xrpl::Currency{kCurrency}, issuer, yield)
+        );
     });
 }
 
@@ -723,8 +720,7 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerAndAccountIsSameWillNotBeFrozen)
     auto const account = getAccountIdWithString(kAccount);
     auto const issuer = getAccountIdWithString(kAccount2);
 
-    auto const trustLineKey =
-        xrpl::keylet::line(account, issuer, xrpl::Currency{kCurrency}).key;
+    auto const trustLineKey = xrpl::keylet::line(account, issuer, xrpl::Currency{kCurrency}).key;
     auto const trustlineDeepFrozen = createRippleStateLedgerObject(
         "USD", kAccount, 8, kAccount, 1000, kAccount2, 2000, kIndex1, 2, xrpl::lsfHighFreeze
     );
@@ -1133,8 +1129,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
 
     auto const usdRippleState =
         createRippleStateLedgerObject("USD", kIssuer, 100, kAccount, 100, kIssuer, 100, kTxnId, 3);
-    auto const usdRippleStateKk =
-        xrpl::keylet::line(issuer, account, xrpl::toCurrency("USD")).key;
+    auto const usdRippleStateKk = xrpl::keylet::line(issuer, account, xrpl::toCurrency("USD")).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_))
         .WillOnce(Return(usdRippleState.getSerializer().peekData()));

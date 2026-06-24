@@ -142,8 +142,7 @@ TEST_F(NFTHelpersTest, NFTModifyWithURI)
     auto const tx = createNftModifyTxWithMetadata(kAccount, kNftId, uriBlob);
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
 
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(
         txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
     );
@@ -159,8 +158,7 @@ TEST_F(NFTHelpersTest, NFTModifyWithoutURI)
 {
     auto const tx = createNftModifyTxWithMetadata(kAccount, kNftId, xrpl::Blob{});
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -175,8 +173,7 @@ TEST_F(NFTHelpersTest, NFTMintFromModifiedNode)
     auto const tx = createMintNftTxWithMetadata(kAccount, 1, 20, 1, kNftId);
     xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
     txMeta.getNodes()[0].setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(kPageIndex));
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -209,8 +206,7 @@ TEST_F(NFTHelpersTest, NFTMintFromCreatedNode)
     auto const tx =
         createMintNftTxWithMetadataOfCreatedNode(kAccount, 1, 20, 1, kNftId, uri, kPageIndex);
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
 
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
@@ -227,8 +223,7 @@ TEST_F(NFTHelpersTest, NFTMintWithoutUriField)
         kAccount, 1, 20, 1, kNftId, std::nullopt, kPageIndex
     );
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
 
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
@@ -260,8 +255,7 @@ TEST_F(NFTHelpersTest, NFTBurnFromDeletedNode)
     auto const tx = createNftBurnTxWithMetadataOfDeletedNode(kAccount, kNftId);
     xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
     txMeta.getNodes()[1].setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(kPageIndex));
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -291,8 +285,7 @@ TEST_F(NFTHelpersTest, NFTBurnFromModifiedNode)
     xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
     txMeta.getNodes()[0].setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(kPageIndex));
 
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -309,8 +302,7 @@ TEST_F(NFTHelpersTest, NFTCancelOffer)
     );
     xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
     txMeta.getNodes()[0].setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(kPageIndex));
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 2);
@@ -325,8 +317,7 @@ TEST_F(NFTHelpersTest, NFTCancelOfferContainsDuplicateNFTs)
         kAccount, 1, 2, std::vector<std::string>{kNftID2, kNftId, kNftID2, kNftId}
     );
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 2);
@@ -373,8 +364,7 @@ TEST_F(NFTHelpersTest, NFTAcceptBuyerOffer)
 {
     auto const tx = createAcceptNftBuyerOfferTxWithMetadata(kAccount, 1, 2, kNftId, kOfferId);
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -407,8 +397,7 @@ TEST_F(NFTHelpersTest, NFTAcceptSellerOfferFromCreatedNode)
         kAccount2, 1, 2, kNftId, kOfferId, kPageIndex, true
     );
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -425,8 +414,7 @@ TEST_F(NFTHelpersTest, NFTAcceptSellerOfferFromModifiedNode)
         kAccount2, 1, 2, kNftId, kOfferId, kPageIndex, false
     );
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -510,8 +498,7 @@ TEST_F(NFTHelpersTest, NFTCreateOffer)
 {
     auto const tx = createCreateNftOfferTxWithMetadata(kAccount, 1, 2, kNftId, 1, kOfferId);
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 5, tx.metadata);
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);

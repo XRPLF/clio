@@ -845,7 +845,8 @@ TEST_F(RPCTxTest, CTIDInvalidString)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = boost::json::parse(R"JSON({ "command": "tx", "ctid": "B002807000010002"})JSON");
+        auto const req =
+            boost::json::parse(R"JSON({ "command": "tx", "ctid": "B002807000010002"})JSON");
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 

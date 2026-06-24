@@ -64,11 +64,7 @@ getAccountKey(xrpl::AccountID const& acc)
 }
 
 xrpl::LedgerHeader
-createLedgerHeader(
-    std::string_view ledgerHash,
-    xrpl::LedgerIndex seq,
-    std::optional<uint32_t> age
-)
+createLedgerHeader(std::string_view ledgerHash, xrpl::LedgerIndex seq, std::optional<uint32_t> age)
 {
     using namespace std::chrono;
 
@@ -1305,9 +1301,7 @@ createAmmObject(
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         *util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId))
     );
-    amm.setFieldAmount(
-        xrpl::sfLPTokenBalance, xrpl::STAmount(issue1, lpTokenBalanceIssueAmount)
-    );
+    amm.setFieldAmount(xrpl::sfLPTokenBalance, xrpl::STAmount(issue1, lpTokenBalanceIssueAmount));
     amm.setFieldU32(xrpl::sfFlags, 0);
     return amm;
 }
@@ -1400,9 +1394,7 @@ createChainOwnedCreateAccountClaimId(
     chainOwnedCreateAccountClaimID.setFieldU16(
         xrpl::sfLedgerEntryType, xrpl::ltXCHAIN_OWNED_CLAIM_ID
     );
-    chainOwnedCreateAccountClaimID.setAccountID(
-        xrpl::sfAccount, getAccountIdWithString(accountId)
-    );
+    chainOwnedCreateAccountClaimID.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
     chainOwnedCreateAccountClaimID.setFieldU64(xrpl::sfXChainAccountCreateCount, 100);
     chainOwnedCreateAccountClaimID.setFieldU64(xrpl::sfOwnerNode, 100);
     chainOwnedCreateAccountClaimID.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
@@ -1852,9 +1844,7 @@ createVault(
     );
     vault[xrpl::sfShareMPTID] = shareMPTID;
     vault.setFieldNumber(xrpl::sfAssetsTotal, xrpl::STNumber{xrpl::sfAssetsTotal, 300});
-    vault.setFieldNumber(
-        xrpl::sfAssetsAvailable, xrpl::STNumber{xrpl::sfAssetsAvailable, 300}
-    );
+    vault.setFieldNumber(xrpl::sfAssetsAvailable, xrpl::STNumber{xrpl::sfAssetsAvailable, 300});
     vault.setFieldNumber(xrpl::sfLossUnrealized, xrpl::STNumber{xrpl::sfLossUnrealized, 1});
     vault.setFieldU8(xrpl::sfWithdrawalPolicy, 200);
 

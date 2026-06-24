@@ -99,8 +99,7 @@ public:
                     // wallet needs to be an valid accountID or public key
                     auto const wallets =
                         value.is_array() ? value.as_array() : boost::json::array{value};
-                    auto const getAccountID =
-                        [](auto const& j) -> std::optional<xrpl::AccountID> {
+                    auto const getAccountID = [](auto const& j) -> std::optional<xrpl::AccountID> {
                         if (j.is_string()) {
                             auto const pk = util::parseBase58Wrapper<xrpl::PublicKey>(
                                 xrpl::TokenType::AccountPublic,
@@ -137,9 +136,8 @@ public:
         static auto const kSpecV1 = RpcSpec{
             kSpecCommon, {{JS(hotwallet), getHotWalletValidator(xrpl::RpcInvalidHotwallet)}}
         };
-        static auto const kSpecV2 = RpcSpec{
-            kSpecCommon, {{JS(hotwallet), getHotWalletValidator(xrpl::RpcInvalidParams)}}
-        };
+        static auto const kSpecV2 =
+            RpcSpec{kSpecCommon, {{JS(hotwallet), getHotWalletValidator(xrpl::RpcInvalidParams)}}};
 
         return apiVersion == 1 ? kSpecV1 : kSpecV2;
     }

@@ -69,12 +69,7 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
 
     MOCK_METHOD(void, subBook, (xrpl::Book const&, feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(
-        void,
-        unsubBook,
-        (xrpl::Book const&, feed::SubscriberSharedPtr const&),
-        (override)
-    );
+    MOCK_METHOD(void, unsubBook, (xrpl::Book const&, feed::SubscriberSharedPtr const&), (override));
 
     MOCK_METHOD(void, subBookChanges, (feed::SubscriberSharedPtr const&), (override));
 

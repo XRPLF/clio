@@ -28,7 +28,6 @@ using namespace rpc::validation;
 using namespace rpc::meta;
 using namespace rpc::modifiers;
 
-
 class RPCBaseTest : public virtual ::testing::Test {};
 
 TEST_F(RPCBaseTest, CheckTypeString)
@@ -343,7 +342,8 @@ TEST_F(RPCBaseTest, ArrayAtValidator)
     auto failingInput = boost::json::parse(R"JSON({ "arr": [{"limit": "not int"}] })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput = boost::json::parse(R"JSON({ "arr": [{"limit": 42}], "arr2": "not array type" })JSON");
+    failingInput =
+        boost::json::parse(R"JSON({ "arr": [{"limit": 42}], "arr2": "not array type" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
     failingInput = boost::json::parse(R"JSON({ "arr": [] })JSON");
@@ -390,7 +390,8 @@ TEST_F(RPCBaseTest, IfTypeValidator)
     failingInput = boost::json::parse(R"JSON({ "mix": 1213 })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput = boost::json::parse(R"JSON({ "mix": {"limit": 42, "limit2": 22}, "mix2": 1213 })JSON");
+    failingInput =
+        boost::json::parse(R"JSON({ "mix": {"limit": 42, "limit2": 22}, "mix2": 1213 })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 }
 
@@ -466,16 +467,18 @@ TEST_F(RPCBaseTest, TimeFormatValidator)
 
 TEST_F(RPCBaseTest, CustomValidator)
 {
-    auto customFormatCheck =
-        CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
+    auto customFormatCheck = CustomValidator{
+        [](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
             return value.as_string().size() == 34 ? MaybeError{} : Error{rpc::Status{"Uh oh"}};
-        }};
+        }
+    };
 
     auto spec = RpcSpec{
         {"taker", customFormatCheck},
     };
 
-    auto passingInput = boost::json::parse(R"JSON({ "taker": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59" })JSON");
+    auto passingInput =
+        boost::json::parse(R"JSON({ "taker": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59" })JSON");
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput = boost::json::parse(R"JSON({ "taker": "wrongformat" })JSON");
@@ -532,7 +535,8 @@ TEST_F(RPCBaseTest, AccountValidator)
     auto failingInput = boost::json::parse(R"JSON({ "account": 256 })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput = boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON");
+    failingInput =
+        boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
     failingInput = boost::json::parse(
@@ -540,7 +544,8 @@ TEST_F(RPCBaseTest, AccountValidator)
     );
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput = boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })JSON");
+    failingInput =
+        boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
     auto passingInput =
@@ -561,7 +566,8 @@ TEST_F(RPCBaseTest, AccountBase58Validator)
     auto failingInput = boost::json::parse(R"JSON({ "account": 256 })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput = boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON");
+    failingInput =
+        boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
     failingInput = boost::json::parse(
@@ -569,7 +575,8 @@ TEST_F(RPCBaseTest, AccountBase58Validator)
     );
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput = boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })JSON");
+    failingInput =
+        boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
     auto passingInput =
@@ -607,8 +614,9 @@ TEST_F(RPCBaseTest, Uint160HexStringValidator)
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "markerNotString");
 
-    failingInput =
-        boost::json::parse(R"JSON({ "marker": "F609A18102218C75767209946A77523CBD97E2253515BC"})JSON");
+    failingInput = boost::json::parse(
+        R"JSON({ "marker": "F609A18102218C75767209946A77523CBD97E2253515BC"})JSON"
+    );
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "markerMalformed");
@@ -671,7 +679,8 @@ TEST_F(RPCBaseTest, CurrencyValidator)
     ASSERT_TRUE(spec.process(passingInput));
 
     for (auto const& currency : {"[]<", ">()", "{}|", "?!@", "#$%", "^&*"}) {
-        passingInput = boost::json::parse(fmt::format(R"JSON({{ "currency": "{}" }})JSON", currency));
+        passingInput =
+            boost::json::parse(fmt::format(R"JSON({{ "currency": "{}" }})JSON", currency));
         ASSERT_TRUE(spec.process(passingInput));
     }
 
@@ -689,7 +698,8 @@ TEST_F(RPCBaseTest, CurrencyValidator)
 TEST_F(RPCBaseTest, IssuerValidator)
 {
     auto const spec = RpcSpec{{"issuer", CustomValidators::issuerValidator}};
-    auto passingInput = boost::json::parse(R"JSON({ "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})JSON");
+    auto passingInput =
+        boost::json::parse(R"JSON({ "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})JSON");
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput = boost::json::parse(R"JSON({ "issuer": 256})JSON");
@@ -697,8 +707,9 @@ TEST_F(RPCBaseTest, IssuerValidator)
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "issuerNotString");
 
-    failingInput =
-        boost::json::parse(fmt::format(R"JSON({{ "issuer": "{}"}})JSON", toBase58(xrpl::noAccount())));
+    failingInput = boost::json::parse(
+        fmt::format(R"JSON({{ "issuer": "{}"}})JSON", toBase58(xrpl::noAccount()))
+    );
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
 }
@@ -823,7 +834,8 @@ TEST_F(RPCBaseTest, ToNumberModifier)
 
 TEST_F(RPCBaseTest, CustomModifier)
 {
-    testing::StrictMock<testing::MockFunction<MaybeError(boost::json::value & value, std::string_view)>>
+    testing::StrictMock<
+        testing::MockFunction<MaybeError(boost::json::value & value, std::string_view)>>
         mockModifier;
     auto const customModifier = CustomModifier{mockModifier.AsStdFunction()};
     auto const spec = RpcSpec{

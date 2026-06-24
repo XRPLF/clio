@@ -69,10 +69,14 @@ AccountCurrenciesHandler::process(
                 balance.negate();
 
             if (balance < lineLimit)
-                response.receiveCurrencies.insert(xrpl::to_string(balance.get<xrpl::Issue>().currency));
+                response.receiveCurrencies.insert(
+                    xrpl::to_string(balance.get<xrpl::Issue>().currency)
+                );
 
             if ((-balance) < lineLimitPeer)
-                response.sendCurrencies.insert(xrpl::to_string(balance.get<xrpl::Issue>().currency));
+                response.sendCurrencies.insert(
+                    xrpl::to_string(balance.get<xrpl::Issue>().currency)
+                );
         }
 
         return true;

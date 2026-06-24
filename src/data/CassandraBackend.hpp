@@ -124,8 +124,7 @@ public:
             r.bindAt(
                 1,
                 std::make_tuple(
-                    cursorIn.has_value() ? xrpl::nft::toUInt32(xrpl::nft::getTaxon(*cursorIn))
-                                         : 0,
+                    cursorIn.has_value() ? xrpl::nft::toUInt32(xrpl::nft::getTaxon(*cursorIn)) : 0,
                     cursorIn.value_or(xrpl::uint256(0))
                 )
             );

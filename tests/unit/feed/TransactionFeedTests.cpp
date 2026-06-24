@@ -1255,9 +1255,8 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     )
         .WillOnce(testing::Return(true));
 
-    auto const ammObj = createAmmObject(
-        kAmmAccount, "XRP", xrpl::toBase58(xrpl::xrpAccount()), kCurrency, kIssuer
-    );
+    auto const ammObj =
+        createAmmObject(kAmmAccount, "XRP", xrpl::toBase58(xrpl::xrpAccount()), kCurrency, kIssuer);
     EXPECT_CALL(
         *backend_, doFetchLedgerObject(xrpl::keylet::amm(ammID).key, testing::_, testing::_)
     )

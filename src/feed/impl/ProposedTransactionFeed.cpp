@@ -52,10 +52,7 @@ ProposedTransactionFeed::sub(SubscriberSharedPtr const& subscriber)
 }
 
 void
-ProposedTransactionFeed::sub(
-    xrpl::AccountID const& account,
-    SubscriberSharedPtr const& subscriber
-)
+ProposedTransactionFeed::sub(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     auto const added = accountSignal_.connectTrackableSlot(
         subscriber, account, ProposedTransactionSlot(*this, subscriber)
@@ -114,8 +111,7 @@ ProposedTransactionFeed::pub(boost::json::object const& receivedTxJson)
 
     auto const transaction = receivedTxJson.at(JS(transaction)).as_object();
     auto const accounts = rpc::getAccountsFromTransaction(transaction);
-    auto affectedAccounts =
-        std::unordered_set<xrpl::AccountID>(accounts.cbegin(), accounts.cend());
+    auto affectedAccounts = std::unordered_set<xrpl::AccountID>(accounts.cbegin(), accounts.cend());
 
     [[maybe_unused]] auto task =
         strand_.execute([this, allVersionMsgs, affectedAccounts = std::move(affectedAccounts)]() {

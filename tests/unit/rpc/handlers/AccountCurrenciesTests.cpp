@@ -24,7 +24,6 @@ using namespace rpc;
 using namespace data;
 using namespace testing;
 
-
 namespace {
 
 constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";

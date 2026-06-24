@@ -103,8 +103,7 @@ AccountChannelsHandler::process(
 
     Output response;
     auto const addToResponse = [&](xrpl::SLE const sle) {
-        if (sle.getType() == xrpl::ltPAYCHAN &&
-            sle.getAccountID(xrpl::sfAccount) == accountID &&
+        if (sle.getType() == xrpl::ltPAYCHAN && sle.getAccountID(xrpl::sfAccount) == accountID &&
             (!destAccountID || *destAccountID == sle.getAccountID(xrpl::sfDestination))) {
             addChannel(response.channels, sle);
         }

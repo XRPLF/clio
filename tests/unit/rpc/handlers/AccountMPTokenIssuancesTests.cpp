@@ -434,7 +434,8 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
             kIssuanceOuT1,
             kIssuanceOuT2
         );
-        auto const input = boost::json::parse(fmt::format(R"JSON({{"account": "{}"}})JSON", kAccount));
+        auto const input =
+            boost::json::parse(fmt::format(R"JSON({{"account": "{}"}})JSON", kAccount));
         auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
 
         auto const output = handler.process(input, Context{yield});
@@ -1008,9 +1009,7 @@ generateSingleFlagTests()
         {.testName = "CanEscrow",
          .flag = xrpl::lsfMPTCanEscrow,
          .expectedJsonKey = "mpt_can_escrow"},
-        {.testName = "CanTrade",
-         .flag = xrpl::lsfMPTCanTrade,
-         .expectedJsonKey = "mpt_can_trade"},
+        {.testName = "CanTrade", .flag = xrpl::lsfMPTCanTrade, .expectedJsonKey = "mpt_can_trade"},
         {.testName = "CanTransfer",
          .flag = xrpl::lsfMPTCanTransfer,
          .expectedJsonKey = "mpt_can_transfer"},

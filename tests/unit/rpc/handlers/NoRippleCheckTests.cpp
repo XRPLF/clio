@@ -325,11 +325,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
     // fetch account object return valid account with DefaultRippleSet flag
 
     ON_CALL(*backend_, doFetchLedgerObject)
-        .WillByDefault(Return(
-            createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
-                .getSerializer()
-                .peekData()
-        ));
+        .WillByDefault(
+            Return(createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
+                       .getSerializer()
+                       .peekData())
+        );
     auto const ownerDir =
         createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
     auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
@@ -457,11 +457,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
     // fetch account object return valid account with DefaultRippleSet flag
 
     ON_CALL(*backend_, doFetchLedgerObject)
-        .WillByDefault(Return(
-            createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
-                .getSerializer()
-                .peekData()
-        ));
+        .WillByDefault(
+            Return(createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
+                       .getSerializer()
+                       .peekData())
+        );
     auto const ownerDir =
         createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
     auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
@@ -640,11 +640,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
     // fetch account object return valid account with DefaultRippleSet flag
 
     ON_CALL(*backend_, doFetchLedgerObject)
-        .WillByDefault(Return(
-            createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
-                .getSerializer()
-                .peekData()
-        ));
+        .WillByDefault(
+            Return(createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
+                       .getSerializer()
+                       .peekData())
+        );
     auto const ownerDir =
         createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
     auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
@@ -809,11 +809,11 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
     // fetch account object return valid account with DefaultRippleSet flag
 
     ON_CALL(*backend_, doFetchLedgerObject)
-        .WillByDefault(Return(
-            createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
-                .getSerializer()
-                .peekData()
-        ));
+        .WillByDefault(
+            Return(createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
+                       .getSerializer()
+                       .peekData())
+        );
     auto const ownerDir = createOwnerDirLedgerObject(
         std::vector{NoRippleCheckHandler::kLimitMax + 1, xrpl::uint256{kIndex1}}, kIndex1
     );

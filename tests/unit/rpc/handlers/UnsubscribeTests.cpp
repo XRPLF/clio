@@ -504,7 +504,8 @@ TEST_F(RPCUnsubscribeTest, EmptyResponse)
 {
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{UnsubscribeHandler{mockSubscriptionManagerPtr_}};
-        auto const output = handler.process(boost::json::parse(R"JSON({})JSON"), Context{yield, session_});
+        auto const output =
+            handler.process(boost::json::parse(R"JSON({})JSON"), Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
     });

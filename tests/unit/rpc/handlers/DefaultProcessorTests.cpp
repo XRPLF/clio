@@ -16,7 +16,6 @@ using namespace rpc;
 using namespace rpc::validation;
 using namespace tests::common;
 
-
 class RPCDefaultProcessorTest : public HandlerBaseTest {};
 
 TEST_F(RPCDefaultProcessorTest, ValidInput)
