@@ -84,7 +84,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderWithinAgeLimit)
     auto dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSeq, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kSeq, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSeq, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{}));
@@ -134,7 +134,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderInRange)
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
     backend_->setRange(kSeq - 1, kSeq);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSeq, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kSeq, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     TransactionAndMetadata t1;
@@ -177,13 +177,13 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderCloseTimeGreaterThanNow)
     auto const nowPlus10 = system_clock::now() + seconds(10);
     auto const closeTime =
         duration_cast<seconds>(nowPlus10.time_since_epoch()).count() - kRippleEpochStart;
-    dummyLedgerHeader.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
+    dummyLedgerHeader.closeTime = xrpl::NetClock::time_point{seconds{closeTime}};
 
     backend_->setRange(kSeq - 1, kSeq);
 
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSeq, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kSeq, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     TransactionAndMetadata t1;
@@ -261,7 +261,7 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
     backend_->setRange(kSeq - 1, kSeq);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSeq, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kSeq, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     // t1 index > t2 index
@@ -342,9 +342,9 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleLedgersInQuickSuccession)
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
     backend_->setRange(kSeq - 1, kSeq + 1);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSeq, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kSeq, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSeq + 1, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kSeq + 1, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSeq, _))

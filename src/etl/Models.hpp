@@ -28,7 +28,7 @@ namespace etl::model {
  * incoming transactions by the Registry for its `onTransaction` and `onInitialTransaction` hooks.
  * It's a compilation error to list the same transaction type more than once.
  */
-template <ripple::TxType... Types>
+template <xrpl::TxType... Types>
     requires(util::hasNoDuplicates(Types...))
 struct Spec {
     static constexpr bool kSpecTag = true;
@@ -40,7 +40,7 @@ struct Spec {
      * @return true if the transaction was requested; false otherwise
      */
     [[nodiscard]] static constexpr bool
-    wants(ripple::TxType type) noexcept
+    wants(xrpl::TxType type) noexcept
     {
         return ((Types == type) || ...);
     }
@@ -54,13 +54,13 @@ struct Transaction {
     std::string metaRaw;
 
     // unpacked blob and meta
-    ripple::STTx sttx;
-    ripple::TxMeta meta;
+    xrpl::STTx sttx;
+    xrpl::TxMeta meta;
 
     // commonly used stuff
-    ripple::uint256 id;
+    xrpl::uint256 id;
     std::string key;  // key is the above id as a string of 32 characters
-    ripple::TxType type;
+    xrpl::TxType type;
 
     /**
      * @brief Compares Transaction objects to each other without considering sttx and meta fields
@@ -94,9 +94,9 @@ struct Object {
         Deleted = 3,
     };
 
-    ripple::uint256 key;
+    xrpl::uint256 key;
     std::string keyRaw;
-    ripple::Blob data;
+    xrpl::Blob data;
     std::string dataRaw;
     std::string successor;
     std::string predecessor;
@@ -127,7 +127,7 @@ struct LedgerData {
     std::optional<std::vector<BookSuccessor>> successors;
     std::optional<std::vector<std::string>> edgeKeys;
 
-    ripple::LedgerHeader header;
+    xrpl::LedgerHeader header;
     std::string rawHeader;
     uint32_t seq;
 
@@ -140,8 +140,8 @@ struct LedgerData {
     operator==(LedgerData const& other) const
     {
         auto const serialized = [](auto const& hdr) {
-            ripple::Serializer ser;
-            ripple::addRaw(hdr, ser);
+            xrpl::Serializer ser;
+            xrpl::addRaw(hdr, ser);
             return ser.getString();
         };
 

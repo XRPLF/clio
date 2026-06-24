@@ -178,9 +178,9 @@ public:
      *
      * @param sequence The sequence number to fetch for
      * @param yield The coroutine context
-     * @return The ripple::LedgerHeader if found; nullopt otherwise
+     * @return The xrpl::LedgerHeader if found; nullopt otherwise
      */
-    virtual std::optional<ripple::LedgerHeader>
+    virtual std::optional<xrpl::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t sequence, boost::asio::yield_context yield) const = 0;
 
     /**
@@ -188,10 +188,10 @@ public:
      *
      * @param hash The hash to fetch for
      * @param yield The coroutine context
-     * @return The ripple::LedgerHeader if found; nullopt otherwise
+     * @return The xrpl::LedgerHeader if found; nullopt otherwise
      */
-    virtual std::optional<ripple::LedgerHeader>
-    fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context yield) const = 0;
+    virtual std::optional<xrpl::LedgerHeader>
+    fetchLedgerByHash(xrpl::uint256 const& hash, boost::asio::yield_context yield) const = 0;
 
     /**
      * @brief Fetches the latest ledger sequence.
@@ -218,9 +218,9 @@ public:
      * @param pageSize The maximum number of accounts per page
      * @param seq The accounts need to exist for this sequence
      * @param yield The coroutine context
-     * @return A vector of ripple::uint256 representing the account roots
+     * @return A vector of xrpl::uint256 representing the account roots
      */
-    virtual std::vector<ripple::uint256>
+    virtual std::vector<xrpl::uint256>
     fetchAccountRoots(
         std::uint32_t number,
         std::uint32_t pageSize,
@@ -262,7 +262,7 @@ public:
      * @param yield The coroutine context
      * @return Fees if fees are found; nullopt otherwise
      */
-    std::optional<ripple::Fees>
+    std::optional<xrpl::Fees>
     fetchFees(std::uint32_t seq, boost::asio::yield_context yield) const;
 
     /**
@@ -273,7 +273,7 @@ public:
      * @return TransactionAndMetadata if transaction is found; nullopt otherwise
      */
     virtual std::optional<TransactionAndMetadata>
-    fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context yield) const = 0;
+    fetchTransaction(xrpl::uint256 const& hash, boost::asio::yield_context yield) const = 0;
 
     /**
      * @brief Fetches multiple transactions.
@@ -284,7 +284,7 @@ public:
      */
     virtual std::vector<TransactionAndMetadata>
     fetchTransactions(
-        std::vector<ripple::uint256> const& hashes,
+        std::vector<xrpl::uint256> const& hashes,
         boost::asio::yield_context yield
     ) const = 0;
 
@@ -300,7 +300,7 @@ public:
      */
     virtual TransactionsAndCursor
     fetchAccountTransactions(
-        ripple::AccountID const& account,
+        xrpl::AccountID const& account,
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& txnCursor,
@@ -325,9 +325,9 @@ public:
      *
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield The coroutine context
-     * @return Hashes as ripple::uint256 in a vector
+     * @return Hashes as xrpl::uint256 in a vector
      */
-    virtual std::vector<ripple::uint256>
+    virtual std::vector<xrpl::uint256>
     fetchAllTransactionHashesInLedger(
         std::uint32_t ledgerSequence,
         boost::asio::yield_context yield
@@ -343,7 +343,7 @@ public:
      */
     virtual std::optional<NFT>
     fetchNFT(
-        ripple::uint256 const& tokenID,
+        xrpl::uint256 const& tokenID,
         std::uint32_t ledgerSequence,
         boost::asio::yield_context yield
     ) const = 0;
@@ -360,7 +360,7 @@ public:
      */
     virtual TransactionsAndCursor
     fetchNFTTransactions(
-        ripple::uint256 const& tokenID,
+        xrpl::uint256 const& tokenID,
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -381,11 +381,11 @@ public:
      */
     virtual NFTsAndCursor
     fetchNFTsByIssuer(
-        ripple::AccountID const& issuer,
+        xrpl::AccountID const& issuer,
         std::optional<std::uint32_t> const& taxon,
         std::uint32_t ledgerSequence,
         std::uint32_t limit,
-        std::optional<ripple::uint256> const& cursorIn,
+        std::optional<xrpl::uint256> const& cursorIn,
         boost::asio::yield_context yield
     ) const = 0;
 
@@ -401,9 +401,9 @@ public:
      */
     virtual MPTHoldersAndCursor
     fetchMPTHolders(
-        ripple::uint192 const& mptID,
+        xrpl::uint192 const& mptID,
         std::uint32_t const limit,
-        std::optional<ripple::AccountID> const& cursorIn,
+        std::optional<xrpl::AccountID> const& cursorIn,
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context yield
     ) const = 0;
@@ -426,7 +426,7 @@ public:
      */
     virtual TransactionsAndCursor
     fetchMPTokenIssuanceTransactions(
-        ripple::uint192 const& mptIssuanceID,
+        xrpl::uint192 const& mptIssuanceID,
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -454,8 +454,8 @@ public:
      */
     virtual TransactionsAndCursor
     fetchAccountMPTokenIssuanceTransactions(
-        ripple::uint192 const& mptIssuanceID,
-        ripple::AccountID const& account,
+        xrpl::uint192 const& mptIssuanceID,
+        xrpl::AccountID const& account,
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -475,7 +475,7 @@ public:
      */
     std::optional<Blob>
     fetchLedgerObject(
-        ripple::uint256 const& key,
+        xrpl::uint256 const& key,
         std::uint32_t sequence,
         boost::asio::yield_context yield
     ) const;
@@ -492,7 +492,7 @@ public:
      */
     std::optional<std::uint32_t>
     fetchLedgerObjectSeq(
-        ripple::uint256 const& key,
+        xrpl::uint256 const& key,
         std::uint32_t sequence,
         boost::asio::yield_context yield
     ) const;
@@ -511,7 +511,7 @@ public:
      */
     std::vector<Blob>
     fetchLedgerObjects(
-        std::vector<ripple::uint256> const& keys,
+        std::vector<xrpl::uint256> const& keys,
         std::uint32_t sequence,
         boost::asio::yield_context yield
     ) const;
@@ -526,7 +526,7 @@ public:
      */
     virtual std::optional<Blob>
     doFetchLedgerObject(
-        ripple::uint256 const& key,
+        xrpl::uint256 const& key,
         std::uint32_t sequence,
         boost::asio::yield_context yield
     ) const = 0;
@@ -541,7 +541,7 @@ public:
      */
     virtual std::optional<std::uint32_t>
     doFetchLedgerObjectSeq(
-        ripple::uint256 const& key,
+        xrpl::uint256 const& key,
         std::uint32_t sequence,
         boost::asio::yield_context yield
     ) const = 0;
@@ -556,7 +556,7 @@ public:
      */
     virtual std::vector<Blob>
     doFetchLedgerObjects(
-        std::vector<ripple::uint256> const& keys,
+        std::vector<xrpl::uint256> const& keys,
         std::uint32_t sequence,
         boost::asio::yield_context yield
     ) const = 0;
@@ -583,7 +583,7 @@ public:
      */
     LedgerPage
     fetchLedgerPage(
-        std::optional<ripple::uint256> const& cursor,
+        std::optional<xrpl::uint256> const& cursor,
         std::uint32_t ledgerSequence,
         std::uint32_t limit,
         bool outOfOrder,
@@ -600,7 +600,7 @@ public:
      */
     std::optional<LedgerObject>
     fetchSuccessorObject(
-        ripple::uint256 key,
+        xrpl::uint256 key,
         std::uint32_t ledgerSequence,
         boost::asio::yield_context yield
     ) const;
@@ -617,9 +617,9 @@ public:
      * @param yield The coroutine context
      * @return The successor key on success; nullopt otherwise
      */
-    std::optional<ripple::uint256>
+    std::optional<xrpl::uint256>
     fetchSuccessorKey(
-        ripple::uint256 key,
+        xrpl::uint256 key,
         std::uint32_t ledgerSequence,
         boost::asio::yield_context yield
     ) const;
@@ -632,9 +632,9 @@ public:
      * @param yield The coroutine context
      * @return The successor on success; nullopt otherwise
      */
-    virtual std::optional<ripple::uint256>
+    virtual std::optional<xrpl::uint256>
     doFetchSuccessorKey(
-        ripple::uint256 key,
+        xrpl::uint256 key,
         std::uint32_t ledgerSequence,
         boost::asio::yield_context yield
     ) const = 0;
@@ -650,7 +650,7 @@ public:
      */
     BookOffersPage
     fetchBookOffers(
-        ripple::uint256 const& book,
+        xrpl::uint256 const& book,
         std::uint32_t ledgerSequence,
         std::uint32_t limit,
         boost::asio::yield_context yield
@@ -717,7 +717,7 @@ public:
      * @param blob r-value string serialization of ledger header.
      */
     virtual void
-    writeLedger(ripple::LedgerHeader const& ledgerHeader, std::string&& blob) = 0;
+    writeLedger(xrpl::LedgerHeader const& ledgerHeader, std::string&& blob) = 0;
 
     /**
      * @brief Writes a new ledger object.

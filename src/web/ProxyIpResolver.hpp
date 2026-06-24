@@ -24,8 +24,8 @@ namespace web {
  */
 class ProxyIpResolver {
     std::unordered_set<std::string> proxyIps_;
-    // ripple::uint256 doesn't have hash implementation
-    std::unordered_set<ripple::uint256, ripple::uint256::hasher> proxyTokens_;
+    // xrpl::uint256 doesn't have hash implementation
+    std::unordered_set<xrpl::uint256, xrpl::uint256::hasher> proxyTokens_;
 
 public:
     /**

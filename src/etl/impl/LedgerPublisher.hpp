@@ -65,7 +65,7 @@ class LedgerPublisher : public LedgerPublisherInterface {
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
     std::reference_wrapper<SystemState const> state_;  // shared state for ETL
 
-    util::Mutex<std::chrono::time_point<ripple::NetClock>, std::shared_mutex> lastCloseTime_;
+    util::Mutex<std::chrono::time_point<xrpl::NetClock>, std::shared_mutex> lastCloseTime_;
 
     std::reference_wrapper<util::prometheus::CounterInt> lastPublishSeconds_ =
         PrometheusService::counterInt(
@@ -157,7 +157,7 @@ public:
      * @param lgrInfo the ledger to publish
      */
     void
-    publish(ripple::LedgerHeader const& lgrInfo)
+    publish(xrpl::LedgerHeader const& lgrInfo)
     {
         publishStrand_.submit([this, lgrInfo = lgrInfo] {
             LOG(log_.info()) << "Publishing ledger " << std::to_string(lgrInfo.seq);
@@ -169,7 +169,7 @@ public:
             // and don't publish
             static constexpr std::uint32_t kMaxLedgerAgeSeconds = 600;
             if (age < kMaxLedgerAgeSeconds) {
-                std::optional<ripple::Fees> fees =
+                std::optional<xrpl::Fees> fees =
                     data::synchronousAndRetryOnTimeout([&](auto yield) {
                         return backend_->fetchFees(lgrInfo.seq, yield);
                     });
@@ -188,12 +188,12 @@ public:
 
                 // order with transaction index
                 std::ranges::sort(transactions, [](auto const& t1, auto const& t2) {
-                    ripple::SerialIter iter1{t1.metadata.data(), t1.metadata.size()};
-                    ripple::STObject const object1(iter1, ripple::sfMetadata);
-                    ripple::SerialIter iter2{t2.metadata.data(), t2.metadata.size()};
-                    ripple::STObject const object2(iter2, ripple::sfMetadata);
-                    return object1.getFieldU32(ripple::sfTransactionIndex) <
-                        object2.getFieldU32(ripple::sfTransactionIndex);
+                    xrpl::SerialIter iter1{t1.metadata.data(), t1.metadata.size()};
+                    xrpl::STObject const object1(iter1, xrpl::sfMetadata);
+                    xrpl::SerialIter iter2{t2.metadata.data(), t2.metadata.size()};
+                    xrpl::STObject const object2(iter2, xrpl::sfMetadata);
+                    return object1.getFieldU32(xrpl::sfTransactionIndex) <
+                        object2.getFieldU32(xrpl::sfTransactionIndex);
                 });
 
                 for (auto const& txAndMeta : transactions)
@@ -275,7 +275,7 @@ public:
 
 private:
     void
-    setLastClose(std::chrono::time_point<ripple::NetClock> lastCloseTime)
+    setLastClose(std::chrono::time_point<xrpl::NetClock> lastCloseTime)
     {
         auto closeTime = lastCloseTime_.lock<std::scoped_lock>();
         *closeTime = lastCloseTime;

@@ -18,7 +18,7 @@ struct ShasumTest : testing::Test {
 
 TEST_F(ShasumTest, sha256sum)
 {
-    ripple::uint256 expected;
+    xrpl::uint256 expected;
 
     ASSERT_TRUE(expected.parseHex(kEmptyHash));
     EXPECT_EQ(sha256sum(""), expected);
@@ -38,7 +38,7 @@ TEST_F(ShasumTest, Sha256sumStreamingEmpty)
     Sha256sum hasher;
     auto result = std::move(hasher).finalize();
 
-    ripple::uint256 expected;
+    xrpl::uint256 expected;
     ASSERT_TRUE(expected.parseHex(kEmptyHash));
     EXPECT_EQ(result, expected);
 }
@@ -50,7 +50,7 @@ TEST_F(ShasumTest, Sha256sumStreamingSingleUpdate)
     hasher.update(data.data(), data.size());
     auto result = std::move(hasher).finalize();
 
-    ripple::uint256 expected;
+    xrpl::uint256 expected;
     ASSERT_TRUE(expected.parseHex(kHelloWorldHash));
     EXPECT_EQ(result, expected);
 }
@@ -63,7 +63,7 @@ TEST_F(ShasumTest, Sha256sumStreamingMultipleUpdates)
     hasher.update("world", 5);
     auto result = std::move(hasher).finalize();
 
-    ripple::uint256 expected;
+    xrpl::uint256 expected;
     ASSERT_TRUE(expected.parseHex(kHelloWorldHash));
     EXPECT_EQ(result, expected);
 }

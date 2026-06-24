@@ -81,28 +81,28 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
     auto const& lgrInfo = *expectedLgrInfo;
 
     // Extract the vault keylet based on input
-    auto const vaultKeylet = [&]() -> std::expected<ripple::Keylet, Status> {
+    auto const vaultKeylet = [&]() -> std::expected<xrpl::Keylet, Status> {
         if (input.owner && input.tnxSequence) {
             auto const accountStr = *input.owner;
             auto const accountID = accountFromStringStrict(accountStr);
 
             // checks that account exists
             {
-                auto const accountKeylet = ripple::keylet::account(*accountID);
+                auto const accountKeylet = xrpl::keylet::account(*accountID);
                 auto const accountLedgerObject =
                     sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
                 if (!accountLedgerObject)
-                    return std::unexpected{Status{RippledError::rpcENTRY_NOT_FOUND}};
+                    return std::unexpected{Status{RippledError::RpcEntryNotFound}};
             }
 
-            return ripple::keylet::vault(*accountID, *input.tnxSequence);
+            return xrpl::keylet::vault(*accountID, *input.tnxSequence);
         }
-        ripple::uint256 nodeIndex;
+        xrpl::uint256 nodeIndex;
         if (nodeIndex.parseHex(*input.vaultID))
-            return ripple::keylet::vault(nodeIndex);
+            return xrpl::keylet::vault(nodeIndex);
 
-        return std::unexpected{Status{RippledError::rpcENTRY_NOT_FOUND}};
+        return std::unexpected{Status{RippledError::RpcEntryNotFound}};
     }();
 
     if (not vaultKeylet.has_value())
@@ -113,30 +113,30 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
         sharedPtrBackend_->fetchLedgerObject(vaultKeylet->key, lgrInfo.seq, ctx.yield);
 
     if (not vaultLedgerObject)
-        return Error{Status{RippledError::rpcENTRY_NOT_FOUND, "vault object not found."}};
+        return Error{Status{RippledError::RpcEntryNotFound, "vault object not found."}};
 
-    ripple::STLedgerEntry const vaultSle{
-        ripple::SerialIter{vaultLedgerObject->data(), vaultLedgerObject->size()}, vaultKeylet->key
+    xrpl::STLedgerEntry const vaultSle{
+        xrpl::SerialIter{vaultLedgerObject->data(), vaultLedgerObject->size()}, vaultKeylet->key
     };
 
-    auto const issuanceKeylet = ripple::keylet::mptIssuance(vaultSle[ripple::sfShareMPTID]).key;
+    auto const issuanceKeylet = xrpl::keylet::mptIssuance(vaultSle[xrpl::sfShareMPTID]).key;
     auto const issuanceObject =
         sharedPtrBackend_->fetchLedgerObject(issuanceKeylet, lgrInfo.seq, ctx.yield);
 
     if (not issuanceObject)
-        return Error{Status{RippledError::rpcENTRY_NOT_FOUND, "issuance object not found."}};
+        return Error{Status{RippledError::RpcEntryNotFound, "issuance object not found."}};
 
-    ripple::STLedgerEntry const issuanceSle{
-        ripple::SerialIter{issuanceObject->data(), issuanceObject->size()}, issuanceKeylet
+    xrpl::STLedgerEntry const issuanceSle{
+        xrpl::SerialIter{issuanceObject->data(), issuanceObject->size()}, issuanceKeylet
     };
 
     // put issuance object into "shares" field of vault object
     // follows same logic as rippled:
     // https://github.com/XRPLF/rippled/pull/5224/files#diff-6cb544622c7942261f097d628f61f1c1fcf34a1bcfd954aedbada4238fc28f69R107
     Output response;
-    response.vault = toBoostJson(vaultSle.getJson(ripple::JsonOptions::none));
+    response.vault = toBoostJson(vaultSle.getJson(xrpl::JsonOptions::Values::None));
     response.vault.as_object()[JS(shares)] =
-        toBoostJson(issuanceSle.getJson(ripple::JsonOptions::none));
+        toBoostJson(issuanceSle.getJson(xrpl::JsonOptions::Values::None));
     response.ledgerIndex = lgrInfo.seq;
 
     return response;

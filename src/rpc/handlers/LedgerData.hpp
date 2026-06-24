@@ -65,10 +65,10 @@ public:
         std::optional<uint32_t> ledgerIndex;
         bool binary = false;
         uint32_t limit = LedgerDataHandler::kLimitJson;  // max 256 for json ; 2048 for binary
-        std::optional<ripple::uint256> marker;
+        std::optional<xrpl::uint256> marker;
         std::optional<uint32_t> diffMarker;
         bool outOfOrder = false;
-        ripple::LedgerEntryType type = ripple::LedgerEntryType::ltANY;
+        xrpl::LedgerEntryType type = xrpl::LedgerEntryType::ltANY;
     };
 
     using Result = HandlerReturnType<Output>;

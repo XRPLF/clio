@@ -50,69 +50,69 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        ripple::keylet::account(*accountID).key,
+        xrpl::keylet::account(*accountID).key,
         lgrInfo.seq,
         ctx.yield
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
     auto response = Output{};
     response.account = input.account;
     response.limit = input.limit;
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
     // if a marker was passed, start at the page specified in marker. Else, start at the max page
-    auto const pageKey = input.marker ? ripple::uint256{input.marker->c_str()}
+    auto const pageKey = input.marker ? xrpl::uint256{input.marker->c_str()}
                                       // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                                      : ripple::keylet::nftpage_max(*accountID).key;
+                                      : xrpl::keylet::nftpageMax(*accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
     if (!blob) {
         if (input.marker.has_value()) {
             return Error{Status{
-                RippledError::rpcINVALID_PARAMS, "Marker field does not match any valid Page ID"
+                RippledError::RpcInvalidParams, "Marker field does not match any valid Page ID"
             }};
         }
         return response;
     }
 
-    std::optional<ripple::SLE const> page{
-        ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}
+    std::optional<xrpl::SLE const> page{
+        xrpl::SLE{xrpl::SerialIter{blob->data(), blob->size()}, pageKey}
     };
 
-    if (page->getType() != ripple::ltNFTOKEN_PAGE) {
+    if (page->getType() != xrpl::ltNFTOKEN_PAGE) {
         return Error{
-            Status{RippledError::rpcINVALID_PARAMS, "Marker matches Page ID from another Account"}
+            Status{RippledError::RpcInvalidParams, "Marker matches Page ID from another Account"}
         };
     }
 
     auto numPages = 0u;
 
     while (page) {
-        auto const arr = page->getFieldArray(ripple::sfNFTokens);
+        auto const arr = page->getFieldArray(xrpl::sfNFTokens);
 
         for (auto const& nft : arr) {
-            auto const nftokenID = nft[ripple::sfNFTokenID];
+            auto const nftokenID = nft[xrpl::sfNFTokenID];
 
-            response.nfts.push_back(toBoostJson(nft.getJson(ripple::JsonOptions::none)));
+            response.nfts.push_back(toBoostJson(nft.getJson(xrpl::JsonOptions::Values::None)));
             auto& obj = response.nfts.back().as_object();
 
             // Pull out the components of the nft ID.
-            obj[SFS(sfFlags)] = ripple::nft::getFlags(nftokenID);
-            obj[SFS(sfIssuer)] = to_string(ripple::nft::getIssuer(nftokenID));
-            obj[SFS(sfNFTokenTaxon)] = ripple::nft::toUInt32(ripple::nft::getTaxon(nftokenID));
-            obj[JS(nft_serial)] = ripple::nft::getSerial(nftokenID);
+            obj[SFS(sfFlags)] = xrpl::nft::getFlags(nftokenID);
+            obj[SFS(sfIssuer)] = to_string(xrpl::nft::getIssuer(nftokenID));
+            obj[SFS(sfNFTokenTaxon)] = xrpl::nft::toUInt32(xrpl::nft::getTaxon(nftokenID));
+            obj[JS(nft_serial)] = xrpl::nft::getSerial(nftokenID);
 
-            if (std::uint16_t const xferFee = {ripple::nft::getTransferFee(nftokenID)})
+            if (std::uint16_t const xferFee = {xrpl::nft::getTransferFee(nftokenID)})
                 obj[SFS(sfTransferFee)] = xferFee;
         }
 
         ++numPages;
-        if (auto const npm = (*page)[~ripple::sfPreviousPageMin]) {
-            auto const nextKey = ripple::Keylet(ripple::ltNFTOKEN_PAGE, *npm);
+        if (auto const npm = (*page)[~xrpl::sfPreviousPageMin]) {
+            auto const nextKey = xrpl::Keylet(xrpl::ltNFTOKEN_PAGE, *npm);
             if (numPages == input.limit) {
                 response.marker = to_string(nextKey.key);
                 return response;
@@ -122,7 +122,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
                 sharedPtrBackend_->fetchLedgerObject(nextKey.key, lgrInfo.seq, ctx.yield);
             page.emplace(
                 // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                ripple::SLE{ripple::SerialIter{nextBlob->data(), nextBlob->size()}, nextKey.key}
+                xrpl::SLE{xrpl::SerialIter{nextBlob->data(), nextBlob->size()}, nextKey.key}
             );
         } else {
             page.reset();

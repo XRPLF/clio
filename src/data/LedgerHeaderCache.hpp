@@ -11,7 +11,7 @@
 namespace data {
 
 /**
- * @brief A simple cache holding one `ripple::LedgerHeader` to reduce DB lookups.
+ * @brief A simple cache holding one `xrpl::LedgerHeader` to reduce DB lookups.
  *
  * Used internally by backend implementations. When a ledger header is
  * fetched via `FetchLedgerBySeq` (often triggered by RPC commands),
@@ -27,7 +27,7 @@ public:
      * @brief Struct to store ledger header cache entry and the sequence it belongs to
      */
     struct CacheEntry {
-        ripple::LedgerHeader ledger;
+        xrpl::LedgerHeader ledger;
         uint32_t seq{};
 
         /**

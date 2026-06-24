@@ -120,7 +120,7 @@ Loader::onInitialLoadGotMoreObjects(
     }
 }
 
-std::optional<ripple::LedgerHeader>
+std::optional<xrpl::LedgerHeader>
 Loader::loadInitialLedger(model::LedgerData const& data)
 {
     try {

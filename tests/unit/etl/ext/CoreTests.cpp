@@ -24,9 +24,9 @@ auto
 createTestData()
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
     auto const header = createLedgerHeader(kLedgerHash, kSeq);

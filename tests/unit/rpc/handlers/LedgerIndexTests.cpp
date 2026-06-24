@@ -25,7 +25,6 @@ constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 struct RPCLedgerIndexTest : HandlerBaseTestStrict {
@@ -38,7 +37,7 @@ struct RPCLedgerIndexTest : HandlerBaseTestStrict {
 TEST_F(RPCLedgerIndexTest, DateStrNotValid)
 {
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"JSON({"date": "not_a_number"})JSON");
+    auto const req = boost::json::parse(R"JSON({"date": "not_a_number"})JSON");
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -54,7 +53,7 @@ TEST_F(RPCLedgerIndexTest, NoDateGiven)
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _)).WillOnce(Return(ledgerHeader));
 
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"JSON({})JSON");
+    auto const req = boost::json::parse(R"JSON({})JSON");
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -67,7 +66,7 @@ TEST_F(RPCLedgerIndexTest, NoDateGiven)
 TEST_F(RPCLedgerIndexTest, EarlierThanMinLedger)
 {
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
+    auto const req = boost::json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
     auto const ledgerHeader = createLedgerHeaderWithUnixTime(
         kLedgerHash, kRangeMin, 1719318190
     );  //"2024-06-25T12:23:10Z"
@@ -85,7 +84,7 @@ TEST_F(RPCLedgerIndexTest, ChangeTimeZone)
     // Note: setenv/unsetenv are included with <cstdlib> but misc-include-cleaner still angry
     setenv("TZ", "EST+5", 1);  // NOLINT(misc-include-cleaner)
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
+    auto const req = boost::json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
     auto const ledgerHeader = createLedgerHeaderWithUnixTime(
         kLedgerHash, kRangeMin, 1719318190
     );  //"2024-06-25T12:23:10Z"
@@ -152,7 +151,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(LedgerIndexTests, SearchFromLedgerRange)
 {
     auto const testBundle = GetParam();
-    auto const jv = json::parse(testBundle.json).as_object();
+    auto const jv = boost::json::parse(testBundle.json).as_object();
 
     // start from 1719318190 , which is the unix time for 2024-06-25T12:23:10Z to
     // 2024-06-25T12:23:50Z with step 2
@@ -166,7 +165,7 @@ TEST_P(LedgerIndexTests, SearchFromLedgerRange)
     }
 
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(testBundle.json);
+    auto const req = boost::json::parse(testBundle.json);
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);

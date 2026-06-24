@@ -21,7 +21,6 @@
 using namespace util;
 using namespace util::config;
 using namespace std;
-namespace json = boost::json;
 
 using namespace data::cassandra;
 
@@ -67,7 +66,7 @@ class SettingsProviderTest : virtual public ::testing::Test {};
 TEST_F(SettingsProviderTest, Defaults)
 {
     auto const cfg = getParseSettingsConfig(
-        json::parse(R"JSON({"database.cassandra.contact_points": "127.0.0.1"})JSON")
+        boost::json::parse(R"JSON({"database.cassandra.contact_points": "127.0.0.1"})JSON")
     );
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
@@ -97,7 +96,7 @@ TEST_F(SettingsProviderTest, Defaults)
 
 TEST_F(SettingsProviderTest, SimpleConfig)
 {
-    auto const cfg = getParseSettingsConfig(json::parse(R"JSON({
+    auto const cfg = getParseSettingsConfig(boost::json::parse(R"JSON({
         "database.cassandra.contact_points": "123.123.123.123",
         "database.cassandra.port": 1234,
         "database.cassandra.keyspace": "test",
@@ -122,7 +121,7 @@ TEST_F(SettingsProviderTest, SimpleConfig)
 
 TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 {
-    auto const cfg = getParseSettingsConfig(json::parse(R"JSON({
+    auto const cfg = getParseSettingsConfig(boost::json::parse(R"JSON({
         "database.cassandra.contact_points": "123.123.123.123",
         "database.cassandra.queue_size_io": 2
     })JSON"));
@@ -135,7 +134,7 @@ TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 TEST_F(SettingsProviderTest, SecureBundleConfig)
 {
     auto const cfg = getParseSettingsConfig(
-        json::parse(R"JSON({"database.cassandra.secure_connect_bundle": "bundleData"})JSON")
+        boost::json::parse(R"JSON({"database.cassandra.secure_connect_bundle": "bundleData"})JSON")
     );
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
@@ -149,7 +148,7 @@ TEST_F(SettingsProviderTest, CertificateConfig)
 {
     TmpFile const file{"certificateData"};
     auto const cfg = getParseSettingsConfig(
-        json::parse(
+        boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "database.cassandra.contact_points": "127.0.0.1",

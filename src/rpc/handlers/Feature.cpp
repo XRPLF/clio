@@ -56,7 +56,7 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
 
     auto searchPredicate = [search = input.feature](auto const& feature) {
         if (search) {
-            return ripple::to_string(feature.feature) == *search or feature.name == *search;
+            return xrpl::to_string(feature.feature) == *search or feature.name == *search;
         }
         return true;
     };
@@ -66,14 +66,14 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
         all | vs::filter(searchPredicate), std::back_inserter(filtered), [&](auto const& feature) {
             return Output::Feature{
                 .name = feature.name,
-                .key = ripple::to_string(feature.feature),
+                .key = xrpl::to_string(feature.feature),
                 .supported = feature.isSupportedByClio and feature.isSupportedByXRPL,
             };
         }
     );
 
     if (filtered.empty())
-        return Error{Status{RippledError::rpcBAD_FEATURE}};
+        return Error{Status{RippledError::RpcBadFeature}};
 
     std::vector<data::AmendmentKey> names;
     rg::transform(filtered, std::back_inserter(names), [](auto const& feature) {
@@ -93,7 +93,7 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
 
     return Output{
         .features = std::move(features),
-        .ledgerHash = ripple::strHex(lgrInfo.hash),
+        .ledgerHash = xrpl::strHex(lgrInfo.hash),
         .ledgerIndex = lgrInfo.seq,
         .inlineResult = input.feature.has_value()
     };
@@ -108,7 +108,7 @@ FeatureHandler::spec([[maybe_unused]] uint32_t apiVersion)
          meta::WithCustomError{
              validation::NotSupported{},
              Status(
-                 RippledError::rpcNO_PERMISSION,
+                 RippledError::RpcNoPermission,
                  "The admin portion of feature API is not available through Clio."
              )
          }},

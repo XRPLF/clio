@@ -389,10 +389,10 @@ auto
 createTestData()
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN, kHash2, kTxnMetA2, kTxnHeX2),
-        util::createTransaction(ripple::TxType::ttAMM_CREATE),    // not NFT - will be filtered
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),  // not unique - will be filtered
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN, kHash2, kTxnMetA2, kTxnHeX2),
+        util::createTransaction(xrpl::TxType::ttAMM_CREATE),    // not NFT - will be filtered
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),  // not unique - will be filtered
     };
 
     auto const header = createLedgerHeader(kLedgerHash, kSeq);

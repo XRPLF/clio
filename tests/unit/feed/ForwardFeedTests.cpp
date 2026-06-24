@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 
 using namespace feed::impl;
-namespace json = boost::json;
 using namespace util::prometheus;
 
 namespace {
@@ -33,7 +32,7 @@ TEST_F(FeedForwardTest, Pub)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
 
-    auto const json = json::parse(kFeed).as_object();
+    auto const json = boost::json::parse(kFeed).as_object();
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kFeed))).Times(1);
     testFeedPtr->pub(json);
 
@@ -49,7 +48,7 @@ TEST_F(FeedForwardTest, AutoDisconnect)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
 
-    auto const json = json::parse(kFeed).as_object();
+    auto const json = boost::json::parse(kFeed).as_object();
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kFeed)));
     testFeedPtr->pub(json);
 

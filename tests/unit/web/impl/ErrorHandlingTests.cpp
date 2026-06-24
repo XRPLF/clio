@@ -46,7 +46,7 @@ TEST_P(ErrorHandlingComposeErrorTest, composeError)
 {
     connection_->upgraded = GetParam().connectionUpgraded;
     ErrorHelper const errorHelper{connection_, GetParam().request};
-    auto const result = errorHelper.composeError(rpc::RippledError::rpcNOT_READY);
+    auto const result = errorHelper.composeError(rpc::RippledError::RpcNotReady);
     EXPECT_EQ(boost::json::serialize(result), boost::json::serialize(GetParam().expectedResult));
 }
 
@@ -135,7 +135,7 @@ INSTANTIATE_TEST_CASE_P(
         ErrorHandlingSendErrorTestBundle{
             "UpgradedConnection",
             true,
-            rpc::Status{rpc::RippledError::rpcTOO_BUSY},
+            rpc::Status{rpc::RippledError::RpcTooBusy},
             R"JSON({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})JSON",
             boost::beast::http::status::ok
         },
@@ -177,7 +177,7 @@ INSTANTIATE_TEST_CASE_P(
         ErrorHandlingSendErrorTestBundle{
             "NotUpgradedConnection_RippledError",
             false,
-            rpc::Status{rpc::RippledError::rpcTOO_BUSY},
+            rpc::Status{rpc::RippledError::RpcTooBusy},
             R"JSON({"result":{"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"}})JSON",
             boost::beast::http::status::bad_request
         },

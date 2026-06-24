@@ -61,7 +61,7 @@ public:
             std::nullopt;  // NOLINT(readability-redundant-member-init)
         std::optional<std::string> ctid =
             std::nullopt;  // NOLINT(readability-redundant-member-init) ctid when binary=true
-        std::optional<ripple::LedgerHeader> ledgerHeader =
+        std::optional<xrpl::LedgerHeader> ledgerHeader =
             std::nullopt;  // NOLINT(readability-redundant-member-init) ledger hash when apiVersion
                            // >= 2
         uint32_t apiVersion = 0u;
@@ -128,20 +128,20 @@ public:
     process(Input const& input, Context const& ctx) const
     {
         if (input.ctid && input.transaction)  // ambiguous identifier
-            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::RpcInvalidParams}};
 
         if (!input.ctid && !input.transaction)  // at least one identifier must be supplied
-            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::RpcInvalidParams}};
 
         static constexpr auto kMaxLedgerRange = 1000u;
         auto const rangeSupplied = input.minLedger && input.maxLedger;
 
         if (rangeSupplied) {
             if (*input.minLedger > *input.maxLedger)
-                return Error{Status{RippledError::rpcINVALID_LGR_RANGE}};
+                return Error{Status{RippledError::RpcInvalidLgrRange}};
 
             if (*input.maxLedger - *input.minLedger > kMaxLedgerRange)
-                return Error{Status{RippledError::rpcEXCESSIVE_LGR_RANGE}};
+                return Error{Status{RippledError::RpcExcessiveLgrRange}};
         }
 
         std::optional<uint32_t> currentNetId = std::nullopt;
@@ -153,13 +153,13 @@ public:
         if (input.ctid) {
             auto const ctid = rpc::decodeCTID(*input.ctid);
             if (!ctid)
-                return Error{Status{RippledError::rpcINVALID_PARAMS}};
+                return Error{Status{RippledError::RpcInvalidParams}};
 
             auto const [lgrSeq, txnIdx, netId] = *ctid;
             // when current network id is available, let us check the network id from parameter
             if (currentNetId && netId != *currentNetId) {
                 return Error{Status{
-                    RippledError::rpcWRONG_NETWORK,
+                    RippledError::RpcWrongNetwork,
                     fmt::format(
                         "Wrong network. You should submit this request to a node running on "
                         "NetworkID: {}",
@@ -171,7 +171,7 @@ public:
             dbResponse = fetchTxViaCtid(lgrSeq, txnIdx, ctx.yield);
         } else {
             dbResponse = sharedPtrBackend_->fetchTransaction(
-                ripple::uint256{input.transaction->c_str()}, ctx.yield
+                xrpl::uint256{input.transaction->c_str()}, ctx.yield
             );
         }
 
@@ -191,10 +191,10 @@ public:
                 boost::json::object extra;
                 extra["searched_all"] = searchedAll;
 
-                return Error{Status{RippledError::rpcTXN_NOT_FOUND, std::move(extra)}};
+                return Error{Status{RippledError::RpcTxnNotFound, std::move(extra)}};
             }
 
-            return Error{Status{RippledError::rpcTXN_NOT_FOUND}};
+            return Error{Status{RippledError::RpcTxnNotFound}};
         }
 
         auto const [txn, meta] =
@@ -204,8 +204,8 @@ public:
             output.tx = txn;
             output.meta = meta;
         } else {
-            output.txStr = ripple::strHex(dbResponse->transaction);
-            output.metaStr = ripple::strHex(dbResponse->metadata);
+            output.txStr = xrpl::strHex(dbResponse->transaction);
+            output.metaStr = xrpl::strHex(dbResponse->metadata);
 
             // input.transaction might be not available, get hash via tx object
             if (txn.contains(JS(hash)))
@@ -299,8 +299,8 @@ private:
             obj[JS(ledger_index)] = output.ledgerIndex;
 
             if (output.ledgerHeader) {
-                obj[JS(ledger_hash)] = ripple::strHex(output.ledgerHeader->hash);
-                obj[JS(close_time_iso)] = ripple::to_string_iso(output.ledgerHeader->closeTime);
+                obj[JS(ledger_hash)] = xrpl::strHex(output.ledgerHeader->hash);
+                obj[JS(close_time_iso)] = xrpl::toStringIso(output.ledgerHeader->closeTime);
             }
             return obj;
         };

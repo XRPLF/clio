@@ -3,8 +3,8 @@
 
 #include "data/DBHelpers.hpp"
 
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/TxMeta.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/TxMeta.h>
 
 #include <optional>
 #include <string>
@@ -21,7 +21,7 @@ namespace etl {
  * failed or created no MPToken.
  */
 std::vector<MPTHolderData>
-getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+getMPTHolderFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
 
 /**
  * @brief Pull MPT data from ledger object via loadInitialLedger.

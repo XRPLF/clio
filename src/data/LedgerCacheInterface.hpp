@@ -56,7 +56,7 @@ public:
      * @return If found in cache, will return the cached Blob; otherwise nullopt is returned
      */
     [[nodiscard]] virtual std::optional<Blob>
-    get(ripple::uint256 const& key, uint32_t seq) const = 0;
+    get(xrpl::uint256 const& key, uint32_t seq) const = 0;
 
     /**
      * @brief Fetch a recently deleted object by its key and sequence number.
@@ -66,7 +66,7 @@ public:
      * @return If found in deleted cache, will return the cached Blob; otherwise nullopt is returned
      */
     [[nodiscard]] virtual std::optional<Blob>
-    getDeleted(ripple::uint256 const& key, uint32_t seq) const = 0;
+    getDeleted(xrpl::uint256 const& key, uint32_t seq) const = 0;
 
     /**
      * @brief Gets a cached successor.
@@ -78,7 +78,7 @@ public:
      * @return If found in cache, will return the cached successor; otherwise nullopt is returned
      */
     [[nodiscard]] virtual std::optional<LedgerObject>
-    getSuccessor(ripple::uint256 const& key, uint32_t seq) const = 0;
+    getSuccessor(xrpl::uint256 const& key, uint32_t seq) const = 0;
 
     /**
      * @brief Gets a cached predcessor.
@@ -90,7 +90,7 @@ public:
      * @return If found in cache, will return the cached predcessor; otherwise nullopt is returned
      */
     [[nodiscard]] virtual std::optional<LedgerObject>
-    getPredecessor(ripple::uint256 const& key, uint32_t seq) const = 0;
+    getPredecessor(xrpl::uint256 const& key, uint32_t seq) const = 0;
 
     /**
      * @brief Disables the cache.

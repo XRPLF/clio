@@ -39,9 +39,9 @@ public:
      * @brief A struct to hold the statistics
      */
     struct Stats {
-        ripple::STAmount avg{};  // NOLINT(readability-redundant-member-init)
+        xrpl::STAmount avg{};  // NOLINT(readability-redundant-member-init)
         // standard deviation
-        ripple::Number sd{};  // NOLINT(readability-redundant-member-init)
+        xrpl::Number sd{};  // NOLINT(readability-redundant-member-init)
         uint32_t size{0};
     };
 
@@ -63,7 +63,7 @@ public:
      */
     struct Oracle {
         std::uint32_t documentId{0};
-        ripple::AccountID account;
+        xrpl::AccountID account;
     };
 
     /**
@@ -106,13 +106,13 @@ public:
             [](boost::json::value& value, std::string_view) -> MaybeError {
                 if (!value.is_array() or value.as_array().empty() or
                     value.as_array().size() > kOraclesMax)
-                    return Error{Status{RippledError::rpcORACLE_MALFORMED}};
+                    return Error{Status{RippledError::RpcOracleMalformed}};
 
                 for (auto& oracle : value.as_array()) {
                     if (!oracle.is_object() or
                         !oracle.as_object().contains(JS(oracle_document_id)) or
                         !oracle.as_object().contains(JS(account)))
-                        return Error{Status{RippledError::rpcORACLE_MALFORMED}};
+                        return Error{Status{RippledError::RpcOracleMalformed}};
 
                     auto maybeError = validation::Type<std::uint32_t, std::string>{}.verify(
                         oracle, JS(oracle_document_id)
@@ -128,7 +128,7 @@ public:
                         oracle.as_object(), JS(account)
                     );
                     if (!maybeError)
-                        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+                        return Error{Status{RippledError::RpcInvalidParams}};
                 };
 
                 return MaybeError{};
@@ -147,13 +147,13 @@ public:
              validation::Required{},
              meta::WithCustomError{
                  validation::CustomValidators::currencyValidator,
-                 Status(RippledError::rpcINVALID_PARAMS)
+                 Status(RippledError::RpcInvalidParams)
              }},
             {JS(quote_asset),
              validation::Required{},
              meta::WithCustomError{
                  validation::CustomValidators::currencyValidator,
-                 Status(RippledError::rpcINVALID_PARAMS)
+                 Status(RippledError::RpcInvalidParams)
              }},
             {JS(oracles), validation::Required{}, kOraclesValidator},
             // note: Unlike `rippled`, Clio only supports UInt as input, no string, no `null`, etc.
@@ -187,8 +187,8 @@ private:
     void
     tracebackOracleObject(
         boost::asio::yield_context yield,
-        ripple::STObject const& oracleObject,
-        std::function<bool(ripple::STObject const&)> const& callback
+        xrpl::STObject const& oracleObject,
+        std::function<bool(xrpl::STObject const&)> const& callback
     ) const;
 
     /**

@@ -42,8 +42,8 @@ private:
 public:
     AsyncGrpcCall(
         uint32_t seq,
-        ripple::uint256 const& marker,
-        std::optional<ripple::uint256> const& nextMarker
+        xrpl::uint256 const& marker,
+        std::optional<xrpl::uint256> const& nextMarker
     );
 
     static std::vector<AsyncGrpcCall>

@@ -10,6 +10,7 @@
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
+#include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/STTx.h>
@@ -55,9 +56,10 @@ model::Transaction
 extractTx(PBTxType tx, uint32_t seq)
 {
     auto raw = std::move(*tx.mutable_transaction_blob());
-    ripple::SerialIter it{raw.data(), raw.size()};
-    ripple::STTx const sttx{it};
-    ripple::TxMeta meta{sttx.getTransactionID(), seq, tx.metadata_blob()};
+    xrpl::SerialIter it{raw.data(), raw.size()};
+    xrpl::STTx const sttx{it};
+    auto const& metaBlob = tx.metadata_blob();
+    xrpl::TxMeta meta{sttx.getTransactionID(), seq, xrpl::Blob{metaBlob.begin(), metaBlob.end()}};
 
     return {
         .raw = std::move(raw),
@@ -90,7 +92,7 @@ extractTxs(PBTxListType transactions, uint32_t seq)
 model::Object
 extractObj(PBObjType obj)
 {
-    auto const key = ripple::uint256::fromVoidChecked(obj.key());
+    auto const key = xrpl::uint256::fromVoidChecked(obj.key());
     ASSERT(key.has_value(), "Failed to deserialize key from void");
     if (!key)
         return {};
@@ -162,7 +164,7 @@ auto
 Extractor::unpack()
 {
     return [](auto&& data) {
-        auto header = ::util::deserializeHeader(ripple::makeSlice(data.ledger_header()));
+        auto header = ::util::deserializeHeader(xrpl::makeSlice(data.ledger_header()));
 
         return std::make_optional<model::LedgerData>({
             .transactions = extractTxs(

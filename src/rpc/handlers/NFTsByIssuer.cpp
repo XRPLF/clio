@@ -23,7 +23,7 @@
 #include <optional>
 #include <string>
 
-using namespace ripple;
+using namespace xrpl;
 
 namespace rpc {
 
@@ -50,13 +50,13 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
     auto const issuer = accountFromStringStrict(input.issuer);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        ripple::keylet::account(*issuer).key,
+        xrpl::keylet::account(*issuer).key,
         lgrInfo.seq,
         ctx.yield
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
     std::optional<uint256> cursor;
     if (input.marker)

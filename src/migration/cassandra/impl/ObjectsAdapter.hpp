@@ -22,7 +22,7 @@ namespace migration::cassandra::impl {
  * @brief The description of the objects table. It has to be a TableSpec.
  */
 struct TableObjectsDesc {
-    using Row = std::tuple<ripple::uint256, std::uint32_t, data::Blob>;
+    using Row = std::tuple<xrpl::uint256, std::uint32_t, data::Blob>;
     static constexpr char const* kPartitionKey = "key";
     static constexpr char const* kTableName = "objects";
 };
@@ -33,7 +33,7 @@ struct TableObjectsDesc {
  */
 class ObjectsAdapter : public impl::FullTableScannerAdapterBase<TableObjectsDesc> {
 public:
-    using OnStateRead = std::function<void(std::uint32_t, std::optional<ripple::SLE>)>;
+    using OnStateRead = std::function<void(std::uint32_t, std::optional<xrpl::SLE>)>;
 
     /**
      * @brief Construct a new Objects Adapter object

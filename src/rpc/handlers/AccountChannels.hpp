@@ -132,7 +132,7 @@ public:
 
 private:
     static void
-    addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle);
+    addChannel(std::vector<ChannelResponse>& jsonChannels, xrpl::SLE const& channelSle);
 
     /**
      * @brief Convert the Output to a JSON object

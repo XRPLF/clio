@@ -29,14 +29,14 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
     MOCK_METHOD(
         void,
         pubLedger,
-        (ripple::LedgerHeader const&, ripple::Fees const&, std::string const&, std::uint32_t),
+        (xrpl::LedgerHeader const&, xrpl::Fees const&, std::string const&, std::uint32_t),
         (override)
     );
 
     MOCK_METHOD(
         void,
         pubBookChanges,
-        (ripple::LedgerHeader const&, std::vector<data::TransactionAndMetadata> const&),
+        (xrpl::LedgerHeader const&, std::vector<data::TransactionAndMetadata> const&),
         (override)
     );
 
@@ -49,30 +49,30 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
     MOCK_METHOD(
         void,
         pubTransaction,
-        (data::TransactionAndMetadata const&, ripple::LedgerHeader const&),
+        (data::TransactionAndMetadata const&, xrpl::LedgerHeader const&),
         (override)
     );
 
     MOCK_METHOD(
         void,
         subAccount,
-        (ripple::AccountID const&, feed::SubscriberSharedPtr const&),
+        (xrpl::AccountID const&, feed::SubscriberSharedPtr const&),
         (override)
     );
 
     MOCK_METHOD(
         void,
         unsubAccount,
-        (ripple::AccountID const&, feed::SubscriberSharedPtr const&),
+        (xrpl::AccountID const&, feed::SubscriberSharedPtr const&),
         (override)
     );
 
-    MOCK_METHOD(void, subBook, (ripple::Book const&, feed::SubscriberSharedPtr const&), (override));
+    MOCK_METHOD(void, subBook, (xrpl::Book const&, feed::SubscriberSharedPtr const&), (override));
 
     MOCK_METHOD(
         void,
         unsubBook,
-        (ripple::Book const&, feed::SubscriberSharedPtr const&),
+        (xrpl::Book const&, feed::SubscriberSharedPtr const&),
         (override)
     );
 
@@ -97,14 +97,14 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
     MOCK_METHOD(
         void,
         subProposedAccount,
-        (ripple::AccountID const&, feed::SubscriberSharedPtr const&),
+        (xrpl::AccountID const&, feed::SubscriberSharedPtr const&),
         (override)
     );
 
     MOCK_METHOD(
         void,
         unsubProposedAccount,
-        (ripple::AccountID const&, feed::SubscriberSharedPtr const&),
+        (xrpl::AccountID const&, feed::SubscriberSharedPtr const&),
         (override)
     );
 

@@ -43,7 +43,6 @@ constexpr auto kRangeMax = 30;
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 struct RPCDepositAuthorizedTest : HandlerBaseTest {
@@ -203,7 +202,7 @@ TEST_P(DepositAuthorizedParameterTest, InvalidParams)
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
-        auto const req = json::parse(testBundle.testJson);
+        auto const req = boost::json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
@@ -221,7 +220,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "source_account": "{}",
@@ -250,7 +249,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "source_account": "{}",
@@ -275,12 +274,12 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
 {
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "source_account": "{}",
@@ -306,14 +305,14 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 {
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -342,7 +341,7 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 {
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
@@ -351,13 +350,13 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(std::optional<Blob>{}));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -396,7 +395,7 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
@@ -405,7 +404,7 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -423,7 +422,7 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -441,7 +440,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
@@ -450,17 +449,17 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
 
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
     )
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -478,7 +477,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -496,28 +495,28 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
     auto const account1Root = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     auto const account2Root =
-        createAccountRootObject(kAccount2, ripple::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
+        createAccountRootObject(kAccount2, xrpl::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
 
     ON_CALL(*backend_, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::nullopt));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
     )
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -535,7 +534,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -553,29 +552,29 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
     auto const account1Root = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     auto const account2Root =
-        createAccountRootObject(kAccount2, ripple::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
+        createAccountRootObject(kAccount2, xrpl::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
 
     ON_CALL(*backend_, doFetchLedgerObject(_, _, _))
         .WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
     )
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -593,7 +592,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -614,17 +613,17 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
 
     auto const account1Root = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     auto const account2Root =
-        createAccountRootObject(kAccount2, ripple::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
+        createAccountRootObject(kAccount2, xrpl::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
     auto const credential = createCredentialObject(kAccount, kAccount2, kCredentialType);
-    auto const credentialIndex = ripple::keylet::credential(
+    auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount),
                                      getAccountIdWithString(kAccount2),
-                                     ripple::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
     )
                                      .key;
 
@@ -632,19 +631,19 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
         .WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
     )
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(credentialIndex, _, _))
         .WillByDefault(Return(credential.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(4);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -655,7 +654,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
             kAccount,
             kAccount2,
             kLedgerHash,
-            ripple::strHex(credentialIndex)
+            xrpl::strHex(credentialIndex)
         )
     );
 
@@ -664,7 +663,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -672,17 +671,17 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
 {
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
 
     auto const account1Root = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     auto const account2Root =
-        createAccountRootObject(kAccount2, ripple::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
+        createAccountRootObject(kAccount2, xrpl::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
     auto const credential = createCredentialObject(kAccount, kAccount2, kCredentialType, false);
-    auto const credentialIndex = ripple::keylet::credential(
+    auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount),
                                      getAccountIdWithString(kAccount2),
-                                     ripple::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
     )
                                      .key;
 
@@ -690,12 +689,12 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
         .WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
     )
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(credentialIndex, _, _))
@@ -703,7 +702,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -714,7 +713,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
             kAccount,
             kAccount2,
             kLedgerHash,
-            ripple::strHex(credentialIndex)
+            xrpl::strHex(credentialIndex)
         )
     );
 
@@ -734,23 +733,23 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30, 100);
 
     // set parent close time to 500 seconds
-    ledgerHeader.parentCloseTime = ripple::NetClock::time_point{std::chrono::seconds{500}};
+    ledgerHeader.parentCloseTime = xrpl::NetClock::time_point{std::chrono::seconds{500}};
 
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
 
     auto const account1Root = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     auto const account2Root =
-        createAccountRootObject(kAccount2, ripple::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
+        createAccountRootObject(kAccount2, xrpl::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
 
     // credential expire time is 23 seconds, so credential will fail
     auto const expiredCredential =
         createCredentialObject(kAccount, kAccount2, kCredentialType, true, 23);
 
-    auto const credentialIndex = ripple::keylet::credential(
+    auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount),
                                      getAccountIdWithString(kAccount2),
-                                     ripple::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
     )
                                      .key;
 
@@ -758,12 +757,12 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
         .WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
     )
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(credentialIndex, _, _))
@@ -771,7 +770,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -782,7 +781,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
             kAccount,
             kAccount2,
             kLedgerHash,
-            ripple::strHex(credentialIndex)
+            xrpl::strHex(credentialIndex)
         )
     );
 
@@ -801,17 +800,17 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
 {
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30, 34);
 
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
 
     auto const account1Root = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     auto const account2Root =
-        createAccountRootObject(kAccount2, ripple::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
+        createAccountRootObject(kAccount2, xrpl::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
     auto const credential = createCredentialObject(kAccount, kAccount2, kCredentialType);
-    auto const credentialIndex = ripple::keylet::credential(
+    auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount),
                                      getAccountIdWithString(kAccount2),
-                                     ripple::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
     )
                                      .key;
 
@@ -819,12 +818,12 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
         .WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
     )
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(credentialIndex, _, _))
@@ -832,7 +831,7 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -843,8 +842,8 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
             kAccount,
             kAccount2,
             kLedgerHash,
-            ripple::strHex(credentialIndex),
-            ripple::strHex(credentialIndex)
+            xrpl::strHex(credentialIndex),
+            xrpl::strHex(credentialIndex)
         )
     );
 
@@ -863,29 +862,29 @@ TEST_F(RPCDepositAuthorizedTest, NoElementsInCredentialsReturnsFalse)
 {
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30, 34);
 
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
 
     auto const account1Root = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     auto const account2Root =
-        createAccountRootObject(kAccount2, ripple::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
+        createAccountRootObject(kAccount2, xrpl::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
 
     ON_CALL(*backend_, doFetchLedgerObject(_, _, _))
         .WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
     )
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -914,17 +913,17 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
 {
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30, 34);
 
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
 
     auto const account1Root = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     auto const account2Root =
-        createAccountRootObject(kAccount2, ripple::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
+        createAccountRootObject(kAccount2, xrpl::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
     auto const credential = createCredentialObject(kAccount, kAccount2, kCredentialType);
-    auto const credentialIndex = ripple::keylet::credential(
+    auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount),
                                      getAccountIdWithString(kAccount2),
-                                     ripple::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
     )
                                      .key;
 
@@ -932,12 +931,12 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
         .WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
     )
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(credentialIndex, _, _))
@@ -945,9 +944,9 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    std::vector<std::string> credentials(9, ripple::strHex(credentialIndex));
+    std::vector<std::string> credentials(9, xrpl::strHex(credentialIndex));
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -982,19 +981,19 @@ TEST_F(RPCDepositAuthorizedTest, DifferentSubjectAccountForCredentialReturnsFals
 {
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
 
     auto const account1Root = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     auto const account2Root =
-        createAccountRootObject(kAccount2, ripple::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
+        createAccountRootObject(kAccount2, xrpl::lsfDepositAuth, 2, 200, 2, kIndex2, 2);
 
     // reverse the subject and issuer account. Now subject is Account2
     auto const credential = createCredentialObject(kAccount2, kAccount, kCredentialType);
-    auto const credentialIndex = ripple::keylet::credential(
+    auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount2),
                                      getAccountIdWithString(kAccount),
-                                     ripple::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
     )
                                      .key;
 
@@ -1002,19 +1001,19 @@ TEST_F(RPCDepositAuthorizedTest, DifferentSubjectAccountForCredentialReturnsFals
         .WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount)).key, _, _)
     )
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
     ON_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
+        doFetchLedgerObject(xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, _, _)
     )
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(credentialIndex, _, _))
         .WillByDefault(Return(credential.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "source_account": "{}",
@@ -1025,7 +1024,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentSubjectAccountForCredentialReturnsFals
             kAccount,
             kAccount2,
             kLedgerHash,
-            ripple::strHex(credentialIndex)
+            xrpl::strHex(credentialIndex)
         )
     );
 

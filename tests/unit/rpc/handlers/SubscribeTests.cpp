@@ -32,7 +32,6 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 using std::chrono::milliseconds;
 
@@ -570,7 +569,7 @@ TEST_P(SubscribeParameterTest, InvalidParams)
         auto const handler = AnyHandler{
             SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
         };
-        auto const req = json::parse(testBundle.testJson);
+        auto const req = boost::json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -586,7 +585,7 @@ TEST_F(RPCSubscribeHandlerTest, EmptyResponse)
             SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
         };
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
-        auto const output = handler.process(json::parse(R"JSON({})JSON"), Context{yield, session_});
+        auto const output = handler.process(boost::json::parse(R"JSON({})JSON"), Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
     });
@@ -595,7 +594,7 @@ TEST_F(RPCSubscribeHandlerTest, EmptyResponse)
 TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
 {
     // these streams don't return response
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         R"JSON({
             "streams": ["transactions_proposed", "transactions", "validations", "manifests", "book_changes"]
         })JSON"
@@ -630,7 +629,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
             "reserve_inc": 2
         })JSON";
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         R"JSON({
             "streams": ["ledger"]
         })JSON"
@@ -646,13 +645,13 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->as_object(), json::parse(kExpectedOutput));
+        EXPECT_EQ(output.result->as_object(), boost::json::parse(kExpectedOutput));
     });
 }
 
 TEST_F(RPCSubscribeHandlerTest, Accounts)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "accounts": ["{}", "{}", "{}"]
@@ -683,7 +682,7 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
 
 TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "accounts_proposed": ["{}", "{}", "{}"]
@@ -716,7 +715,7 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
 
 TEST_F(RPCSubscribeHandlerTest, JustBooks)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "books": [
@@ -748,7 +747,7 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
 
 TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "books": [
@@ -781,7 +780,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
 
 TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "books": [
@@ -807,10 +806,10 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 
     auto const getsXRPPaysUSDBook = getBookBase(
         rpc::parseBook(
-            ripple::to_currency("USD"),
+            xrpl::toCurrency("USD"),
             issuer,
-            ripple::xrpCurrency(),
-            ripple::xrpAccount(),
+            xrpl::xrpCurrency(),
+            xrpl::xrpAccount(),
             std::nullopt
         )
             .value()
@@ -818,9 +817,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 
     auto const reversedBook = getBookBase(
         rpc::parseBook(
-            ripple::xrpCurrency(),
-            ripple::xrpAccount(),
-            ripple::to_currency("USD"),
+            xrpl::xrpCurrency(),
+            xrpl::xrpAccount(),
+            xrpl::toCurrency("USD"),
             issuer,
             std::nullopt
         )
@@ -828,28 +827,28 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     );
 
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, kMaxSeq, _))
-        .WillByDefault(Return(ripple::uint256{kPayS20UsdGetS10XrpBookDir}));
+        .WillByDefault(Return(xrpl::uint256{kPayS20UsdGetS10XrpBookDir}));
 
-    ON_CALL(*backend_, doFetchSuccessorKey(ripple::uint256{kPayS20UsdGetS10XrpBookDir}, kMaxSeq, _))
+    ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, kMaxSeq, _))
         .WillByDefault(Return(std::nullopt));
 
     ON_CALL(*backend_, doFetchSuccessorKey(reversedBook, kMaxSeq, _))
-        .WillByDefault(Return(ripple::uint256{kPayS20XrpGetS10UsdBookDir}));
+        .WillByDefault(Return(xrpl::uint256{kPayS20XrpGetS10UsdBookDir}));
 
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(4);
 
     // 2 book dirs + 2 issuer global freeze + 2 transferRate + 1 owner root + 1 fee
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(8);
 
-    auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{kIndex2});
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kPayS20UsdGetS10XrpBookDir}, kMaxSeq, _))
+    auto const indexes = std::vector<xrpl::uint256>(10, xrpl::uint256{kIndex2});
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, kMaxSeq, _))
         .WillByDefault(
             Return(createOwnerDirLedgerObject(indexes, kIndex1).getSerializer().peekData())
         );
 
     // for reverse
-    auto const indexes2 = std::vector<ripple::uint256>(10, ripple::uint256{kIndex1});
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kPayS20XrpGetS10UsdBookDir}, kMaxSeq, _))
+    auto const indexes2 = std::vector<xrpl::uint256>(10, xrpl::uint256{kIndex1});
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, kMaxSeq, _))
         .WillByDefault(
             Return(createOwnerDirLedgerObject(indexes2, kIndex2).getSerializer().peekData())
         );
@@ -858,7 +857,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     ON_CALL(
         *backend_,
         doFetchLedgerObject(
-            ripple::keylet::account(getAccountIdWithString(kAccount2)).key, kMaxSeq, _
+            xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, kMaxSeq, _
         )
     )
         .WillByDefault(Return(
@@ -869,7 +868,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     ON_CALL(
         *backend_,
         doFetchLedgerObject(
-            ripple::keylet::account(getAccountIdWithString(kAccount)).key, kMaxSeq, _
+            xrpl::keylet::account(getAccountIdWithString(kAccount)).key, kMaxSeq, _
         )
     )
         .WillByDefault(Return(
@@ -878,16 +877,16 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 
     // fee
     auto feeBlob = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kMaxSeq, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kMaxSeq, _))
         .WillByDefault(Return(feeBlob));
 
     auto const gets10XRPPays20USDOffer = createOfferLedgerObject(
         kAccount2,
         10,
         20,
-        ripple::to_string(ripple::xrpCurrency()),
-        ripple::to_string(ripple::to_currency("USD")),
-        toBase58(ripple::xrpAccount()),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        toBase58(xrpl::xrpAccount()),
         kAccount,
         kPayS20UsdGetS10XrpBookDir
     );
@@ -898,10 +897,10 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         kAccount,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
         kAccount,
-        toBase58(ripple::xrpAccount()),
+        toBase58(xrpl::xrpAccount()),
         kPayS20XrpGetS10UsdBookDir
     );
 
@@ -976,18 +975,18 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         EXPECT_EQ(output.result->as_object().at("asks").as_array().size(), 10);
         EXPECT_EQ(
             output.result->as_object().at("bids").as_array()[0].as_object(),
-            json::parse(kExpectedOffer)
+            boost::json::parse(kExpectedOffer)
         );
         EXPECT_EQ(
             output.result->as_object().at("asks").as_array()[0].as_object(),
-            json::parse(kExpectedReversedOffer)
+            boost::json::parse(kExpectedReversedOffer)
         );
     });
 }
 
 TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "books": [
@@ -1012,10 +1011,10 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 
     auto const getsXRPPaysUSDBook = getBookBase(
         rpc::parseBook(
-            ripple::to_currency("USD"),
+            xrpl::toCurrency("USD"),
             issuer,
-            ripple::xrpCurrency(),
-            ripple::xrpAccount(),
+            xrpl::xrpCurrency(),
+            xrpl::xrpAccount(),
             std::nullopt
         )
             .value()
@@ -1023,9 +1022,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 
     auto const reversedBook = getBookBase(
         rpc::parseBook(
-            ripple::xrpCurrency(),
-            ripple::xrpAccount(),
-            ripple::to_currency("USD"),
+            xrpl::xrpCurrency(),
+            xrpl::xrpAccount(),
+            xrpl::toCurrency("USD"),
             issuer,
             std::nullopt
         )
@@ -1033,27 +1032,27 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     );
 
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, kMaxSeq, _))
-        .WillByDefault(Return(ripple::uint256{kPayS20UsdGetS10XrpBookDir}));
+        .WillByDefault(Return(xrpl::uint256{kPayS20UsdGetS10XrpBookDir}));
 
-    ON_CALL(*backend_, doFetchSuccessorKey(ripple::uint256{kPayS20UsdGetS10XrpBookDir}, kMaxSeq, _))
+    ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, kMaxSeq, _))
         .WillByDefault(Return(std::nullopt));
 
     ON_CALL(*backend_, doFetchSuccessorKey(reversedBook, kMaxSeq, _))
-        .WillByDefault(Return(ripple::uint256{kPayS20XrpGetS10UsdBookDir}));
+        .WillByDefault(Return(xrpl::uint256{kPayS20XrpGetS10UsdBookDir}));
 
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(2);
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(5);
 
-    auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{kIndex2});
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kPayS20UsdGetS10XrpBookDir}, kMaxSeq, _))
+    auto const indexes = std::vector<xrpl::uint256>(10, xrpl::uint256{kIndex2});
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, kMaxSeq, _))
         .WillByDefault(
             Return(createOwnerDirLedgerObject(indexes, kIndex1).getSerializer().peekData())
         );
 
     // for reverse
-    auto const indexes2 = std::vector<ripple::uint256>(10, ripple::uint256{kIndex1});
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kPayS20XrpGetS10UsdBookDir}, kMaxSeq, _))
+    auto const indexes2 = std::vector<xrpl::uint256>(10, xrpl::uint256{kIndex1});
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, kMaxSeq, _))
         .WillByDefault(
             Return(createOwnerDirLedgerObject(indexes2, kIndex2).getSerializer().peekData())
         );
@@ -1062,7 +1061,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     ON_CALL(
         *backend_,
         doFetchLedgerObject(
-            ripple::keylet::account(getAccountIdWithString(kAccount2)).key, kMaxSeq, _
+            xrpl::keylet::account(getAccountIdWithString(kAccount2)).key, kMaxSeq, _
         )
     )
         .WillByDefault(Return(
@@ -1073,7 +1072,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     ON_CALL(
         *backend_,
         doFetchLedgerObject(
-            ripple::keylet::account(getAccountIdWithString(kAccount)).key, kMaxSeq, _
+            xrpl::keylet::account(getAccountIdWithString(kAccount)).key, kMaxSeq, _
         )
     )
         .WillByDefault(Return(
@@ -1082,16 +1081,16 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 
     // fee
     auto feeBlob = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kMaxSeq, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kMaxSeq, _))
         .WillByDefault(Return(feeBlob));
 
     auto const gets10XRPPays20USDOffer = createOfferLedgerObject(
         kAccount2,
         10,
         20,
-        ripple::to_string(ripple::xrpCurrency()),
-        ripple::to_string(ripple::to_currency("USD")),
-        toBase58(ripple::xrpAccount()),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        toBase58(xrpl::xrpAccount()),
         kAccount,
         kPayS20UsdGetS10XrpBookDir
     );
@@ -1102,10 +1101,10 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         kAccount,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
         kAccount,
-        toBase58(ripple::xrpAccount()),
+        toBase58(xrpl::xrpAccount()),
         kPayS20XrpGetS10UsdBookDir
     );
 
@@ -1155,14 +1154,14 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         EXPECT_EQ(output.result->as_object().at("offers").as_array().size(), 10);
         EXPECT_EQ(
             output.result->as_object().at("offers").as_array()[0].as_object(),
-            json::parse(kExpectedOffer)
+            boost::json::parse(kExpectedOffer)
         );
     });
 }
 
 TEST_F(RPCSubscribeHandlerTest, APIVersion)
 {
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         R"JSON({
             "streams": ["transactions_proposed"]
         })JSON"

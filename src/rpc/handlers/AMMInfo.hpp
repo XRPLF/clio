@@ -51,10 +51,10 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::optional<ripple::AccountID> accountID;
-        std::optional<ripple::AccountID> ammAccount;
-        ripple::Issue issue1 = ripple::noIssue();
-        ripple::Issue issue2 = ripple::noIssue();
+        std::optional<xrpl::AccountID> accountID;
+        std::optional<xrpl::AccountID> ammAccount;
+        xrpl::Issue issue1 = xrpl::noIssue();
+        xrpl::Issue issue2 = xrpl::noIssue();
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
     };

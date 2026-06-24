@@ -36,7 +36,7 @@ struct LoaderInterface {
      * @param data The data to load
      * @return Optional ledger header
      */
-    [[nodiscard]] virtual std::optional<ripple::LedgerHeader>
+    [[nodiscard]] virtual std::optional<xrpl::LedgerHeader>
     loadInitialLedger(model::LedgerData const& data) = 0;
 };
 

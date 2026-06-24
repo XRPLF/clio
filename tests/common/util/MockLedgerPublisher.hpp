@@ -16,7 +16,7 @@ struct MockLedgerPublisher : public etl::LedgerPublisherInterface {
         (uint32_t, std::optional<uint32_t>, std::chrono::steady_clock::duration),
         (override)
     );
-    MOCK_METHOD(void, publish, (ripple::LedgerHeader const&), ());
+    MOCK_METHOD(void, publish, (xrpl::LedgerHeader const&), ());
     MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
     MOCK_METHOD(
         std::chrono::time_point<std::chrono::system_clock>,
