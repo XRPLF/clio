@@ -15,7 +15,6 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <xrpl/basics/strHex.h>
-#include <xrpl/ledger/View.h>
 #include <xrpl/ledger/helpers/AccountRootHelpers.h>
 #include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/Indexes.h>

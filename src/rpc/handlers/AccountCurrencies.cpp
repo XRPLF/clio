@@ -12,6 +12,7 @@
 #include <boost/json/value_to.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
@@ -68,15 +69,17 @@ AccountCurrenciesHandler::process(
             if (!viewLowest)
                 balance.negate();
 
-            if (balance < lineLimit)
+            if (balance < lineLimit) {
                 response.receiveCurrencies.insert(
                     xrpl::to_string(balance.get<xrpl::Issue>().currency)
                 );
+            }
 
-            if ((-balance) < lineLimitPeer)
+            if ((-balance) < lineLimitPeer) {
                 response.sendCurrencies.insert(
                     xrpl::to_string(balance.get<xrpl::Issue>().currency)
                 );
+            }
         }
 
         return true;

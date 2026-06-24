@@ -16,6 +16,7 @@
 #include <boost/json/value_to.hpp>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>

@@ -1049,7 +1049,7 @@ createAcceptNftSellerOfferTxWithMetadata(
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     finalFields.setAccountID(xrpl::sfOwner, *account);
 
-    node.set(std::move(finalFields));
+    node.set(xrpl::STObject{finalFields});
     node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{offerId});
     metaArray.push_back(node);
 
