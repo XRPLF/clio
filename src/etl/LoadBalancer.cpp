@@ -312,9 +312,8 @@ LoadBalancer::forwardToRippled(
 
     if (response) {
         if (shouldUseCache(isAdmin) and not response->contains("error")) {
-            forwardingCache_->put(
-                cmd, request, *response
-            );  // NOLINT(bugprone-unchecked-optional-access)
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+            forwardingCache_->put(cmd, request, *response);
         }
         return *std::move(response);
     }
