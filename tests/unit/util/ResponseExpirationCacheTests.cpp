@@ -54,35 +54,35 @@ TEST_F(ResponseExpirationCacheTests, GetExpired)
 
 TEST_F(ResponseExpirationCacheTests, BareRequestCommandOnlyIsCached)
 {
-    boost::json::object req{{"command", "key"}};
+    boost::json::object const req{{"command", "key"}};
     cache_.put("key", req, object_);
     auto const result = cache_.get("key", req);
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(*result, object_);
+    EXPECT_EQ(*result, object_);  // NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(ResponseExpirationCacheTests, BareRequestWithIdIsCached)
 {
-    boost::json::object req{{"command", "key"}, {"id", 42}};
+    boost::json::object const req{{"command", "key"}, {"id", 42}};
     cache_.put("key", req, object_);
     auto const result = cache_.get("key", req);
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(*result, object_);
+    EXPECT_EQ(*result, object_);  // NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(ResponseExpirationCacheTests, BareRequestMethodAndIdIsCached)
 {
-    boost::json::object req{{"method", "key"}, {"id", "req-1"}};
+    boost::json::object const req{{"method", "key"}, {"id", "req-1"}};
     cache_.put("key", req, object_);
     auto const result = cache_.get("key", req);
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(*result, object_);
+    EXPECT_EQ(*result, object_);  // NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(ResponseExpirationCacheTests, NonBareGetReturnNulloptAfterBarePut)
 {
-    boost::json::object bareReq{{"command", "key"}};
-    boost::json::object nonBareReq{{"command", "key"}, {"limit", 50}};
+    boost::json::object const bareReq{{"command", "key"}};
+    boost::json::object const nonBareReq{{"command", "key"}, {"limit", 50}};
 
     cache_.put("key", bareReq, object_);
     ASSERT_TRUE(cache_.get("key", bareReq).has_value());
@@ -91,8 +91,8 @@ TEST_F(ResponseExpirationCacheTests, NonBareGetReturnNulloptAfterBarePut)
 
 TEST_F(ResponseExpirationCacheTests, NonBarePutDoesNotStore)
 {
-    boost::json::object nonBareReq{{"command", "key"}, {"limit", 50}};
-    boost::json::object bareReq{{"command", "key"}};
+    boost::json::object const nonBareReq{{"command", "key"}, {"limit", 50}};
+    boost::json::object const bareReq{{"command", "key"}};
 
     cache_.put("key", nonBareReq, object_);
     EXPECT_FALSE(cache_.get("key", bareReq).has_value());
@@ -100,16 +100,16 @@ TEST_F(ResponseExpirationCacheTests, NonBarePutDoesNotStore)
 
 TEST_F(ResponseExpirationCacheTests, ApiVersionMakesRequestNonBare)
 {
-    boost::json::object req{{"command", "key"}, {"api_version", 1}};
+    boost::json::object const req{{"command", "key"}, {"api_version", 1}};
     cache_.put("key", req, object_);
     EXPECT_FALSE(cache_.get("key", req).has_value());
 }
 
 TEST_F(ResponseExpirationCacheTests, BareRequestIdOnlyIsCached)
 {
-    boost::json::object req{{"id", 7}};
+    boost::json::object const req{{"id", 7}};
     cache_.put("key", req, object_);
     auto const result = cache_.get("key", req);
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(*result, object_);
+    EXPECT_EQ(*result, object_);  // NOLINT(bugprone-unchecked-optional-access)
 }
