@@ -133,7 +133,7 @@ SuccessorExt::updateSuccessorFromCache(uint32_t seq, model::Object const& obj) c
 
     if (isDeleted) {
         auto const old = cache_.get().getDeleted(obj.key, seq - 1);
-        ASSERT(old.has_value(), "Deleted object {} must be in cache", ripple::strHex(obj.key));
+        ASSERT(old.has_value(), "Deleted object {} must be in cache", xrpl::strHex(obj.key));
 
         checkBookBase = isBookDir(obj.key, *old);  // NOLINT(bugprone-unchecked-optional-access)
     } else {
@@ -161,7 +161,7 @@ void
 SuccessorExt::updateBookSuccessor(
     std::optional<data::LedgerObject> const& maybeSuccessor,
     auto seq,
-    ripple::uint256 const& bookBase
+    xrpl::uint256 const& bookBase
 ) const
 {
     if (maybeSuccessor.has_value()) {
@@ -176,7 +176,7 @@ SuccessorExt::updateBookSuccessor(
 void
 SuccessorExt::writeSuccessors(uint32_t seq) const
 {
-    ripple::uint256 prev = data::kFirstKey;
+    xrpl::uint256 prev = data::kFirstKey;
     while (auto cur = cache_.get().getSuccessor(prev, seq)) {
         if (prev == data::kFirstKey)
             backend_->writeSuccessor(uint256ToString(prev), seq, uint256ToString(cur->key));
@@ -187,9 +187,7 @@ SuccessorExt::writeSuccessors(uint32_t seq) const
             // make sure the base is not an actual object
             if (not cache_.get().get(base, seq)) {
                 auto succ = cache_.get().getSuccessor(base, seq);
-                ASSERT(
-                    succ.has_value(), "Book base {} must have a successor", ripple::strHex(base)
-                );
+                ASSERT(succ.has_value(), "Book base {} must have a successor", xrpl::strHex(base));
 
                 if (succ->key == cur->key)  // NOLINT(bugprone-unchecked-optional-access)
                     backend_->writeSuccessor(uint256ToString(base), seq, uint256ToString(cur->key));
@@ -207,7 +205,7 @@ SuccessorExt::writeEdgeKeys(std::uint32_t seq, auto const& edgeKeys) const
 {
     for (auto const& key : edgeKeys) {
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        auto succ = cache_.get().getSuccessor(*ripple::uint256::fromVoidChecked(key), seq);
+        auto succ = cache_.get().getSuccessor(*xrpl::uint256::fromVoidChecked(key), seq);
         if (succ)
             backend_->writeSuccessor(auto{key}, seq, uint256ToString(succ->key));
     }

@@ -28,7 +28,7 @@ namespace rpc::credentials {
  * @return true if credential not expired, false otherwise
  */
 bool
-checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger);
+checkExpired(xrpl::SLE const& sleCred, xrpl::LedgerHeader const& ledger);
 
 /**
  * @brief Creates authentication credential field (which is a set of pairs of AccountID and
@@ -37,8 +37,8 @@ checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger);
  * @param in The array of Credential objects to check
  * @return Auth Credential array
  */
-std::set<std::pair<ripple::AccountID, ripple::Slice>>
-createAuthCredentials(ripple::STArray const& in);
+std::set<std::pair<xrpl::AccountID, xrpl::Slice>>
+createAuthCredentials(xrpl::STArray const& in);
 
 /**
  * @brief Parses each credential object and makes sure the credential type and values are correct
@@ -46,7 +46,7 @@ createAuthCredentials(ripple::STArray const& in);
  * @param jv The boost json array of credentials to parse
  * @return Array of credentials after parsing
  */
-ripple::STArray
+xrpl::STArray
 parseAuthorizeCredentials(boost::json::array const& jv);
 
 /**
@@ -59,12 +59,12 @@ parseAuthorizeCredentials(boost::json::array const& jv);
  * @param yield The coroutine context
  * @return Array of credential objects, error if failed otherwise
  */
-std::expected<ripple::STArray, Status>
+std::expected<xrpl::STArray, Status>
 fetchCredentialArray(
     std::optional<boost::json::array> const& credID,
-    ripple::AccountID const& srcAcc,
+    xrpl::AccountID const& srcAcc,
     BackendInterface const& backend,
-    ripple::LedgerHeader const& info,
+    xrpl::LedgerHeader const& info,
     boost::asio::yield_context const& yield
 );
 

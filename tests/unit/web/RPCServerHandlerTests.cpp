@@ -479,7 +479,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPErrorPath)
         .WillOnce(
             testing::Return(
                 rpc::Result{
-                    rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}
+                    rpc::Status{rpc::RippledError::RpcInvalidParams, "ledgerIndexMalformed"}
                 }
             )
         );
@@ -534,7 +534,7 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
         .WillOnce(
             testing::Return(
                 rpc::Result{
-                    rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}
+                    rpc::Status{rpc::RippledError::RpcInvalidParams, "ledgerIndexMalformed"}
                 }
             )
         );

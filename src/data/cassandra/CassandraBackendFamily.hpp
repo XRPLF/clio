@@ -141,7 +141,7 @@ public:
 
     TransactionsAndCursor
     fetchAccountTransactions(
-        ripple::AccountID const& account,
+        xrpl::AccountID const& account,
         std::uint32_t const limit,
         bool forward,
         std::optional<TransactionsCursor> const& txnCursor,
@@ -162,7 +162,7 @@ public:
         auto cursor = txnCursor;
         if (cursor) {
             statement.bindAt(kTransactionCursorBindIndex, cursor->asTuple());
-            LOG(log_.debug()) << "account = " << ripple::strHex(account)
+            LOG(log_.debug()) << "account = " << xrpl::strHex(account)
                               << " tuple = " << cursor->ledgerSequence << cursor->transactionIndex;
         } else {
             auto const seq = forward ? rng->minSequence : rng->maxSequence;
@@ -171,7 +171,7 @@ public:
             statement.bindAt(
                 kTransactionCursorBindIndex, std::make_tuple(placeHolder, placeHolder)
             );
-            LOG(log_.debug()) << "account = " << ripple::strHex(account) << " idx = " << seq
+            LOG(log_.debug()) << "account = " << xrpl::strHex(account) << " idx = " << seq
                               << " tuple = " << placeHolder;
         }
 
@@ -186,12 +186,11 @@ public:
             return {};
         }
 
-        std::vector<ripple::uint256> hashes = {};
+        std::vector<xrpl::uint256> hashes = {};
         auto numRows = results.numRows();
         LOG(log_.info()) << "num_rows = " << numRows;
 
-        for (auto [hash, data] :
-             extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
+        for (auto [hash, data] : extract<xrpl::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
             hashes.push_back(hash);
             if (--numRows == 0) {
                 LOG(log_.debug()) << "Setting cursor";
@@ -217,7 +216,7 @@ public:
     }
 
     void
-    writeLedger(ripple::LedgerHeader const& ledgerHeader, std::string&& blob) override
+    writeLedger(xrpl::LedgerHeader const& ledgerHeader, std::string&& blob) override
     {
         executor_.write(schema_->insertLedgerHeader, ledgerHeader.seq, std::move(blob));
 
@@ -246,7 +245,7 @@ public:
         return std::nullopt;
     }
 
-    std::optional<ripple::LedgerHeader>
+    std::optional<xrpl::LedgerHeader>
     fetchLedgerBySequence(
         std::uint32_t const sequence,
         boost::asio::yield_context yield
@@ -260,7 +259,7 @@ public:
             if (auto const& result = res.value(); result) {
                 if (auto const maybeValue = result.template get<std::vector<unsigned char>>();
                     maybeValue) {
-                    auto const header = util::deserializeHeader(ripple::makeSlice(*maybeValue));
+                    auto const header = util::deserializeHeader(xrpl::makeSlice(*maybeValue));
                     ledgerCache_.put(FetchLedgerCache::CacheEntry{header, sequence});
                     return header;
                 }
@@ -277,8 +276,8 @@ public:
         return std::nullopt;
     }
 
-    std::optional<ripple::LedgerHeader>
-    fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context yield) const override
+    std::optional<xrpl::LedgerHeader>
+    fetchLedgerByHash(xrpl::uint256 const& hash, boost::asio::yield_context yield) const override
     {
         if (auto const res = executor_.read(yield, schema_->selectLedgerByHash, hash); res) {
             if (auto const& result = res.value(); result) {
@@ -345,7 +344,7 @@ public:
         return fetchTransactions(hashes, yield);
     }
 
-    std::vector<ripple::uint256>
+    std::vector<xrpl::uint256>
     fetchAllTransactionHashesInLedger(
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context yield
@@ -367,8 +366,8 @@ public:
             return {};
         }
 
-        std::vector<ripple::uint256> hashes;
-        for (auto [hash] : extract<ripple::uint256>(result))
+        std::vector<xrpl::uint256> hashes;
+        for (auto [hash] : extract<xrpl::uint256>(result))
             hashes.push_back(std::move(hash));
 
         auto end = std::chrono::system_clock::now();
@@ -384,7 +383,7 @@ public:
 
     std::optional<NFT>
     fetchNFT(
-        ripple::uint256 const& tokenID,
+        xrpl::uint256 const& tokenID,
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context yield
     ) const override
@@ -393,8 +392,7 @@ public:
         if (not res)
             return std::nullopt;
 
-        if (auto const maybeRow = res->template get<uint32_t, ripple::AccountID, bool>();
-            maybeRow) {
+        if (auto const maybeRow = res->template get<uint32_t, xrpl::AccountID, bool>(); maybeRow) {
             auto [seq, owner, isBurned] = *maybeRow;
             auto result = std::make_optional<NFT>(tokenID, seq, owner, isBurned);
 
@@ -411,7 +409,7 @@ public:
             // one.
             auto uriRes = executor_.read(yield, schema_->selectNFTURI, tokenID, ledgerSequence);
             if (uriRes) {
-                if (auto const maybeUri = uriRes->template get<ripple::Blob>(); maybeUri)
+                if (auto const maybeUri = uriRes->template get<xrpl::Blob>(); maybeUri)
                     result->uri = *maybeUri;
             }
 
@@ -424,7 +422,7 @@ public:
 
     TransactionsAndCursor
     fetchNFTTransactions(
-        ripple::uint256 const& tokenID,
+        xrpl::uint256 const& tokenID,
         std::uint32_t const limit,
         bool const forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -445,7 +443,7 @@ public:
         auto cursor = cursorIn;
         if (cursor) {
             statement.bindAt(kTransactionCursorBindIndex, cursor->asTuple());
-            LOG(log_.debug()) << "token_id = " << ripple::strHex(tokenID)
+            LOG(log_.debug()) << "token_id = " << xrpl::strHex(tokenID)
                               << " tuple = " << cursor->ledgerSequence << cursor->transactionIndex;
         } else {
             auto const seq = forward ? rng->minSequence : rng->maxSequence;
@@ -454,7 +452,7 @@ public:
             statement.bindAt(
                 kTransactionCursorBindIndex, std::make_tuple(placeHolder, placeHolder)
             );
-            LOG(log_.debug()) << "token_id = " << ripple::strHex(tokenID) << " idx = " << seq
+            LOG(log_.debug()) << "token_id = " << xrpl::strHex(tokenID) << " idx = " << seq
                               << " tuple = " << placeHolder;
         }
 
@@ -467,12 +465,11 @@ public:
             return {};
         }
 
-        std::vector<ripple::uint256> hashes = {};
+        std::vector<xrpl::uint256> hashes = {};
         auto numRows = results.numRows();
         LOG(log_.info()) << "num_rows = " << numRows;
 
-        for (auto [hash, data] :
-             extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
+        for (auto [hash, data] : extract<xrpl::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
             hashes.push_back(hash);
             if (--numRows == 0) {
                 LOG(log_.debug()) << "Setting cursor";
@@ -498,7 +495,7 @@ public:
 
     TransactionsAndCursor
     fetchMPTokenIssuanceTransactions(
-        ripple::uint192 const& mptIssuanceID,
+        xrpl::uint192 const& mptIssuanceID,
         std::uint32_t const limit,
         bool const forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -524,8 +521,8 @@ public:
 
     TransactionsAndCursor
     fetchAccountMPTokenIssuanceTransactions(
-        ripple::uint192 const& mptIssuanceID,
-        ripple::AccountID const& account,
+        xrpl::uint192 const& mptIssuanceID,
+        xrpl::AccountID const& account,
         std::uint32_t const limit,
         bool const forward,
         std::optional<TransactionsCursor> const& cursorIn,
@@ -551,9 +548,9 @@ public:
 
     MPTHoldersAndCursor
     fetchMPTHolders(
-        ripple::uint192 const& mptID,
+        xrpl::uint192 const& mptID,
         std::uint32_t const limit,
-        std::optional<ripple::AccountID> const& cursorIn,
+        std::optional<xrpl::AccountID> const& cursorIn,
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context yield
     ) const override
@@ -562,7 +559,7 @@ public:
             yield,
             schema_->selectMPTHolders,
             mptID,
-            cursorIn.value_or(ripple::AccountID(0)),
+            cursorIn.value_or(xrpl::AccountID(0)),
             Limit{limit}
         );
 
@@ -572,10 +569,10 @@ public:
             return {};
         }
 
-        std::vector<ripple::uint256> mptKeys;
-        std::optional<ripple::AccountID> cursor;
-        for (auto const [holder] : extract<ripple::AccountID>(holderResults)) {
-            mptKeys.push_back(ripple::keylet::mptoken(mptID, holder).key);
+        std::vector<xrpl::uint256> mptKeys;
+        std::optional<xrpl::AccountID> cursor;
+        for (auto const [holder] : extract<xrpl::AccountID>(holderResults)) {
+            mptKeys.push_back(xrpl::keylet::mptoken(mptID, holder).key);
             cursor = holder;
         }
 
@@ -596,13 +593,13 @@ public:
 
     std::optional<Blob>
     doFetchLedgerObject(
-        ripple::uint256 const& key,
+        xrpl::uint256 const& key,
         std::uint32_t const sequence,
         boost::asio::yield_context yield
     ) const override
     {
         LOG(log_.debug()) << "Fetching ledger object for seq " << sequence
-                          << ", key = " << ripple::to_string(key);
+                          << ", key = " << xrpl::to_string(key);
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
             if (auto const result = res->template get<Blob>(); result) {
                 if (result->size())
@@ -619,13 +616,13 @@ public:
 
     std::optional<std::uint32_t>
     doFetchLedgerObjectSeq(
-        ripple::uint256 const& key,
+        xrpl::uint256 const& key,
         std::uint32_t const sequence,
         boost::asio::yield_context yield
     ) const override
     {
         LOG(log_.debug()) << "Fetching ledger object for seq " << sequence
-                          << ", key = " << ripple::to_string(key);
+                          << ", key = " << xrpl::to_string(key);
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
             if (auto const result = res->template get<Blob, std::uint32_t>(); result) {
                 auto [_, seq] = *result;
@@ -640,7 +637,7 @@ public:
     }
 
     std::optional<TransactionAndMetadata>
-    fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context yield) const override
+    fetchTransaction(xrpl::uint256 const& hash, boost::asio::yield_context yield) const override
     {
         if (auto const res = executor_.read(yield, schema_->selectTransaction, hash); res) {
             if (auto const maybeValue = res->template get<Blob, Blob, uint32_t, uint32_t>();
@@ -657,16 +654,16 @@ public:
         return std::nullopt;
     }
 
-    std::optional<ripple::uint256>
+    std::optional<xrpl::uint256>
     doFetchSuccessorKey(
-        ripple::uint256 key,
+        xrpl::uint256 key,
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context yield
     ) const override
     {
         if (auto const res = executor_.read(yield, schema_->selectSuccessor, key, ledgerSequence);
             res) {
-            if (auto const result = res->template get<ripple::uint256>(); result) {
+            if (auto const result = res->template get<xrpl::uint256>(); result) {
                 if (*result == kLastKey)
                     return std::nullopt;
                 return result;
@@ -682,7 +679,7 @@ public:
 
     std::vector<TransactionAndMetadata>
     fetchTransactions(
-        std::vector<ripple::uint256> const& hashes,
+        std::vector<xrpl::uint256> const& hashes,
         boost::asio::yield_context yield
     ) const override
     {
@@ -728,7 +725,7 @@ public:
 
     std::vector<Blob>
     doFetchLedgerObjects(
-        std::vector<ripple::uint256> const& keys,
+        std::vector<xrpl::uint256> const& keys,
         std::uint32_t const sequence,
         boost::asio::yield_context yield
     ) const override
@@ -777,7 +774,7 @@ public:
     ) const override
     {
         auto const [keys, timeDiff] =
-            util::timed([this, &ledgerSequence, yield]() -> std::vector<ripple::uint256> {
+            util::timed([this, &ledgerSequence, yield]() -> std::vector<xrpl::uint256> {
                 auto const res = executor_.read(yield, schema_->selectDiff, ledgerSequence);
                 if (not res) {
                     LOG(log_.error()) << "Could not fetch ledger diff: " << res.error()
@@ -792,8 +789,8 @@ public:
                     return {};
                 }
 
-                std::vector<ripple::uint256> resultKeys;
-                for (auto [key] : extract<ripple::uint256>(results))
+                std::vector<xrpl::uint256> resultKeys;
+                for (auto [key] : extract<xrpl::uint256>(results))
                     resultKeys.push_back(key);
 
                 return resultKeys;
@@ -1031,8 +1028,8 @@ public:
                 // to record the URI and link to the issuer_nf_tokens table.
                 if (record.uri) {
                     statements.push_back(schema_->insertIssuerNFT.bind(
-                        ripple::nft::getIssuer(record.tokenID),
-                        static_cast<uint32_t>(ripple::nft::getTaxon(record.tokenID)),
+                        xrpl::nft::getIssuer(record.tokenID),
+                        static_cast<uint32_t>(xrpl::nft::getTaxon(record.tokenID)),
                         record.tokenID
                     ));
                     statements.push_back(schema_->insertNFTURI.bind(
@@ -1181,11 +1178,11 @@ protected:
             return {};
         }
 
-        std::vector<ripple::uint256> hashes = {};
+        std::vector<xrpl::uint256> hashes = {};
         auto numRows = results.numRows();
 
         for (auto const& [hash, data] :
-             extract<ripple::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
+             extract<xrpl::uint256, std::tuple<uint32_t, uint32_t>>(results)) {
             hashes.push_back(hash);
 
             if (--numRows == 0) {

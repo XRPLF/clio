@@ -22,7 +22,6 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
@@ -157,7 +156,7 @@ TEST_P(NoRippleCheckParameterTest, InvalidParams)
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
-        auto const req = json::parse(testBundle.testJson);
+        auto const req = boost::json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_FALSE(output);
 
@@ -180,7 +179,7 @@ TEST_F(NoRippleCheckParameterTest, V1ApiTransactionsIsNotBool)
     EXPECT_CALL(*backend_, fetchLedgerBySequence);
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
-        auto const req = json::parse(kReqJson);
+        auto const req = boost::json::parse(kReqJson);
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1});
         ASSERT_FALSE(output);
 
@@ -194,10 +193,10 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
 {
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(std::nullopt));
 
-    static auto const kInput = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -226,7 +225,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSeq, _)).WillByDefault(Return(std::nullopt));
 
-    static auto const kInput = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -255,7 +254,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSeq, _)).WillByDefault(Return(std::nullopt));
 
-    static auto const kInput = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -279,13 +278,13 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
 TEST_F(RPCNoRippleCheckTest, AccountNotExist)
 {
     auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return empty
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -320,30 +319,30 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
         })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, kSeq);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
     ON_CALL(*backend_, doFetchLedgerObject)
-        .WillByDefault(Return(
-            createAccountRootObject(kAccount, ripple::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
-                .getSerializer()
-                .peekData()
-        ));
+        .WillByDefault(
+            Return(createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
+                       .getSerializer()
+                       .peekData())
+        );
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kIndex1}, ripple::uint256{kIndex2}}, kIndex1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, ripple::lsfLowNoRipple
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, xrpl::lsfLowNoRipple
     );
 
     auto const line2 = createRippleStateLedgerObject(
-        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, ripple::lsfLowNoRipple
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, xrpl::lsfLowNoRipple
     );
 
     std::vector<Blob> bbs;
@@ -353,7 +352,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -368,7 +367,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOutput));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOutput));
     });
 }
 
@@ -387,7 +386,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
         })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, kSeq);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
@@ -397,8 +396,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
             createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2).getSerializer().peekData()
         ));
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kIndex1}, ripple::uint256{kIndex2}}, kIndex1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -418,7 +417,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -433,7 +432,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOutput));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOutput));
     });
 }
 
@@ -452,30 +451,30 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
         })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, kSeq);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
     ON_CALL(*backend_, doFetchLedgerObject)
-        .WillByDefault(Return(
-            createAccountRootObject(kAccount, ripple::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
-                .getSerializer()
-                .peekData()
-        ));
+        .WillByDefault(
+            Return(createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
+                       .getSerializer()
+                       .peekData())
+        );
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kIndex1}, ripple::uint256{kIndex2}}, kIndex1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, ripple::lsfLowNoRipple
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, xrpl::lsfLowNoRipple
     );
 
     auto const line2 = createRippleStateLedgerObject(
-        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, ripple::lsfLowNoRipple
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, xrpl::lsfLowNoRipple
     );
 
     std::vector<Blob> bbs;
@@ -485,7 +484,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -500,7 +499,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOutput));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOutput));
     });
 }
 
@@ -518,7 +517,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, kSeq);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
@@ -528,8 +527,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
             createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2).getSerializer().peekData()
         ));
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kIndex1}, ripple::uint256{kIndex2}}, kIndex1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -549,7 +548,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -564,7 +563,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOutput));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOutput));
     });
 }
 
@@ -576,7 +575,7 @@ TEST_F(
     static constexpr auto kSeq = 30;
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, kSeq);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
@@ -586,11 +585,11 @@ TEST_F(
             createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2).getSerializer().peekData()
         ));
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kIndex1}, ripple::uint256{kIndex2}}, kIndex1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSeq, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kSeq, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
@@ -609,7 +608,7 @@ TEST_F(
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -635,30 +634,30 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
     constexpr auto kSeq = 30;
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, kSeq);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
     ON_CALL(*backend_, doFetchLedgerObject)
-        .WillByDefault(Return(
-            createAccountRootObject(kAccount, ripple::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
-                .getSerializer()
-                .peekData()
-        ));
+        .WillByDefault(
+            Return(createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
+                       .getSerializer()
+                       .peekData())
+        );
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kIndex1}, ripple::uint256{kIndex2}}, kIndex1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, ripple::lsfLowNoRipple
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, xrpl::lsfLowNoRipple
     );
 
     auto const line2 = createRippleStateLedgerObject(
-        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, ripple::lsfLowNoRipple
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, xrpl::lsfLowNoRipple
     );
 
     std::vector<Blob> bbs;
@@ -668,7 +667,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -738,13 +737,13 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
         }})JSON",
         kTransactionSeq,
         kTransactionSeq + 1,
-        ripple::tfClearNoRipple,
+        xrpl::tfClearNoRipple,
         kTransactionSeq + 2,
-        ripple::tfClearNoRipple
+        xrpl::tfClearNoRipple
     );
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, kSeq);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
@@ -756,20 +755,20 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
                        .peekData())
         );
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kIndex1}, ripple::uint256{kIndex2}}, kIndex1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSeq, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kSeq, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, ripple::lsfLowNoRipple
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, xrpl::lsfLowNoRipple
     );
 
     auto const line2 = createRippleStateLedgerObject(
-        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, ripple::lsfLowNoRipple
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, xrpl::lsfLowNoRipple
     );
 
     std::vector<Blob> bbs;
@@ -779,7 +778,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -795,7 +794,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, boost::json::parse(expectedOutput));
     });
 }
 
@@ -804,27 +803,27 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
     constexpr auto kSeq = 30;
 
     auto ledgerHeader = createLedgerHeader(kLedgerHash, kSeq);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
     ON_CALL(*backend_, doFetchLedgerObject)
-        .WillByDefault(Return(
-            createAccountRootObject(kAccount, ripple::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
-                .getSerializer()
-                .peekData()
-        ));
+        .WillByDefault(
+            Return(createAccountRootObject(kAccount, xrpl::lsfDefaultRipple, 2, 200, 2, kIndex1, 2)
+                       .getSerializer()
+                       .peekData())
+        );
     auto const ownerDir = createOwnerDirLedgerObject(
-        std::vector{NoRippleCheckHandler::kLimitMax + 1, ripple::uint256{kIndex1}}, kIndex1
+        std::vector{NoRippleCheckHandler::kLimitMax + 1, xrpl::uint256{kIndex1}}, kIndex1
     );
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, ripple::lsfLowNoRipple
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, xrpl::lsfLowNoRipple
     );
 
     std::vector<Blob> bbs;
@@ -836,7 +835,7 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",

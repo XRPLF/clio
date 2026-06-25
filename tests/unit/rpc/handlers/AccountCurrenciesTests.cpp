@@ -24,8 +24,6 @@ using namespace rpc;
 using namespace data;
 using namespace testing;
 
-namespace json = boost::json;
-
 namespace {
 
 constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
@@ -54,7 +52,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
-    static auto const kInput = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}"
@@ -77,9 +75,9 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(30, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
-    static auto const kInput = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}"
@@ -104,9 +102,9 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(12, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
-    static auto const kInput = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -130,10 +128,10 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
 {
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
-    static auto const kInput = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -174,14 +172,14 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(ledgerHeader));
     // return valid account
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kAccount)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = createOwnerDirLedgerObject(
-        {ripple::uint256{kIndex1}, ripple::uint256{kIndex2}, ripple::uint256{kIndex2}}, kIndex1
+        {xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
     );
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -208,7 +206,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
-    static auto const kInput = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}"
@@ -220,7 +218,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kOutput));
+        EXPECT_EQ(*output.result, boost::json::parse(kOutput));
     });
 }
 
@@ -229,15 +227,15 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
     // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     // return valid account
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kAccount)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kIndex1}}, kIndex1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -249,7 +247,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
-    static auto const kInput = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
@@ -274,12 +272,12 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend_, fetchLedgerBySequence(ledgerSeq, _)).WillByDefault(Return(ledgerHeader));
     // return valid account
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kAccount)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, ledgerSeq, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kIndex1}}, kIndex1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, ledgerSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -291,7 +289,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
-    static auto const kInput = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",

@@ -41,7 +41,7 @@ constexpr std::string_view kCredentialType = "credType";
 
 TEST(CreateAuthCredentialsTest, UniqueCredentials)
 {
-    ripple::STArray credentials;
+    xrpl::STArray credentials;
     auto const cred1 = createCredentialObject(kAccount, kAccount2, kCredentialType);
     auto const cred2 = createCredentialObject(kAccount2, kAccount, kCredentialType);
 
@@ -53,14 +53,14 @@ TEST(CreateAuthCredentialsTest, UniqueCredentials)
     // Validate that the result contains the correct set of credentials
     ASSERT_EQ(result.size(), 2);
 
-    auto const cred1Type = cred1.getFieldVL(ripple::sfCredentialType);
-    auto const cred2Type = cred2.getFieldVL(ripple::sfCredentialType);
+    auto const cred1Type = cred1.getFieldVL(xrpl::sfCredentialType);
+    auto const cred2Type = cred2.getFieldVL(xrpl::sfCredentialType);
 
     auto const expectedCred1 = std::make_pair(
-        cred1.getAccountID(ripple::sfIssuer), ripple::Slice{cred1Type.data(), cred1Type.size()}
+        cred1.getAccountID(xrpl::sfIssuer), xrpl::Slice{cred1Type.data(), cred1Type.size()}
     );
     auto const expectedCred2 = std::make_pair(
-        cred2.getAccountID(ripple::sfIssuer), ripple::Slice{cred2Type.data(), cred2Type.size()}
+        cred2.getAccountID(xrpl::sfIssuer), xrpl::Slice{cred2Type.data(), cred2Type.size()}
     );
 
     EXPECT_TRUE(result.count(expectedCred1));
@@ -72,27 +72,27 @@ TEST(ParseAuthorizeCredentialsTest, ValidCredentialsArray)
     boost::json::array credentials;
     boost::json::object credential1;
     credential1[JS(issuer)] = kAccount;
-    credential1[JS(credential_type)] = ripple::strHex(kCredentialType);
+    credential1[JS(credential_type)] = xrpl::strHex(kCredentialType);
 
     credentials.push_back(credential1);
-    ripple::STArray const parsedCredentials = credentials::parseAuthorizeCredentials(credentials);
+    xrpl::STArray const parsedCredentials = credentials::parseAuthorizeCredentials(credentials);
 
     ASSERT_EQ(parsedCredentials.size(), 1);
 
-    ripple::STObject const& cred = parsedCredentials[0];
-    ASSERT_TRUE(cred.isFieldPresent(ripple::sfIssuer));
-    ASSERT_TRUE(cred.isFieldPresent(ripple::sfCredentialType));
+    xrpl::STObject const& cred = parsedCredentials[0];
+    ASSERT_TRUE(cred.isFieldPresent(xrpl::sfIssuer));
+    ASSERT_TRUE(cred.isFieldPresent(xrpl::sfCredentialType));
 
     auto const expectedIssuer =
-        *ripple::parseBase58<ripple::AccountID>(  // NOLINT(bugprone-unchecked-optional-access)
+        *xrpl::parseBase58<xrpl::AccountID>(  // NOLINT(bugprone-unchecked-optional-access)
             static_cast<std::string>(credential1[JS(issuer)].as_string())
         );
     auto const expectedCredentialType =
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        *ripple::strUnHex(static_cast<std::string>(credential1[JS(credential_type)].as_string()));
+        *xrpl::strUnHex(static_cast<std::string>(credential1[JS(credential_type)].as_string()));
 
-    EXPECT_EQ(cred.getAccountID(ripple::sfIssuer), expectedIssuer);
-    EXPECT_EQ(cred.getFieldVL(ripple::sfCredentialType), expectedCredentialType);
+    EXPECT_EQ(cred.getAccountID(xrpl::sfIssuer), expectedIssuer);
+    EXPECT_EQ(cred.getFieldVL(xrpl::sfCredentialType), expectedCredentialType);
 }
 
 class CredentialHelperTest : public util::prometheus::WithPrometheus,
@@ -110,7 +110,7 @@ TEST_F(CredentialHelperTest, GetInvalidCredentialArray)
         );
         ASSERT_FALSE(ret.has_value());
         auto const status = ret.error();
-        EXPECT_EQ(status, RippledError::rpcBAD_CREDENTIALS);
+        EXPECT_EQ(status, RippledError::RpcBadCredentials);
         EXPECT_EQ(status.message, "credentials don't exist.");
     });
     ctx_.run();
@@ -130,12 +130,11 @@ TEST_F(CredentialHelperTest, GetValidCredentialArray)
 
     boost::json::array credentialsArray = {kCredentialId};
 
-    ripple::STArray expectedAuthCreds;
-    ripple::STObject credential(ripple::sfCredential);
-    credential.setAccountID(ripple::sfIssuer, getAccountIdWithString(kAccount2));
+    xrpl::STArray expectedAuthCreds;
+    xrpl::STObject credential(xrpl::sfCredential);
+    credential.setAccountID(xrpl::sfIssuer, getAccountIdWithString(kAccount2));
     credential.setFieldVL(
-        ripple::sfCredentialType,
-        ripple::Blob{std::begin(kCredentialType), std::end(kCredentialType)}
+        xrpl::sfCredentialType, xrpl::Blob{std::begin(kCredentialType), std::end(kCredentialType)}
     );
     expectedAuthCreds.push_back(std::move(credential));
 

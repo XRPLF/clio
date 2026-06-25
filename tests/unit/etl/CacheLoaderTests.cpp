@@ -26,7 +26,6 @@
 #include <utility>
 #include <vector>
 
-namespace json = boost::json;
 using namespace etl;
 using namespace util;
 using namespace data;
@@ -290,7 +289,8 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
 //
 TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "sync"}})JSON"));
+    auto const cfg =
+        getParseCacheConfig(boost::json::parse(R"JSON({"cache": {"load": "sync"}})JSON"));
     CacheLoader<> loader{cfg, backend_, cache, std::move(cacheLoadingState)};
 
     auto const diffs = diffProvider.getLatestDiff();
@@ -318,7 +318,8 @@ TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 
 TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "async"}})JSON"));
+    auto const cfg =
+        getParseCacheConfig(boost::json::parse(R"JSON({"cache": {"load": "async"}})JSON"));
     CacheLoader<> loader{cfg, backend_, cache, std::move(cacheLoadingState)};
 
     auto const diffs = diffProvider.getLatestDiff();
@@ -348,7 +349,8 @@ TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
 
 TEST_F(CacheLoaderTest, DisabledCacheLoaderDoesNotLoadCache)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "none"}})JSON"));
+    auto const cfg =
+        getParseCacheConfig(boost::json::parse(R"JSON({"cache": {"load": "none"}})JSON"));
     CacheLoader<> loader{cfg, backend_, cache, std::move(cacheLoadingState)};
 
     EXPECT_CALL(cache, updateImpl).Times(0);
@@ -360,7 +362,8 @@ TEST_F(CacheLoaderTest, DisabledCacheLoaderDoesNotLoadCache)
 
 TEST_F(CacheLoaderTest, DisabledCacheLoaderCanCallStopAndWait)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "none"}})JSON"));
+    auto const cfg =
+        getParseCacheConfig(boost::json::parse(R"JSON({"cache": {"load": "none"}})JSON"));
     CacheLoader<> loader{cfg, backend_, cache, std::move(cacheLoadingState)};
 
     EXPECT_CALL(cache, updateImpl).Times(0);
@@ -382,7 +385,7 @@ struct CacheLoaderFromFileTest : CacheLoaderTest {
     std::string const filePath = "./cache.bin";
     uint32_t const maxSequenceLag = 10;
     ClioConfigDefinition const cfg = getParseCacheConfig(
-        json::parse(
+        boost::json::parse(
             fmt::format(
                 R"JSON({{"cache": {{"load": "sync", "file": {{"path": "{}", "max_sequence_age": {}}}}}}})JSON",
                 filePath,
@@ -441,7 +444,9 @@ TEST_F(CacheLoaderFromFileTest, FailureBackToNormalLoad)
 TEST_F(CacheLoaderFromFileTest, DontLoadWhenCacheIsDisabled)
 {
     auto const disabledCacheCfg = getParseCacheConfig(
-        json::parse(R"JSON({"cache": {"load": "none", "file": {"path": "/tmp/cache.bin"}}})JSON")
+        boost::json::parse(
+            R"JSON({"cache": {"load": "none", "file": {"path": "/tmp/cache.bin"}}})JSON"
+        )
     );
     CacheLoader<> loaderWithCacheDisabled{
         disabledCacheCfg, backend_, cache, std::make_unique<MockLedgerCacheLoadingState>()

@@ -44,7 +44,6 @@ constexpr auto kApiVersion = 2;
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 struct RPCLedgerHandlerTest : HandlerBaseTest {
@@ -174,7 +173,7 @@ TEST_P(LedgerParameterTest, InvalidParams)
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(testBundle.testJson);
+        auto const req = boost::json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -190,7 +189,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "ledger_index": {}
@@ -213,7 +212,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "ledger_index": "{}"
@@ -232,12 +231,12 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
 {
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "ledger_hash": "{}"
@@ -282,12 +281,12 @@ TEST_F(RPCLedgerHandlerTest, Default)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse("{}");
+        auto const req = boost::json::parse("{}");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -300,7 +299,7 @@ TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "full": false,
                 "accounts": false,
@@ -320,7 +319,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(R"JSON({"ledger_index": 15})JSON");
+        auto const req = boost::json::parse(R"JSON({"ledger_index": 15})JSON");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -331,12 +330,13 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
 {
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, kRangeMax);
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kIndex1}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kIndex1}, _))
         .WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(fmt::format(R"JSON({{"ledger_hash": "{}" }})JSON", kIndex1));
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"ledger_hash": "{}" }})JSON", kIndex1));
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -362,14 +362,14 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": true
             })JSON"
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -414,7 +414,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": true,
                 "expand": true,
@@ -423,7 +423,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -468,7 +468,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": true,
                 "expand": true,
@@ -478,7 +478,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
         auto const output =
             handler.process(req, Context{.yield = yield, .apiVersion = kApiVersion});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -561,7 +561,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": false,
                 "expand": true,
@@ -572,7 +572,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
         ASSERT_TRUE(output);
         // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -658,7 +658,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": false,
                 "expand": true,
@@ -669,7 +669,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
         ASSERT_TRUE(output);
         // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -696,7 +696,7 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": false,
                 "expand": true,
@@ -706,7 +706,7 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
         auto output = handler.process(req, Context{.yield = yield, .apiVersion = kApiVersion});
         ASSERT_TRUE(output);
 
-        auto const req2 = json::parse(
+        auto const req2 = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "binary": false,
@@ -734,11 +734,11 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
 
     EXPECT_CALL(*backend_, fetchAllTransactionHashesInLedger).Times(1);
     ON_CALL(*backend_, fetchAllTransactionHashesInLedger(kRangeMax, _))
-        .WillByDefault(Return(std::vector{ripple::uint256{kIndex1}, ripple::uint256{kIndex2}}));
+        .WillByDefault(Return(std::vector{xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "transactions": true
             })JSON"
@@ -747,7 +747,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
         ASSERT_TRUE(output);
         EXPECT_EQ(
             output.result->as_object().at("ledger").at("transactions"),
-            json::parse(fmt::format(R"JSON(["{}", "{}"])JSON", kIndex1, kIndex2))
+            boost::json::parse(fmt::format(R"JSON(["{}", "{}"])JSON", kIndex1, kIndex2))
         );
     });
 }
@@ -786,12 +786,12 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
     EXPECT_CALL(*backend_, fetchLedgerDiff).Times(1);
 
     los.push_back(
-        LedgerObject{.key = ripple::uint256{kIndex2}, .blob = Blob{}}
+        LedgerObject{.key = xrpl::uint256{kIndex2}, .blob = Blob{}}
     );  // NOLINT(modernize-use-emplace)
     los.push_back(
         LedgerObject{
-            .key = ripple::uint256{kIndex1},
-            .blob = createAccountRootObject(kAccount, ripple::lsfGlobalFreeze, 1, 10, 2, kIndex1, 3)
+            .key = xrpl::uint256{kIndex1},
+            .blob = createAccountRootObject(kAccount, xrpl::lsfGlobalFreeze, 1, 10, 2, kIndex1, 3)
                         .getSerializer()
                         .peekData()
         }
@@ -801,14 +801,14 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "diff": true
             })JSON"
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->at("ledger").at("diff"), json::parse(kExpectedOut));
+        EXPECT_EQ(output.result->at("ledger").at("diff"), boost::json::parse(kExpectedOut));
     });
 }
 
@@ -835,12 +835,12 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
     EXPECT_CALL(*backend_, fetchLedgerDiff).Times(1);
 
     los.push_back(
-        LedgerObject{.key = ripple::uint256{kIndex2}, .blob = Blob{}}
+        LedgerObject{.key = xrpl::uint256{kIndex2}, .blob = Blob{}}
     );  // NOLINT(modernize-use-emplace)
     los.push_back(
         LedgerObject{
-            .key = ripple::uint256{kIndex1},
-            .blob = createAccountRootObject(kAccount, ripple::lsfGlobalFreeze, 1, 10, 2, kIndex1, 3)
+            .key = xrpl::uint256{kIndex1},
+            .blob = createAccountRootObject(kAccount, xrpl::lsfGlobalFreeze, 1, 10, 2, kIndex1, 3)
                         .getSerializer()
                         .peekData()
         }
@@ -850,7 +850,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "diff": true,
                 "binary": true
@@ -858,7 +858,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->at("ledger").at("diff"), json::parse(kExpectedOut));
+        EXPECT_EQ(output.result->at("ledger").at("diff"), boost::json::parse(kExpectedOut));
     });
 }
 
@@ -941,7 +941,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmpty)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": false,
                 "expand": true,
@@ -953,7 +953,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmpty)
         ASSERT_TRUE(output);
         // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -1021,7 +1021,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
     ON_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _)).WillByDefault(Return(ledgerHeader));
 
     // account doFetchLedgerObject
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kAccount)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kAccount)).key;
     auto const accountObject =
         createAccountRootObject(
             kAccount, 0, kRangeMax, 200 /*balance*/, 2 /*owner object*/, kIndex1, kRangeMax - 1, 0
@@ -1033,7 +1033,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
 
     // fee object 2*2+3->7 ; balance 200 - 7 -> 193
     auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kRangeMax, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kRangeMax, _))
         .WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -1055,7 +1055,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": false,
                 "expand": true,
@@ -1067,7 +1067,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
         ASSERT_TRUE(output);
         // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -1096,7 +1096,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
     ON_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _)).WillByDefault(Return(ledgerHeader));
 
     // account doFetchLedgerObject
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kAccount)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kAccount)).key;
     auto const accountObject =
         createAccountRootObject(
             kAccount, 0, kRangeMax, 200 /*balance*/, 2 /*owner object*/, kIndex1, kRangeMax - 1, 0
@@ -1108,7 +1108,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
 
     // fee object 2*2+3->7 ; balance 200 - 7 -> 193
     auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kRangeMax, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kRangeMax, _))
         .WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -1130,7 +1130,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": true,
                 "expand": true,
@@ -1140,7 +1140,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -1167,7 +1167,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": true,
                 "expand": true,
@@ -1210,7 +1210,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
     ON_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _)).WillByDefault(Return(ledgerHeader));
 
     // account doFetchLedgerObject
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kAccount)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kAccount)).key;
     auto const accountObject =
         createAccountRootObject(
             kAccount, 0, kRangeMax, 6 /*balance*/, 2 /*owner object*/, kIndex1, kRangeMax - 1, 0
@@ -1222,7 +1222,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
 
     // fee object 2*2+3->7 ; balance 6 - 7 -> -1
     auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kRangeMax, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kRangeMax, _))
         .WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -1244,7 +1244,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": true,
                 "expand": true,
@@ -1254,7 +1254,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kExpectedOut));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
@@ -1268,10 +1268,10 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
     auto const line = createRippleStateLedgerObject(
         kCurrency, kAccount2, 50 /*balance*/, kAccount, 10, kAccount2, 20, kIndex1, 123
     );
-    auto lineKey = ripple::keylet::line(
+    auto lineKey = xrpl::keylet::line(
                        getAccountIdWithString(kAccount),
                        getAccountIdWithString(kAccount2),
-                       ripple::to_currency(std::string(kCurrency))
+                       xrpl::toCurrency(std::string(kCurrency))
     )
                        .key;
     ON_CALL(*backend_, doFetchLedgerObject(lineKey, kRangeMax, _))
@@ -1296,7 +1296,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": true,
                 "expand": true,
@@ -1334,12 +1334,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
         20,
         kIndex1,
         123,
-        ripple::lsfLowFreeze | ripple::lsfHighFreeze
+        xrpl::lsfLowFreeze | xrpl::lsfHighFreeze
     );
-    auto lineKey = ripple::keylet::line(
+    auto lineKey = xrpl::keylet::line(
                        getAccountIdWithString(kAccount),
                        getAccountIdWithString(kAccount2),
-                       ripple::to_currency(std::string(kCurrency))
+                       xrpl::toCurrency(std::string(kCurrency))
     )
                        .key;
     ON_CALL(*backend_, doFetchLedgerObject(lineKey, kRangeMax, _))
@@ -1364,7 +1364,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             R"JSON({
                 "binary": true,
                 "expand": true,

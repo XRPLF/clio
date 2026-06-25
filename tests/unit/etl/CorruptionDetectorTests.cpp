@@ -14,7 +14,7 @@ struct CorruptionDetectorTest : WithPrometheus {};
 
 TEST_F(CorruptionDetectorTest, DisableCacheOnCorruption)
 {
-    using namespace ripple;
+    using namespace xrpl;
     auto state = etl::SystemState{};
     auto cache = MockLedgerCache{};
     auto detector = etl::CorruptionDetector{state, cache};

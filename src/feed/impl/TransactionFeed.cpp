@@ -18,6 +18,7 @@
 #include <xrpl/json/json_value.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/NFTSyntheticSerializer.h>
@@ -68,7 +69,7 @@ TransactionFeed::sub(SubscriberSharedPtr const& subscriber)
 }
 
 void
-TransactionFeed::sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+TransactionFeed::sub(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     auto const added = accountSignal_.connectTrackableSlot(
         subscriber, account, TransactionSlot(*this, subscriber)
@@ -95,10 +96,7 @@ TransactionFeed::subProposed(SubscriberSharedPtr const& subscriber)
 }
 
 void
-TransactionFeed::subProposed(
-    ripple::AccountID const& account,
-    SubscriberSharedPtr const& subscriber
-)
+TransactionFeed::subProposed(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     auto const added = accountProposedSignal_.connectTrackableSlot(
         subscriber, account, TransactionSlot(*this, subscriber)
@@ -111,7 +109,7 @@ TransactionFeed::subProposed(
 }
 
 void
-TransactionFeed::sub(ripple::Book const& book, SubscriberSharedPtr const& subscriber)
+TransactionFeed::sub(xrpl::Book const& book, SubscriberSharedPtr const& subscriber)
 {
     auto const added =
         bookSignal_.connectTrackableSlot(subscriber, book, TransactionSlot(*this, subscriber));
@@ -131,7 +129,7 @@ TransactionFeed::unsub(SubscriberSharedPtr const& subscriber)
 }
 
 void
-TransactionFeed::unsub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+TransactionFeed::unsub(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     unsubInternal(account, subscriber.get());
 }
@@ -144,7 +142,7 @@ TransactionFeed::unsubProposed(SubscriberSharedPtr const& subscriber)
 
 void
 TransactionFeed::unsubProposed(
-    ripple::AccountID const& account,
+    xrpl::AccountID const& account,
     SubscriberSharedPtr const& subscriber
 )
 {
@@ -152,7 +150,7 @@ TransactionFeed::unsubProposed(
 }
 
 void
-TransactionFeed::unsub(ripple::Book const& book, SubscriberSharedPtr const& subscriber)
+TransactionFeed::unsub(xrpl::Book const& book, SubscriberSharedPtr const& subscriber)
 {
     unsubInternal(book, subscriber.get());
 }
@@ -178,7 +176,7 @@ TransactionFeed::bookSubCount() const
 void
 TransactionFeed::pub(
     data::TransactionAndMetadata const& txMeta,
-    ripple::LedgerHeader const& lgrInfo,
+    xrpl::LedgerHeader const& lgrInfo,
     std::shared_ptr<data::BackendInterface const> const& backend,
     std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
     uint32_t const networkID
@@ -186,12 +184,12 @@ TransactionFeed::pub(
 {
     auto [tx, meta] = rpc::deserializeTxPlusMeta(txMeta, lgrInfo.seq);
 
-    std::optional<ripple::STAmount> ownerFunds;
+    std::optional<xrpl::STAmount> ownerFunds;
 
-    if (tx->getTxnType() == ripple::ttOFFER_CREATE) {
-        auto const account = tx->getAccountID(ripple::sfAccount);
-        auto const amount = tx->getFieldAmount(ripple::sfTakerGets);
-        if (account != amount.issue().account) {
+    if (tx->getTxnType() == xrpl::ttOFFER_CREATE) {
+        auto const account = tx->getAccountID(xrpl::sfAccount);
+        auto const amount = tx->getFieldAmount(xrpl::sfTakerGets);
+        if (account != amount.get<xrpl::Issue>().account) {
             auto fetchFundsSynchronous = [&]() {
                 data::synchronous([&](boost::asio::yield_context yield) {
                     ownerFunds = rpc::accountFunds(
@@ -215,8 +213,8 @@ TransactionFeed::pub(
         rpc::insertDeliverMaxAlias(txnPubobj, version);
         rpc::insertMPTIssuanceID(txnPubobj, tx, metaPubobj, meta);
 
-        Json::Value nftJson;
-        ripple::RPC::insertNFTSyntheticInJson(nftJson, tx, *meta);
+        json::Value nftJson;
+        xrpl::RPC::insertNFTSyntheticInJson(nftJson, tx, *meta);
         auto const nftBoostJson = rpc::toBoostJson(nftJson).as_object();
         if (nftBoostJson.contains(JS(meta)) && nftBoostJson.at(JS(meta)).is_object()) {
             auto& metaObjInPub = pubObj.at(JS(meta)).as_object();
@@ -240,10 +238,10 @@ TransactionFeed::pub(
         pubObj[JS(type)] = "transaction";
         pubObj[JS(validated)] = true;
         pubObj[JS(status)] = "closed";
-        pubObj[JS(close_time_iso)] = ripple::to_string_iso(lgrInfo.closeTime);
+        pubObj[JS(close_time_iso)] = xrpl::toStringIso(lgrInfo.closeTime);
 
         pubObj[JS(ledger_index)] = lgrInfo.seq;
-        pubObj[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+        pubObj[JS(ledger_hash)] = xrpl::strHex(lgrInfo.hash);
         if (version >= 2u) {
             if (pubObj[txKey].as_object().contains(JS(hash))) {
                 pubObj[JS(hash)] = pubObj[txKey].as_object()[JS(hash)];
@@ -255,7 +253,7 @@ TransactionFeed::pub(
         pubObj[JS(engine_result_code)] = meta->getResult();
         std::string token;
         std::string human;
-        ripple::transResultInfo(meta->getResultTER(), token, human);
+        xrpl::transResultInfo(meta->getResultTER(), token, human);
         pubObj[JS(engine_result)] = token;
         pubObj[JS(engine_result_message)] = human;
 
@@ -270,36 +268,36 @@ TransactionFeed::pub(
     );
 
     auto const affectedAccountsFlat = meta->getAffectedAccounts();
-    auto affectedAccounts = std::unordered_set<ripple::AccountID>(
+    auto affectedAccounts = std::unordered_set<xrpl::AccountID>(
         affectedAccountsFlat.cbegin(), affectedAccountsFlat.cend()
     );
 
-    std::unordered_set<ripple::Book> affectedBooks;
+    std::unordered_set<xrpl::Book> affectedBooks;
 
     for (auto const& node : meta->getNodes()) {
-        if (node.getFieldU16(ripple::sfLedgerEntryType) == ripple::ltOFFER) {
-            ripple::SField const* field = nullptr;
+        if (node.getFieldU16(xrpl::sfLedgerEntryType) == xrpl::ltOFFER) {
+            xrpl::SField const* field = nullptr;
 
             // We need a field that contains the TakerGets and TakerPays
             // parameters.
-            if (node.getFName() == ripple::sfModifiedNode) {
-                field = &ripple::sfPreviousFields;
-            } else if (node.getFName() == ripple::sfCreatedNode) {
-                field = &ripple::sfNewFields;
-            } else if (node.getFName() == ripple::sfDeletedNode) {
-                field = &ripple::sfFinalFields;
+            if (node.getFName() == xrpl::sfModifiedNode) {
+                field = &xrpl::sfPreviousFields;
+            } else if (node.getFName() == xrpl::sfCreatedNode) {
+                field = &xrpl::sfNewFields;
+            } else if (node.getFName() == xrpl::sfDeletedNode) {
+                field = &xrpl::sfFinalFields;
             }
 
             if (field != nullptr) {
-                auto const data = dynamic_cast<ripple::STObject const*>(node.peekAtPField(*field));
+                auto const data = dynamic_cast<xrpl::STObject const*>(node.peekAtPField(*field));
 
-                if ((data != nullptr) && data->isFieldPresent(ripple::sfTakerPays) &&
-                    data->isFieldPresent(ripple::sfTakerGets)) {
+                if ((data != nullptr) && data->isFieldPresent(xrpl::sfTakerPays) &&
+                    data->isFieldPresent(xrpl::sfTakerGets)) {
                     // determine the OrderBook
-                    ripple::Book const book{
-                        data->getFieldAmount(ripple::sfTakerGets).issue(),
-                        data->getFieldAmount(ripple::sfTakerPays).issue(),
-                        (*data)[~ripple::sfDomainID]
+                    xrpl::Book const book{
+                        data->getFieldAmount(xrpl::sfTakerGets).get<xrpl::Issue>(),
+                        data->getFieldAmount(xrpl::sfTakerPays).get<xrpl::Issue>(),
+                        (*data)[~xrpl::sfDomainID]
                     };
                     if (!affectedBooks.contains(book)) {
                         affectedBooks.insert(book);
@@ -345,7 +343,7 @@ TransactionFeed::unsubInternal(SubscriberPtr subscriber)
 }
 
 void
-TransactionFeed::unsubInternal(ripple::AccountID const& account, SubscriberPtr subscriber)
+TransactionFeed::unsubInternal(xrpl::AccountID const& account, SubscriberPtr subscriber)
 {
     if (accountSignal_.disconnect(subscriber, account)) {
         LOG(logger_.info()) << subscriber->tag() << "Unsubscribed account " << account;
@@ -360,13 +358,13 @@ TransactionFeed::unsubProposedInternal(SubscriberPtr subscriber)
 }
 
 void
-TransactionFeed::unsubProposedInternal(ripple::AccountID const& account, SubscriberPtr subscriber)
+TransactionFeed::unsubProposedInternal(xrpl::AccountID const& account, SubscriberPtr subscriber)
 {
     accountProposedSignal_.disconnect(subscriber, account);
 }
 
 void
-TransactionFeed::unsubInternal(ripple::Book const& book, SubscriberPtr subscriber)
+TransactionFeed::unsubInternal(xrpl::Book const& book, SubscriberPtr subscriber)
 {
     if (bookSignal_.disconnect(subscriber, book)) {
         LOG(logger_.info()) << subscriber->tag() << "Unsubscribed book " << book;

@@ -30,7 +30,7 @@ struct MockLedgerCache : data::LedgerCacheInterface {
     MOCK_METHOD(
         std::optional<data::Blob>,
         get,
-        (ripple::uint256 const& a, uint32_t b),
+        (xrpl::uint256 const& a, uint32_t b),
         (const, override)
     );
 
@@ -39,21 +39,21 @@ struct MockLedgerCache : data::LedgerCacheInterface {
     MOCK_METHOD(
         std::optional<data::Blob>,
         getDeleted,
-        (ripple::uint256 const&, uint32_t),
+        (xrpl::uint256 const&, uint32_t),
         (const, override)
     );
 
     MOCK_METHOD(
         std::optional<data::LedgerObject>,
         getSuccessor,
-        (ripple::uint256 const& a, uint32_t b),
+        (xrpl::uint256 const& a, uint32_t b),
         (const, override)
     );
 
     MOCK_METHOD(
         std::optional<data::LedgerObject>,
         getPredecessor,
-        (ripple::uint256 const& a, uint32_t b),
+        (xrpl::uint256 const& a, uint32_t b),
         (const, override)
     );
 

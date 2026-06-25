@@ -110,12 +110,12 @@ struct ToNumber final {
 
         auto const strInt = boost::json::value_to<std::string>(value.as_object().at(key));
         if (strInt.contains('.'))
-            return Error{Status{RippledError::rpcINVALID_PARAMS}};  // maybe a float
+            return Error{Status{RippledError::RpcInvalidParams}};  // maybe a float
 
         try {
             value.as_object()[key] = std::stoi(strInt);
         } catch (std::exception& e) {
-            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+            return Error{Status{RippledError::RpcInvalidParams}};
         }
         return {};
     }

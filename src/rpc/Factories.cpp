@@ -83,7 +83,7 @@ makeHttpContext(
 
     if (command == "subscribe" || command == "unsubscribe") {
         return Error{
-            {RippledError::rpcBAD_SYNTAX,
+            {RippledError::RpcBadSyntax,
              "Subscribe and unsubscribe are only allowed for websocket."}
         };
     }

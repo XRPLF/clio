@@ -149,7 +149,7 @@ struct Result {
  * @brief A cursor object used to traverse nodes owned by an account.
  */
 struct AccountCursor {
-    ripple::uint256 index;
+    xrpl::uint256 index;
     std::uint32_t hint{};
 
     /**
@@ -160,7 +160,7 @@ struct AccountCursor {
     [[nodiscard]] std::string
     toString() const
     {
-        return ripple::strHex(index) + "," + std::to_string(hint);
+        return xrpl::strHex(index) + "," + std::to_string(hint);
     }
 
     /**

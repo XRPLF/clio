@@ -48,18 +48,18 @@ check(
 
 TEST(RPCErrorsTest, StatusAsBool)
 {
-    // Only rpcSUCCESS status should return false
-    EXPECT_FALSE(Status{RippledError::rpcSUCCESS});
+    // Only RpcSuccess status should return false
+    EXPECT_FALSE(Status{RippledError::RpcSuccess});
 
     // true should be returned for any error state, we just test a few
     CombinedError const errors[]{
-        RippledError::rpcINVALID_PARAMS,
-        RippledError::rpcUNKNOWN_COMMAND,
-        RippledError::rpcTOO_BUSY,
-        RippledError::rpcNO_NETWORK,
-        RippledError::rpcWRONG_NETWORK,
-        RippledError::rpcACT_MALFORMED,
-        RippledError::rpcBAD_MARKET,
+        RippledError::RpcInvalidParams,
+        RippledError::RpcUnknownCommand,
+        RippledError::RpcTooBusy,
+        RippledError::RpcNoNetwork,
+        RippledError::RpcWrongNetwork,
+        RippledError::RpcActMalformed,
+        RippledError::RpcBadMarket,
         ClioError::RpcMalformedCurrency,
     };
 
@@ -69,21 +69,21 @@ TEST(RPCErrorsTest, StatusAsBool)
 
 TEST(RPCErrorsTest, StatusEquals)
 {
-    EXPECT_EQ(Status{RippledError::rpcUNKNOWN}, Status{RippledError::rpcUNKNOWN});
-    EXPECT_NE(Status{RippledError::rpcUNKNOWN}, Status{RippledError::rpcINTERNAL});
+    EXPECT_EQ(Status{RippledError::RpcUnknown}, Status{RippledError::RpcUnknown});
+    EXPECT_NE(Status{RippledError::RpcUnknown}, Status{RippledError::RpcInternal});
 }
 
 TEST(RPCErrorsTest, SuccessToJSON)
 {
-    auto const status = Status{RippledError::rpcSUCCESS};
-    check(makeError(status), "unknown", RippledError::rpcSUCCESS, "An unknown error code.");
+    auto const status = Status{RippledError::RpcSuccess};
+    check(makeError(status), "unknown", RippledError::RpcSuccess, "An unknown error code.");
 }
 
 TEST(RPCErrorsTest, RippledErrorToJSON)
 {
-    auto const status = Status{RippledError::rpcINVALID_PARAMS};
+    auto const status = Status{RippledError::RpcInvalidParams};
     check(
-        makeError(status), "invalidParams", RippledError::rpcINVALID_PARAMS, "Invalid parameters."
+        makeError(status), "invalidParams", RippledError::RpcInvalidParams, "Invalid parameters."
     );
 }
 
@@ -95,14 +95,14 @@ TEST(RPCErrorsTest, RippledErrorFromStringToJSON)
 
 TEST(RPCErrorsTest, RippledErrorToJSONCustomMessage)
 {
-    auto const status = Status{RippledError::rpcINVALID_PARAMS, "custom"};
-    check(makeError(status), "invalidParams", RippledError::rpcINVALID_PARAMS, "custom");
+    auto const status = Status{RippledError::RpcInvalidParams, "custom"};
+    check(makeError(status), "invalidParams", RippledError::RpcInvalidParams, "custom");
 }
 
 TEST(RPCErrorsTest, RippledErrorToJSONCustomStrCodeAndMessage)
 {
-    auto const status = Status{RippledError::rpcINVALID_PARAMS, "customCode", "customMessage"};
-    check(makeError(status), "customCode", RippledError::rpcINVALID_PARAMS, "customMessage");
+    auto const status = Status{RippledError::RpcInvalidParams, "customCode", "customMessage"};
+    check(makeError(status), "customCode", RippledError::RpcInvalidParams, "customMessage");
 }
 
 TEST(RPCErrorsTest, ClioErrorToJSON)
@@ -223,7 +223,7 @@ INSTANTIATE_TEST_SUITE_P(
         },
         StatusStreamTestBundle{
             .testName = "StatusWithRippledError",
-            .status = Status{RippledError::rpcSUCCESS},
+            .status = Status{RippledError::RpcSuccess},
             .expectedOutput = "Code: 0, Message: An unknown error code."
         },
         StatusStreamTestBundle{
@@ -244,7 +244,7 @@ INSTANTIATE_TEST_SUITE_P(
         },
         StatusStreamTestBundle{
             .testName = "StatusWithRippledErrorAndMessage",
-            .status = Status{RippledError::rpcSUCCESS, "test message."},
+            .status = Status{RippledError::RpcSuccess, "test message."},
             .expectedOutput = "Code: 0, Message: test message."
         },
         StatusStreamTestBundle{

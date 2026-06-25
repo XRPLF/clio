@@ -1,4 +1,4 @@
-find_package(OpenSSL 1.1.1 REQUIRED CONFIG)
+find_package(OpenSSL 3 REQUIRED CONFIG)
 
 set_target_properties(
     OpenSSL::SSL

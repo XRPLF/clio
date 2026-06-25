@@ -213,7 +213,7 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaHash)
 {
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, testing::_))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, testing::_))
         .WillOnce(testing::Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
@@ -391,7 +391,7 @@ TEST_F(RPCFeatureHandlerTest, BadFeaturePath)
 TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByNameReturnsSupportedFalse)
 {
     auto const ownerPaysFeeKey =
-        ripple::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
+        xrpl::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
     auto const all = std::vector<data::Amendment>{{
         .name = Amendments::OwnerPaysFee,
         .feature = data::Amendment::getAmendmentId(Amendments::OwnerPaysFee),
@@ -439,7 +439,7 @@ TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByNameReturnsSupported
 TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByHashReturnsSupportedFalse)
 {
     auto const ownerPaysFeeKey =
-        ripple::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
+        xrpl::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
     auto const all = std::vector<data::Amendment>{{
         .name = Amendments::OwnerPaysFee,
         .feature = data::Amendment::getAmendmentId(Amendments::OwnerPaysFee),

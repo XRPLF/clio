@@ -76,6 +76,6 @@ TEST(TimeUtilTests, SystemTpFromLedgerCloseTime)
 {
     using namespace std::chrono;
 
-    auto const tp = util::systemTpFromLedgerCloseTime(ripple::NetClock::time_point{seconds{0}});
-    EXPECT_EQ(tp.time_since_epoch(), ripple::epoch_offset);
+    auto const tp = util::systemTpFromLedgerCloseTime(xrpl::NetClock::time_point{seconds{0}});
+    EXPECT_EQ(tp.time_since_epoch(), xrpl::kEpochOffset);
 }

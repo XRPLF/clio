@@ -129,7 +129,7 @@ static constexpr auto kDefaultObjKey =
 [[maybe_unused, nodiscard]] std::pair<std::string, std::string>
 createTxAndMetaBlobs(std::string metaStr = kDefaultTxnMeta, std::string txnStr = kDefaultTxnHex);
 
-[[maybe_unused, nodiscard]] std::pair<ripple::STTx, ripple::TxMeta>
+[[maybe_unused, nodiscard]] std::pair<xrpl::STTx, xrpl::TxMeta>
 createTxAndMeta(
     std::string hashStr = kDefaultHash,
     std::string metaStr = kDefaultTxnMeta,
@@ -138,7 +138,7 @@ createTxAndMeta(
 
 [[maybe_unused, nodiscard]] etl::model::Transaction
 createTransaction(
-    ripple::TxType type,
+    xrpl::TxType type,
     std::string hashStr = kDefaultHash,
     std::string metaStr = kDefaultTxnMeta,
     std::string txnStr = kDefaultTxnHex

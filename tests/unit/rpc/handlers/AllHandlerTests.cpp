@@ -196,9 +196,9 @@ BookOffersHandler::Input
 createInput<BookOffersHandler>()
 {
     BookOffersHandler::Input input{};
-    input.paysCurrency = ripple::xrpCurrency();
-    input.getsCurrency = ripple::Currency(kCurrency);
-    input.paysID = ripple::xrpAccount();
+    input.paysCurrency = xrpl::xrpCurrency();
+    input.getsCurrency = xrpl::Currency(kCurrency);
+    input.paysID = xrpl::xrpAccount();
     input.getsID = getAccountIdWithString(kAccount);
 
     return input;
@@ -247,7 +247,7 @@ createInput<SubscribeHandler>()
     SubscribeHandler::Input input{};
 
     input.books = std::vector<SubscribeHandler::OrderBook>{SubscribeHandler::OrderBook{
-        .book = ripple::Book{}, .taker = kAccount, .snapshot = true, .both = true
+        .book = xrpl::Book{}, .taker = kAccount, .snapshot = true, .both = true
     }};
     return input;
 }

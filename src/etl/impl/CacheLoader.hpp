@@ -105,7 +105,7 @@ private:
                 }
 
                 auto [start, end] = *cursor;
-                LOG(log_.debug()) << "Starting a cursor: " << ripple::strHex(start);
+                LOG(log_.debug()) << "Starting a cursor: " << xrpl::strHex(start);
 
                 while (not token.isStopRequested() and not cache_.get().isDisabled()) {
                     auto res =

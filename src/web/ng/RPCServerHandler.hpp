@@ -340,7 +340,7 @@ private:
     static Response
     makeSlowDownResponse(Request const& request, std::optional<boost::json::value> requestJson)
     {
-        auto error = rpc::makeError(rpc::RippledError::rpcSLOW_DOWN);
+        auto error = rpc::makeError(rpc::RippledError::RpcSlowDown);
 
         if (not request.isHttp()) {
             try {

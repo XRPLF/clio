@@ -90,7 +90,7 @@ struct MockLoader : etl::LoaderInterface {
     using ExpectedType = std::expected<void, etl::LoaderError>;
     MOCK_METHOD(ExpectedType, load, (etl::model::LedgerData const&), (override));
     MOCK_METHOD(
-        std::optional<ripple::LedgerHeader>,
+        std::optional<xrpl::LedgerHeader>,
         loadInitialLedger,
         (etl::model::LedgerData const&),
         (override)
@@ -316,7 +316,7 @@ TEST_F(ETLServiceTests, RunWithEmptyDatabase)
     EXPECT_CALL(*extractor_, extractLedgerOnly(kSeq)).WillOnce(testing::Return(ledgerData));
     EXPECT_CALL(*balancer_, loadInitialLedger(kSeq, testing::_, testing::_))
         .WillOnce(testing::Return(std::vector<std::string>{}));
-    EXPECT_CALL(*loader_, loadInitialLedger).WillOnce(testing::Return(ripple::LedgerHeader{}));
+    EXPECT_CALL(*loader_, loadInitialLedger).WillOnce(testing::Return(xrpl::LedgerHeader{}));
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
         .Times(1)
         .InSequence(s)

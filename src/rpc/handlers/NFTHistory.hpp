@@ -118,7 +118,7 @@ public:
             {JS(marker),
              meta::WithCustomError{
                  validation::Type<boost::json::object>{},
-                 Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}
+                 Status{RippledError::RpcInvalidParams, "invalidMarker"}
              },
              meta::Section{
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},

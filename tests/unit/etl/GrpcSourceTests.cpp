@@ -57,8 +57,8 @@ struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXr
     }
 
     class KeyStore {
-        std::vector<ripple::uint256> keys_;
-        using Store = std::map<std::string, std::queue<ripple::uint256>, std::greater<>>;
+        std::vector<xrpl::uint256> keys_;
+        using Store = std::map<std::string, std::queue<xrpl::uint256>, std::greater<>>;
 
         util::Mutex<Store> store_;
 
@@ -71,7 +71,7 @@ struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXr
             auto store = store_.lock();
             for (auto mi = 0uz; mi < markers.size(); ++mi) {
                 for (auto i = 0uz; i < totalPerMarker; ++i) {
-                    auto const mapKey = ripple::strHex(markers.at(mi)).substr(0, 2);
+                    auto const mapKey = xrpl::strHex(markers.at(mi)).substr(0, 2);
                     store->operator[](mapKey).push(keys_.at((mi * totalPerMarker) + i));
                 }
             }
@@ -82,7 +82,7 @@ struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXr
         {
             auto store = store_.lock<std::scoped_lock>();
 
-            auto const mapKey = ripple::strHex(marker).substr(0, 2);
+            auto const mapKey = xrpl::strHex(marker).substr(0, 2);
             auto it = store->lower_bound(mapKey);
             ASSERT(it != store->end(), "Lower bound not found for '{}'", mapKey);
 
@@ -101,7 +101,7 @@ struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXr
         {
             auto store = store_.lock<std::scoped_lock>();
 
-            auto const mapKey = ripple::strHex(marker).substr(0, 2);
+            auto const mapKey = xrpl::strHex(marker).substr(0, 2);
             auto it = store->lower_bound(mapKey);
             ASSERT(it != store->end(), "Lower bound not found for '{}'", mapKey);
 
@@ -179,7 +179,7 @@ TEST_F(GrpcSourceLoadInitialLedgerTests, GetLedgerDataNotFound)
 
 TEST_F(GrpcSourceLoadInitialLedgerTests, ObserverCalledCorrectly)
 {
-    auto const key = ripple::uint256{4};
+    auto const key = xrpl::uint256{4};
     auto const keyStr = uint256ToString(key);
     auto const object = createTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
     auto const objectData = object.getSerializer().peekData();

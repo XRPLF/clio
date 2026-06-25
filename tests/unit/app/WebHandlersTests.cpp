@@ -20,7 +20,7 @@
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
-#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/string_body_fwd.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
@@ -212,7 +212,7 @@ TEST_F(RequestHandlerTest, RpcHandlerThrows)
 
         auto const body = boost::json::parse(httpResponse.body()).as_object();
         EXPECT_EQ(body.at("error").as_string(), "internal");
-        EXPECT_EQ(body.at("error_code").as_int64(), rpc::RippledError::rpcINTERNAL);
+        EXPECT_EQ(body.at("error_code").as_int64(), rpc::RippledError::RpcInternal);
         EXPECT_EQ(body.at("status").as_string(), "error");
     });
 }

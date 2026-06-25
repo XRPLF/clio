@@ -77,8 +77,8 @@ public:
     struct ValidatedLedgerSection {
         uint32_t age = 0;
         std::string hash;
-        ripple::LedgerIndex seq = {};
-        std::optional<ripple::Fees> fees = std::nullopt;
+        xrpl::LedgerIndex seq = {};
+        std::optional<xrpl::Fees> fees = std::nullopt;
     };
 
     /**
@@ -88,7 +88,7 @@ public:
         std::size_t size = 0;
         bool isEnabled = false;
         bool isFull = false;
-        ripple::LedgerIndex latestLedgerSeq = {};
+        xrpl::LedgerIndex latestLedgerSeq = {};
         float objectHitRate = 1.0;
         float successorHitRate = 1.0;
     };
@@ -103,7 +103,7 @@ public:
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::chrono::seconds uptime = {};
         std::string clioVersion = util::build::getClioVersionString();
-        std::string xrplVersion = ripple::BuildInfo::getVersionString();
+        std::string xrplVersion = xrpl::BuildInfo::getVersionString();
         std::optional<boost::json::object> rippledInfo = std::nullopt;
         ValidatedLedgerSection validatedLedger = {};
         CacheSection cache = {};
@@ -182,11 +182,11 @@ public:
             ctx.yield
         );
         if (not lgrInfo.has_value())
-            return Error{Status{RippledError::rpcINTERNAL}};
+            return Error{Status{RippledError::RpcInternal}};
 
         auto const fees = backend_->fetchFees(lgrInfo->seq, ctx.yield);
         if (not fees.has_value())
-            return Error{Status{RippledError::rpcINTERNAL}};
+            return Error{Status{RippledError::RpcInternal}};
 
         auto output = Output{};
         auto const sinceEpoch =
@@ -222,7 +222,7 @@ public:
         }
 
         output.info.validatedLedger.age = age < 0 ? 0 : age;
-        output.info.validatedLedger.hash = ripple::strHex(lgrInfo->hash);
+        output.info.validatedLedger.hash = xrpl::strHex(lgrInfo->hash);
         output.info.validatedLedger.seq = lgrInfo->seq;
         output.info.validatedLedger.fees = fees;
         output.info.cache.size = backend_->cache().size();
@@ -254,7 +254,7 @@ private:
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, InfoSection const& info)
     {
         using boost::json::value_from;
-        using ripple::to_string;
+        using xrpl::to_string;
 
         jv = {
             {JS(complete_ledgers), info.completeLedgers},

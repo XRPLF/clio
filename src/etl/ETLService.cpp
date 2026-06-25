@@ -298,7 +298,7 @@ ETLService::loadInitialLedgerIfNeeded()
 
             auto [ledger, timeDiff] = ::util::timed<std::chrono::duration<double>>([this, seq]() {
                 return extractor_->extractLedgerOnly(seq).and_then(
-                    [this, seq](auto&& data) -> std::optional<ripple::LedgerHeader> {
+                    [this, seq](auto&& data) -> std::optional<xrpl::LedgerHeader> {
                         // TODO: loadInitialLedger in balancer should be called fetchEdgeKeys or
                         // similar
                         auto res = balancer_->loadInitialLedger(seq, *initialLoadObserver_);

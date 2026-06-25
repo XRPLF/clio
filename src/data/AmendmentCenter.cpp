@@ -40,7 +40,7 @@ supportedAmendments()
 bool
 lookupAmendment(
     auto const& allAmendments,
-    std::vector<ripple::uint256> const& ledgerAmendments,
+    std::vector<xrpl::uint256> const& ledgerAmendments,
     std::string_view name
 )
 {
@@ -80,7 +80,7 @@ operator std::string_view() const
 }
 
 AmendmentKey::
-operator ripple::uint256() const
+operator xrpl::uint256() const
 {
     return Amendment::getAmendmentId(name);
 }
@@ -92,14 +92,14 @@ AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& 
     namespace vs = std::views;
 
     rg::copy(
-        ripple::allAmendments() | vs::transform([&](auto const& p) {
+        xrpl::allAmendments() | vs::transform([&](auto const& p) {
             auto const& [name, support] = p;
             return Amendment{
                 .name = name,
                 .feature = Amendment::getAmendmentId(name),
-                .isSupportedByXRPL = support != ripple::AmendmentSupport::Unsupported,
+                .isSupportedByXRPL = support != xrpl::AmendmentSupport::Unsupported,
                 .isSupportedByClio = rg::contains(supportedAmendments(), name),
-                .isRetired = support == ripple::AmendmentSupport::Retired
+                .isRetired = support == xrpl::AmendmentSupport::Retired
             };
         }),
         std::back_inserter(all_)
@@ -207,26 +207,25 @@ AmendmentCenter::operator[](AmendmentKey const& key) const
     return getAmendment(key);
 }
 
-ripple::uint256
+xrpl::uint256
 Amendment::getAmendmentId(std::string_view name)
 {
-    return ripple::sha512Half(ripple::Slice(name.data(), name.size()));
+    return xrpl::sha512Half(xrpl::Slice(name.data(), name.size()));
 }
 
-std::optional<std::vector<ripple::uint256>>
+std::optional<std::vector<xrpl::uint256>>
 AmendmentCenter::fetchAmendmentsList(boost::asio::yield_context yield, uint32_t seq) const
 {
     // the amendments should always be present on the ledger
-    auto const amendments =
-        backend_->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
+    auto const amendments = backend_->fetchLedgerObject(xrpl::keylet::amendments().key, seq, yield);
     if (not amendments.has_value())
         throw std::runtime_error("Amendments ledger object must be present in the database");
 
-    ripple::SLE const amendmentsSLE{
-        ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key
+    xrpl::SLE const amendmentsSLE{
+        xrpl::SerialIter{amendments->data(), amendments->size()}, xrpl::keylet::amendments().key
     };
 
-    return amendmentsSLE[~ripple::sfAmendments];
+    return amendmentsSLE[~xrpl::sfAmendments];
 }
 
 }  // namespace data

@@ -134,6 +134,11 @@ struct Amendments {
     REGISTER(fixIncludeKeyletFields);
     REGISTER(fixTokenEscrowV1);
     REGISTER(LendingProtocol);
+    REGISTER(MPTokensV2);
+    REGISTER(PermissionDelegationV1_1);
+    REGISTER(fixBatchInnerSigs);
+    REGISTER(fixCleanup3_1_3);
+    REGISTER(fixCleanup3_2_0);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);
@@ -158,8 +163,6 @@ struct Amendments {
     REGISTER(fix1512);
     REGISTER(fix1523);
     REGISTER(fix1528);
-    REGISTER(fixBatchInnerSigs);
-    REGISTER(fixCleanup3_1_3);
     // NOLINTEND(readability-identifier-naming)
     /** @endcond */
 };
@@ -263,7 +266,7 @@ public:
     operator[](AmendmentKey const& key) const final;
 
 private:
-    [[nodiscard]] std::optional<std::vector<ripple::uint256>>
+    [[nodiscard]] std::optional<std::vector<xrpl::uint256>>
     fetchAmendmentsList(boost::asio::yield_context yield, uint32_t seq) const;
 };
 

@@ -23,7 +23,6 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
@@ -408,7 +407,7 @@ TEST_P(AccountTxParameterTest, CheckParams)
 {
     auto const& testBundle = GetParam();
 
-    auto const req = json::parse(testBundle.testJson);
+    auto const req = boost::json::parse(testBundle.testJson);
     if (testBundle.expectedError.has_value()) {
         ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
 
@@ -440,21 +439,19 @@ genTransactions(uint32_t seq1, uint32_t seq2)
 {
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kAccount, kAccount2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = seq1;
-    ripple::STObject const metaObj =
-        createPaymentTransactionMetaObject(kAccount, kAccount2, 22, 23);
+    xrpl::STObject const metaObj = createPaymentTransactionMetaObject(kAccount, kAccount2, 22, 23);
     trans1.metadata = metaObj.getSerializer().peekData();
     trans1.date = 1;
     transactions.push_back(trans1);
 
     auto trans2 = TransactionAndMetadata();
-    ripple::STObject const obj2 = createPaymentTransactionObject(kAccount, kAccount2, 1, 1, 32);
+    xrpl::STObject const obj2 = createPaymentTransactionObject(kAccount, kAccount2, 1, 1, 32);
     trans2.transaction = obj.getSerializer().peekData();
     trans2.ledgerSequence = seq2;
-    ripple::STObject const metaObj2 =
-        createPaymentTransactionMetaObject(kAccount, kAccount2, 22, 23);
+    xrpl::STObject const metaObj2 = createPaymentTransactionMetaObject(kAccount, kAccount2, 22, 23);
     trans2.metadata = metaObj2.getSerializer().peekData();
     trans2.date = 2;
     transactions.push_back(trans2);
@@ -512,7 +509,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -532,7 +529,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMaxSeq - 1);
         EXPECT_EQ(
             output.result->at("marker").as_object(),
-            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
         );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
@@ -560,7 +557,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -580,7 +577,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMaxSeq - 1);
         EXPECT_EQ(
             output.result->at("marker").as_object(),
-            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
         );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
@@ -608,7 +605,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -628,7 +625,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMaxSeq);
         EXPECT_EQ(
             output.result->at("marker").as_object(),
-            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
         );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
@@ -656,7 +653,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -676,7 +673,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMaxSeq);
         EXPECT_EQ(
             output.result->at("marker").as_object(),
-            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
         );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
@@ -702,7 +699,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -722,7 +719,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMaxSeq);
         EXPECT_EQ(
             output.result->at("marker").as_object(),
-            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
         );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
@@ -764,7 +761,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -784,7 +781,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMaxSeq);
         EXPECT_EQ(
             output.result->at("marker").as_object(),
-            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
         );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
@@ -828,7 +825,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -851,7 +848,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
         EXPECT_EQ(output.result->at("limit").as_uint64(), 2);
         EXPECT_EQ(
             output.result->at("marker").as_object(),
-            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
         );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
     });
@@ -870,7 +867,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitIsCapped)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -907,7 +904,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAllowedUpToCap)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -956,7 +953,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -983,7 +980,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -1007,7 +1004,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -1045,14 +1042,14 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq - 1);
     EXPECT_CALL(*backend_, fetchLedgerByHash);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLedgerHash}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
 
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -1098,7 +1095,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -1139,7 +1136,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -1184,7 +1181,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -1206,7 +1203,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
         EXPECT_FALSE(output.result->as_object().contains("limit"));
         EXPECT_EQ(
             output.result->at("marker").as_object(),
-            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
         );
     });
 }
@@ -1408,7 +1405,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -1424,7 +1421,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
         );
         auto const output = handler.process(kInput, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(out));
+        EXPECT_EQ(*output.result, boost::json::parse(out));
     });
 }
 
@@ -1637,7 +1634,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -1653,7 +1650,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
         );
         auto const output = handler.process(kInput, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(out));
+        EXPECT_EQ(*output.result, boost::json::parse(out));
     });
 }
 
@@ -1731,7 +1728,7 @@ TEST_F(RPCAccountTxHandlerTest, MPTTxs_API_v2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kInput = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
@@ -1745,7 +1742,7 @@ TEST_F(RPCAccountTxHandlerTest, MPTTxs_API_v2)
         );
         auto const output = handler.process(kInput, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(out));
+        EXPECT_EQ(*output.result, boost::json::parse(out));
     });
 }
 
@@ -2261,13 +2258,13 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(testBundle.testJson);
+        auto const req = boost::json::parse(testBundle.testJson);
         auto const output =
             handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
         EXPECT_TRUE(output);
 
         auto const transactions = output.result->at("transactions").as_array();
-        auto const jsonObject = json::parse(testBundle.result);
+        auto const jsonObject = boost::json::parse(testBundle.result);
         EXPECT_EQ(jsonObject, transactions);
     });
 }

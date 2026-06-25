@@ -38,10 +38,10 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
 {
     // marker must be int if outOfOrder is true
     if (input.outOfOrder && input.marker)
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "outOfOrderMarkerNotInt"}};
+        return Error{Status{RippledError::RpcInvalidParams, "outOfOrderMarkerNotInt"}};
 
     if (!input.outOfOrder && input.diffMarker)
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "markerNotString"}};
+        return Error{Status{RippledError::RpcInvalidParams, "markerNotString"}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "LedgerData's ledger range must be available");
@@ -67,10 +67,10 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
     } else {
         if (input.marker &&
             !sharedPtrBackend_->fetchLedgerObject(*(input.marker), lgrInfo.seq, ctx.yield))
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "markerDoesNotExist"}};
+            return Error{Status{RippledError::RpcInvalidParams, "markerDoesNotExist"}};
     }
 
-    output.ledgerHash = ripple::strHex(lgrInfo.hash);
+    output.ledgerHash = xrpl::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
 
     auto const start = std::chrono::system_clock::now();
@@ -79,7 +79,7 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
     if (input.diffMarker) {
         // keep the same logic as previous implementation
         auto diff = sharedPtrBackend_->fetchLedgerDiff(*(input.diffMarker), ctx.yield);
-        std::vector<ripple::uint256> keys;
+        std::vector<xrpl::uint256> keys;
 
         for (auto& [key, object] : diff) {
             if (object.empty())
@@ -109,7 +109,7 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
         results = std::move(page.objects);
 
         if (page.cursor) {
-            output.marker = ripple::strHex(*(page.cursor));
+            output.marker = xrpl::strHex(*(page.cursor));
         } else if (input.outOfOrder) {
             output.diffMarker = range->maxSequence;  // NOLINT(bugprone-unchecked-optional-access)
         }
@@ -123,14 +123,14 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
     output.states.reserve(results.size());
 
     for (auto const& [key, object] : results) {
-        ripple::STLedgerEntry const sle{ripple::SerialIter{object.data(), object.size()}, key};
+        xrpl::STLedgerEntry const sle{xrpl::SerialIter{object.data(), object.size()}, key};
 
         // note the filter is after limit is applied, same as rippled
-        if (input.type == ripple::LedgerEntryType::ltANY || sle.getType() == input.type) {
+        if (input.type == xrpl::LedgerEntryType::ltANY || sle.getType() == input.type) {
             if (input.binary) {
                 boost::json::object entry;
-                entry[JS(data)] = ripple::serializeHex(sle);
-                entry[JS(index)] = ripple::to_string(sle.key());
+                entry[JS(data)] = xrpl::serializeHex(sle);
+                entry[JS(index)] = xrpl::to_string(sle.key());
                 output.states.push_back(std::move(entry));
             } else {
                 output.states.push_back(toJson(sle));
@@ -198,9 +198,8 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
 
     if (jsonObject.contains(JS(marker))) {
         if (jsonObject.at(JS(marker)).is_string()) {
-            input.marker = ripple::uint256{
-                boost::json::value_to<std::string>(jsonObject.at(JS(marker))).data()
-            };
+            input.marker =
+                xrpl::uint256{boost::json::value_to<std::string>(jsonObject.at(JS(marker))).data()};
         } else {
             input.diffMarker = util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)));
         }

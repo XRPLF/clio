@@ -35,7 +35,7 @@ struct BackendInterfaceTest : WithPrometheus, MockBackendTestNaggy, SyncAsioCont
 
 TEST_F(BackendInterfaceTest, FetchFeesSuccessPath)
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     // New fee setting (after XRPFees amendment)
     EXPECT_CALL(*backend_, doFetchLedgerObject(keylet::fees().key, kMaxSeq, _))
@@ -53,7 +53,7 @@ TEST_F(BackendInterfaceTest, FetchFeesSuccessPath)
 
 TEST_F(BackendInterfaceTest, FetchFeesLegacySuccessPath)
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     // Legacy fee setting (before XRPFees amendment)
     EXPECT_CALL(*backend_, doFetchLedgerObject(keylet::fees().key, kMaxSeq, _))
@@ -71,7 +71,7 @@ TEST_F(BackendInterfaceTest, FetchFeesLegacySuccessPath)
 
 TEST_F(BackendInterfaceTest, FetchLedgerPageSuccessPath)
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     auto state = etl::SystemState{};
     backend_->setCorruptionDetector(etl::CorruptionDetector{state, backend_->cache()});
@@ -93,7 +93,7 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageSuccessPath)
 
 TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     auto state = etl::SystemState{};
     backend_->setCorruptionDetector(etl::CorruptionDetector{state, backend_->cache()});
@@ -131,7 +131,7 @@ TEST_F(
     FetchLedgerPageWithoutCorruptionDetectorDoesNotDisableCacheOnMissingData
 )
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     EXPECT_FALSE(backend_->cache().isDisabled());
     EXPECT_CALL(*backend_, doFetchSuccessorKey(_, _, _))

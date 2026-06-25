@@ -12,16 +12,16 @@
 
 namespace util {
 
-ripple::LedgerEntryType
+xrpl::LedgerEntryType
 LedgerTypes::getLedgerEntryTypeFromStr(std::string const& entryName)
 {
     if (auto const result = getLedgerTypeAttributeFromStr(entryName); result.has_value()) {
         return result->get().type_;
     }
-    return ripple::ltANY;
+    return xrpl::ltANY;
 }
 
-ripple::LedgerEntryType
+xrpl::LedgerEntryType
 LedgerTypes::getAccountOwnedLedgerTypeFromStr(std::string const& entryName)
 {
     if (auto const result = getLedgerTypeAttributeFromStr(entryName); result.has_value() &&
@@ -29,7 +29,7 @@ LedgerTypes::getAccountOwnedLedgerTypeFromStr(std::string const& entryName)
         return result->get().type_;
     }
 
-    return ripple::ltANY;
+    return xrpl::ltANY;
 }
 
 std::optional<std::reference_wrapper<impl::LedgerTypeAttribute const>>

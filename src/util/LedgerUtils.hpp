@@ -32,7 +32,7 @@ class LedgerTypeAttribute {
         DeletionBlocker  // The ledger object is owned by account and it blocks deletion
     };
 
-    ripple::LedgerEntryType type_ = ripple::ltANY;
+    xrpl::LedgerEntryType type_ = xrpl::ltANY;
     char const* name_ = nullptr;
     char const* rpcName_ = nullptr;
     LedgerCategory category_ = LedgerCategory::Invalid;
@@ -40,7 +40,7 @@ class LedgerTypeAttribute {
     constexpr LedgerTypeAttribute(
         char const* name,
         char const* rpcName,
-        ripple::LedgerEntryType type,
+        xrpl::LedgerEntryType type,
         LedgerCategory category
     )
         : type_{type}, name_{name}, rpcName_{rpcName}, category_{category}
@@ -49,19 +49,19 @@ class LedgerTypeAttribute {
 
 public:
     static constexpr LedgerTypeAttribute
-    chainLedgerType(char const* name, char const* rpcName, ripple::LedgerEntryType type)
+    chainLedgerType(char const* name, char const* rpcName, xrpl::LedgerEntryType type)
     {
         return LedgerTypeAttribute(name, rpcName, type, LedgerCategory::Chain);
     }
 
     static constexpr LedgerTypeAttribute
-    accountOwnedLedgerType(char const* name, char const* rpcName, ripple::LedgerEntryType type)
+    accountOwnedLedgerType(char const* name, char const* rpcName, xrpl::LedgerEntryType type)
     {
         return LedgerTypeAttribute(name, rpcName, type, LedgerCategory::AccountOwned);
     }
 
     static constexpr LedgerTypeAttribute
-    deletionBlockerLedgerType(char const* name, char const* rpcName, ripple::LedgerEntryType type)
+    deletionBlockerLedgerType(char const* name, char const* rpcName, xrpl::LedgerEntryType type)
     {
         return LedgerTypeAttribute(name, rpcName, type, LedgerCategory::DeletionBlocker);
     }
@@ -82,80 +82,80 @@ class LedgerTypes {
         LedgerTypeAttribute::accountOwnedLedgerType(
             JS(AccountRoot),
             JS(account),
-            ripple::ltACCOUNT_ROOT
+            xrpl::ltACCOUNT_ROOT
         ),
-        LedgerTypeAttribute::chainLedgerType(JS(Amendments), JS(amendments), ripple::ltAMENDMENTS),
-        LedgerTypeAttribute::deletionBlockerLedgerType(JS(Check), JS(check), ripple::ltCHECK),
+        LedgerTypeAttribute::chainLedgerType(JS(Amendments), JS(amendments), xrpl::ltAMENDMENTS),
+        LedgerTypeAttribute::deletionBlockerLedgerType(JS(Check), JS(check), xrpl::ltCHECK),
         LedgerTypeAttribute::accountOwnedLedgerType(
             JS(DepositPreauth),
             JS(deposit_preauth),
-            ripple::ltDEPOSIT_PREAUTH
+            xrpl::ltDEPOSIT_PREAUTH
         ),
         // dir node belongs to account, but can not be filtered from account_objects
-        LedgerTypeAttribute::chainLedgerType(JS(DirectoryNode), JS(directory), ripple::ltDIR_NODE),
-        LedgerTypeAttribute::deletionBlockerLedgerType(JS(Escrow), JS(escrow), ripple::ltESCROW),
-        LedgerTypeAttribute::chainLedgerType(JS(FeeSettings), JS(fee), ripple::ltFEE_SETTINGS),
-        LedgerTypeAttribute::chainLedgerType(JS(LedgerHashes), JS(hashes), ripple::ltLEDGER_HASHES),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(Offer), JS(offer), ripple::ltOFFER),
+        LedgerTypeAttribute::chainLedgerType(JS(DirectoryNode), JS(directory), xrpl::ltDIR_NODE),
+        LedgerTypeAttribute::deletionBlockerLedgerType(JS(Escrow), JS(escrow), xrpl::ltESCROW),
+        LedgerTypeAttribute::chainLedgerType(JS(FeeSettings), JS(fee), xrpl::ltFEE_SETTINGS),
+        LedgerTypeAttribute::chainLedgerType(JS(LedgerHashes), JS(hashes), xrpl::ltLEDGER_HASHES),
+        LedgerTypeAttribute::accountOwnedLedgerType(JS(Offer), JS(offer), xrpl::ltOFFER),
         LedgerTypeAttribute::deletionBlockerLedgerType(
             JS(PayChannel),
             JS(payment_channel),
-            ripple::ltPAYCHAN
+            xrpl::ltPAYCHAN
         ),
         LedgerTypeAttribute::accountOwnedLedgerType(
             JS(SignerList),
             JS(signer_list),
-            ripple::ltSIGNER_LIST
+            xrpl::ltSIGNER_LIST
         ),
         LedgerTypeAttribute::deletionBlockerLedgerType(
             JS(RippleState),
             JS(state),
-            ripple::ltRIPPLE_STATE
+            xrpl::ltRIPPLE_STATE
         ),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(Ticket), JS(ticket), ripple::ltTICKET),
+        LedgerTypeAttribute::accountOwnedLedgerType(JS(Ticket), JS(ticket), xrpl::ltTICKET),
         LedgerTypeAttribute::accountOwnedLedgerType(
             JS(NFTokenOffer),
             JS(nft_offer),
-            ripple::ltNFTOKEN_OFFER
+            xrpl::ltNFTOKEN_OFFER
         ),
         LedgerTypeAttribute::deletionBlockerLedgerType(
             JS(NFTokenPage),
             JS(nft_page),
-            ripple::ltNFTOKEN_PAGE
+            xrpl::ltNFTOKEN_PAGE
         ),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(AMM), JS(amm), ripple::ltAMM),
-        LedgerTypeAttribute::deletionBlockerLedgerType(JS(Bridge), JS(bridge), ripple::ltBRIDGE),
+        LedgerTypeAttribute::accountOwnedLedgerType(JS(AMM), JS(amm), xrpl::ltAMM),
+        LedgerTypeAttribute::deletionBlockerLedgerType(JS(Bridge), JS(bridge), xrpl::ltBRIDGE),
         LedgerTypeAttribute::deletionBlockerLedgerType(
             JS(XChainOwnedClaimID),
             JS(xchain_owned_claim_id),
-            ripple::ltXCHAIN_OWNED_CLAIM_ID
+            xrpl::ltXCHAIN_OWNED_CLAIM_ID
         ),
         LedgerTypeAttribute::deletionBlockerLedgerType(
             JS(XChainOwnedCreateAccountClaimID),
             JS(xchain_owned_create_account_claim_id),
-            ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID
+            xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID
         ),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(DID), JS(did), ripple::ltDID),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(Oracle), JS(oracle), ripple::ltORACLE),
+        LedgerTypeAttribute::accountOwnedLedgerType(JS(DID), JS(did), xrpl::ltDID),
+        LedgerTypeAttribute::accountOwnedLedgerType(JS(Oracle), JS(oracle), xrpl::ltORACLE),
         LedgerTypeAttribute::accountOwnedLedgerType(
             JS(Credential),
             JS(credential),
-            ripple::ltCREDENTIAL
+            xrpl::ltCREDENTIAL
         ),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(Vault), JS(vault), ripple::ltVAULT),
-        LedgerTypeAttribute::chainLedgerType(JS(NegativeUNL), JS(nunl), ripple::ltNEGATIVE_UNL),
+        LedgerTypeAttribute::accountOwnedLedgerType(JS(Vault), JS(vault), xrpl::ltVAULT),
+        LedgerTypeAttribute::chainLedgerType(JS(NegativeUNL), JS(nunl), xrpl::ltNEGATIVE_UNL),
         LedgerTypeAttribute::deletionBlockerLedgerType(
             JS(MPTokenIssuance),
             JS(mpt_issuance),
-            ripple::ltMPTOKEN_ISSUANCE
+            xrpl::ltMPTOKEN_ISSUANCE
         ),
-        LedgerTypeAttribute::deletionBlockerLedgerType(JS(MPToken), JS(mptoken), ripple::ltMPTOKEN),
+        LedgerTypeAttribute::deletionBlockerLedgerType(JS(MPToken), JS(mptoken), xrpl::ltMPTOKEN),
         LedgerTypeAttribute::deletionBlockerLedgerType(
             JS(PermissionedDomain),
             JS(permissioned_domain),
-            ripple::ltPERMISSIONED_DOMAIN
+            xrpl::ltPERMISSIONED_DOMAIN
         ),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(Delegate), JS(delegate), ripple::ltDELEGATE),
+        LedgerTypeAttribute::accountOwnedLedgerType(JS(Delegate), JS(delegate), xrpl::ltDELEGATE),
     };
 
 public:
@@ -187,7 +187,7 @@ public:
 
         constexpr auto kDeletionBlockersCount =
             std::count_if(std::begin(kLedgerTypes), std::end(kLedgerTypes), kFilter);
-        std::array<ripple::LedgerEntryType, kDeletionBlockersCount> res{};
+        std::array<xrpl::LedgerEntryType, kDeletionBlockersCount> res{};
         auto it = std::begin(res);
         std::ranges::for_each(kLedgerTypes, [&](auto const& item) {
             if (kFilter(item)) {
@@ -199,23 +199,23 @@ public:
     }
 
     /**
-     * @brief Returns the ripple::LedgerEntryType from the given string.
+     * @brief Returns the xrpl::LedgerEntryType from the given string.
      *
      * @param entryName The name or canonical name (case-insensitive) of the ledger entry type for
      * all categories
-     * @return The ripple::LedgerEntryType of the given string, returns ltANY if not found.
+     * @return The xrpl::LedgerEntryType of the given string, returns ltANY if not found.
      */
-    static ripple::LedgerEntryType
+    static xrpl::LedgerEntryType
     getLedgerEntryTypeFromStr(std::string const& entryName);
 
     /**
-     * @brief Returns the ripple::LedgerEntryType from the given string.
+     * @brief Returns the xrpl::LedgerEntryType from the given string.
      *
      * @param entryName The name or canonical name (case-insensitive) of the ledger entry type for
      * account owned category
-     * @return The ripple::LedgerEntryType of the given string, returns ltANY if not found.
+     * @return The xrpl::LedgerEntryType of the given string, returns ltANY if not found.
      */
-    static ripple::LedgerEntryType
+    static xrpl::LedgerEntryType
     getAccountOwnedLedgerTypeFromStr(std::string const& entryName);
 
 private:
@@ -224,32 +224,32 @@ private:
 };
 
 /**
- * @brief Deserializes a ripple::LedgerHeader from ripple::Slice of data.
+ * @brief Deserializes a xrpl::LedgerHeader from xrpl::Slice of data.
  *
  * @param data The slice to deserialize
- * @return The deserialized ripple::LedgerHeader
+ * @return The deserialized xrpl::LedgerHeader
  */
-inline ripple::LedgerHeader
-deserializeHeader(ripple::Slice data)
+inline xrpl::LedgerHeader
+deserializeHeader(xrpl::Slice data)
 {
-    return ripple::deserializeHeader(data, /* hasHash = */ true);
+    return xrpl::deserializeHeader(data, /* hasHash = */ true);
 }
 
 /**
- * @brief A helper function that converts a ripple::LedgerHeader to a string representation.
+ * @brief A helper function that converts a xrpl::LedgerHeader to a string representation.
  *
  * @param info The ledger header
  * @return The string representation of the supplied ledger header
  */
 inline std::string
-toString(ripple::LedgerHeader const& info)
+toString(xrpl::LedgerHeader const& info)
 {
     return fmt::format(
         "LedgerHeader {{Sequence: {}, Hash: {}, TxHash: {}, AccountHash: {}, ParentHash: {}}}",
         info.seq,
-        ripple::strHex(info.hash),
+        xrpl::strHex(info.hash),
         strHex(info.txHash),
-        ripple::strHex(info.accountHash),
+        xrpl::strHex(info.accountHash),
         strHex(info.parentHash)
     );
 }

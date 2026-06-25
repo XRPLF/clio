@@ -135,7 +135,7 @@ public:
         if (forwardingProxy_.shouldForward(ctx)) {
             // Disallow forwarding of the admin api, only user api is allowed for security reasons.
             if (isAdminCmd(ctx.method, ctx.params))
-                return Result{Status{RippledError::rpcNO_PERMISSION}};
+                return Result{Status{RippledError::RpcNoPermission}};
 
             return forwardingProxy_.forward(ctx);
         }
@@ -148,13 +148,13 @@ public:
         if (backend_->isTooBusy()) {
             LOG(log_.error()) << "Database is too busy. Rejecting request";
             notifyTooBusy();  // TODO: should we add ctx.method if we have it?
-            return Result{Status{RippledError::rpcTOO_BUSY}};
+            return Result{Status{RippledError::RpcTooBusy}};
         }
 
         auto const method = handlerProvider_->getHandler(ctx.method);
         if (!method) {
             notifyUnknownCommand();
-            return Result{Status{RippledError::rpcUNKNOWN_COMMAND}};
+            return Result{Status{RippledError::RpcUnknownCommand}};
         }
 
         try {
@@ -182,12 +182,12 @@ public:
             LOG(log_.error()) << "Database timeout";
             notifyTooBusy();
 
-            return Result{Status{RippledError::rpcTOO_BUSY}};
+            return Result{Status{RippledError::RpcTooBusy}};
         } catch (std::exception const& ex) {
             LOG(log_.error()) << ctx.tag() << "Caught exception: " << ex.what();
             notifyInternalError();
 
-            return Result{Status{RippledError::rpcINTERNAL}};
+            return Result{Status{RippledError::RpcInternal}};
         }
     }
 
@@ -333,13 +333,13 @@ private:
         if (backend_->isTooBusy()) {
             LOG(log_.error()) << "Database is too busy. Rejecting request";
             notifyTooBusy();  // TODO: should we add ctx.method if we have it?
-            return Result{Status{RippledError::rpcTOO_BUSY}};
+            return Result{Status{RippledError::RpcTooBusy}};
         }
 
         auto const method = handlerProvider_->getHandler(ctx.method);
         if (!method) {
             notifyUnknownCommand();
-            return Result{Status{RippledError::rpcUNKNOWN_COMMAND}};
+            return Result{Status{RippledError::RpcUnknownCommand}};
         }
 
         try {
@@ -365,12 +365,12 @@ private:
             LOG(log_.error()) << "Database timeout";
             notifyTooBusy();
 
-            return Result{Status{RippledError::rpcTOO_BUSY}};
+            return Result{Status{RippledError::RpcTooBusy}};
         } catch (std::exception const& ex) {
             LOG(log_.error()) << ctx.tag() << "Caught exception: " << ex.what();
             notifyInternalError();
 
-            return Result{Status{RippledError::rpcINTERNAL}};
+            return Result{Status{RippledError::RpcInternal}};
         }
     }
 };

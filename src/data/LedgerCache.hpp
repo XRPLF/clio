@@ -35,7 +35,7 @@ public:
         Blob blob;
     };
 
-    using CacheMap = std::map<ripple::uint256, CacheEntry>;
+    using CacheMap = std::map<xrpl::uint256, CacheEntry>;
 
 private:
     // counters for fetchLedgerObject(s) hit rate
@@ -95,7 +95,7 @@ private:
 
     // temporary set to prevent background thread from writing already deleted data. not used when
     // cache is full
-    std::unordered_set<ripple::uint256, ripple::hardened_hash<>> deletes_;
+    std::unordered_set<xrpl::uint256, xrpl::HardenedHash<>> deletes_;
 
 public:
     void
@@ -105,16 +105,16 @@ public:
     update(std::vector<etl::model::Object> const& objs, uint32_t seq) override;
 
     std::optional<Blob>
-    get(ripple::uint256 const& key, uint32_t seq) const override;
+    get(xrpl::uint256 const& key, uint32_t seq) const override;
 
     std::optional<Blob>
-    getDeleted(ripple::uint256 const& key, uint32_t seq) const override;
+    getDeleted(xrpl::uint256 const& key, uint32_t seq) const override;
 
     std::optional<LedgerObject>
-    getSuccessor(ripple::uint256 const& key, uint32_t seq) const override;
+    getSuccessor(xrpl::uint256 const& key, uint32_t seq) const override;
 
     std::optional<LedgerObject>
-    getPredecessor(ripple::uint256 const& key, uint32_t seq) const override;
+    getPredecessor(xrpl::uint256 const& key, uint32_t seq) const override;
 
     void
     setDisabled() override;

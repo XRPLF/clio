@@ -41,8 +41,8 @@ public:
     struct Offer {
         uint32_t flags{};
         uint32_t seq{};
-        ripple::STAmount takerGets;
-        ripple::STAmount takerPays;
+        xrpl::STAmount takerGets;
+        xrpl::STAmount takerPays;
         std::string quality;
         std::optional<uint32_t> expiration;
     };
@@ -120,7 +120,7 @@ public:
 
 private:
     static void
-    addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle);
+    addOffer(std::vector<Offer>& offers, xrpl::SLE const& offerSle);
 
     /**
      * @brief Convert the Output to a JSON object

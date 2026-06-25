@@ -293,7 +293,7 @@ public:
             return sender_(httpResponse(
                 http::status::internal_server_error,
                 "application/json",
-                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcINTERNAL))
+                boost::json::serialize(rpc::makeError(rpc::RippledError::RpcInternal))
             ));
         }
     }
@@ -304,7 +304,7 @@ public:
         sender_(httpResponse(
             http::status::service_unavailable,
             "text/plain",
-            boost::json::serialize(rpc::makeError(rpc::RippledError::rpcSLOW_DOWN))
+            boost::json::serialize(rpc::makeError(rpc::RippledError::RpcSlowDown))
         ));
     }
 

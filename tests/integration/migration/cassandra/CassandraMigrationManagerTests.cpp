@@ -232,28 +232,28 @@ TEST_F(MigrationCassandraManagerTxTableTest, MigrateExampleTransactionsMigrator)
     EXPECT_EQ(newTableSize, gTransactionsRawData.size());
 
     // check a few tx types
-    auto const getTxType = [&](ripple::uint256 const& txHash) -> std::optional<std::string> {
+    auto const getTxType = [&](xrpl::uint256 const& txHash) -> std::optional<std::string> {
         return data::synchronous([&](auto ctx) {
             return testMigrationBackend_->fetchTxTypeViaID(uint256ToString(txHash), ctx);
         });
     };
 
     auto txType = getTxType(
-        ripple::uint256("CEECF7E516F8A53C5D32A357B737ED54D3186FDD510B1973D908AD8D93AD8E00")
+        xrpl::uint256("CEECF7E516F8A53C5D32A357B737ED54D3186FDD510B1973D908AD8D93AD8E00")
     );
     ASSERT_TRUE(txType.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(txType.value(), "OracleSet");
 
     txType = getTxType(
-        ripple::uint256("35DBFB1A88DE17EBD2BCE37F6E1FD6D3B9887C92B7933ED2FCF2A84E9138B7CA")
+        xrpl::uint256("35DBFB1A88DE17EBD2BCE37F6E1FD6D3B9887C92B7933ED2FCF2A84E9138B7CA")
     );
     ASSERT_TRUE(txType.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(txType.value(), "Payment");
 
     txType = getTxType(
-        ripple::uint256("FCACE9D00625FA3BCC5316078324EA153EC8551243AC1701D496CC1CA2B8A474")
+        xrpl::uint256("FCACE9D00625FA3BCC5316078324EA153EC8551243AC1701D496CC1CA2B8A474")
     );
     ASSERT_TRUE(txType.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
@@ -340,15 +340,15 @@ TEST_F(MigrationCassandraManagerLedgerTableTest, MigrateExampleLedgerMigrator)
 
     EXPECT_EQ(
         getAccountHash(5619393),
-        ripple::uint256("D1DE0F83A6858DF52811E31FE97B8449A4DD55A7D9E0023FE5DC2B335E4C49E8")
+        xrpl::uint256("D1DE0F83A6858DF52811E31FE97B8449A4DD55A7D9E0023FE5DC2B335E4C49E8")
     );
     EXPECT_EQ(
         getAccountHash(5619394),
-        ripple::uint256("3FEF485204772F03842AA8757B4631E8F146E17AD9762E0552540A517DD38A24")
+        xrpl::uint256("3FEF485204772F03842AA8757B4631E8F146E17AD9762E0552540A517DD38A24")
     );
     EXPECT_EQ(
         getAccountHash(5619395),
-        ripple::uint256("D0A61C158AD8941868666AD51C4662EEAAA2A141BF0F4435BC22B9BC6783AF65")
+        xrpl::uint256("D0A61C158AD8941868666AD51C4662EEAAA2A141BF0F4435BC22B9BC6783AF65")
     );
 }
 

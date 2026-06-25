@@ -41,39 +41,35 @@
 
 namespace {
 constexpr auto kIndex1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
-ripple::Slice const kSlice("test", 4);
+xrpl::Slice const kSlice("test", 4);
 }  // namespace
 
-ripple::AccountID
+xrpl::AccountID
 getAccountIdWithString(std::string_view id)
 {
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    return *util::parseBase58Wrapper<ripple::AccountID>(std::string(id));
+    return *util::parseBase58Wrapper<xrpl::AccountID>(std::string(id));
 }
 
-ripple::uint256
+xrpl::uint256
 getAccountKey(std::string_view id)
 {
-    return ripple::keylet::account(getAccountIdWithString(id)).key;
+    return xrpl::keylet::account(getAccountIdWithString(id)).key;
 }
 
-ripple::uint256
-getAccountKey(ripple::AccountID const& acc)
+xrpl::uint256
+getAccountKey(xrpl::AccountID const& acc)
 {
-    return ripple::keylet::account(acc).key;
+    return xrpl::keylet::account(acc).key;
 }
 
-ripple::LedgerHeader
-createLedgerHeader(
-    std::string_view ledgerHash,
-    ripple::LedgerIndex seq,
-    std::optional<uint32_t> age
-)
+xrpl::LedgerHeader
+createLedgerHeader(std::string_view ledgerHash, xrpl::LedgerIndex seq, std::optional<uint32_t> age)
 {
     using namespace std::chrono;
 
-    auto ledgerHeader = ripple::LedgerHeader();
-    ledgerHeader.hash = ripple::uint256{ledgerHash};
+    auto ledgerHeader = xrpl::LedgerHeader();
+    ledgerHeader.hash = xrpl::uint256{ledgerHash};
     ledgerHeader.seq = seq;
 
     if (age) {
@@ -81,32 +77,32 @@ createLedgerHeader(
         // precision is seconds and the small time difference may lead to comparison bugs
         auto const now = duration_cast<seconds>(system_clock::now().time_since_epoch());
         auto const closeTime = (now - seconds{*age}).count() - kRippleEpochStart;
-        ledgerHeader.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
+        ledgerHeader.closeTime = xrpl::NetClock::time_point{seconds{closeTime}};
     }
 
     return ledgerHeader;
 }
 
-ripple::LedgerHeader
+xrpl::LedgerHeader
 createLedgerHeaderWithUnixTime(
     std::string_view ledgerHash,
-    ripple::LedgerIndex seq,
+    xrpl::LedgerIndex seq,
     uint64_t closeTimeUnixStamp
 )
 {
     using namespace std::chrono;
 
-    auto ledgerHeader = ripple::LedgerHeader();
-    ledgerHeader.hash = ripple::uint256{ledgerHash};
+    auto ledgerHeader = xrpl::LedgerHeader();
+    ledgerHeader.hash = xrpl::uint256{ledgerHash};
     ledgerHeader.seq = seq;
 
     auto const closeTime = closeTimeUnixStamp - seconds{kRippleEpochStart}.count();
-    ledgerHeader.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
+    ledgerHeader.closeTime = xrpl::NetClock::time_point{seconds{closeTime}};
 
     return ledgerHeader;
 }
 
-ripple::STObject
+xrpl::STObject
 createLegacyFeeSettingLedgerObject(
     uint64_t base,
     uint32_t reserveInc,
@@ -115,34 +111,34 @@ createLegacyFeeSettingLedgerObject(
     uint32_t flag
 )
 {
-    ripple::STObject obj(ripple::sfFee);
-    obj.setFieldU16(ripple::sfLedgerEntryType, ripple::ltFEE_SETTINGS);
-    obj.setFieldU64(ripple::sfBaseFee, base);
-    obj.setFieldU32(ripple::sfReserveIncrement, reserveInc);
-    obj.setFieldU32(ripple::sfReserveBase, reserveBase);
-    obj.setFieldU32(ripple::sfReferenceFeeUnits, refFeeUnit);
-    obj.setFieldU32(ripple::sfFlags, flag);
+    xrpl::STObject obj(xrpl::sfFee);
+    obj.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltFEE_SETTINGS);
+    obj.setFieldU64(xrpl::sfBaseFee, base);
+    obj.setFieldU32(xrpl::sfReserveIncrement, reserveInc);
+    obj.setFieldU32(xrpl::sfReserveBase, reserveBase);
+    obj.setFieldU32(xrpl::sfReferenceFeeUnits, refFeeUnit);
+    obj.setFieldU32(xrpl::sfFlags, flag);
     return obj;
 }
 
-ripple::STObject
+xrpl::STObject
 createFeeSettingLedgerObject(
-    ripple::STAmount base,
-    ripple::STAmount reserveInc,
-    ripple::STAmount reserveBase,
+    xrpl::STAmount base,
+    xrpl::STAmount reserveInc,
+    xrpl::STAmount reserveBase,
     uint32_t flag
 )
 {
-    ripple::STObject obj(ripple::sfFee);
-    obj.setFieldU16(ripple::sfLedgerEntryType, ripple::ltFEE_SETTINGS);
-    obj.setFieldAmount(ripple::sfBaseFeeDrops, base);
-    obj.setFieldAmount(ripple::sfReserveBaseDrops, reserveBase);
-    obj.setFieldAmount(ripple::sfReserveIncrementDrops, reserveInc);
-    obj.setFieldU32(ripple::sfFlags, flag);
+    xrpl::STObject obj(xrpl::sfFee);
+    obj.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltFEE_SETTINGS);
+    obj.setFieldAmount(xrpl::sfBaseFeeDrops, base);
+    obj.setFieldAmount(xrpl::sfReserveBaseDrops, reserveBase);
+    obj.setFieldAmount(xrpl::sfReserveIncrementDrops, reserveInc);
+    obj.setFieldU32(xrpl::sfFlags, flag);
     return obj;
 }
 
-ripple::Blob
+xrpl::Blob
 createLegacyFeeSettingBlob(
     uint64_t base,
     uint32_t reserveInc,
@@ -155,11 +151,11 @@ createLegacyFeeSettingBlob(
     return lo.getSerializer().peekData();
 }
 
-ripple::Blob
+xrpl::Blob
 createFeeSettingBlob(
-    ripple::STAmount base,
-    ripple::STAmount reserveInc,
-    ripple::STAmount reserveBase,
+    xrpl::STAmount base,
+    xrpl::STAmount reserveInc,
+    xrpl::STAmount reserveBase,
     uint32_t flag
 )
 {
@@ -167,7 +163,7 @@ createFeeSettingBlob(
     return lo.getSerializer().peekData();
 }
 
-ripple::STObject
+xrpl::STObject
 createPaymentTransactionObject(
     std::string_view accountId1,
     std::string_view accountId2,
@@ -176,21 +172,21 @@ createPaymentTransactionObject(
     uint32_t seq
 )
 {
-    ripple::STObject obj(ripple::sfTransaction);
-    obj.setFieldU16(ripple::sfTransactionType, ripple::ttPAYMENT);
-    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId1));
-    obj.setAccountID(ripple::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    obj.setFieldAmount(ripple::sfAmount, ripple::STAmount(amount, false));
-    obj.setFieldAmount(ripple::sfFee, ripple::STAmount(fee, false));
-    auto account2 = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId2));
+    xrpl::STObject obj(xrpl::sfTransaction);
+    obj.setFieldU16(xrpl::sfTransactionType, xrpl::ttPAYMENT);
+    auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId1));
+    obj.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
+    obj.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(amount, false));
+    obj.setFieldAmount(xrpl::sfFee, xrpl::STAmount(fee, false));
+    auto account2 = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId2));
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    obj.setAccountID(ripple::sfDestination, *account2);
-    obj.setFieldU32(ripple::sfSequence, seq);
-    obj.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    obj.setAccountID(xrpl::sfDestination, *account2);
+    obj.setFieldU32(xrpl::sfSequence, seq);
+    obj.setFieldVL(xrpl::sfSigningPubKey, kSlice);
     return obj;
 }
 
-ripple::STObject
+xrpl::STObject
 createPaymentTransactionMetaObject(
     std::string_view accountId1,
     std::string_view accountId2,
@@ -199,31 +195,31 @@ createPaymentTransactionMetaObject(
     uint32_t transactionIndex
 )
 {
-    ripple::STObject finalFields(ripple::sfFinalFields);
-    finalFields.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId1));
-    finalFields.setFieldAmount(ripple::sfBalance, ripple::STAmount(finalBalance1));
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    finalFields.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId1));
+    finalFields.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(finalBalance1));
 
-    ripple::STObject finalFields2(ripple::sfFinalFields);
-    finalFields2.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId2));
-    finalFields2.setFieldAmount(ripple::sfBalance, ripple::STAmount(finalBalance2));
+    xrpl::STObject finalFields2(xrpl::sfFinalFields);
+    finalFields2.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId2));
+    finalFields2.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(finalBalance2));
 
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{2};
-    ripple::STObject node(ripple::sfModifiedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltACCOUNT_ROOT);
-    node.emplace_back(std::move(finalFields));
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{2};
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltACCOUNT_ROOT);
+    node.set(std::move(finalFields));
     metaArray.push_back(node);
-    ripple::STObject node2(ripple::sfModifiedNode);
-    node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltACCOUNT_ROOT);
-    node2.emplace_back(std::move(finalFields2));
+    xrpl::STObject node2(xrpl::sfModifiedNode);
+    node2.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltACCOUNT_ROOT);
+    node2.set(std::move(finalFields2));
     metaArray.push_back(node2);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, transactionIndex);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, transactionIndex);
     return metaObj;
 }
 
-ripple::STObject
+xrpl::STObject
 createDidObject(
     std::string_view accountId,
     std::string_view didDoc,
@@ -231,23 +227,23 @@ createDidObject(
     std::string_view data
 )
 {
-    ripple::STObject did(ripple::sfLedgerEntry);
-    did.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
-    did.setFieldU16(ripple::sfLedgerEntryType, ripple::ltDID);
-    did.setFieldU32(ripple::sfFlags, 0);
-    did.setFieldU64(ripple::sfOwnerNode, 0);
-    did.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    did.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
-    ripple::Slice const sliceDoc(didDoc.data(), didDoc.size());
-    did.setFieldVL(ripple::sfDIDDocument, sliceDoc);
-    ripple::Slice const sliceUri(uri.data(), uri.size());
-    did.setFieldVL(ripple::sfURI, sliceUri);
-    ripple::Slice const sliceData(data.data(), data.size());
-    did.setFieldVL(ripple::sfData, sliceData);
+    xrpl::STObject did(xrpl::sfLedgerEntry);
+    did.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    did.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltDID);
+    did.setFieldU32(xrpl::sfFlags, 0);
+    did.setFieldU64(xrpl::sfOwnerNode, 0);
+    did.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    did.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
+    xrpl::Slice const sliceDoc(didDoc.data(), didDoc.size());
+    did.setFieldVL(xrpl::sfDIDDocument, sliceDoc);
+    xrpl::Slice const sliceUri(uri.data(), uri.size());
+    did.setFieldVL(xrpl::sfURI, sliceUri);
+    xrpl::Slice const sliceData(data.data(), data.size());
+    did.setFieldVL(xrpl::sfData, sliceData);
     return did;
 }
 
-ripple::STObject
+xrpl::STObject
 createAccountRootObject(
     std::string_view accountId,
     uint32_t flag,
@@ -257,27 +253,27 @@ createAccountRootObject(
     std::string_view previousTxnID,
     uint32_t previousTxnSeq,
     uint32_t transferRate,
-    std::optional<ripple::uint256> ammID
+    std::optional<xrpl::uint256> ammID
 )
 {
-    ripple::STObject accountRoot(ripple::sfAccount);
-    accountRoot.setFieldU16(ripple::sfLedgerEntryType, ripple::ltACCOUNT_ROOT);
-    accountRoot.setFieldU32(ripple::sfFlags, flag);
-    accountRoot.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
-    accountRoot.setFieldU32(ripple::sfSequence, seq);
-    accountRoot.setFieldAmount(ripple::sfBalance, ripple::STAmount(balance, false));
-    accountRoot.setFieldU32(ripple::sfOwnerCount, ownerCount);
-    accountRoot.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{previousTxnID});
-    accountRoot.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxnSeq);
-    accountRoot.setFieldU32(ripple::sfTransferRate, transferRate);
+    xrpl::STObject accountRoot(xrpl::sfAccount);
+    accountRoot.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltACCOUNT_ROOT);
+    accountRoot.setFieldU32(xrpl::sfFlags, flag);
+    accountRoot.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    accountRoot.setFieldU32(xrpl::sfSequence, seq);
+    accountRoot.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(balance, false));
+    accountRoot.setFieldU32(xrpl::sfOwnerCount, ownerCount);
+    accountRoot.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{previousTxnID});
+    accountRoot.setFieldU32(xrpl::sfPreviousTxnLgrSeq, previousTxnSeq);
+    accountRoot.setFieldU32(xrpl::sfTransferRate, transferRate);
 
     if (ammID)
-        accountRoot.setFieldH256(ripple::sfAMMID, *ammID);
+        accountRoot.setFieldH256(xrpl::sfAMMID, *ammID);
 
     return accountRoot;
 }
 
-ripple::STObject
+xrpl::STObject
 createCreateOfferTransactionObject(
     std::string_view accountId,
     int fee,
@@ -289,52 +285,52 @@ createCreateOfferTransactionObject(
     bool reverse
 )
 {
-    ripple::STObject obj(ripple::sfTransaction);
-    obj.setFieldU16(ripple::sfTransactionType, ripple::ttOFFER_CREATE);
-    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
-    obj.setAccountID(ripple::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = ripple::STAmount(fee, false);
-    obj.setFieldAmount(ripple::sfFee, amount);
-    obj.setFieldU32(ripple::sfSequence, seq);
+    xrpl::STObject obj(xrpl::sfTransaction);
+    obj.setFieldU16(xrpl::sfTransactionType, xrpl::ttOFFER_CREATE);
+    auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
+    obj.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
+    auto amount = xrpl::STAmount(fee, false);
+    obj.setFieldAmount(xrpl::sfFee, amount);
+    obj.setFieldU32(xrpl::sfSequence, seq);
     // add amount
-    ripple::Issue const issue1(
-        ripple::Currency{currency},
+    xrpl::Issue const issue1(
+        xrpl::Currency{currency},
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        *util::parseBase58Wrapper<ripple::AccountID>(std::string(issuer))
+        *util::parseBase58Wrapper<xrpl::AccountID>(std::string(issuer))
     );
     if (reverse) {
-        obj.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, takerGets));
-        obj.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(takerPays, false));
+        obj.setFieldAmount(xrpl::sfTakerPays, xrpl::STAmount(issue1, takerGets));
+        obj.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(takerPays, false));
     } else {
-        obj.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, takerGets));
-        obj.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(takerPays, false));
+        obj.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(issue1, takerGets));
+        obj.setFieldAmount(xrpl::sfTakerPays, xrpl::STAmount(takerPays, false));
     }
 
     auto key = "test";
-    ripple::Slice const slice(key, 4);
-    obj.setFieldVL(ripple::sfSigningPubKey, slice);
+    xrpl::Slice const slice(key, 4);
+    obj.setFieldVL(xrpl::sfSigningPubKey, slice);
     return obj;
 }
 
-ripple::Issue
+xrpl::Issue
 getIssue(std::string_view currency, std::string_view issuerId)
 {
     // standard currency
     if (currency.size() == 3) {
-        return ripple::Issue(
-            ripple::to_currency(std::string(currency)),
+        return xrpl::Issue(
+            xrpl::toCurrency(std::string(currency)),
             // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            *util::parseBase58Wrapper<ripple::AccountID>(std::string(issuerId))
+            *util::parseBase58Wrapper<xrpl::AccountID>(std::string(issuerId))
         );
     }
-    return ripple::Issue(
-        ripple::Currency{currency},
+    return xrpl::Issue(
+        xrpl::Currency{currency},
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        *util::parseBase58Wrapper<ripple::AccountID>(std::string(issuerId))
+        *util::parseBase58Wrapper<xrpl::AccountID>(std::string(issuerId))
     );
 }
 
-ripple::STObject
+xrpl::STObject
 createMetaDataForBookChange(
     std::string_view currency,
     std::string_view issueId,
@@ -346,29 +342,29 @@ createMetaDataForBookChange(
     std::optional<std::string_view> domain
 )
 {
-    ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::Issue const issue1 = getIssue(currency, issueId);
-    finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
-    finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    xrpl::Issue const issue1 = getIssue(currency, issueId);
+    finalFields.setFieldAmount(xrpl::sfTakerPays, xrpl::STAmount(issue1, finalTakerPays));
+    finalFields.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(finalTakerGets, false));
     if (domain.has_value())
-        finalFields.setFieldH256(ripple::sfDomainID, ripple::uint256{*domain});
-    ripple::STObject previousFields(ripple::sfPreviousFields);
-    previousFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, previousTakerPays));
-    previousFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(previousTakerGets, false));
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
-    ripple::STObject node(ripple::sfModifiedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltOFFER);
-    node.emplace_back(std::move(finalFields));
-    node.emplace_back(std::move(previousFields));
+        finalFields.setFieldH256(xrpl::sfDomainID, xrpl::uint256{*domain});
+    xrpl::STObject previousFields(xrpl::sfPreviousFields);
+    previousFields.setFieldAmount(xrpl::sfTakerPays, xrpl::STAmount(issue1, previousTakerPays));
+    previousFields.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(previousTakerGets, false));
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltOFFER);
+    node.set(std::move(finalFields));
+    node.set(std::move(previousFields));
     metaArray.push_back(node);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, transactionIndex);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, transactionIndex);
     return metaObj;
 }
 
-ripple::STObject
+xrpl::STObject
 createMetaDataForCreateOffer(
     std::string_view currency,
     std::string_view issueId,
@@ -378,28 +374,28 @@ createMetaDataForCreateOffer(
     bool reverse
 )
 {
-    ripple::STObject finalFields(ripple::sfNewFields);
-    ripple::Issue const issue1 = getIssue(currency, issueId);
+    xrpl::STObject finalFields(xrpl::sfNewFields);
+    xrpl::Issue const issue1 = getIssue(currency, issueId);
     if (reverse) {
-        finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, finalTakerPays));
-        finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(finalTakerGets, false));
+        finalFields.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(issue1, finalTakerPays));
+        finalFields.setFieldAmount(xrpl::sfTakerPays, xrpl::STAmount(finalTakerGets, false));
     } else {
-        finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
-        finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
+        finalFields.setFieldAmount(xrpl::sfTakerPays, xrpl::STAmount(issue1, finalTakerPays));
+        finalFields.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(finalTakerGets, false));
     }
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
-    ripple::STObject node(ripple::sfCreatedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltOFFER);
-    node.emplace_back(std::move(finalFields));
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
+    xrpl::STObject node(xrpl::sfCreatedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltOFFER);
+    node.set(std::move(finalFields));
     metaArray.push_back(node);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, transactionIndex);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, transactionIndex);
     return metaObj;
 }
 
-ripple::STObject
+xrpl::STObject
 createMetaDataForCancelOffer(
     std::string_view currency,
     std::string_view issueId,
@@ -408,34 +404,34 @@ createMetaDataForCancelOffer(
     int finalTakerPays
 )
 {
-    ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::Issue const issue1 = getIssue(currency, issueId);
-    finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
-    finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
-    ripple::STObject node(ripple::sfDeletedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltOFFER);
-    node.emplace_back(std::move(finalFields));
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    xrpl::Issue const issue1 = getIssue(currency, issueId);
+    finalFields.setFieldAmount(xrpl::sfTakerPays, xrpl::STAmount(issue1, finalTakerPays));
+    finalFields.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(finalTakerGets, false));
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
+    xrpl::STObject node(xrpl::sfDeletedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltOFFER);
+    node.set(std::move(finalFields));
     metaArray.push_back(node);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, transactionIndex);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, transactionIndex);
     return metaObj;
 }
 
-ripple::STObject
-createOwnerDirLedgerObject(std::vector<ripple::uint256> indexes, std::string_view rootIndex)
+xrpl::STObject
+createOwnerDirLedgerObject(std::vector<xrpl::uint256> indexes, std::string_view rootIndex)
 {
-    ripple::STObject ownerDir(ripple::sfLedgerEntry);
-    ownerDir.setFieldU16(ripple::sfLedgerEntryType, ripple::ltDIR_NODE);
-    ownerDir.setFieldV256(ripple::sfIndexes, ripple::STVector256{indexes});
-    ownerDir.setFieldH256(ripple::sfRootIndex, ripple::uint256{rootIndex});
-    ownerDir.setFieldU32(ripple::sfFlags, 0);
+    xrpl::STObject ownerDir(xrpl::sfLedgerEntry);
+    ownerDir.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltDIR_NODE);
+    ownerDir.setFieldV256(xrpl::sfIndexes, xrpl::STVector256{indexes});
+    ownerDir.setFieldH256(xrpl::sfRootIndex, xrpl::uint256{rootIndex});
+    ownerDir.setFieldU32(xrpl::sfFlags, 0);
     return ownerDir;
 }
 
-ripple::STObject
+xrpl::STObject
 createPaymentChannelLedgerObject(
     std::string_view accountId,
     std::string_view destId,
@@ -446,25 +442,25 @@ createPaymentChannelLedgerObject(
     uint32_t previousTxnSeq
 )
 {
-    ripple::STObject channel(ripple::sfLedgerEntry);
-    channel.setFieldU16(ripple::sfLedgerEntryType, ripple::ltPAYCHAN);
-    channel.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
-    channel.setAccountID(ripple::sfDestination, getAccountIdWithString(destId));
-    channel.setFieldAmount(ripple::sfAmount, ripple::STAmount(amount, false));
-    channel.setFieldAmount(ripple::sfBalance, ripple::STAmount(balance, false));
-    channel.setFieldU32(ripple::sfSettleDelay, settleDelay);
-    channel.setFieldU64(ripple::sfOwnerNode, 0);
-    channel.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{previousTxnId});
-    channel.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxnSeq);
-    channel.setFieldU32(ripple::sfFlags, 0);
+    xrpl::STObject channel(xrpl::sfLedgerEntry);
+    channel.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltPAYCHAN);
+    channel.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    channel.setAccountID(xrpl::sfDestination, getAccountIdWithString(destId));
+    channel.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(amount, false));
+    channel.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(balance, false));
+    channel.setFieldU32(xrpl::sfSettleDelay, settleDelay);
+    channel.setFieldU64(xrpl::sfOwnerNode, 0);
+    channel.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{previousTxnId});
+    channel.setFieldU32(xrpl::sfPreviousTxnLgrSeq, previousTxnSeq);
+    channel.setFieldU32(xrpl::sfFlags, 0);
     uint8_t key[33] = {0};
     key[0] = 2;  // KeyType::secp256k1
-    ripple::Slice const slice(key, 33);
-    channel.setFieldVL(ripple::sfPublicKey, slice);
+    xrpl::Slice const slice(key, 33);
+    channel.setFieldVL(xrpl::sfPublicKey, slice);
     return channel;
 }
 
-[[nodiscard]] ripple::STObject
+[[nodiscard]] xrpl::STObject
 createRippleStateLedgerObject(
     std::string_view currency,
     std::string_view issuerId,
@@ -478,22 +474,22 @@ createRippleStateLedgerObject(
     uint32_t flag
 )
 {
-    auto line = ripple::STObject(ripple::sfLedgerEntry);
-    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
-    line.setFieldU32(ripple::sfFlags, flag);
-    line.setFieldAmount(ripple::sfBalance, ripple::STAmount(getIssue(currency, issuerId), balance));
+    auto line = xrpl::STObject(xrpl::sfLedgerEntry);
+    line.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltRIPPLE_STATE);
+    line.setFieldU32(xrpl::sfFlags, flag);
+    line.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(getIssue(currency, issuerId), balance));
     line.setFieldAmount(
-        ripple::sfHighLimit, ripple::STAmount(getIssue(currency, highNodeAccountId), highLimit)
+        xrpl::sfHighLimit, xrpl::STAmount(getIssue(currency, highNodeAccountId), highLimit)
     );
     line.setFieldAmount(
-        ripple::sfLowLimit, ripple::STAmount(getIssue(currency, lowNodeAccountId), lowLimit)
+        xrpl::sfLowLimit, xrpl::STAmount(getIssue(currency, lowNodeAccountId), lowLimit)
     );
-    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{previousTxnId});
-    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxnSeq);
+    line.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{previousTxnId});
+    line.setFieldU32(xrpl::sfPreviousTxnLgrSeq, previousTxnSeq);
     return line;
 }
 
-ripple::STObject
+xrpl::STObject
 createOfferLedgerObject(
     std::string_view account,
     int takerGets,
@@ -506,106 +502,106 @@ createOfferLedgerObject(
     std::optional<std::string_view> domain
 )
 {
-    ripple::STObject offer(ripple::sfLedgerEntry);
-    offer.setFieldU16(ripple::sfLedgerEntryType, ripple::ltOFFER);
-    offer.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
-    offer.setFieldU32(ripple::sfSequence, 0);
-    offer.setFieldU32(ripple::sfFlags, 0);
-    ripple::Issue const issue1 = getIssue(getsCurrency, getsIssueId);
-    offer.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, takerGets));
-    ripple::Issue const issue2 = getIssue(paysCurrency, paysIssueId);
-    offer.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue2, takerPays));
-    offer.setFieldH256(ripple::sfBookDirectory, ripple::uint256{});
-    offer.setFieldU64(ripple::sfBookNode, 0);
-    offer.setFieldU64(ripple::sfOwnerNode, 0);
-    offer.setFieldH256(ripple::sfBookDirectory, ripple::uint256{dirId});
-    offer.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    offer.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    xrpl::STObject offer(xrpl::sfLedgerEntry);
+    offer.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltOFFER);
+    offer.setAccountID(xrpl::sfAccount, getAccountIdWithString(account));
+    offer.setFieldU32(xrpl::sfSequence, 0);
+    offer.setFieldU32(xrpl::sfFlags, 0);
+    xrpl::Issue const issue1 = getIssue(getsCurrency, getsIssueId);
+    offer.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(issue1, takerGets));
+    xrpl::Issue const issue2 = getIssue(paysCurrency, paysIssueId);
+    offer.setFieldAmount(xrpl::sfTakerPays, xrpl::STAmount(issue2, takerPays));
+    offer.setFieldH256(xrpl::sfBookDirectory, xrpl::uint256{});
+    offer.setFieldU64(xrpl::sfBookNode, 0);
+    offer.setFieldU64(xrpl::sfOwnerNode, 0);
+    offer.setFieldH256(xrpl::sfBookDirectory, xrpl::uint256{dirId});
+    offer.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    offer.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
     if (domain.has_value())
-        offer.setFieldH256(ripple::sfDomainID, ripple::uint256{*domain});
+        offer.setFieldH256(xrpl::sfDomainID, xrpl::uint256{*domain});
     return offer;
 }
 
-ripple::STObject
+xrpl::STObject
 createTicketLedgerObject(std::string_view account, uint32_t sequence)
 {
-    ripple::STObject ticket(ripple::sfLedgerEntry);
-    ticket.setFieldU16(ripple::sfLedgerEntryType, ripple::ltTICKET);
-    ticket.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
-    ticket.setFieldU32(ripple::sfFlags, 0);
-    ticket.setFieldU64(ripple::sfOwnerNode, 0);
-    ticket.setFieldU32(ripple::sfTicketSequence, sequence);
-    ticket.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    ticket.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    xrpl::STObject ticket(xrpl::sfLedgerEntry);
+    ticket.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltTICKET);
+    ticket.setAccountID(xrpl::sfAccount, getAccountIdWithString(account));
+    ticket.setFieldU32(xrpl::sfFlags, 0);
+    ticket.setFieldU64(xrpl::sfOwnerNode, 0);
+    ticket.setFieldU32(xrpl::sfTicketSequence, sequence);
+    ticket.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    ticket.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
     return ticket;
 }
 
-ripple::STObject
+xrpl::STObject
 createEscrowLedgerObject(std::string_view account, std::string_view dest)
 {
-    ripple::STObject escrow(ripple::sfLedgerEntry);
-    escrow.setFieldU16(ripple::sfLedgerEntryType, ripple::ltESCROW);
-    escrow.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
-    escrow.setAccountID(ripple::sfDestination, getAccountIdWithString(dest));
-    escrow.setFieldAmount(ripple::sfAmount, ripple::STAmount(0, false));
-    escrow.setFieldU64(ripple::sfOwnerNode, 0);
-    escrow.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    escrow.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
-    escrow.setFieldU32(ripple::sfFlags, 0);
+    xrpl::STObject escrow(xrpl::sfLedgerEntry);
+    escrow.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltESCROW);
+    escrow.setAccountID(xrpl::sfAccount, getAccountIdWithString(account));
+    escrow.setAccountID(xrpl::sfDestination, getAccountIdWithString(dest));
+    escrow.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(0, false));
+    escrow.setFieldU64(xrpl::sfOwnerNode, 0);
+    escrow.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    escrow.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
+    escrow.setFieldU32(xrpl::sfFlags, 0);
     return escrow;
 }
 
-ripple::STObject
+xrpl::STObject
 createCheckLedgerObject(std::string_view account, std::string_view dest)
 {
-    ripple::STObject check(ripple::sfLedgerEntry);
-    check.setFieldU16(ripple::sfLedgerEntryType, ripple::ltCHECK);
-    check.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
-    check.setAccountID(ripple::sfDestination, getAccountIdWithString(dest));
-    check.setFieldU32(ripple::sfFlags, 0);
-    check.setFieldU64(ripple::sfOwnerNode, 0);
-    check.setFieldU64(ripple::sfDestinationNode, 0);
-    check.setFieldAmount(ripple::sfSendMax, ripple::STAmount(0, false));
-    check.setFieldU32(ripple::sfSequence, 0);
-    check.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    check.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    xrpl::STObject check(xrpl::sfLedgerEntry);
+    check.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltCHECK);
+    check.setAccountID(xrpl::sfAccount, getAccountIdWithString(account));
+    check.setAccountID(xrpl::sfDestination, getAccountIdWithString(dest));
+    check.setFieldU32(xrpl::sfFlags, 0);
+    check.setFieldU64(xrpl::sfOwnerNode, 0);
+    check.setFieldU64(xrpl::sfDestinationNode, 0);
+    check.setFieldAmount(xrpl::sfSendMax, xrpl::STAmount(0, false));
+    check.setFieldU32(xrpl::sfSequence, 0);
+    check.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    check.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
     return check;
 }
 
-ripple::STObject
+xrpl::STObject
 createDepositPreauthLedgerObjectByAuth(std::string_view account, std::string_view auth)
 {
-    ripple::STObject depositPreauth(ripple::sfLedgerEntry);
-    depositPreauth.setFieldU16(ripple::sfLedgerEntryType, ripple::ltDEPOSIT_PREAUTH);
-    depositPreauth.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
-    depositPreauth.setAccountID(ripple::sfAuthorize, getAccountIdWithString(auth));
-    depositPreauth.setFieldU32(ripple::sfFlags, 0);
-    depositPreauth.setFieldU64(ripple::sfOwnerNode, 0);
-    depositPreauth.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    depositPreauth.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    xrpl::STObject depositPreauth(xrpl::sfLedgerEntry);
+    depositPreauth.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltDEPOSIT_PREAUTH);
+    depositPreauth.setAccountID(xrpl::sfAccount, getAccountIdWithString(account));
+    depositPreauth.setAccountID(xrpl::sfAuthorize, getAccountIdWithString(auth));
+    depositPreauth.setFieldU32(xrpl::sfFlags, 0);
+    depositPreauth.setFieldU64(xrpl::sfOwnerNode, 0);
+    depositPreauth.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    depositPreauth.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
     return depositPreauth;
 }
 
-ripple::STObject
+xrpl::STObject
 createDepositPreauthLedgerObjectByAuthCredentials(
     std::string_view account,
     std::string_view issuer,
     std::string_view credType
 )
 {
-    ripple::STObject depositPreauth(ripple::sfLedgerEntry);
-    depositPreauth.setFieldU16(ripple::sfLedgerEntryType, ripple::ltDEPOSIT_PREAUTH);
-    depositPreauth.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
+    xrpl::STObject depositPreauth(xrpl::sfLedgerEntry);
+    depositPreauth.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltDEPOSIT_PREAUTH);
+    depositPreauth.setAccountID(xrpl::sfAccount, getAccountIdWithString(account));
     depositPreauth.setFieldArray(
-        ripple::sfAuthorizeCredentials,
+        xrpl::sfAuthorizeCredentials,
         createAuthCredentialArray(
             std::vector<std::string_view>{issuer}, std::vector<std::string_view>{credType}
         )
     );
-    depositPreauth.setFieldU32(ripple::sfFlags, 0);
-    depositPreauth.setFieldU64(ripple::sfOwnerNode, 0);
-    depositPreauth.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    depositPreauth.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    depositPreauth.setFieldU32(xrpl::sfFlags, 0);
+    depositPreauth.setFieldU64(xrpl::sfOwnerNode, 0);
+    depositPreauth.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    depositPreauth.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
     return depositPreauth;
 }
 
@@ -613,91 +609,91 @@ data::NFT
 createNft(
     std::string_view tokenID,
     std::string_view account,
-    ripple::LedgerIndex seq,
-    ripple::Blob uri,
+    xrpl::LedgerIndex seq,
+    xrpl::Blob uri,
     bool isBurned
 )
 {
-    return data::NFT{ripple::uint256(tokenID), seq, getAccountIdWithString(account), uri, isBurned};
+    return data::NFT{xrpl::uint256(tokenID), seq, getAccountIdWithString(account), uri, isBurned};
 }
 
-ripple::STObject
+xrpl::STObject
 createNftBuyOffer(std::string_view tokenID, std::string_view account)
 {
-    ripple::STObject offer(ripple::sfLedgerEntry);
-    offer.setFieldH256(ripple::sfNFTokenID, ripple::uint256{tokenID});
-    offer.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
-    offer.setFieldU32(ripple::sfFlags, 0u);
-    offer.setFieldAmount(ripple::sfAmount, ripple::STAmount{123});
-    offer.setFieldU64(ripple::sfOwnerNode, 0ul);
-    offer.setAccountID(ripple::sfOwner, getAccountIdWithString(account));
-    offer.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    offer.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0u);
-    offer.setFieldU64(ripple::sfNFTokenOfferNode, 0ul);
+    xrpl::STObject offer(xrpl::sfLedgerEntry);
+    offer.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{tokenID});
+    offer.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_OFFER);
+    offer.setFieldU32(xrpl::sfFlags, 0u);
+    offer.setFieldAmount(xrpl::sfAmount, xrpl::STAmount{123});
+    offer.setFieldU64(xrpl::sfOwnerNode, 0ul);
+    offer.setAccountID(xrpl::sfOwner, getAccountIdWithString(account));
+    offer.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    offer.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0u);
+    offer.setFieldU64(xrpl::sfNFTokenOfferNode, 0ul);
     return offer;
 }
 
-ripple::STObject
+xrpl::STObject
 createNftSellOffer(std::string_view tokenID, std::string_view account)
 {
-    ripple::STObject offer(ripple::sfLedgerEntry);
-    offer.setFieldH256(ripple::sfNFTokenID, ripple::uint256{tokenID});
-    offer.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
-    offer.setFieldU32(ripple::sfFlags, 0u);
-    offer.setFieldAmount(ripple::sfAmount, ripple::STAmount{123});
-    offer.setFieldU64(ripple::sfOwnerNode, 0ul);
-    offer.setAccountID(ripple::sfOwner, getAccountIdWithString(account));
-    offer.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    offer.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0u);
-    offer.setFieldU64(ripple::sfNFTokenOfferNode, 0ul);
+    xrpl::STObject offer(xrpl::sfLedgerEntry);
+    offer.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{tokenID});
+    offer.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_OFFER);
+    offer.setFieldU32(xrpl::sfFlags, 0u);
+    offer.setFieldAmount(xrpl::sfAmount, xrpl::STAmount{123});
+    offer.setFieldU64(xrpl::sfOwnerNode, 0ul);
+    offer.setAccountID(xrpl::sfOwner, getAccountIdWithString(account));
+    offer.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    offer.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0u);
+    offer.setFieldU64(xrpl::sfNFTokenOfferNode, 0ul);
     return offer;
 }
 
-ripple::STObject
+xrpl::STObject
 createSignerLists(std::vector<std::pair<std::string, uint32_t>> const& signers)
 {
-    auto signerlists = ripple::STObject(ripple::sfLedgerEntry);
-    signerlists.setFieldU16(ripple::sfLedgerEntryType, ripple::ltSIGNER_LIST);
-    signerlists.setFieldU32(ripple::sfFlags, 0);
-    signerlists.setFieldU64(ripple::sfOwnerNode, 0);
-    signerlists.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256());
-    signerlists.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
-    signerlists.setFieldU32(ripple::sfSignerListID, 0);
+    auto signerlists = xrpl::STObject(xrpl::sfLedgerEntry);
+    signerlists.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltSIGNER_LIST);
+    signerlists.setFieldU32(xrpl::sfFlags, 0);
+    signerlists.setFieldU64(xrpl::sfOwnerNode, 0);
+    signerlists.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256());
+    signerlists.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
+    signerlists.setFieldU32(xrpl::sfSignerListID, 0);
     uint32_t quorum = 0;
-    ripple::STArray list;
+    xrpl::STArray list;
     for (auto const& signer : signers) {
-        auto entry = ripple::STObject(ripple::sfSignerEntry);
-        entry.setAccountID(ripple::sfAccount, getAccountIdWithString(signer.first));
-        entry.setFieldU16(ripple::sfSignerWeight, signer.second);
+        auto entry = xrpl::STObject(xrpl::sfSignerEntry);
+        entry.setAccountID(xrpl::sfAccount, getAccountIdWithString(signer.first));
+        entry.setFieldU16(xrpl::sfSignerWeight, signer.second);
         quorum += signer.second;
         list.push_back(std::move(entry));
     }
-    signerlists.setFieldU32(ripple::sfSignerQuorum, quorum);
-    signerlists.setFieldArray(ripple::sfSignerEntries, list);
+    signerlists.setFieldU32(xrpl::sfSignerQuorum, quorum);
+    signerlists.setFieldArray(xrpl::sfSignerEntries, list);
     return signerlists;
 }
 
-ripple::STObject
+xrpl::STObject
 createNftTokenPage(
     std::vector<std::pair<std::string, std::string>> const& tokens,
-    std::optional<ripple::uint256> previousPage
+    std::optional<xrpl::uint256> previousPage
 )
 {
-    auto tokenPage = ripple::STObject(ripple::sfLedgerEntry);
-    tokenPage.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
-    tokenPage.setFieldU32(ripple::sfFlags, 0);
-    tokenPage.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256());
-    tokenPage.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    auto tokenPage = xrpl::STObject(xrpl::sfLedgerEntry);
+    tokenPage.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_PAGE);
+    tokenPage.setFieldU32(xrpl::sfFlags, 0);
+    tokenPage.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256());
+    tokenPage.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
     if (previousPage)
-        tokenPage.setFieldH256(ripple::sfPreviousPageMin, *previousPage);
-    ripple::STArray list;
+        tokenPage.setFieldH256(xrpl::sfPreviousPageMin, *previousPage);
+    xrpl::STArray list;
     for (auto const& token : tokens) {
-        auto entry = ripple::STObject(ripple::sfNFToken);
-        entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{token.first.c_str()});
-        entry.setFieldVL(ripple::sfURI, ripple::Slice(token.second.c_str(), token.second.size()));
+        auto entry = xrpl::STObject(xrpl::sfNFToken);
+        entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{token.first.c_str()});
+        entry.setFieldVL(xrpl::sfURI, xrpl::Slice(token.second.c_str(), token.second.size()));
         list.push_back(std::move(entry));
     }
-    tokenPage.setFieldArray(ripple::sfNFTokens, list);
+    tokenPage.setFieldArray(xrpl::sfNFTokens, list);
     return tokenPage;
 }
 
@@ -711,50 +707,50 @@ createMintNftTxWithMetadata(
 )
 {
     // tx
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_MINT);
-    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
-    tx.setAccountID(ripple::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = ripple::STAmount(fee, false);
-    tx.setFieldAmount(ripple::sfFee, amount);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_MINT);
+    auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
+    tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
+    auto amount = xrpl::STAmount(fee, false);
+    tx.setFieldAmount(xrpl::sfFee, amount);
     // required field for ttNFTOKEN_MINT
-    tx.setFieldU32(ripple::sfNFTokenTaxon, nfTokenTaxon);
-    tx.setFieldU32(ripple::sfSequence, seq);
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    tx.setFieldU32(xrpl::sfNFTokenTaxon, nfTokenTaxon);
+    tx.setFieldU32(xrpl::sfSequence, seq);
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
 
     // meta
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
-    ripple::STObject node(ripple::sfModifiedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_PAGE);
 
-    ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::STArray nftArray1{2};
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    xrpl::STArray nftArray1{2};
 
     // finalFields contain new NFT while previousFields does not
-    auto entry = ripple::STObject(ripple::sfNFToken);
-    entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    auto entry = xrpl::STObject(xrpl::sfNFToken);
+    entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
     char const* url = "testurl";
-    entry.setFieldVL(ripple::sfURI, ripple::Slice(url, 7));
+    entry.setFieldVL(xrpl::sfURI, xrpl::Slice(url, 7));
     nftArray1.push_back(entry);
 
-    auto entry2 = ripple::STObject(ripple::sfNFToken);
-    entry2.setFieldH256(ripple::sfNFTokenID, ripple::uint256{kIndex1});
-    entry2.setFieldVL(ripple::sfURI, ripple::Slice(url, 7));
+    auto entry2 = xrpl::STObject(xrpl::sfNFToken);
+    entry2.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{kIndex1});
+    entry2.setFieldVL(xrpl::sfURI, xrpl::Slice(url, 7));
     nftArray1.push_back(entry2);
 
-    finalFields.setFieldArray(ripple::sfNFTokens, nftArray1);
+    finalFields.setFieldArray(xrpl::sfNFTokens, nftArray1);
 
     nftArray1.erase(nftArray1.begin());
-    ripple::STObject previousFields(ripple::sfPreviousFields);
-    previousFields.setFieldArray(ripple::sfNFTokens, nftArray1);
+    xrpl::STObject previousFields(xrpl::sfPreviousFields);
+    previousFields.setFieldArray(xrpl::sfNFTokens, nftArray1);
 
-    node.emplace_back(std::move(finalFields));
-    node.emplace_back(std::move(previousFields));
+    node.set(std::move(finalFields));
+    node.set(std::move(previousFields));
     metaArray.push_back(node);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -774,52 +770,52 @@ createMintNftTxWithMetadataOfCreatedNode(
 )
 {
     // tx
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_MINT);
-    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
-    tx.setAccountID(ripple::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = ripple::STAmount(fee, false);
-    tx.setFieldAmount(ripple::sfFee, amount);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_MINT);
+    auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
+    tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
+    auto amount = xrpl::STAmount(fee, false);
+    tx.setFieldAmount(xrpl::sfFee, amount);
     // required field for ttNFTOKEN_MINT
-    tx.setFieldU32(ripple::sfNFTokenTaxon, nfTokenTaxon);
-    tx.setFieldU32(ripple::sfSequence, seq);
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    tx.setFieldU32(xrpl::sfNFTokenTaxon, nfTokenTaxon);
+    tx.setFieldU32(xrpl::sfSequence, seq);
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
     if (uri)
-        tx.setFieldVL(ripple::sfURI, ripple::Slice(uri->data(), uri->size()));
+        tx.setFieldVL(xrpl::sfURI, xrpl::Slice(uri->data(), uri->size()));
 
     // meta
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
-    ripple::STObject node(ripple::sfCreatedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
+    xrpl::STObject node(xrpl::sfCreatedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_PAGE);
 
-    ripple::STObject newFields(ripple::sfNewFields);
-    ripple::STArray nftArray1{1};
+    xrpl::STObject newFields(xrpl::sfNewFields);
+    xrpl::STArray nftArray1{1};
 
     if (nftID) {
         // finalFields contain new NFT while previousFields does not
-        auto entry = ripple::STObject(ripple::sfNFToken);
-        entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{*nftID});
+        auto entry = xrpl::STObject(xrpl::sfNFToken);
+        entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{*nftID});
         if (uri)
-            entry.setFieldVL(ripple::sfURI, ripple::Slice(uri->data(), uri->size()));
+            entry.setFieldVL(xrpl::sfURI, xrpl::Slice(uri->data(), uri->size()));
 
         nftArray1.push_back(entry);
     }
-    newFields.setFieldArray(ripple::sfNFTokens, nftArray1);
-    node.emplace_back(std::move(newFields));
+    newFields.setFieldArray(xrpl::sfNFTokens, nftArray1);
+    node.set(std::move(newFields));
     if (pageIndex)
-        node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{*pageIndex});
+        node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{*pageIndex});
 
     // add a ledger object ahead of nft page
-    ripple::STObject node2(ripple::sfCreatedNode);
-    node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltACCOUNT_ROOT);
+    xrpl::STObject node2(xrpl::sfCreatedNode);
+    node2.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltACCOUNT_ROOT);
     metaArray.push_back(node2);
 
     metaArray.push_back(node);
 
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -828,56 +824,56 @@ createMintNftTxWithMetadataOfCreatedNode(
 }
 
 data::TransactionAndMetadata
-createNftModifyTxWithMetadata(std::string_view accountId, std::string_view nftID, ripple::Blob uri)
+createNftModifyTxWithMetadata(std::string_view accountId, std::string_view nftID, xrpl::Blob uri)
 {
     // tx
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_MODIFY);
-    auto account = ripple::parseBase58<ripple::AccountID>(std::string(accountId));
-    tx.setAccountID(ripple::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = ripple::STAmount(10, false);
-    tx.setFieldAmount(ripple::sfFee, amount);
-    tx.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
-    tx.setFieldU32(ripple::sfSequence, 100);
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_MODIFY);
+    auto account = xrpl::parseBase58<xrpl::AccountID>(std::string(accountId));
+    tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
+    auto amount = xrpl::STAmount(10, false);
+    tx.setFieldAmount(xrpl::sfFee, amount);
+    tx.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
+    tx.setFieldU32(xrpl::sfSequence, 100);
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
 
     if (!uri.empty())  // sfURI should be absent if empty
-        tx.setFieldVL(ripple::sfURI, uri);
+        tx.setFieldVL(xrpl::sfURI, uri);
 
     // meta
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
-    ripple::STObject node(ripple::sfModifiedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_PAGE);
 
-    ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::STArray nftArray1{1};
-    ripple::STArray nftArray2{1};
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    xrpl::STArray nftArray1{1};
+    xrpl::STArray nftArray2{1};
 
     // finalFields contain new NFT while previousFields does not
-    auto entry = ripple::STObject(ripple::sfNFToken);
-    entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    auto entry = xrpl::STObject(xrpl::sfNFToken);
+    entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
     if (!uri.empty())
-        entry.setFieldVL(ripple::sfURI, uri);
+        entry.setFieldVL(xrpl::sfURI, uri);
     nftArray1.push_back(entry);
 
-    auto entry2 = ripple::STObject(ripple::sfNFToken);
-    entry2.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    auto entry2 = xrpl::STObject(xrpl::sfNFToken);
+    entry2.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
     char const* url = "previous";
-    entry2.setFieldVL(ripple::sfURI, ripple::Slice(url, 7));
+    entry2.setFieldVL(xrpl::sfURI, xrpl::Slice(url, 7));
     nftArray2.push_back(entry2);
 
-    finalFields.setFieldArray(ripple::sfNFTokens, nftArray1);
+    finalFields.setFieldArray(xrpl::sfNFTokens, nftArray1);
 
-    ripple::STObject previousFields(ripple::sfPreviousFields);
-    previousFields.setFieldArray(ripple::sfNFTokens, nftArray2);
+    xrpl::STObject previousFields(xrpl::sfPreviousFields);
+    previousFields.setFieldArray(xrpl::sfNFTokens, nftArray2);
 
-    node.emplace_back(std::move(finalFields));
-    node.emplace_back(std::move(previousFields));
+    node.set(std::move(finalFields));
+    node.set(std::move(previousFields));
     metaArray.push_back(node);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -889,40 +885,40 @@ data::TransactionAndMetadata
 createNftBurnTxWithMetadataOfDeletedNode(std::string_view accountId, std::string_view nftID)
 {
     // tx
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_BURN);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_BURN);
     auto account = getAccountIdWithString(accountId);
-    tx.setAccountID(ripple::sfAccount, account);
-    auto amount = ripple::STAmount(10, false);
-    tx.setFieldAmount(ripple::sfFee, amount);
-    tx.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
-    tx.setFieldU32(ripple::sfSequence, 100);
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    tx.setAccountID(xrpl::sfAccount, account);
+    auto amount = xrpl::STAmount(10, false);
+    tx.setFieldAmount(xrpl::sfFee, amount);
+    tx.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
+    tx.setFieldU32(xrpl::sfSequence, 100);
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
 
     // meta
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
-    ripple::STObject node(ripple::sfDeletedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
+    xrpl::STObject node(xrpl::sfDeletedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_PAGE);
     // deleted node should contain finalFields
-    ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::STArray nftArray{1};
-    auto entry = ripple::STObject(ripple::sfNFToken);
-    entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    xrpl::STArray nftArray{1};
+    auto entry = xrpl::STObject(xrpl::sfNFToken);
+    entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
     nftArray.push_back(entry);
-    finalFields.setFieldArray(ripple::sfNFTokens, nftArray);
+    finalFields.setFieldArray(xrpl::sfNFTokens, nftArray);
 
-    node.emplace_back(std::move(finalFields));
+    node.set(std::move(finalFields));
 
     // add a ledger object ahead of nft page
-    ripple::STObject node2(ripple::sfCreatedNode);
-    node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltACCOUNT_ROOT);
+    xrpl::STObject node2(xrpl::sfCreatedNode);
+    node2.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltACCOUNT_ROOT);
     metaArray.push_back(node2);
 
     metaArray.push_back(node);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -934,36 +930,36 @@ data::TransactionAndMetadata
 createNftBurnTxWithMetadataOfModifiedNode(std::string_view accountId, std::string_view nftID)
 {
     // tx
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_BURN);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_BURN);
     auto account = getAccountIdWithString(accountId);
-    tx.setAccountID(ripple::sfAccount, account);
-    auto amount = ripple::STAmount(10, false);
-    tx.setFieldAmount(ripple::sfFee, amount);
-    tx.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
-    tx.setFieldU32(ripple::sfSequence, 100);
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    tx.setAccountID(xrpl::sfAccount, account);
+    auto amount = xrpl::STAmount(10, false);
+    tx.setFieldAmount(xrpl::sfFee, amount);
+    tx.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
+    tx.setFieldU32(xrpl::sfSequence, 100);
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
 
     // meta
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
-    ripple::STObject node(ripple::sfModifiedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_PAGE);
 
-    ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::STArray nftArray{1};
-    ripple::STObject previousFields(ripple::sfPreviousFields);
-    auto entry = ripple::STObject(ripple::sfNFToken);
-    entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    xrpl::STArray nftArray{1};
+    xrpl::STObject previousFields(xrpl::sfPreviousFields);
+    auto entry = xrpl::STObject(xrpl::sfNFToken);
+    entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
     nftArray.push_back(entry);
-    previousFields.setFieldArray(ripple::sfNFTokens, nftArray);
+    previousFields.setFieldArray(xrpl::sfNFTokens, nftArray);
 
-    node.emplace_back(std::move(previousFields));
-    node.emplace_back(std::move(finalFields));
+    node.set(std::move(previousFields));
+    node.set(std::move(finalFields));
     metaArray.push_back(node);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -981,35 +977,35 @@ createAcceptNftBuyerOfferTxWithMetadata(
 )
 {
     // tx
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_ACCEPT_OFFER);
-    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
-    tx.setAccountID(ripple::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = ripple::STAmount(fee, false);
-    tx.setFieldAmount(ripple::sfFee, amount);
-    tx.setFieldU32(ripple::sfSequence, seq);
-    tx.setFieldH256(ripple::sfNFTokenBuyOffer, ripple::uint256{offerId});
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_ACCEPT_OFFER);
+    auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
+    tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
+    auto amount = xrpl::STAmount(fee, false);
+    tx.setFieldAmount(xrpl::sfFee, amount);
+    tx.setFieldU32(xrpl::sfSequence, seq);
+    tx.setFieldH256(xrpl::sfNFTokenBuyOffer, xrpl::uint256{offerId});
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
 
     // meta
     // create deletedNode with ltNFTOKEN_OFFER
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
-    ripple::STObject node(ripple::sfDeletedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
+    xrpl::STObject node(xrpl::sfDeletedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_OFFER);
 
-    ripple::STObject finalFields(ripple::sfFinalFields);
-    finalFields.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    finalFields.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftId});
     // for buyer offer, the offer owner is the nft's new owner
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    finalFields.setAccountID(ripple::sfOwner, *account);
+    finalFields.setAccountID(xrpl::sfOwner, *account);
 
-    node.emplace_back(std::move(finalFields));
-    node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{offerId});
+    node.set(std::move(finalFields));
+    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{offerId});
     metaArray.push_back(node);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -1029,80 +1025,80 @@ createAcceptNftSellerOfferTxWithMetadata(
 )
 {
     // tx
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_ACCEPT_OFFER);
-    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
-    tx.setAccountID(ripple::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = ripple::STAmount(fee, false);
-    tx.setFieldAmount(ripple::sfFee, amount);
-    tx.setFieldU32(ripple::sfSequence, seq);
-    tx.setFieldH256(ripple::sfNFTokenSellOffer, ripple::uint256{offerId});
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_ACCEPT_OFFER);
+    auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
+    tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
+    auto amount = xrpl::STAmount(fee, false);
+    tx.setFieldAmount(xrpl::sfFee, amount);
+    tx.setFieldU32(xrpl::sfSequence, seq);
+    tx.setFieldH256(xrpl::sfNFTokenSellOffer, xrpl::uint256{offerId});
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
 
     // meta
     // create deletedNode with ltNFTOKEN_OFFER
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
-    ripple::STObject node(ripple::sfDeletedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
+    xrpl::STObject node(xrpl::sfDeletedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_OFFER);
 
-    ripple::STObject finalFields(ripple::sfFinalFields);
-    finalFields.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    finalFields.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftId});
     // offer owner is not the nft's new owner for seller offer, we need to create other nodes for
     // processing new owner
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    finalFields.setAccountID(ripple::sfOwner, *account);
+    finalFields.setAccountID(xrpl::sfOwner, *account);
 
-    node.emplace_back(finalFields);
-    node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{offerId});
+    node.set(xrpl::STObject{finalFields});
+    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{offerId});
     metaArray.push_back(node);
 
     // new owner's nft page node changed: 1 new nft page node added 2 old nft page node modified
     if (isNewPageCreated) {
-        ripple::STObject node2(ripple::sfCreatedNode);
-        node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+        xrpl::STObject node2(xrpl::sfCreatedNode);
+        node2.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_PAGE);
 
-        ripple::STObject newFields(ripple::sfNewFields);
-        ripple::STArray nftArray1{1};
+        xrpl::STObject newFields(xrpl::sfNewFields);
+        xrpl::STArray nftArray1{1};
 
-        auto entry = ripple::STObject(ripple::sfNFToken);
-        entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
+        auto entry = xrpl::STObject(xrpl::sfNFToken);
+        entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftId});
         nftArray1.push_back(entry);
 
-        newFields.setFieldArray(ripple::sfNFTokens, nftArray1);
-        node2.emplace_back(std::move(newFields));
-        node2.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{pageIndex});
+        newFields.setFieldArray(xrpl::sfNFTokens, nftArray1);
+        node2.set(std::move(newFields));
+        node2.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{pageIndex});
         metaArray.push_back(node2);
     } else {
-        ripple::STObject node2(ripple::sfModifiedNode);
-        node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+        xrpl::STObject node2(xrpl::sfModifiedNode);
+        node2.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_PAGE);
 
-        ripple::STArray nftArray1{2};
+        xrpl::STArray nftArray1{2};
 
         // finalFields contain new NFT while previousFields does not
-        auto entry = ripple::STObject(ripple::sfNFToken);
-        entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
+        auto entry = xrpl::STObject(xrpl::sfNFToken);
+        entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftId});
         nftArray1.push_back(entry);
 
-        auto entry2 = ripple::STObject(ripple::sfNFToken);
-        entry2.setFieldH256(ripple::sfNFTokenID, ripple::uint256{kIndex1});
+        auto entry2 = xrpl::STObject(xrpl::sfNFToken);
+        entry2.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{kIndex1});
         nftArray1.push_back(entry2);
 
-        finalFields.setFieldArray(ripple::sfNFTokens, nftArray1);
+        finalFields.setFieldArray(xrpl::sfNFTokens, nftArray1);
 
         nftArray1.erase(nftArray1.begin());
-        ripple::STObject previousFields(ripple::sfPreviousFields);
-        previousFields.setFieldArray(ripple::sfNFTokens, nftArray1);
+        xrpl::STObject previousFields(xrpl::sfPreviousFields);
+        previousFields.setFieldArray(xrpl::sfNFTokens, nftArray1);
 
-        node2.emplace_back(std::move(finalFields));
-        node2.emplace_back(std::move(previousFields));
-        node2.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{pageIndex});
+        node2.set(std::move(finalFields));
+        node2.set(std::move(previousFields));
+        node2.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{pageIndex});
         metaArray.push_back(node2);
     }
 
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -1120,40 +1116,40 @@ createCancelNftOffersTxWithMetadata(
 )
 {
     // tx
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_CANCEL_OFFER);
-    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
-    tx.setAccountID(ripple::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = ripple::STAmount(fee, false);
-    tx.setFieldAmount(ripple::sfFee, amount);
-    tx.setFieldU32(ripple::sfSequence, seq);
-    ripple::STVector256 offers;
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_CANCEL_OFFER);
+    auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
+    tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
+    auto amount = xrpl::STAmount(fee, false);
+    tx.setFieldAmount(xrpl::sfFee, amount);
+    tx.setFieldU32(xrpl::sfSequence, seq);
+    xrpl::STVector256 offers;
     offers.resize(nftOffers.size());
     std::ranges::transform(nftOffers, offers.begin(), [&](auto const& nftId) {
-        return ripple::uint256{nftId.c_str()};
+        return xrpl::uint256{nftId.c_str()};
     });
-    tx.setFieldV256(ripple::sfNFTokenOffers, offers);
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    tx.setFieldV256(xrpl::sfNFTokenOffers, offers);
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
 
     // meta
     // create deletedNode with ltNFTOKEN_OFFER
     // reuse the offer id as nft id
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{nftOffers.size()};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{nftOffers.size()};
     for (auto const& nftId : nftOffers) {
-        ripple::STObject node(ripple::sfDeletedNode);
-        node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
+        xrpl::STObject node(xrpl::sfDeletedNode);
+        node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_OFFER);
 
-        ripple::STObject finalFields(ripple::sfFinalFields);
-        finalFields.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId.c_str()});
+        xrpl::STObject finalFields(xrpl::sfFinalFields);
+        finalFields.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftId.c_str()});
 
-        node.emplace_back(std::move(finalFields));
+        node.set(std::move(finalFields));
         metaArray.push_back(node);
     }
 
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -1172,31 +1168,31 @@ createCreateNftOfferTxWithMetadata(
 )
 {
     // tx
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_CREATE_OFFER);
-    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
-    tx.setAccountID(ripple::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = ripple::STAmount(fee, false);
-    tx.setFieldAmount(ripple::sfFee, amount);
-    auto price = ripple::STAmount(offerPrice, false);
-    tx.setFieldAmount(ripple::sfAmount, price);
-    tx.setFieldU32(ripple::sfSequence, seq);
-    tx.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_CREATE_OFFER);
+    auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
+    tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
+    auto amount = xrpl::STAmount(fee, false);
+    tx.setFieldAmount(xrpl::sfFee, amount);
+    auto price = xrpl::STAmount(offerPrice, false);
+    tx.setFieldAmount(xrpl::sfAmount, price);
+    tx.setFieldU32(xrpl::sfSequence, seq);
+    tx.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftId});
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
 
     // meta
     // create createdNode with LedgerIndex
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
 
-    ripple::STObject node(ripple::sfCreatedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
-    node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{offerId});
+    xrpl::STObject node(xrpl::sfCreatedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_OFFER);
+    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{offerId});
 
     metaArray.push_back(node);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -1211,43 +1207,43 @@ createOracleSetTxWithMetadata(
     uint32_t fee,
     uint32_t docId,
     std::uint32_t lastUpdateTime,
-    ripple::STArray priceDataSeries,
+    xrpl::STArray priceDataSeries,
     std::string_view oracleIndex,
     bool created,
     std::string_view previousTxnId
 )
 {
     // tx
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttORACLE_SET);
-    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
-    tx.setAccountID(ripple::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = ripple::STAmount(fee, false);
-    tx.setFieldAmount(ripple::sfFee, amount);
-    tx.setFieldU32(ripple::sfLastUpdateTime, lastUpdateTime);
-    tx.setFieldU32(ripple::sfOracleDocumentID, docId);
-    tx.setFieldU32(ripple::sfSequence, seq);
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
-    tx.setFieldArray(ripple::sfPriceDataSeries, priceDataSeries);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttORACLE_SET);
+    auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
+    tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
+    auto amount = xrpl::STAmount(fee, false);
+    tx.setFieldAmount(xrpl::sfFee, amount);
+    tx.setFieldU32(xrpl::sfLastUpdateTime, lastUpdateTime);
+    tx.setFieldU32(xrpl::sfOracleDocumentID, docId);
+    tx.setFieldU32(xrpl::sfSequence, seq);
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
+    tx.setFieldArray(xrpl::sfPriceDataSeries, priceDataSeries);
 
     // meta
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    ripple::STArray metaArray{1};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    xrpl::STArray metaArray{1};
 
-    ripple::STObject node(created ? ripple::sfCreatedNode : ripple::sfModifiedNode);
-    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltORACLE);
-    node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{oracleIndex});
-    node.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{previousTxnId});
-    ripple::STObject fields(created ? ripple::sfNewFields : ripple::sfFinalFields);
-    fields.setFieldU32(ripple::sfOracleDocumentID, docId);
-    fields.setFieldU32(ripple::sfLastUpdateTime, lastUpdateTime);
-    fields.setFieldArray(ripple::sfPriceDataSeries, priceDataSeries);
-    node.emplace_back(std::move(fields));
+    xrpl::STObject node(created ? xrpl::sfCreatedNode : xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltORACLE);
+    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{oracleIndex});
+    node.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{previousTxnId});
+    xrpl::STObject fields(created ? xrpl::sfNewFields : xrpl::sfFinalFields);
+    fields.setFieldU32(xrpl::sfOracleDocumentID, docId);
+    fields.setFieldU32(xrpl::sfLastUpdateTime, lastUpdateTime);
+    fields.setFieldArray(xrpl::sfPriceDataSeries, priceDataSeries);
+    node.set(std::move(fields));
 
     metaArray.push_back(node);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -1255,28 +1251,28 @@ createOracleSetTxWithMetadata(
     return ret;
 }
 
-ripple::STObject
-createAmendmentsObject(std::vector<ripple::uint256> const& enabledAmendments)
+xrpl::STObject
+createAmendmentsObject(std::vector<xrpl::uint256> const& enabledAmendments)
 {
-    auto amendments = ripple::STObject(ripple::sfLedgerEntry);
-    amendments.setFieldU16(ripple::sfLedgerEntryType, ripple::ltAMENDMENTS);
-    amendments.setFieldU32(ripple::sfFlags, 0);
-    ripple::STVector256 const list(enabledAmendments);
-    amendments.setFieldV256(ripple::sfAmendments, list);
+    auto amendments = xrpl::STObject(xrpl::sfLedgerEntry);
+    amendments.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltAMENDMENTS);
+    amendments.setFieldU32(xrpl::sfFlags, 0);
+    xrpl::STVector256 const list(enabledAmendments);
+    amendments.setFieldV256(xrpl::sfAmendments, list);
     return amendments;
 }
 
-ripple::STObject
+xrpl::STObject
 createBrokenAmendmentsObject()
 {
-    auto amendments = ripple::STObject(ripple::sfLedgerEntry);
-    amendments.setFieldU16(ripple::sfLedgerEntryType, ripple::ltAMENDMENTS);
-    amendments.setFieldU32(ripple::sfFlags, 0);
+    auto amendments = xrpl::STObject(xrpl::sfLedgerEntry);
+    amendments.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltAMENDMENTS);
+    amendments.setFieldU32(xrpl::sfFlags, 0);
     // Note: no sfAmendments present
     return amendments;
 }
 
-ripple::STObject
+xrpl::STObject
 createAmmObject(
     std::string_view accountId,
     std::string_view assetCurrency,
@@ -1289,30 +1285,28 @@ createAmmObject(
     uint64_t ownerNode
 )
 {
-    auto amm = ripple::STObject(ripple::sfLedgerEntry);
-    amm.setFieldU16(ripple::sfLedgerEntryType, ripple::ltAMM);
-    amm.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
-    amm.setFieldU16(ripple::sfTradingFee, tradingFee);
-    amm.setFieldU64(ripple::sfOwnerNode, ownerNode);
+    auto amm = xrpl::STObject(xrpl::sfLedgerEntry);
+    amm.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltAMM);
+    amm.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    amm.setFieldU16(xrpl::sfTradingFee, tradingFee);
+    amm.setFieldU64(xrpl::sfOwnerNode, ownerNode);
     amm.setFieldIssue(
-        ripple::sfAsset, ripple::STIssue{ripple::sfAsset, getIssue(assetCurrency, assetIssuer)}
+        xrpl::sfAsset, xrpl::STIssue{xrpl::sfAsset, getIssue(assetCurrency, assetIssuer)}
     );
     amm.setFieldIssue(
-        ripple::sfAsset2, ripple::STIssue{ripple::sfAsset2, getIssue(asset2Currency, asset2Issuer)}
+        xrpl::sfAsset2, xrpl::STIssue{xrpl::sfAsset2, getIssue(asset2Currency, asset2Issuer)}
     );
-    ripple::Issue const issue1(
-        ripple::Currency{lpTokenBalanceIssueCurrency},
+    xrpl::Issue const issue1(
+        xrpl::Currency{lpTokenBalanceIssueCurrency},
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        *util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId))
+        *util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId))
     );
-    amm.setFieldAmount(
-        ripple::sfLPTokenBalance, ripple::STAmount(issue1, lpTokenBalanceIssueAmount)
-    );
-    amm.setFieldU32(ripple::sfFlags, 0);
+    amm.setFieldAmount(xrpl::sfLPTokenBalance, xrpl::STAmount(issue1, lpTokenBalanceIssueAmount));
+    amm.setFieldU32(xrpl::sfFlags, 0);
     return amm;
 }
 
-ripple::STObject
+xrpl::STObject
 createBridgeObject(
     std::string_view accountId,
     std::string_view lockingDoor,
@@ -1321,34 +1315,34 @@ createBridgeObject(
     std::string_view issuingIssuer
 )
 {
-    auto bridge = ripple::STObject(ripple::sfLedgerEntry);
-    bridge.setFieldU16(ripple::sfLedgerEntryType, ripple::ltBRIDGE);
-    bridge.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
-    bridge.setFieldAmount(ripple::sfSignatureReward, ripple::STAmount(10, false));
-    bridge.setFieldU64(ripple::sfXChainClaimID, 100);
-    bridge.setFieldU64(ripple::sfXChainAccountCreateCount, 100);
-    bridge.setFieldU64(ripple::sfXChainAccountClaimCount, 100);
-    bridge.setFieldU64(ripple::sfOwnerNode, 100);
-    bridge.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    bridge.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
-    bridge.setFieldU32(ripple::sfFlags, 0);
-    Json::Value lockingIssue;
+    auto bridge = xrpl::STObject(xrpl::sfLedgerEntry);
+    bridge.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltBRIDGE);
+    bridge.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    bridge.setFieldAmount(xrpl::sfSignatureReward, xrpl::STAmount(10, false));
+    bridge.setFieldU64(xrpl::sfXChainClaimID, 100);
+    bridge.setFieldU64(xrpl::sfXChainAccountCreateCount, 100);
+    bridge.setFieldU64(xrpl::sfXChainAccountClaimCount, 100);
+    bridge.setFieldU64(xrpl::sfOwnerNode, 100);
+    bridge.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    bridge.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
+    bridge.setFieldU32(xrpl::sfFlags, 0);
+    json::Value lockingIssue;
     lockingIssue["currency"] = "XRP";
-    Json::Value issuingIssue;
+    json::Value issuingIssue;
     issuingIssue["currency"] = std::string(issuingCurrency);
     issuingIssue["issuer"] = std::string(issuingIssuer);
 
-    bridge[ripple::sfXChainBridge] = ripple::STXChainBridge(
+    bridge[xrpl::sfXChainBridge] = xrpl::STXChainBridge(
         getAccountIdWithString(lockingDoor),
-        ripple::issueFromJson(lockingIssue),
+        xrpl::issueFromJson(lockingIssue),
         getAccountIdWithString(issuingDoor),
-        ripple::issueFromJson(issuingIssue)
+        xrpl::issueFromJson(issuingIssue)
     );
-    bridge.setFieldU32(ripple::sfFlags, 0);
+    bridge.setFieldU32(xrpl::sfFlags, 0);
     return bridge;
 }
 
-ripple::STObject
+xrpl::STObject
 createChainOwnedClaimIdObject(
     std::string_view accountId,
     std::string_view lockingDoor,
@@ -1358,36 +1352,36 @@ createChainOwnedClaimIdObject(
     std::string_view otherChainSource
 )
 {
-    auto chainOwnedClaimID = ripple::STObject(ripple::sfLedgerEntry);
-    chainOwnedClaimID.setFieldU16(ripple::sfLedgerEntryType, ripple::ltXCHAIN_OWNED_CLAIM_ID);
-    chainOwnedClaimID.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
-    chainOwnedClaimID.setFieldAmount(ripple::sfSignatureReward, ripple::STAmount(10, false));
-    chainOwnedClaimID.setFieldU64(ripple::sfXChainClaimID, 100);
-    chainOwnedClaimID.setFieldU64(ripple::sfOwnerNode, 100);
-    chainOwnedClaimID.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    chainOwnedClaimID.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
-    chainOwnedClaimID.setFieldU32(ripple::sfFlags, 0);
-    Json::Value lockingIssue;
+    auto chainOwnedClaimID = xrpl::STObject(xrpl::sfLedgerEntry);
+    chainOwnedClaimID.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltXCHAIN_OWNED_CLAIM_ID);
+    chainOwnedClaimID.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    chainOwnedClaimID.setFieldAmount(xrpl::sfSignatureReward, xrpl::STAmount(10, false));
+    chainOwnedClaimID.setFieldU64(xrpl::sfXChainClaimID, 100);
+    chainOwnedClaimID.setFieldU64(xrpl::sfOwnerNode, 100);
+    chainOwnedClaimID.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    chainOwnedClaimID.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
+    chainOwnedClaimID.setFieldU32(xrpl::sfFlags, 0);
+    json::Value lockingIssue;
     lockingIssue["currency"] = "XRP";
-    Json::Value issuingIssue;
+    json::Value issuingIssue;
     issuingIssue["currency"] = std::string(issuingCurrency);
     issuingIssue["issuer"] = std::string(issuingIssuer);
 
-    chainOwnedClaimID[ripple::sfXChainBridge] = ripple::STXChainBridge(
+    chainOwnedClaimID[xrpl::sfXChainBridge] = xrpl::STXChainBridge(
         getAccountIdWithString(lockingDoor),
-        ripple::issueFromJson(lockingIssue),
+        xrpl::issueFromJson(lockingIssue),
         getAccountIdWithString(issuingDoor),
-        ripple::issueFromJson(issuingIssue)
+        xrpl::issueFromJson(issuingIssue)
     );
-    chainOwnedClaimID.setFieldU32(ripple::sfFlags, 0);
+    chainOwnedClaimID.setFieldU32(xrpl::sfFlags, 0);
     chainOwnedClaimID.setAccountID(
-        ripple::sfOtherChainSource, getAccountIdWithString(otherChainSource)
+        xrpl::sfOtherChainSource, getAccountIdWithString(otherChainSource)
     );
-    chainOwnedClaimID.setFieldArray(ripple::sfXChainClaimAttestations, ripple::STArray{});
+    chainOwnedClaimID.setFieldArray(xrpl::sfXChainClaimAttestations, xrpl::STArray{});
     return chainOwnedClaimID;
 }
 
-ripple::STObject
+xrpl::STObject
 createChainOwnedCreateAccountClaimId(
     std::string_view accountId,
     std::string_view lockingDoor,
@@ -1396,100 +1390,98 @@ createChainOwnedCreateAccountClaimId(
     std::string_view issuingIssuer
 )
 {
-    auto chainOwnedCreateAccountClaimID = ripple::STObject(ripple::sfLedgerEntry);
+    auto chainOwnedCreateAccountClaimID = xrpl::STObject(xrpl::sfLedgerEntry);
     chainOwnedCreateAccountClaimID.setFieldU16(
-        ripple::sfLedgerEntryType, ripple::ltXCHAIN_OWNED_CLAIM_ID
+        xrpl::sfLedgerEntryType, xrpl::ltXCHAIN_OWNED_CLAIM_ID
     );
-    chainOwnedCreateAccountClaimID.setAccountID(
-        ripple::sfAccount, getAccountIdWithString(accountId)
-    );
-    chainOwnedCreateAccountClaimID.setFieldU64(ripple::sfXChainAccountCreateCount, 100);
-    chainOwnedCreateAccountClaimID.setFieldU64(ripple::sfOwnerNode, 100);
-    chainOwnedCreateAccountClaimID.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    chainOwnedCreateAccountClaimID.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
-    chainOwnedCreateAccountClaimID.setFieldU32(ripple::sfFlags, 0);
-    Json::Value lockingIssue;
+    chainOwnedCreateAccountClaimID.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    chainOwnedCreateAccountClaimID.setFieldU64(xrpl::sfXChainAccountCreateCount, 100);
+    chainOwnedCreateAccountClaimID.setFieldU64(xrpl::sfOwnerNode, 100);
+    chainOwnedCreateAccountClaimID.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    chainOwnedCreateAccountClaimID.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
+    chainOwnedCreateAccountClaimID.setFieldU32(xrpl::sfFlags, 0);
+    json::Value lockingIssue;
     lockingIssue["currency"] = "XRP";
-    Json::Value issuingIssue;
+    json::Value issuingIssue;
     issuingIssue["currency"] = std::string(issuingCurrency);
     issuingIssue["issuer"] = std::string(issuingIssuer);
 
-    chainOwnedCreateAccountClaimID[ripple::sfXChainBridge] = ripple::STXChainBridge(
+    chainOwnedCreateAccountClaimID[xrpl::sfXChainBridge] = xrpl::STXChainBridge(
         getAccountIdWithString(lockingDoor),
-        ripple::issueFromJson(lockingIssue),
+        xrpl::issueFromJson(lockingIssue),
         getAccountIdWithString(issuingDoor),
-        ripple::issueFromJson(issuingIssue)
+        xrpl::issueFromJson(issuingIssue)
     );
-    chainOwnedCreateAccountClaimID.setFieldU32(ripple::sfFlags, 0);
+    chainOwnedCreateAccountClaimID.setFieldU32(xrpl::sfFlags, 0);
     chainOwnedCreateAccountClaimID.setFieldArray(
-        ripple::sfXChainCreateAccountAttestations, ripple::STArray{}
+        xrpl::sfXChainCreateAccountAttestations, xrpl::STArray{}
     );
     return chainOwnedCreateAccountClaimID;
 }
 
 void
 ammAddVoteSlot(
-    ripple::STObject& amm,
-    ripple::AccountID const& accountId,
+    xrpl::STObject& amm,
+    xrpl::AccountID const& accountId,
     uint16_t tradingFee,
     uint32_t voteWeight
 )
 {
-    if (!amm.isFieldPresent(ripple::sfVoteSlots))
-        amm.setFieldArray(ripple::sfVoteSlots, ripple::STArray{});
+    if (!amm.isFieldPresent(xrpl::sfVoteSlots))
+        amm.setFieldArray(xrpl::sfVoteSlots, xrpl::STArray{});
 
-    auto& arr = amm.peekFieldArray(ripple::sfVoteSlots);
-    auto slot = ripple::STObject(ripple::sfVoteEntry);
-    slot.setAccountID(ripple::sfAccount, accountId);
-    slot.setFieldU16(ripple::sfTradingFee, tradingFee);
-    slot.setFieldU32(ripple::sfVoteWeight, voteWeight);
+    auto& arr = amm.peekFieldArray(xrpl::sfVoteSlots);
+    auto slot = xrpl::STObject(xrpl::sfVoteEntry);
+    slot.setAccountID(xrpl::sfAccount, accountId);
+    slot.setFieldU16(xrpl::sfTradingFee, tradingFee);
+    slot.setFieldU32(xrpl::sfVoteWeight, voteWeight);
     arr.push_back(slot);
 }
 
 void
 ammSetAuctionSlot(
-    ripple::STObject& amm,
-    ripple::AccountID const& accountId,
-    ripple::STAmount price,
+    xrpl::STObject& amm,
+    xrpl::AccountID const& accountId,
+    xrpl::STAmount price,
     uint16_t discountedFee,
     uint32_t expiration,
-    std::vector<ripple::AccountID> const& authAccounts
+    std::vector<xrpl::AccountID> const& authAccounts
 )
 {
     ASSERT(expiration >= 24 * 3600, "Expiration must be at least 24 hours");
 
-    if (!amm.isFieldPresent(ripple::sfAuctionSlot))
-        amm.makeFieldPresent(ripple::sfAuctionSlot);
+    if (!amm.isFieldPresent(xrpl::sfAuctionSlot))
+        amm.makeFieldPresent(xrpl::sfAuctionSlot);
 
-    auto& auctionSlot = amm.peekFieldObject(ripple::sfAuctionSlot);
-    auctionSlot.setAccountID(ripple::sfAccount, accountId);
-    auctionSlot.setFieldAmount(ripple::sfPrice, price);
-    auctionSlot.setFieldU16(ripple::sfDiscountedFee, discountedFee);
-    auctionSlot.setFieldU32(ripple::sfExpiration, expiration);
+    auto& auctionSlot = amm.peekFieldObject(xrpl::sfAuctionSlot);
+    auctionSlot.setAccountID(xrpl::sfAccount, accountId);
+    auctionSlot.setFieldAmount(xrpl::sfPrice, price);
+    auctionSlot.setFieldU16(xrpl::sfDiscountedFee, discountedFee);
+    auctionSlot.setFieldU32(xrpl::sfExpiration, expiration);
 
     if (not authAccounts.empty()) {
-        ripple::STArray accounts;
+        xrpl::STArray accounts;
 
         for (auto const& acc : authAccounts) {
-            ripple::STObject authAcc(ripple::sfAuthAccount);
-            authAcc.setAccountID(ripple::sfAccount, acc);
+            xrpl::STObject authAcc(xrpl::sfAuthAccount);
+            authAcc.setAccountID(xrpl::sfAccount, acc);
             accounts.push_back(authAcc);
         }
 
-        auctionSlot.setFieldArray(ripple::sfAuthAccounts, accounts);
+        auctionSlot.setFieldArray(xrpl::sfAuthAccounts, accounts);
     }
 }
 
-ripple::Currency
+xrpl::Currency
 createLptCurrency(std::string_view assetCurrency, std::string_view asset2Currency)
 {
-    return ripple::ammLPTCurrency(
-        ripple::to_currency(std::string(assetCurrency)),
-        ripple::to_currency(std::string(asset2Currency))
+    return xrpl::ammLPTCurrency(
+        xrpl::Issue{xrpl::toCurrency(std::string(assetCurrency)), xrpl::xrpAccount()},
+        xrpl::Issue{xrpl::toCurrency(std::string(asset2Currency)), xrpl::xrpAccount()}
     );
 }
 
-ripple::STObject
+xrpl::STObject
 createMptIssuanceObject(
     std::string_view accountId,
     std::uint32_t seq,
@@ -1504,105 +1496,105 @@ createMptIssuanceObject(
     std::optional<std::uint32_t> mutableFlags
 )
 {
-    ripple::STObject mptIssuance(ripple::sfLedgerEntry);
-    mptIssuance.setAccountID(ripple::sfIssuer, getAccountIdWithString(accountId));
-    mptIssuance.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN_ISSUANCE);
-    mptIssuance.setFieldU32(ripple::sfSequence, seq);
-    mptIssuance.setFieldU64(ripple::sfOwnerNode, 0);
-    mptIssuance.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    mptIssuance.setFieldU32(ripple::sfFlags, flags);
-    mptIssuance.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
-    mptIssuance.setFieldU64(ripple::sfOutstandingAmount, outstandingAmount);
+    xrpl::STObject mptIssuance(xrpl::sfLedgerEntry);
+    mptIssuance.setAccountID(xrpl::sfIssuer, getAccountIdWithString(accountId));
+    mptIssuance.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
+    mptIssuance.setFieldU32(xrpl::sfSequence, seq);
+    mptIssuance.setFieldU64(xrpl::sfOwnerNode, 0);
+    mptIssuance.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    mptIssuance.setFieldU32(xrpl::sfFlags, flags);
+    mptIssuance.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
+    mptIssuance.setFieldU64(xrpl::sfOutstandingAmount, outstandingAmount);
 
     if (transferFee.has_value())
-        mptIssuance.setFieldU16(ripple::sfTransferFee, *transferFee);
+        mptIssuance.setFieldU16(xrpl::sfTransferFee, *transferFee);
     if (assetScale.has_value())
-        mptIssuance.setFieldU8(ripple::sfAssetScale, *assetScale);
+        mptIssuance.setFieldU8(xrpl::sfAssetScale, *assetScale);
     if (maxAmount.has_value())
-        mptIssuance.setFieldU64(ripple::sfMaximumAmount, *maxAmount);
+        mptIssuance.setFieldU64(xrpl::sfMaximumAmount, *maxAmount);
     if (lockedAmount.has_value())
-        mptIssuance.setFieldU64(ripple::sfLockedAmount, *lockedAmount);
+        mptIssuance.setFieldU64(xrpl::sfLockedAmount, *lockedAmount);
     if (metadata.has_value()) {
-        ripple::Slice const sliceMetadata(metadata->data(), metadata->size());
-        mptIssuance.setFieldVL(ripple::sfMPTokenMetadata, sliceMetadata);
+        xrpl::Slice const sliceMetadata(metadata->data(), metadata->size());
+        mptIssuance.setFieldVL(xrpl::sfMPTokenMetadata, sliceMetadata);
     }
     if (domainId.has_value())
-        mptIssuance.setFieldH256(ripple::sfDomainID, ripple::uint256{*domainId});
+        mptIssuance.setFieldH256(xrpl::sfDomainID, xrpl::uint256{*domainId});
     if (mutableFlags.has_value())
-        mptIssuance.setFieldU32(ripple::sfMutableFlags, *mutableFlags);
+        mptIssuance.setFieldU32(xrpl::sfMutableFlags, *mutableFlags);
 
     return mptIssuance;
 }
 
-ripple::STObject
+xrpl::STObject
 createMpTokenObject(
     std::string_view accountId,
-    ripple::uint192 issuanceID,
+    xrpl::uint192 issuanceID,
     std::uint64_t mptAmount,
     std::uint32_t flags,
     std::optional<uint64_t> lockedAmount
 )
 {
-    ripple::STObject mptoken(ripple::sfLedgerEntry);
-    mptoken.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
-    mptoken[ripple::sfMPTokenIssuanceID] = issuanceID;
-    mptoken.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN);
-    mptoken.setFieldU32(ripple::sfFlags, flags);
-    mptoken.setFieldU64(ripple::sfOwnerNode, 0);
-    mptoken.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    mptoken.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    xrpl::STObject mptoken(xrpl::sfLedgerEntry);
+    mptoken.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    mptoken[xrpl::sfMPTokenIssuanceID] = issuanceID;
+    mptoken.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
+    mptoken.setFieldU32(xrpl::sfFlags, flags);
+    mptoken.setFieldU64(xrpl::sfOwnerNode, 0);
+    mptoken.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    mptoken.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
 
     if (mptAmount != 0u)
-        mptoken.setFieldU64(ripple::sfMPTAmount, mptAmount);
+        mptoken.setFieldU64(xrpl::sfMPTAmount, mptAmount);
     if (lockedAmount.has_value())
-        mptoken.setFieldU64(ripple::sfLockedAmount, *lockedAmount);
+        mptoken.setFieldU64(xrpl::sfLockedAmount, *lockedAmount);
 
     return mptoken;
 }
 
-ripple::STObject
+xrpl::STObject
 createMPTIssuanceCreateTx(std::string_view accountId, uint32_t fee, uint32_t seq)
 {
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttMPTOKEN_ISSUANCE_CREATE);
-    tx.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
-    tx.setFieldAmount(ripple::sfFee, ripple::STAmount(fee, false));
-    tx.setFieldU32(ripple::sfSequence, seq);
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttMPTOKEN_ISSUANCE_CREATE);
+    tx.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    tx.setFieldAmount(xrpl::sfFee, xrpl::STAmount(fee, false));
+    tx.setFieldU32(xrpl::sfSequence, seq);
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
     return tx;
 }
 
 data::TransactionAndMetadata
 createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, uint32_t seq)
 {
-    ripple::STObject const tx = createMPTIssuanceCreateTx(accountId, fee, seq);
+    xrpl::STObject const tx = createMPTIssuanceCreateTx(accountId, fee, seq);
 
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
-    ripple::STObject newFields(ripple::sfNewFields);
-    newFields.setAccountID(ripple::sfIssuer, getAccountIdWithString(accountId));
-    newFields.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN_ISSUANCE);
-    newFields.setFieldU32(ripple::sfFlags, 0);
-    newFields.setFieldU32(ripple::sfSequence, seq);
-    newFields.setFieldU64(ripple::sfOwnerNode, 0);
-    newFields.setFieldU64(ripple::sfMaximumAmount, 0);
-    newFields.setFieldU64(ripple::sfOutstandingAmount, 0);
-    newFields.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    newFields.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    xrpl::STObject newFields(xrpl::sfNewFields);
+    newFields.setAccountID(xrpl::sfIssuer, getAccountIdWithString(accountId));
+    newFields.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
+    newFields.setFieldU32(xrpl::sfFlags, 0);
+    newFields.setFieldU32(xrpl::sfSequence, seq);
+    newFields.setFieldU64(xrpl::sfOwnerNode, 0);
+    newFields.setFieldU64(xrpl::sfMaximumAmount, 0);
+    newFields.setFieldU64(xrpl::sfOutstandingAmount, 0);
+    newFields.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    newFields.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
     std::string_view const metadata = "test-meta";
-    ripple::Slice const sliceMetadata(metadata.data(), metadata.size());
-    newFields.setFieldVL(ripple::sfMPTokenMetadata, sliceMetadata);
+    xrpl::Slice const sliceMetadata(metadata.data(), metadata.size());
+    newFields.setFieldVL(xrpl::sfMPTokenMetadata, sliceMetadata);
 
-    ripple::STObject createdNode(ripple::sfCreatedNode);
-    createdNode.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN_ISSUANCE);
-    createdNode.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{});
-    createdNode.emplace_back(std::move(newFields));
+    xrpl::STObject createdNode(xrpl::sfCreatedNode);
+    createdNode.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
+    createdNode.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
+    createdNode.set(std::move(newFields));
 
-    ripple::STArray affectedNodes(ripple::sfAffectedNodes);
+    xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
     affectedNodes.push_back(std::move(createdNode));
-    metaObj.setFieldArray(ripple::sfAffectedNodes, affectedNodes);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -1610,28 +1602,28 @@ createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, 
     return ret;
 }
 
-ripple::STObject
+xrpl::STObject
 createMPTokenAuthorizeTx(
     std::string_view accountId,
-    ripple::uint192 const& mptIssuanceID,
+    xrpl::uint192 const& mptIssuanceID,
     uint32_t fee,
     uint32_t seq,
     std::optional<std::string_view> holder,
     std::optional<std::uint32_t> flags
 )
 {
-    ripple::STObject tx(ripple::sfTransaction);
-    tx.setFieldU16(ripple::sfTransactionType, ripple::ttMPTOKEN_AUTHORIZE);
-    tx.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
-    tx[ripple::sfMPTokenIssuanceID] = mptIssuanceID;
-    tx.setFieldAmount(ripple::sfFee, ripple::STAmount(fee, false));
-    tx.setFieldU32(ripple::sfSequence, seq);
-    tx.setFieldVL(ripple::sfSigningPubKey, kSlice);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttMPTOKEN_AUTHORIZE);
+    tx.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    tx[xrpl::sfMPTokenIssuanceID] = mptIssuanceID;
+    tx.setFieldAmount(xrpl::sfFee, xrpl::STAmount(fee, false));
+    tx.setFieldU32(xrpl::sfSequence, seq);
+    tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
 
     if (holder)
-        tx.setAccountID(ripple::sfHolder, getAccountIdWithString(*holder));
+        tx.setAccountID(xrpl::sfHolder, getAccountIdWithString(*holder));
     if (flags)
-        tx.setFieldU32(ripple::sfFlags, *flags);
+        tx.setFieldU32(xrpl::sfFlags, *flags);
 
     return tx;
 }
@@ -1639,30 +1631,30 @@ createMPTokenAuthorizeTx(
 data::TransactionAndMetadata
 createMPTokenAuthorizeTxWithMetadata(
     std::string_view accountId,
-    ripple::uint192 const& mptIssuanceID,
+    xrpl::uint192 const& mptIssuanceID,
     uint32_t fee,
     uint32_t seq
 )
 {
-    ripple::STObject const tx = createMPTokenAuthorizeTx(accountId, mptIssuanceID, fee, seq);
+    xrpl::STObject const tx = createMPTokenAuthorizeTx(accountId, mptIssuanceID, fee, seq);
 
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
-    ripple::STObject finalFields(ripple::sfFinalFields);
-    finalFields.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN);
-    finalFields[ripple::sfMPTokenIssuanceID] = mptIssuanceID;
-    finalFields.setFieldU64(ripple::sfMPTAmount, 0);
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    finalFields.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
+    finalFields[xrpl::sfMPTokenIssuanceID] = mptIssuanceID;
+    finalFields.setFieldU64(xrpl::sfMPTAmount, 0);
 
-    ripple::STObject modifiedNode(ripple::sfModifiedNode);
-    modifiedNode.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN);
-    modifiedNode.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{});
-    modifiedNode.emplace_back(std::move(finalFields));
+    xrpl::STObject modifiedNode(xrpl::sfModifiedNode);
+    modifiedNode.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
+    modifiedNode.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
+    modifiedNode.set(std::move(finalFields));
 
-    ripple::STArray affectedNodes(ripple::sfAffectedNodes);
+    xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
     affectedNodes.push_back(std::move(modifiedNode));
-    metaObj.setFieldArray(ripple::sfAffectedNodes, affectedNodes);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
 
     data::TransactionAndMetadata ret;
     ret.transaction = tx.getSerializer().peekData();
@@ -1670,113 +1662,113 @@ createMPTokenAuthorizeTxWithMetadata(
     return ret;
 }
 
-ripple::STObject
+xrpl::STObject
 createPermissionedDomainObject(
     std::string_view accountId,
     std::string_view ledgerIndex,
-    ripple::LedgerIndex seq,
+    xrpl::LedgerIndex seq,
     uint64_t ownerNode,
-    ripple::uint256 previousTxId,
+    xrpl::uint256 previousTxId,
     uint32_t previousTxSeq
 )
 {
-    ripple::STObject object(ripple::sfLedgerEntry);
-    object.setFieldH256(ripple::sfLedgerIndex, ripple::uint256(ledgerIndex));
-    object.setAccountID(ripple::sfOwner, getAccountIdWithString(accountId));
-    object.setFieldU32(ripple::sfSequence, seq);
-    object.setFieldArray(ripple::sfAcceptedCredentials, ripple::STArray{});
-    object.setFieldU64(ripple::sfOwnerNode, ownerNode);
-    object.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
-    object.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
-    object.setFieldU32(ripple::sfFlags, 0);
-    object.setFieldU16(ripple::sfLedgerEntryType, ripple::ltPERMISSIONED_DOMAIN);
+    xrpl::STObject object(xrpl::sfLedgerEntry);
+    object.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(ledgerIndex));
+    object.setAccountID(xrpl::sfOwner, getAccountIdWithString(accountId));
+    object.setFieldU32(xrpl::sfSequence, seq);
+    object.setFieldArray(xrpl::sfAcceptedCredentials, xrpl::STArray{});
+    object.setFieldU64(xrpl::sfOwnerNode, ownerNode);
+    object.setFieldH256(xrpl::sfPreviousTxnID, previousTxId);
+    object.setFieldU32(xrpl::sfPreviousTxnLgrSeq, previousTxSeq);
+    object.setFieldU32(xrpl::sfFlags, 0);
+    object.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltPERMISSIONED_DOMAIN);
 
     return object;
 }
 
-ripple::STObject
+xrpl::STObject
 createDelegateObject(
     std::string_view accountId,
     std::string_view authorize,
     std::string_view ledgerIndex,
     uint64_t ownerNode,
-    ripple::uint256 previousTxId,
+    xrpl::uint256 previousTxId,
     uint32_t previousTxSeq
 )
 {
-    ripple::STObject object(ripple::sfLedgerEntry);
+    xrpl::STObject object(xrpl::sfLedgerEntry);
 
-    object.setFieldH256(ripple::sfLedgerIndex, ripple::uint256(ledgerIndex));
-    object.setFieldU16(ripple::sfLedgerEntryType, ripple::ltDELEGATE);
-    object.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
-    object.setAccountID(ripple::sfAuthorize, getAccountIdWithString(authorize));
-    object.setFieldArray(ripple::sfPermissions, ripple::STArray{});
-    object.setFieldU64(ripple::sfOwnerNode, ownerNode);
-    object.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
-    object.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
-    object.setFieldU32(ripple::sfFlags, 0);
+    object.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(ledgerIndex));
+    object.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltDELEGATE);
+    object.setAccountID(xrpl::sfAccount, getAccountIdWithString(accountId));
+    object.setAccountID(xrpl::sfAuthorize, getAccountIdWithString(authorize));
+    object.setFieldArray(xrpl::sfPermissions, xrpl::STArray{});
+    object.setFieldU64(xrpl::sfOwnerNode, ownerNode);
+    object.setFieldH256(xrpl::sfPreviousTxnID, previousTxId);
+    object.setFieldU32(xrpl::sfPreviousTxnLgrSeq, previousTxSeq);
+    object.setFieldU32(xrpl::sfFlags, 0);
 
     return object;
 }
 
-ripple::STObject
+xrpl::STObject
 createOraclePriceData(
     uint64_t assetPrice,
-    ripple::Currency baseAssetCurrency,
-    ripple::Currency quoteAssetCurrency,
+    xrpl::Currency baseAssetCurrency,
+    xrpl::Currency quoteAssetCurrency,
     uint8_t scale
 )
 {
-    auto priceData = ripple::STObject(ripple::sfPriceData);
-    priceData.setFieldU64(ripple::sfAssetPrice, assetPrice);
+    auto priceData = xrpl::STObject(xrpl::sfPriceData);
+    priceData.setFieldU64(xrpl::sfAssetPrice, assetPrice);
     priceData.setFieldCurrency(
-        ripple::sfBaseAsset, ripple::STCurrency{ripple::sfBaseAsset, baseAssetCurrency}
+        xrpl::sfBaseAsset, xrpl::STCurrency{xrpl::sfBaseAsset, baseAssetCurrency}
     );
     priceData.setFieldCurrency(
-        ripple::sfQuoteAsset, ripple::STCurrency{ripple::sfQuoteAsset, quoteAssetCurrency}
+        xrpl::sfQuoteAsset, xrpl::STCurrency{xrpl::sfQuoteAsset, quoteAssetCurrency}
     );
-    priceData.setFieldU8(ripple::sfScale, scale);
+    priceData.setFieldU8(xrpl::sfScale, scale);
 
     return priceData;
 }
 
-ripple::STArray
-createPriceDataSeries(std::vector<ripple::STObject> const& series)
+xrpl::STArray
+createPriceDataSeries(std::vector<xrpl::STObject> const& series)
 {
-    return ripple::STArray{series.begin(), series.end()};
+    return xrpl::STArray{series.begin(), series.end()};
 }
 
-ripple::STObject
+xrpl::STObject
 createOracleObject(
     std::string_view accountId,
     std::string_view provider,
     uint64_t ownerNode,
     uint32_t lastUpdateTime,
-    ripple::Blob uri,
-    ripple::Blob assetClass,
+    xrpl::Blob uri,
+    xrpl::Blob assetClass,
     uint32_t previousTxSeq,
-    ripple::uint256 previousTxId,
-    ripple::STArray priceDataSeries
+    xrpl::uint256 previousTxId,
+    xrpl::STArray priceDataSeries
 )
 {
-    auto ledgerObject = ripple::STObject(ripple::sfLedgerEntry);
-    ledgerObject.setFieldU16(ripple::sfLedgerEntryType, ripple::ltORACLE);
-    ledgerObject.setFieldU32(ripple::sfFlags, 0);
-    ledgerObject.setAccountID(ripple::sfOwner, getAccountIdWithString(accountId));
-    ledgerObject.setFieldVL(ripple::sfProvider, ripple::Blob{provider.begin(), provider.end()});
-    ledgerObject.setFieldU64(ripple::sfOwnerNode, ownerNode);
-    ledgerObject.setFieldU32(ripple::sfLastUpdateTime, lastUpdateTime);
-    ledgerObject.setFieldVL(ripple::sfURI, uri);
-    ledgerObject.setFieldVL(ripple::sfAssetClass, assetClass);
-    ledgerObject.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
-    ledgerObject.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
-    ledgerObject.setFieldArray(ripple::sfPriceDataSeries, priceDataSeries);
+    auto ledgerObject = xrpl::STObject(xrpl::sfLedgerEntry);
+    ledgerObject.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltORACLE);
+    ledgerObject.setFieldU32(xrpl::sfFlags, 0);
+    ledgerObject.setAccountID(xrpl::sfOwner, getAccountIdWithString(accountId));
+    ledgerObject.setFieldVL(xrpl::sfProvider, xrpl::Blob{provider.begin(), provider.end()});
+    ledgerObject.setFieldU64(xrpl::sfOwnerNode, ownerNode);
+    ledgerObject.setFieldU32(xrpl::sfLastUpdateTime, lastUpdateTime);
+    ledgerObject.setFieldVL(xrpl::sfURI, uri);
+    ledgerObject.setFieldVL(xrpl::sfAssetClass, assetClass);
+    ledgerObject.setFieldU32(xrpl::sfPreviousTxnLgrSeq, previousTxSeq);
+    ledgerObject.setFieldH256(xrpl::sfPreviousTxnID, previousTxId);
+    ledgerObject.setFieldArray(xrpl::sfPriceDataSeries, priceDataSeries);
 
     return ledgerObject;
 }
 
 // acc2 issue credential for acc1 so acc2 is issuer
-ripple::STObject
+xrpl::STObject
 createCredentialObject(
     std::string_view acc1,
     std::string_view acc2,
@@ -1785,147 +1777,145 @@ createCredentialObject(
     std::optional<uint32_t> expiration
 )
 {
-    ripple::STObject credObj(ripple::sfCredential);
-    credObj.setFieldU16(ripple::sfLedgerEntryType, ripple::ltCREDENTIAL);
-    credObj.setFieldVL(ripple::sfCredentialType, ripple::Blob{credType.begin(), credType.end()});
-    credObj.setAccountID(ripple::sfSubject, getAccountIdWithString(acc1));
-    credObj.setAccountID(ripple::sfIssuer, getAccountIdWithString(acc2));
+    xrpl::STObject credObj(xrpl::sfCredential);
+    credObj.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltCREDENTIAL);
+    credObj.setFieldVL(xrpl::sfCredentialType, xrpl::Blob{credType.begin(), credType.end()});
+    credObj.setAccountID(xrpl::sfSubject, getAccountIdWithString(acc1));
+    credObj.setAccountID(xrpl::sfIssuer, getAccountIdWithString(acc2));
     if (expiration.has_value())
-        credObj.setFieldU32(ripple::sfExpiration, *expiration);
+        credObj.setFieldU32(xrpl::sfExpiration, *expiration);
 
     if (accept) {
-        credObj.setFieldU32(ripple::sfFlags, ripple::lsfAccepted);
+        credObj.setFieldU32(xrpl::sfFlags, xrpl::lsfAccepted);
     } else {
-        credObj.setFieldU32(ripple::sfFlags, 0);
+        credObj.setFieldU32(xrpl::sfFlags, 0);
     }
-    credObj.setFieldU64(ripple::sfSubjectNode, 0);
-    credObj.setFieldU64(ripple::sfIssuerNode, 0);
-    credObj.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
-    credObj.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    credObj.setFieldU64(xrpl::sfSubjectNode, 0);
+    credObj.setFieldU64(xrpl::sfIssuerNode, 0);
+    credObj.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    credObj.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
     return credObj;
 }
 
-ripple::STArray
+xrpl::STArray
 createAuthCredentialArray(
     std::vector<std::string_view> issuer,
     std::vector<std::string_view> credType
 )
 {
-    ripple::STArray arr;
+    xrpl::STArray arr;
     ASSERT(issuer.size() == credType.size(), "issuer and credtype vector must be same length");
     for (std::size_t i = 0; i < issuer.size(); ++i) {
-        auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
-        credential.setAccountID(ripple::sfIssuer, getAccountIdWithString(issuer[i]));
+        auto credential = xrpl::STObject::makeInnerObject(xrpl::sfCredential);
+        credential.setAccountID(xrpl::sfIssuer, getAccountIdWithString(issuer[i]));
         credential.setFieldVL(
-            ripple::sfCredentialType,
+            xrpl::sfCredentialType,
             // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            *ripple::strUnHex(std::string(credType[i]))
+            *xrpl::strUnHex(std::string(credType[i]))
         );
         arr.push_back(credential);
     }
     return arr;
 }
 
-ripple::STObject
+xrpl::STObject
 createVault(
     std::string_view owner,
     std::string_view account,
-    ripple::LedgerIndex seq,
+    xrpl::LedgerIndex seq,
     std::string_view assetCurrency,
     std::string_view assetIssuer,
-    ripple::uint192 shareMPTID,
+    xrpl::uint192 shareMPTID,
     uint64_t ownerNode,
-    ripple::uint256 previousTxId,
+    xrpl::uint256 previousTxId,
     uint32_t previousTxSeq
 )
 {
-    auto vault = ripple::STObject(ripple::sfLedgerEntry);
-    vault.setAccountID(ripple::sfOwner, getAccountIdWithString(owner));
-    vault.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
-    vault.setFieldU32(ripple::sfSequence, seq);
-    vault.setFieldU64(ripple::sfOwnerNode, ownerNode);
-    vault.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
-    vault.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
+    auto vault = xrpl::STObject(xrpl::sfLedgerEntry);
+    vault.setAccountID(xrpl::sfOwner, getAccountIdWithString(owner));
+    vault.setAccountID(xrpl::sfAccount, getAccountIdWithString(account));
+    vault.setFieldU32(xrpl::sfSequence, seq);
+    vault.setFieldU64(xrpl::sfOwnerNode, ownerNode);
+    vault.setFieldH256(xrpl::sfPreviousTxnID, previousTxId);
+    vault.setFieldU32(xrpl::sfPreviousTxnLgrSeq, previousTxSeq);
 
     vault.setFieldIssue(
-        ripple::sfAsset, ripple::STIssue{ripple::sfAsset, getIssue(assetCurrency, assetIssuer)}
+        xrpl::sfAsset, xrpl::STIssue{xrpl::sfAsset, getIssue(assetCurrency, assetIssuer)}
     );
-    vault[ripple::sfShareMPTID] = shareMPTID;
-    vault.setFieldNumber(ripple::sfAssetsTotal, ripple::STNumber{ripple::sfAssetsTotal, 300});
-    vault.setFieldNumber(
-        ripple::sfAssetsAvailable, ripple::STNumber{ripple::sfAssetsAvailable, 300}
-    );
-    vault.setFieldNumber(ripple::sfLossUnrealized, ripple::STNumber{ripple::sfLossUnrealized, 1});
-    vault.setFieldU8(ripple::sfWithdrawalPolicy, 200);
+    vault[xrpl::sfShareMPTID] = shareMPTID;
+    vault.setFieldNumber(xrpl::sfAssetsTotal, xrpl::STNumber{xrpl::sfAssetsTotal, 300});
+    vault.setFieldNumber(xrpl::sfAssetsAvailable, xrpl::STNumber{xrpl::sfAssetsAvailable, 300});
+    vault.setFieldNumber(xrpl::sfLossUnrealized, xrpl::STNumber{xrpl::sfLossUnrealized, 1});
+    vault.setFieldU8(xrpl::sfWithdrawalPolicy, 200);
 
-    vault.setFieldU32(ripple::sfFlags, 0);
-    vault.setFieldU16(ripple::sfLedgerEntryType, ripple::ltVAULT);
+    vault.setFieldU32(xrpl::sfFlags, 0);
+    vault.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltVAULT);
 
     return vault;
 }
 
-ripple::STObject
+xrpl::STObject
 createLoanBroker(
     std::string_view owner,
     std::string_view account,
-    ripple::LedgerIndex seq,
-    ripple::uint256 vaultID,
+    xrpl::LedgerIndex seq,
+    xrpl::uint256 vaultID,
     uint32_t loanSequence,
-    ripple::uint256 previousTxId,
+    xrpl::uint256 previousTxId,
     uint32_t previousTxSeq
 )
 {
-    auto loanBroker = ripple::STObject(ripple::sfLedgerEntry);
-    loanBroker.setAccountID(ripple::sfOwner, getAccountIdWithString(owner));
-    loanBroker.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
-    loanBroker.setFieldU32(ripple::sfSequence, seq);
-    loanBroker.setFieldU64(ripple::sfOwnerNode, 0);
-    loanBroker.setFieldU64(ripple::sfVaultNode, 0);
-    loanBroker.setFieldH256(ripple::sfVaultID, vaultID);
-    loanBroker.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
-    loanBroker.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
-    loanBroker.setFieldU32(ripple::sfLoanSequence, loanSequence);
+    auto loanBroker = xrpl::STObject(xrpl::sfLedgerEntry);
+    loanBroker.setAccountID(xrpl::sfOwner, getAccountIdWithString(owner));
+    loanBroker.setAccountID(xrpl::sfAccount, getAccountIdWithString(account));
+    loanBroker.setFieldU32(xrpl::sfSequence, seq);
+    loanBroker.setFieldU64(xrpl::sfOwnerNode, 0);
+    loanBroker.setFieldU64(xrpl::sfVaultNode, 0);
+    loanBroker.setFieldH256(xrpl::sfVaultID, vaultID);
+    loanBroker.setFieldH256(xrpl::sfPreviousTxnID, previousTxId);
+    loanBroker.setFieldU32(xrpl::sfPreviousTxnLgrSeq, previousTxSeq);
+    loanBroker.setFieldU32(xrpl::sfLoanSequence, loanSequence);
 
     // Optional/default fields - not setting them as they will use default values
 
-    loanBroker.setFieldU32(ripple::sfFlags, 0);
-    loanBroker.setFieldU16(ripple::sfLedgerEntryType, ripple::ltLOAN_BROKER);
+    loanBroker.setFieldU32(xrpl::sfFlags, 0);
+    loanBroker.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltLOAN_BROKER);
 
     return loanBroker;
 }
 
-ripple::STObject
+xrpl::STObject
 createLoan(
     std::string_view borrower,
-    ripple::uint256 loanBrokerID,
+    xrpl::uint256 loanBrokerID,
     uint32_t loanSequence,
     uint32_t startDate,
     uint32_t paymentInterval,
     int64_t periodicPaymentValue,
-    ripple::uint256 previousTxId,
+    xrpl::uint256 previousTxId,
     uint32_t previousTxSeq
 )
 {
-    auto loan = ripple::STObject(ripple::sfLedgerEntry);
-    loan.setAccountID(ripple::sfBorrower, getAccountIdWithString(borrower));
-    loan.setFieldH256(ripple::sfLoanBrokerID, loanBrokerID);
-    loan.setFieldU32(ripple::sfLoanSequence, loanSequence);
-    loan.setFieldU64(ripple::sfOwnerNode, 0);
-    loan.setFieldU64(ripple::sfLoanBrokerNode, 0);
-    loan.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
-    loan.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
+    auto loan = xrpl::STObject(xrpl::sfLedgerEntry);
+    loan.setAccountID(xrpl::sfBorrower, getAccountIdWithString(borrower));
+    loan.setFieldH256(xrpl::sfLoanBrokerID, loanBrokerID);
+    loan.setFieldU32(xrpl::sfLoanSequence, loanSequence);
+    loan.setFieldU64(xrpl::sfOwnerNode, 0);
+    loan.setFieldU64(xrpl::sfLoanBrokerNode, 0);
+    loan.setFieldH256(xrpl::sfPreviousTxnID, previousTxId);
+    loan.setFieldU32(xrpl::sfPreviousTxnLgrSeq, previousTxSeq);
 
-    loan.setFieldU32(ripple::sfStartDate, startDate);
-    loan.setFieldU32(ripple::sfPaymentInterval, paymentInterval);
+    loan.setFieldU32(xrpl::sfStartDate, startDate);
+    loan.setFieldU32(xrpl::sfPaymentInterval, paymentInterval);
 
     loan.setFieldNumber(
-        ripple::sfPeriodicPayment, ripple::STNumber{ripple::sfPeriodicPayment, periodicPaymentValue}
+        xrpl::sfPeriodicPayment, xrpl::STNumber{xrpl::sfPeriodicPayment, periodicPaymentValue}
     );
 
     // Optional/default fields - not setting them as they will use default values
 
-    loan.setFieldU32(ripple::sfFlags, 0);
-    loan.setFieldU16(ripple::sfLedgerEntryType, ripple::ltLOAN);
+    loan.setFieldU32(xrpl::sfFlags, 0);
+    loan.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltLOAN);
 
     return loan;
 }
