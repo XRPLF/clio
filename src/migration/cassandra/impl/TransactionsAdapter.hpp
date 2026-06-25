@@ -21,9 +21,12 @@ namespace migration::cassandra::impl {
  * @brief The description of the transactions table. It has to be a TableSpec.
  */
 struct TableTransactionsDesc {
-    // hash, date, ledger_seq, metadata, transaction
-    using Row = std::tuple<xrpl::uint256, std::uint64_t, std::uint32_t, xrpl::Blob, xrpl::Blob>;
+    // Must match kSelectColumns order.
+    using Row =
+        std::tuple<xrpl::uint256, std::uint64_t, std::uint32_t, xrpl::Blob, xrpl::Blob>;
     static constexpr char const* kPartitionKey = "hash";
+    static constexpr char const* kSelectColumns =
+        "hash, date, ledger_sequence, metadata, transaction";
     static constexpr char const* kTableName = "transactions";
 };
 

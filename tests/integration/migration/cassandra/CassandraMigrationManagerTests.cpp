@@ -63,6 +63,7 @@ namespace {
 struct FullScanPagingTableDesc {
     using Row = std::tuple<std::int64_t, std::int64_t>;
     static constexpr char const* kPartitionKey = "id";
+    static constexpr char const* kSelectColumns = "id, value";
     static constexpr char const* kTableName = "full_scan_paging_test";
 };
 

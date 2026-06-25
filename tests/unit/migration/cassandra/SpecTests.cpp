@@ -11,6 +11,7 @@ class Empty {};
 struct SimpleTestTable {
     using Row = std::tuple<std::uint32_t, std::uint32_t>;
     static constexpr char const* kPartitionKey = "key";
+    static constexpr char const* kSelectColumns = "key, value";
     static constexpr char const* kTableName = "test";
 };
 }  // namespace

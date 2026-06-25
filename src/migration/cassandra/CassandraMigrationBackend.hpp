@@ -42,8 +42,9 @@ class CassandraMigrationBackend : public data::cassandra::CassandraBackend {
     std::shared_ptr<data::cassandra::PreparedStatement>
     getPreparedFullScanStatement()
     {
-        auto const statementKey =
-            fmt::format("{}:{}", TableDesc::kTableName, TableDesc::kPartitionKey);
+        auto const statementKey = fmt::format(
+            "{}:{}:{}", TableDesc::kTableName, TableDesc::kPartitionKey, TableDesc::kSelectColumns
+        );
 
         std::scoped_lock const lock{fullScanStatementsMutex_};
         if (auto const statement = fullScanStatements_.find(statementKey);
@@ -53,7 +54,7 @@ class CassandraMigrationBackend : public data::cassandra::CassandraBackend {
 
         auto statement = std::make_shared<data::cassandra::PreparedStatement>(
             migrationSchema_.getPreparedFullScanStatement(
-                handle_, TableDesc::kTableName, TableDesc::kPartitionKey
+                handle_, TableDesc::kTableName, TableDesc::kSelectColumns, TableDesc::kPartitionKey
             )
         );
         return fullScanStatements_.emplace(statementKey, std::move(statement)).first->second;

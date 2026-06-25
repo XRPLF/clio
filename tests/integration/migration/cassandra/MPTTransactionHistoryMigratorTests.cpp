@@ -119,7 +119,11 @@ createMPTokenIssuanceNode(std::uint32_t seq, std::string_view issuer)
 // A single Payment whose metadata touches two distinct issuances and three affected accounts,
 // exercising the multi-issuance fan-out and per-account indexing.
 std::pair<xrpl::STTx, xrpl::TxMeta>
-makeMultiIssuancePayment(std::uint32_t ledgerSeq, std::uint32_t txIndex)
+makeMultiIssuancePayment(
+    std::uint32_t ledgerSeq,
+    std::uint32_t txIndex,
+    std::uint32_t txSequence = 1
+)
 {
     xrpl::Slice const signingKey("test", 4);
     xrpl::STObject tx(xrpl::sfTransaction);
@@ -128,7 +132,7 @@ makeMultiIssuancePayment(std::uint32_t ledgerSeq, std::uint32_t txIndex)
     tx.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(100, false));
     tx.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10, false));
     tx.setAccountID(xrpl::sfDestination, getAccountIdWithString(kHolder2));
-    tx.setFieldU32(xrpl::sfSequence, 1);
+    tx.setFieldU32(xrpl::sfSequence, txSequence);
     tx.setFieldVL(xrpl::sfSigningPubKey, signingKey);
 
     auto const serialized = tx.getSerializer();
@@ -543,4 +547,37 @@ TEST_F(MPTTransactionHistoryMigratorTest, BackfillMatchesLiveETLRows)
 
     manager_->runMigration(kMigratorName);
     EXPECT_EQ(readRawIndexRows(), liveRows);
+}
+
+TEST_F(MPTTransactionHistoryMigratorTest, BackfillReadsAllTransactionDriverPages)
+{
+    setupLedgerRange(kLedgerSeq);
+
+    constexpr std::uint32_t kRowsBeyondFullScanPage = 5'001;
+    RawIndexRows expected;
+
+    for (std::uint32_t i = 0; i < kRowsBeyondFullScanPage; ++i) {
+        auto const [payTx, payMeta] = makeMultiIssuancePayment(kLedgerSeq, i, i + 1);
+        seedTransaction(payTx, payMeta, kLedgerSeq);
+        appendExpected(expected, etl::getMPTokenIssuanceTxsFromTx(payMeta, payTx));
+    }
+    backend_->waitForWritesToFinish();
+
+    EXPECT_EQ(expected.issuance.size(), kRowsBeyondFullScanPage * 2u);
+    EXPECT_EQ(expected.account.size(), kRowsBeyondFullScanPage * 6u);
+
+    ClioConfigDefinition const singleRangeCfg{
+        {{"migration.full_scan_threads",
+          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
+         {"migration.full_scan_jobs",
+          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
+         {"migration.cursors_per_job",
+          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)}}
+    };
+
+    migration::cassandra::MPTTransactionHistoryMigrator::runMigration(
+        backend_, singleRangeCfg.getObject("migration")
+    );
+
+    expectRawRowsEqual(expected);
 }
