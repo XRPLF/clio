@@ -17,9 +17,10 @@
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/http.hpp>  // IWYU pragma: keep
 #include <boost/beast/http/field.hpp>
-#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/message_fwd.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/string_body_fwd.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/http/write.hpp>  // IWYU pragma: keep
 #include <boost/beast/version.hpp>

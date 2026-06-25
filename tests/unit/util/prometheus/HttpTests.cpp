@@ -9,8 +9,10 @@
 
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
+#include <boost/beast/http/message_fwd.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/string_body_fwd.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest.h>

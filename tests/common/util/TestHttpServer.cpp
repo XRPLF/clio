@@ -12,9 +12,10 @@
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>
+#include <boost/beast/http/message_fwd.hpp>
 #include <boost/beast/http/message_generator.hpp>
 #include <boost/beast/http/read.hpp>  // IWYU pragma: keep
-#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/string_body_fwd.hpp>
 #include <gtest/gtest.h>
 
 #include <chrono>
