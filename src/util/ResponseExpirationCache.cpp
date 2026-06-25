@@ -61,11 +61,12 @@ ResponseExpirationCache::isBareRequest(boost::json::object const& request)
     //
     // "api_version" is intentionally NOT in this ignore-set: it can change the response body
     // content (not just an echoed field), so requests carrying it must bypass the cache entirely.
-    static constexpr std::array<std::string_view, 3> kIgnoredKeys{"command", "method", "id"};
+    static constexpr auto kIgnoredKeys =
+        std::to_array<std::string_view>({"command", "method", "id"});
 
     for (auto const& kv : request) {
         std::string_view const key{kv.key()};
-        if (std::ranges::find(kIgnoredKeys, key) == kIgnoredKeys.end())
+        if (not std::ranges::contains(kIgnoredKeys, key))
             return false;
     }
     return true;

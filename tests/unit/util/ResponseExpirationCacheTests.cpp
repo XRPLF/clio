@@ -11,7 +11,6 @@ using namespace util;
 struct ResponseExpirationCacheTests : public ::testing::Test {
 protected:
     ResponseExpirationCache cache_{std::chrono::seconds{100}, {"key"}};
-    // A bare request: only the "command" key, which is in the ignore-set.
     boost::json::object bareRequest_{{"command", "key"}};
     boost::json::object object_{{"key", "value"}};
 };
