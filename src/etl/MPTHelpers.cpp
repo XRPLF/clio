@@ -82,8 +82,7 @@ getMPTokenIssuanceIDFromNode(xrpl::STObject const& node)
 
     // MPTokenIssuance objects carry no sfMPTokenIssuanceID, and the node's ledger key is a
     // one-way hash that does not embed the ID, so reconstruct it from sfSequence and sfIssuer
-    if (not fields.isFieldPresent(xrpl::sfSequence) ||
-        not fields.isFieldPresent(xrpl::sfIssuer))
+    if (not fields.isFieldPresent(xrpl::sfSequence) || not fields.isFieldPresent(xrpl::sfIssuer))
         return {};
 
     return xrpl::makeMptID(

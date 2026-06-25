@@ -107,7 +107,7 @@ createMPTokenNode(xrpl::uint192 const& issuanceID, std::string_view holder)
     xrpl::STObject node(xrpl::sfModifiedNode);
     node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
     node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    node.emplace_back(std::move(fields));
+    node.set(std::move(fields));
     return node;
 }
 
@@ -121,7 +121,7 @@ createMPTokenIssuanceNode(std::uint32_t seq, std::string_view issuer)
     xrpl::STObject node(xrpl::sfModifiedNode);
     node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
     node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    node.emplace_back(std::move(fields));
+    node.set(std::move(fields));
     return node;
 }
 

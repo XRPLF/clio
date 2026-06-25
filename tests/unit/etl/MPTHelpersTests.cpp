@@ -62,16 +62,12 @@ createMPTokenNode(
     xrpl::STObject node(nodeType);
     node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
     node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    node.emplace_back(std::move(fields));
+    node.set(std::move(fields));
     return node;
 }
 
 xrpl::STObject
-createMPTokenIssuanceNode(
-    xrpl::SField const& nodeType,
-    std::uint32_t seq,
-    std::string_view issuer
-)
+createMPTokenIssuanceNode(xrpl::SField const& nodeType, std::uint32_t seq, std::string_view issuer)
 {
     auto const& fieldsName =
         nodeType == xrpl::sfCreatedNode ? xrpl::sfNewFields : xrpl::sfFinalFields;
@@ -83,7 +79,7 @@ createMPTokenIssuanceNode(
     xrpl::STObject node(nodeType);
     node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
     node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    node.emplace_back(std::move(fields));
+    node.set(std::move(fields));
     return node;
 }
 
@@ -96,7 +92,7 @@ createAccountRootNode(std::string_view account)
     xrpl::STObject node(xrpl::sfModifiedNode);
     node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltACCOUNT_ROOT);
     node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    node.emplace_back(std::move(fields));
+    node.set(std::move(fields));
     return node;
 }
 
@@ -139,12 +135,8 @@ createTx(xrpl::TxType type)
             obj.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(200, false));
             break;
         case xrpl::ttAMM_DEPOSIT:
-            obj.setFieldIssue(
-                xrpl::sfAsset, xrpl::STIssue{xrpl::sfAsset, xrpl::xrpIssue()}
-            );
-            obj.setFieldIssue(
-                xrpl::sfAsset2, xrpl::STIssue{xrpl::sfAsset2, xrpl::xrpIssue()}
-            );
+            obj.setFieldIssue(xrpl::sfAsset, xrpl::STIssue{xrpl::sfAsset, xrpl::xrpIssue()});
+            obj.setFieldIssue(xrpl::sfAsset2, xrpl::STIssue{xrpl::sfAsset2, xrpl::xrpIssue()});
             break;
         case xrpl::ttMPTOKEN_ISSUANCE_DESTROY:
         case xrpl::ttMPTOKEN_ISSUANCE_SET:
@@ -185,9 +177,7 @@ createAMMDepositTxWithMPTIssue(xrpl::uint192 const& issuanceID)
     obj.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10, false));
     obj.setFieldU32(xrpl::sfSequence, 1);
     obj.setFieldVL(xrpl::sfSigningPubKey, kSlice);
-    obj.setFieldIssue(
-        xrpl::sfAsset, xrpl::STIssue{xrpl::sfAsset, xrpl::MPTIssue{issuanceID}}
-    );
+    obj.setFieldIssue(xrpl::sfAsset, xrpl::STIssue{xrpl::sfAsset, xrpl::MPTIssue{issuanceID}});
     obj.setFieldIssue(xrpl::sfAsset2, xrpl::STIssue{xrpl::sfAsset2, xrpl::xrpIssue()});
 
     auto const serialized = obj.getSerializer();
@@ -262,8 +252,7 @@ TEST_F(MPTHelpersTest, IssuanceCreateProducesRecordWithReconstructedID)
 {
     auto const tx = createMPTIssuanceCreateTxWithMetadata(kIssuer, 2, kIssuanceSeq);
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
 
     auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
 
@@ -305,8 +294,7 @@ TEST_F(MPTHelpersTest, AuthorizeProducesRecordFromMPTokenNode)
     auto const issuanceID = defaultIssuanceID();
     auto const tx = createMPTokenAuthorizeTxWithMetadata(kAccount, issuanceID, 2, 3);
     xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
 
     auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
 
