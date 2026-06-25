@@ -20,7 +20,6 @@
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
-#include <boost/beast/http/string_body_fwd.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
