@@ -16,7 +16,6 @@
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/format/format_fwd.hpp>
 #include <boost/format/free_funcs.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>

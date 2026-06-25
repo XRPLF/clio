@@ -21,7 +21,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/regex.hpp>
-#include <boost/regex/v5/regex_fwd.hpp>
 #include <boost/regex/v5/regex_match.hpp>
 #include <fmt/format.h>
 #include <xrpl/basics/Number.h>
