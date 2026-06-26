@@ -29,16 +29,14 @@ MPTTransactionHistoryMigrator::runMigration(
     // rows, so the scan is idempotent without explicit deduplication.
     impl::TransactionsScanner scanner(
         {.ctxThreadsNum = fullScanThreads, .jobsNum = fullScanJobs, .cursorsPerJob = cursorsPerJob},
-        impl::TransactionsAdapter(
-            backend, [&](xrpl::STTx const& sttx, xrpl::TxMeta const& txMeta) {
-                auto const indexData = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
-                if (indexData.empty())
-                    return;
+        impl::TransactionsAdapter(backend, [&](xrpl::STTx const& sttx, xrpl::TxMeta const& txMeta) {
+            auto const indexData = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
+            if (indexData.empty())
+                return;
 
-                backend->writeMPTokenIssuanceTransactions(indexData);
-                backend->writeAccountMPTokenIssuanceTransactions(indexData);
-            }
-        )
+            backend->writeMPTokenIssuanceTransactions(indexData);
+            backend->writeAccountMPTokenIssuanceTransactions(indexData);
+        })
     );
     scanner.waitForAllAndThrowOnError();
 
