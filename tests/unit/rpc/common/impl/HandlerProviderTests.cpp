@@ -7,6 +7,7 @@
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockETLService.hpp"
 #include "util/MockLoadBalancer.hpp"
+#include "util/MockMigrationInspector.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -39,6 +40,8 @@ struct ProductionHandlerProviderTest : util::prometheus::WithPrometheus, MockBac
     std::shared_ptr<testing::StrictMock<MockLoadBalancer>> loadBalancerMock;
     std::shared_ptr<testing::StrictMock<MockETLService>> etlServiceMock;
     StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr;
+    MockMigrationInspectorSharedPtr migrationInspectorMock =
+        std::make_shared<testing::NiceMock<MockMigrationInspector>>();
     WorkQueue workQueue{1};
     Counters counters{workQueue};
 
@@ -49,6 +52,7 @@ struct ProductionHandlerProviderTest : util::prometheus::WithPrometheus, MockBac
         loadBalancerMock,
         etlServiceMock,
         mockAmendmentCenterPtr,
+        migrationInspectorMock,
         counters
     };
 };
