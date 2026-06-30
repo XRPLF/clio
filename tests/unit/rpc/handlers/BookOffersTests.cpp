@@ -1860,13 +1860,13 @@ TEST_F(RPCBookOffersHandlerTest, MPTGetsEmptyBook)
     auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
-            "taker_gets": {{
-                "mpt_issuance_id": "{}"
-            }},
-            "taker_pays": {{
-                "currency": "XRP"
-            }}
-        }})JSON",
+                "taker_gets": {{
+                    "mpt_issuance_id": "{}"
+                }},
+                "taker_pays": {{
+                    "currency": "XRP"
+                }}
+            }})JSON",
             kMptIssuanceId
         )
     );
@@ -1952,13 +1952,13 @@ TEST_F(RPCBookOffersHandlerTest, MPTGetsFundedOffer)
     auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
-            "taker_gets": {{
-                "mpt_issuance_id": "{}"
-            }},
-            "taker_pays": {{
-                "currency": "XRP"
-            }}
-        }})JSON",
+                "taker_gets": {{
+                    "mpt_issuance_id": "{}"
+                }},
+                "taker_pays": {{
+                    "currency": "XRP"
+                }}
+            }})JSON",
             kMptIssuanceId
         )
     );
