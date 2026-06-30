@@ -905,7 +905,13 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_IssuerReturnsAvailableCapacity)
 
     // MaximumAmount = 1000, OutstandingAmount = 100 -> available = 900.
     auto const issuance = createMptIssuanceObject(
-        kAccount, 2, std::nullopt, 0, /* outstanding */ 100, std::nullopt, std::nullopt,
+        kAccount,
+        2,
+        std::nullopt,
+        0,
+        /* outstanding */ 100,
+        std::nullopt,
+        std::nullopt,
         /* max */ 1000
     );
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKey, kLedgerSeqObject, _))
