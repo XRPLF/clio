@@ -106,8 +106,10 @@ addMPTokenIssuanceIDsFromTx(MPTokenIssuanceIDs& issuanceIDs, xrpl::STTx const& s
             }
             case xrpl::STI_ISSUE: {
                 auto const& issue = field.downcast<xrpl::STIssue>();
-                if (issue.holds<xrpl::MPTIssue>())
-                    issuanceIDs.insert(issue->get<xrpl::MPTIssue>().getMptID());
+                if (issue.holds<xrpl::MPTIssue>()) {
+                    auto const& mptIssue = issue.value().get<xrpl::MPTIssue>();
+                    issuanceIDs.insert(mptIssue.getMptID());
+                }
                 break;
             }
             default:
