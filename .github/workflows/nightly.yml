@@ -168,6 +168,6 @@ jobs:
         uses: XRPLF/actions/create-issue@2b8bc36af85b88bca0dd7bfac2e2dc05f94ad712
         with:
           title: "Nightly release failed 🌙"
-          body: ""
+          body: "Please check the nightly release workflow for details."
           labels: "bug"
           assignees: "godexsoft,kuznetsss,mathbunnyru"
