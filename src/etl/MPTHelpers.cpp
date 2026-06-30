@@ -101,7 +101,7 @@ void
 addMPTokenIssuanceIDFromIssue(MPTokenIssuanceIDs& issuanceIDs, xrpl::STIssue const& issue)
 {
     if (issue.holds<xrpl::MPTIssue>())
-        issuanceIDs.insert(issue.value().get<xrpl::MPTIssue>().getMptID());
+        issuanceIDs.insert(issue->get<xrpl::MPTIssue>().getMptID());
 }
 
 void
