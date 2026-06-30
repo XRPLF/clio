@@ -91,20 +91,6 @@ getMPTokenIssuanceIDFromNode(xrpl::STObject const& node)
 }
 
 void
-addMPTokenIssuanceIDFromAmount(MPTokenIssuanceIDs& issuanceIDs, xrpl::STAmount const& amount)
-{
-    if (amount.holds<xrpl::MPTIssue>())
-        issuanceIDs.insert(amount.get<xrpl::MPTIssue>().getMptID());
-}
-
-void
-addMPTokenIssuanceIDFromIssue(MPTokenIssuanceIDs& issuanceIDs, xrpl::STIssue const& issue)
-{
-    if (issue.holds<xrpl::MPTIssue>())
-        issuanceIDs.insert(issue->get<xrpl::MPTIssue>().getMptID());
-}
-
-void
 addMPTokenIssuanceIDsFromTx(MPTokenIssuanceIDs& issuanceIDs, xrpl::STTx const& sttx)
 {
     if (sttx.isFieldPresent(xrpl::sfMPTokenIssuanceID))
@@ -112,12 +98,18 @@ addMPTokenIssuanceIDsFromTx(MPTokenIssuanceIDs& issuanceIDs, xrpl::STTx const& s
 
     for (xrpl::STBase const& field : sttx) {
         switch (field.getSType()) {
-            case xrpl::STI_AMOUNT:
-                addMPTokenIssuanceIDFromAmount(issuanceIDs, field.downcast<xrpl::STAmount>());
+            case xrpl::STI_AMOUNT: {
+                auto const& amount = field.downcast<xrpl::STAmount>();
+                if (amount.holds<xrpl::MPTIssue>())
+                    issuanceIDs.insert(amount.get<xrpl::MPTIssue>().getMptID());
                 break;
-            case xrpl::STI_ISSUE:
-                addMPTokenIssuanceIDFromIssue(issuanceIDs, field.downcast<xrpl::STIssue>());
+            }
+            case xrpl::STI_ISSUE: {
+                auto const& issue = field.downcast<xrpl::STIssue>();
+                if (issue.holds<xrpl::MPTIssue>())
+                    issuanceIDs.insert(issue->get<xrpl::MPTIssue>().getMptID());
                 break;
+            }
             default:
                 break;
         }
