@@ -765,6 +765,21 @@ TEST_F(RPCBaseTest, BookTakerValidator)
     ASSERT_FALSE(err);
     EXPECT_TRUE(err.error().code == CombinedError{RippledError::RpcInvalidParams});
     EXPECT_EQ(err.error().message, "Invalid field 'taker_gets'.");
+
+    // A present-but-non-string currency -> expectedFieldError against '<key>.currency'.
+    failingInput = boost::json::parse(R"JSON({ "taker_gets": { "currency": 123 }})JSON");
+    err = spec.process(failingInput);
+    ASSERT_FALSE(err);
+    EXPECT_TRUE(err.error().code == CombinedError{RippledError::RpcInvalidParams});
+    EXPECT_EQ(err.error().message, "Invalid field 'taker_gets.currency', not string.");
+
+    // A present-but-non-string mpt_issuance_id is reported the same way (against '.currency',
+    // matching rippled's validateTakerJSON).
+    failingInput = boost::json::parse(R"JSON({ "taker_gets": { "mpt_issuance_id": 123 }})JSON");
+    err = spec.process(failingInput);
+    ASSERT_FALSE(err);
+    EXPECT_TRUE(err.error().code == CombinedError{RippledError::RpcInvalidParams});
+    EXPECT_EQ(err.error().message, "Invalid field 'taker_gets.currency', not string.");
 }
 
 TEST_F(RPCBaseTest, BookTakerValidatorUsesFieldKey)

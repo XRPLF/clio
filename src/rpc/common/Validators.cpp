@@ -1,6 +1,7 @@
 #include "rpc/common/Validators.hpp"
 
 #include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
@@ -17,6 +18,7 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <charconv>
 #include <cstdint>
@@ -245,6 +247,16 @@ CustomValidator CustomValidators::bookTakerValidator =
             return Error{
                 Status{RippledError::RpcInvalidParams, fmt::format("Invalid field '{}'.", key)}
             };
+        }
+
+        // Wrong type -> invalidParams (rippled's validateTakerJSON), checked here before the
+        // per-field validators so they can own bad *values* -> dst/srcAmtMalformed.
+        if ((hasCurrency && !obj.at(JS(currency)).is_string()) ||
+            (hasMptId && !obj.at(JS(mpt_issuance_id)).is_string())) {
+            return Error{Status{
+                RippledError::RpcInvalidParams,
+                fmt::format("Invalid field '{}.currency', not string.", key)
+            }};
         }
 
         return MaybeError{};

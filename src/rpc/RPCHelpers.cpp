@@ -1291,12 +1291,24 @@ accountHoldsMPT(
     xrpl::SerialIter it{blob->data(), blob->size()};
     xrpl::SLE const sle{it, key};
 
+    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceBlob = backend.fetchLedgerObject(issuanceKey, sequence, yield);
+    std::optional<xrpl::SLE> issuanceSle;
+    if (issuanceBlob) {
+        xrpl::SerialIter issuanceIt{issuanceBlob->data(), issuanceBlob->size()};
+        issuanceSle.emplace(issuanceIt, issuanceKey);
+    }
+
     if (zeroIfFrozen) {
-        if (isGlobalFrozen(backend, sequence, mptIssue, yield))
+        if (issuanceSle && issuanceSle->isFlag(xrpl::lsfMPTLocked))
             return zero;
         if (sle.isFlag(xrpl::lsfMPTLocked))
             return zero;
     }
+
+    if (issuanceSle && issuanceSle->isFlag(xrpl::lsfMPTRequireAuth) &&
+        !sle.isFlag(xrpl::lsfMPTAuthorized))
+        return zero;
 
     return xrpl::STAmount{mptIssue, sle.getFieldU64(xrpl::sfMPTAmount)};
 }
@@ -1482,9 +1494,6 @@ parseBook(
     if (auto const err = checkIssuer(gets, JS(taker_gets), RippledError::RpcDstIsrMalformed))
         return std::unexpected{*err};
 
-    if (pays == gets)
-        return std::unexpected{Status{RippledError::RpcBadMarket}};
-
     std::optional<xrpl::uint256> domainID = std::nullopt;
     if (domain.has_value()) {
         xrpl::uint256 dom;
@@ -1495,6 +1504,9 @@ parseBook(
         }
         domainID = dom;
     }
+
+    if (pays == gets)
+        return std::unexpected{Status{RippledError::RpcBadMarket}};
 
     return xrpl::Book{pays, gets, domainID};
 }

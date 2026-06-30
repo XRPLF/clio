@@ -586,8 +586,9 @@ struct CustomValidators final {
      * The object must specify an asset as either a `currency` (optionally with an `issuer`) or an
      * `mpt_issuance_id`, but not both, and `mpt_issuance_id` must not be combined with `issuer`.
      * Mirrors `rippled`'s `validateTakerJSON`: a missing asset yields `Missing field
-     * '<field>.currency'.` and conflicting fields yield `Invalid field '<field>'.` (both
-     * `invalidParams`). The field name is taken from the validated key.
+     * '<field>.currency'.`, conflicting fields yield `Invalid field '<field>'.`, and a present but
+     * non-string `currency`/`mpt_issuance_id` yields `Invalid field '<field>.currency', not
+     * string.` (all `invalidParams`). The field name is taken from the validated key.
      *
      * Used by book_offers.
      */
