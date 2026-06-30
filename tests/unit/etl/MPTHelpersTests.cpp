@@ -59,6 +59,32 @@ createAccountRootNode(std::string_view account)
     return node;
 }
 
+xrpl::STObject
+createMPTokenNodeWithoutIssuanceID()
+{
+    xrpl::STObject fields(xrpl::sfFinalFields);
+    fields.setAccountID(xrpl::sfAccount, getAccountIdWithString(kAccount));
+
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
+    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
+    node.set(std::move(fields));
+    return node;
+}
+
+xrpl::STObject
+createMPTokenIssuanceNodeWithoutIssuer()
+{
+    xrpl::STObject fields(xrpl::sfFinalFields);
+    fields.setFieldU32(xrpl::sfSequence, kIssuanceSeq);
+
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
+    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
+    node.set(std::move(fields));
+    return node;
+}
+
 xrpl::TxMeta
 createTxMeta(std::vector<xrpl::STObject> nodes, int result = xrpl::tesSUCCESS)
 {
@@ -341,6 +367,18 @@ TEST_F(MPTHelpersTest, MPTNodeWithoutFieldsProducesNoRecords)
 
     std::vector<xrpl::STObject> nodes;
     nodes.push_back(std::move(node));
+    auto const txMeta = createTxMeta(std::move(nodes));
+
+    auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, createTx(xrpl::ttPAYMENT));
+
+    EXPECT_TRUE(records.empty());
+}
+
+TEST_F(MPTHelpersTest, MPTNodesMissingRequiredFieldsProduceNoRecords)
+{
+    std::vector<xrpl::STObject> nodes;
+    nodes.push_back(createMPTokenNodeWithoutIssuanceID());
+    nodes.push_back(createMPTokenIssuanceNodeWithoutIssuer());
     auto const txMeta = createTxMeta(std::move(nodes));
 
     auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, createTx(xrpl::ttPAYMENT));

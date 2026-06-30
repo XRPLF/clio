@@ -13,7 +13,9 @@
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STArray.h>
@@ -25,6 +27,7 @@
 #include <xrpl/protocol/TxMeta.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -79,6 +82,7 @@ constinit auto const kIssuanceID = "002DBD1817E0AF9FDE4F9978B8FCD8A5063630B5737D
 
 constinit auto const kAccount = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
 constinit auto const kAccount2 = "rnd1nHuzceyQDqnLH8urWNr4QBKt4v7WVk";
+constexpr auto kHighFanoutAccountCount = 1001u;
 
 void
 expectSameRecords(
@@ -94,6 +98,30 @@ expectSameRecords(
         EXPECT_EQ(lhs[i].transactionIndex, rhs[i].transactionIndex);
         EXPECT_EQ(lhs[i].txHash, rhs[i].txHash);
     }
+}
+
+xrpl::AccountID
+accountIDFromSeed(std::uint32_t seed)
+{
+    std::array<unsigned char, xrpl::AccountID::size()> bytes{};
+    bytes[16] = static_cast<unsigned char>(seed >> 24);
+    bytes[17] = static_cast<unsigned char>(seed >> 16);
+    bytes[18] = static_cast<unsigned char>(seed >> 8);
+    bytes[19] = static_cast<unsigned char>(seed);
+    return xrpl::AccountID::fromVoid(bytes.data());
+}
+
+xrpl::STObject
+createAccountRootNode(xrpl::AccountID const& account)
+{
+    xrpl::STObject fields(xrpl::sfFinalFields);
+    fields.setAccountID(xrpl::sfAccount, account);
+
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltACCOUNT_ROOT);
+    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
+    node.set(std::move(fields));
+    return node;
 }
 
 // One Payment transaction touching two distinct issuances with three affected accounts.
@@ -138,6 +166,48 @@ createMultiIssuanceTransaction()
         .meta = txMeta,
         .id = sttx.getTransactionID(),
         .key = "0000000000000000000000000000000000000000000000000000000000000002",
+        .type = sttx.getTxnType()
+    };
+}
+
+etl::model::Transaction
+createHighFanoutIssuanceTransaction()
+{
+    xrpl::Slice const slice("test", 4);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttPAYMENT);
+    tx.setAccountID(xrpl::sfAccount, getAccountIdWithString(kAccount));
+    tx.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(100, false));
+    tx.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10, false));
+    tx.setAccountID(xrpl::sfDestination, getAccountIdWithString(kAccount2));
+    tx.setFieldU32(xrpl::sfSequence, 1);
+    tx.setFieldVL(xrpl::sfSigningPubKey, slice);
+
+    auto const serialized = tx.getSerializer();
+    auto const sttx = xrpl::STTx{xrpl::SerialIter{serialized.slice()}};
+
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
+
+    xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
+    affectedNodes.push_back(
+        util::createMPTokenNode(xrpl::sfModifiedNode, xrpl::uint192{kMptIssuanceID}, kHolderAccount)
+    );
+    for (std::uint32_t i = 0; i < kHighFanoutAccountCount; ++i)
+        affectedNodes.push_back(createAccountRootNode(accountIDFromSeed(i + 1)));
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
+
+    auto const txMeta =
+        xrpl::TxMeta{sttx.getTransactionID(), kSeq, metaObj.getSerializer().peekData()};
+
+    return etl::model::Transaction{
+        .raw = "",
+        .metaRaw = "",
+        .sttx = sttx,
+        .meta = txMeta,
+        .id = sttx.getTransactionID(),
+        .key = "0000000000000000000000000000000000000000000000000000000000000003",
         .type = sttx.getTxnType()
     };
 }
@@ -459,6 +529,38 @@ TEST_F(MPTExtTests, OnLedgerDataDedupsMultiIssuanceFanout)
         EXPECT_TRUE(record.accounts.contains(getAccountIdWithString(kHolderAccount)));
         EXPECT_EQ(record.ledgerSequence, kSeq);
     }
+    expectSameRecords(issuanceTxs, accountIssuanceTxs);
+}
+
+TEST_F(MPTExtTests, OnLedgerDataWritesHighFanoutIssuanceIndexWithoutHolders)
+{
+    auto transactions = std::vector{createHighFanoutIssuanceTransaction()};
+
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
+    auto const data = etl::model::LedgerData{
+        .transactions = std::move(transactions),
+        .objects = {},
+        .successors = {},
+        .edgeKeys = {},
+        .header = header,
+        .rawHeader = {},
+        .seq = kSeq
+    };
+
+    EXPECT_CALL(*backend_, writeMPTHolders).Times(0);
+
+    std::vector<MPTokenIssuanceTransactionsData> issuanceTxs;
+    std::vector<MPTokenIssuanceTransactionsData> accountIssuanceTxs;
+    EXPECT_CALL(*backend_, writeMPTokenIssuanceTransactions).WillOnce(SaveArg<0>(&issuanceTxs));
+    EXPECT_CALL(*backend_, writeAccountMPTokenIssuanceTransactions)
+        .WillOnce(SaveArg<0>(&accountIssuanceTxs));
+
+    ext_.onLedgerData(data);
+
+    ASSERT_EQ(issuanceTxs.size(), 1);
+    EXPECT_EQ(issuanceTxs[0].mptIssuanceID, xrpl::uint192{kMptIssuanceID});
+    EXPECT_GT(issuanceTxs[0].accounts.size(), kHighFanoutAccountCount);
+    EXPECT_EQ(issuanceTxs[0].ledgerSequence, kSeq);
     expectSameRecords(issuanceTxs, accountIssuanceTxs);
 }
 
