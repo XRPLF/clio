@@ -27,9 +27,12 @@
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Asset.h>
 #include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/MPTIssue.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/Serializer.h>
@@ -557,6 +560,204 @@ TEST_F(RPCHelpersTest, ParseIssue)
         ),
         std::runtime_error
     );
+}
+
+TEST_F(RPCHelpersTest, ParseBookValid)
+{
+    auto const account = getAccountIdWithString(kAccount);
+    auto const usd = xrpl::Asset{xrpl::Issue{xrpl::toCurrency("USD"), account}};
+    auto const xrp = xrpl::Asset{xrpl::xrpIssue()};
+
+    xrpl::MPTID mptId;
+    ASSERT_TRUE(mptId.parseHex("000004C463C52827307480341125DA0577DEFC38405DBADD"));
+    auto const mpt = xrpl::Asset{xrpl::MPTIssue{mptId}};
+
+    xrpl::MPTID mptId2;
+    ASSERT_TRUE(mptId2.parseHex("000004C463C52827307480341125DA0577DEFC38405DBADE"));
+    auto const mpt2 = xrpl::Asset{xrpl::MPTIssue{mptId2}};
+
+    // IOU vs XRP, no domain. Book is {in = pays, out = gets}.
+    {
+        auto const book = rpc::parseBook(usd, xrp, std::nullopt);
+        ASSERT_TRUE(book.has_value());
+        EXPECT_TRUE(book->in == usd);
+        EXPECT_TRUE(book->out == xrp);
+        EXPECT_FALSE(book->domain.has_value());
+    }
+
+    // MPT vs XRP.
+    {
+        auto const book = rpc::parseBook(xrp, mpt, std::nullopt);
+        ASSERT_TRUE(book.has_value());
+        EXPECT_TRUE(book->in == xrp);
+        EXPECT_TRUE(book->out == mpt);
+    }
+
+    // MPT vs MPT with distinct issuances.
+    {
+        auto const book = rpc::parseBook(mpt, mpt2, std::nullopt);
+        ASSERT_TRUE(book.has_value());
+        EXPECT_TRUE(book->in == mpt);
+        EXPECT_TRUE(book->out == mpt2);
+    }
+
+    // MPT vs IOU.
+    {
+        auto const book = rpc::parseBook(mpt, usd, std::nullopt);
+        ASSERT_TRUE(book.has_value());
+        EXPECT_TRUE(book->in == mpt);
+        EXPECT_TRUE(book->out == usd);
+    }
+
+    // A valid domain is parsed into the book.
+    {
+        auto const book = rpc::parseBook(usd, xrp, std::string{kIndex1});
+        ASSERT_TRUE(book.has_value());
+        ASSERT_TRUE(book->domain.has_value());
+        xrpl::uint256 expectedDomain;
+        ASSERT_TRUE(expectedDomain.parseHex(kIndex1));
+        EXPECT_EQ(book->domain, std::optional<xrpl::uint256>{expectedDomain});
+    }
+}
+
+TEST_F(RPCHelpersTest, ParseBookIssuerErrors)
+{
+    auto const account = getAccountIdWithString(kAccount);
+    auto const validGets = xrpl::Asset{xrpl::Issue{xrpl::toCurrency("USD"), account}};
+    auto const validPays = xrpl::Asset{xrpl::xrpIssue()};
+
+    // taker_pays: XRP currency must not carry an issuer.
+    {
+        auto const book = rpc::parseBook(
+            xrpl::Asset{xrpl::Issue{xrpl::xrpCurrency(), account}}, validGets, std::nullopt
+        );
+        ASSERT_FALSE(book.has_value());
+        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcSrcIsrMalformed});
+        EXPECT_EQ(
+            book.error().message,
+            "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+        );
+    }
+
+    // taker_pays: non-XRP currency must not have an XRP issuer.
+    {
+        auto const book = rpc::parseBook(
+            xrpl::Asset{xrpl::Issue{xrpl::toCurrency("USD"), xrpl::xrpAccount()}},
+            validGets,
+            std::nullopt
+        );
+        ASSERT_FALSE(book.has_value());
+        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcSrcIsrMalformed});
+        EXPECT_EQ(
+            book.error().message, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
+        );
+    }
+
+    // taker_gets: XRP currency must not carry an issuer.
+    {
+        auto const book = rpc::parseBook(
+            validPays, xrpl::Asset{xrpl::Issue{xrpl::xrpCurrency(), account}}, std::nullopt
+        );
+        ASSERT_FALSE(book.has_value());
+        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDstIsrMalformed});
+        EXPECT_EQ(
+            book.error().message,
+            "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+        );
+    }
+
+    // taker_gets: non-XRP currency must not have an XRP issuer.
+    {
+        auto const book = rpc::parseBook(
+            validPays,
+            xrpl::Asset{xrpl::Issue{xrpl::toCurrency("USD"), xrpl::xrpAccount()}},
+            std::nullopt
+        );
+        ASSERT_FALSE(book.has_value());
+        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDstIsrMalformed});
+        EXPECT_EQ(
+            book.error().message, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
+        );
+    }
+
+    // MPT assets skip issuer-consistency checks (the issuer is encoded in the issuance id).
+    {
+        xrpl::MPTID mptId;
+        ASSERT_TRUE(mptId.parseHex("000004C463C52827307480341125DA0577DEFC38405DBADD"));
+        auto const book =
+            rpc::parseBook(xrpl::Asset{xrpl::MPTIssue{mptId}}, validPays, std::nullopt);
+        ASSERT_TRUE(book.has_value());
+    }
+}
+
+TEST_F(RPCHelpersTest, ParseBookBadMarket)
+{
+    auto const account = getAccountIdWithString(kAccount);
+    auto const usd = xrpl::Asset{xrpl::Issue{xrpl::toCurrency("USD"), account}};
+
+    // Identical IOU assets on both sides.
+    {
+        auto const book = rpc::parseBook(usd, usd, std::nullopt);
+        ASSERT_FALSE(book.has_value());
+        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
+        // badMarket carries no explicit message; it renders from the code's default, matching
+        // rippled's "No such market.".
+        EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
+    }
+
+    // Identical MPT assets on both sides.
+    {
+        xrpl::MPTID mptId;
+        ASSERT_TRUE(mptId.parseHex("000004C463C52827307480341125DA0577DEFC38405DBADD"));
+        auto const mpt = xrpl::Asset{xrpl::MPTIssue{mptId}};
+        auto const book = rpc::parseBook(mpt, mpt, std::nullopt);
+        ASSERT_FALSE(book.has_value());
+        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
+        // badMarket carries no explicit message; it renders from the code's default, matching
+        // rippled's "No such market.".
+        EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
+    }
+}
+
+TEST_F(RPCHelpersTest, ParseBookDomainMalformed)
+{
+    auto const account = getAccountIdWithString(kAccount);
+    auto const usd = xrpl::Asset{xrpl::Issue{xrpl::toCurrency("USD"), account}};
+    auto const xrp = xrpl::Asset{xrpl::xrpIssue()};
+
+    auto const book = rpc::parseBook(usd, xrp, std::string{"notavalidhex"});
+    ASSERT_FALSE(book.has_value());
+    EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDomainMalformed});
+    EXPECT_EQ(book.error().message, "Unable to parse domain.");
+}
+
+TEST_F(RPCHelpersTest, ParseBookCurrencyOverloadDelegates)
+{
+    auto const account = getAccountIdWithString(kAccount);
+
+    // A valid book built via the currency/issuer overload matches the asset-based result.
+    {
+        auto const book = rpc::parseBook(
+            xrpl::toCurrency("USD"), account, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt
+        );
+        ASSERT_TRUE(book.has_value());
+        auto const expectedIn = xrpl::Asset{xrpl::Issue{xrpl::toCurrency("USD"), account}};
+        auto const expectedOut = xrpl::Asset{xrpl::xrpIssue()};
+        EXPECT_TRUE(book->in == expectedIn);
+        EXPECT_TRUE(book->out == expectedOut);
+    }
+
+    // Errors propagate from the delegated asset-based overload.
+    {
+        auto const book = rpc::parseBook(
+            xrpl::toCurrency("USD"), account, xrpl::toCurrency("USD"), account, std::nullopt
+        );
+        ASSERT_FALSE(book.has_value());
+        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
+        // badMarket carries no explicit message; it renders from the code's default, matching
+        // rippled's "No such market.".
+        EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
+    }
 }
 
 TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_BlobDoesNotExist)

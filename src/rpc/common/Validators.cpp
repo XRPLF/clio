@@ -226,6 +226,30 @@ CustomValidator CustomValidators::issuerValidator =
         return MaybeError{};
     }};
 
+CustomValidator CustomValidators::bookTakerValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_object())
+            return {};  // type is validated separately by Type<object>
+
+        auto const& obj = value.as_object();
+        bool const hasCurrency = obj.contains("currency");
+        bool const hasMptId = obj.contains("mpt_issuance_id");
+
+        if (!hasCurrency && !hasMptId) {
+            return Error{Status{
+                RippledError::RpcInvalidParams, fmt::format("Missing field '{}.currency'.", key)
+            }};
+        }
+
+        if (hasMptId && (hasCurrency || obj.contains("issuer"))) {
+            return Error{
+                Status{RippledError::RpcInvalidParams, fmt::format("Invalid field '{}'.", key)}
+            };
+        }
+
+        return MaybeError{};
+    }};
+
 CustomValidator CustomValidators::subscribeStreamValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_array())

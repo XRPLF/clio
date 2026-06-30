@@ -45,8 +45,8 @@
 
 #include <boost/asio/spawn.hpp>
 #include <gtest/gtest.h>
-#include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/UintTypes.h>
 
 #include <memory>
@@ -196,10 +196,8 @@ BookOffersHandler::Input
 createInput<BookOffersHandler>()
 {
     BookOffersHandler::Input input{};
-    input.paysCurrency = xrpl::xrpCurrency();
-    input.getsCurrency = xrpl::Currency(kCurrency);
-    input.paysID = xrpl::xrpAccount();
-    input.getsID = getAccountIdWithString(kAccount);
+    input.paysAsset = xrpl::xrpIssue();
+    input.getsAsset = xrpl::Issue{xrpl::Currency(kCurrency), getAccountIdWithString(kAccount)};
 
     return input;
 }

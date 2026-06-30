@@ -27,6 +27,7 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/json/json_value.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Asset.h>
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/Fees.h>
 #include <xrpl/protocol/Indexes.h>
@@ -403,6 +404,23 @@ isGlobalFrozen(
 );
 
 /**
+ * @brief Whether global frozen is set for an MPT issuance
+ *
+ * @param backend The backend to use
+ * @param seq The ledger sequence
+ * @param mptIssue The MPT issue
+ * @param yield The coroutine context
+ * @return true if the global frozen is set; false otherwise
+ */
+bool
+isGlobalFrozen(
+    BackendInterface const& backend,
+    std::uint32_t seq,
+    xrpl::MPTIssue const& mptIssue,
+    boost::asio::yield_context yield
+);
+
+/**
  * @brief Whether the account is frozen
  *
  * @param backend The backend to use
@@ -574,6 +592,27 @@ transferRate(
 );
 
 /**
+ * @brief Get the amount that an account holds in MPT
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence
+ * @param account The account
+ * @param mptIssue The MPT issue
+ * @param zeroIfFrozen Whether to return zero if frozen
+ * @param yield The coroutine context
+ * @return The amount account holds
+ */
+xrpl::STAmount
+accountHoldsMPT(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    xrpl::AccountID const& account,
+    xrpl::MPTIssue const& mptIssue,
+    bool zeroIfFrozen,
+    boost::asio::yield_context yield
+);
+
+/**
  * @brief Get the XRP liquidity
  *
  * @param backend The backend to use
@@ -629,6 +668,21 @@ parseBook(
     xrpl::AccountID payIssuer,
     xrpl::Currency gets,
     xrpl::AccountID getIssuer,
+    std::optional<std::string> const& domain
+);
+
+/**
+ * @brief Parse the book from assets (supports both IOU and MPT)
+ *
+ * @param pays The asset to pay
+ * @param gets The asset to get
+ * @param domain The domain
+ * @return The book or an error status
+ */
+std::expected<xrpl::Book, Status>
+parseBook(
+    xrpl::Asset const& pays,
+    xrpl::Asset const& gets,
     std::optional<std::string> const& domain
 );
 

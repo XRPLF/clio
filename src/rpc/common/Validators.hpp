@@ -581,6 +581,19 @@ struct CustomValidators final {
     static CustomValidator currencyIssueValidator;
 
     /**
+     * @brief Validates a book taker object (`taker_gets`/`taker_pays`).
+     *
+     * The object must specify an asset as either a `currency` (optionally with an `issuer`) or an
+     * `mpt_issuance_id`, but not both, and `mpt_issuance_id` must not be combined with `issuer`.
+     * Mirrors `rippled`'s `validateTakerJSON`: a missing asset yields `Missing field
+     * '<field>.currency'.` and conflicting fields yield `Invalid field '<field>'.` (both
+     * `invalidParams`). The field name is taken from the validated key.
+     *
+     * Used by book_offers.
+     */
+    static CustomValidator bookTakerValidator;
+
+    /**
      * @brief Provides a validator for validating authorized_credentials json array.
      *
      * Used by deposit_preauth.
