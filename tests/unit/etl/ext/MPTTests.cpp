@@ -3,6 +3,7 @@
 #include "etl/impl/ext/MPT.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "util/BinaryTestObject.hpp"
+#include "util/MPTokenTestObjects.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
@@ -13,7 +14,6 @@
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
-#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STArray.h>
@@ -29,7 +29,6 @@
 #include <cstdint>
 #include <iterator>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -97,34 +96,6 @@ expectSameRecords(
     }
 }
 
-xrpl::STObject
-createMPTokenNode(xrpl::uint192 const& issuanceID, std::string_view holder)
-{
-    xrpl::STObject fields(xrpl::sfFinalFields);
-    fields.setAccountID(xrpl::sfAccount, getAccountIdWithString(holder));
-    fields[xrpl::sfMPTokenIssuanceID] = issuanceID;
-
-    xrpl::STObject node(xrpl::sfModifiedNode);
-    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
-    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    node.set(std::move(fields));
-    return node;
-}
-
-xrpl::STObject
-createMPTokenIssuanceNode(std::uint32_t seq, std::string_view issuer)
-{
-    xrpl::STObject fields(xrpl::sfFinalFields);
-    fields.setFieldU32(xrpl::sfSequence, seq);
-    fields.setAccountID(xrpl::sfIssuer, getAccountIdWithString(issuer));
-
-    xrpl::STObject node(xrpl::sfModifiedNode);
-    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
-    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    node.set(std::move(fields));
-    return node;
-}
-
 // One Payment transaction touching two distinct issuances with three affected accounts.
 etl::model::Transaction
 createMultiIssuanceTransaction()
@@ -150,9 +121,11 @@ createMultiIssuanceTransaction()
     metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
-    affectedNodes.push_back(createMPTokenNode(issuanceA, kAccount));
-    affectedNodes.push_back(createMPTokenNode(issuanceB, kAccount2));
-    affectedNodes.push_back(createMPTokenIssuanceNode(1, kHolderAccount));  // issuanceA again
+    affectedNodes.push_back(util::createMPTokenNode(xrpl::sfModifiedNode, issuanceA, kAccount));
+    affectedNodes.push_back(util::createMPTokenNode(xrpl::sfModifiedNode, issuanceB, kAccount2));
+    affectedNodes.push_back(
+        util::createMPTokenIssuanceNode(xrpl::sfModifiedNode, 1, kHolderAccount)
+    );  // issuanceA again
     metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
 
     auto const txMeta =
@@ -194,21 +167,6 @@ createTransactionFromObjects(
 }
 
 xrpl::STObject
-createNewMPTokenNode(std::string_view holder)
-{
-    xrpl::STObject newFields(xrpl::sfNewFields);
-    newFields.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
-    newFields[xrpl::sfMPTokenIssuanceID] = xrpl::uint192{kMptIssuanceID};
-    newFields.setAccountID(xrpl::sfAccount, getAccountIdWithString(holder));
-
-    xrpl::STObject createdNode(xrpl::sfCreatedNode);
-    createdNode.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
-    createdNode.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    createdNode.set(std::move(newFields));
-    return createdNode;
-}
-
-xrpl::STObject
 createPaymentMetaWithNewMPTokens(xrpl::TER result = xrpl::tesSUCCESS)
 {
     xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
@@ -216,8 +174,12 @@ createPaymentMetaWithNewMPTokens(xrpl::TER result = xrpl::tesSUCCESS)
     metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
-    affectedNodes.push_back(createNewMPTokenNode(kHolderAccount));
-    affectedNodes.push_back(createNewMPTokenNode(kHolderAccount2));
+    affectedNodes.push_back(
+        util::createMPTokenNode(xrpl::sfCreatedNode, xrpl::uint192{kMptIssuanceID}, kHolderAccount)
+    );
+    affectedNodes.push_back(
+        util::createMPTokenNode(xrpl::sfCreatedNode, xrpl::uint192{kMptIssuanceID}, kHolderAccount2)
+    );
     metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
 
     return metaObj;

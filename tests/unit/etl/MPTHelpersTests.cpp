@@ -1,5 +1,6 @@
 #include "data/DBHelpers.hpp"
 #include "etl/MPTHelpers.hpp"
+#include "util/MPTokenTestObjects.hpp"
 #include "util/TestObject.hpp"
 
 #include <gtest/gtest.h>
@@ -43,44 +44,6 @@ xrpl::uint192
 defaultIssuanceID()
 {
     return xrpl::makeMptID(kIssuanceSeq, getAccountIdWithString(kIssuer));
-}
-
-xrpl::STObject
-createMPTokenNode(
-    xrpl::SField const& nodeType,
-    xrpl::uint192 const& issuanceID,
-    std::string_view holder
-)
-{
-    auto const& fieldsName =
-        nodeType == xrpl::sfCreatedNode ? xrpl::sfNewFields : xrpl::sfFinalFields;
-
-    xrpl::STObject fields(fieldsName);
-    fields.setAccountID(xrpl::sfAccount, getAccountIdWithString(holder));
-    fields[xrpl::sfMPTokenIssuanceID] = issuanceID;
-
-    xrpl::STObject node(nodeType);
-    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
-    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    node.set(std::move(fields));
-    return node;
-}
-
-xrpl::STObject
-createMPTokenIssuanceNode(xrpl::SField const& nodeType, std::uint32_t seq, std::string_view issuer)
-{
-    auto const& fieldsName =
-        nodeType == xrpl::sfCreatedNode ? xrpl::sfNewFields : xrpl::sfFinalFields;
-
-    xrpl::STObject fields(fieldsName);
-    fields.setFieldU32(xrpl::sfSequence, seq);
-    fields.setAccountID(xrpl::sfIssuer, getAccountIdWithString(issuer));
-
-    xrpl::STObject node(nodeType);
-    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
-    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    node.set(std::move(fields));
-    return node;
 }
 
 xrpl::STObject
@@ -264,7 +227,7 @@ TEST_F(MPTHelpersTest, IssuanceCreateProducesRecordWithReconstructedID)
 TEST_F(MPTHelpersTest, IssuanceDestroyProducesRecordFromDeletedNode)
 {
     std::vector<xrpl::STObject> nodes;
-    nodes.push_back(createMPTokenIssuanceNode(xrpl::sfDeletedNode, kIssuanceSeq, kIssuer));
+    nodes.push_back(util::createMPTokenIssuanceNode(xrpl::sfDeletedNode, kIssuanceSeq, kIssuer));
     auto const txMeta = createTxMeta(std::move(nodes));
     auto const sttx = createTx(xrpl::ttMPTOKEN_ISSUANCE_DESTROY);
 
@@ -278,7 +241,7 @@ TEST_F(MPTHelpersTest, IssuanceDestroyProducesRecordFromDeletedNode)
 TEST_F(MPTHelpersTest, IssuanceSetProducesRecordFromModifiedNode)
 {
     std::vector<xrpl::STObject> nodes;
-    nodes.push_back(createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
+    nodes.push_back(util::createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
     auto const txMeta = createTxMeta(std::move(nodes));
     auto const sttx = createTx(xrpl::ttMPTOKEN_ISSUANCE_SET);
 
@@ -308,8 +271,8 @@ TEST_F(MPTHelpersTest, DedupsAcrossMPTokenAndIssuanceNodes)
     // Both nodes resolve to the same issuance ID: the MPToken node carries it directly while the
     // MPTokenIssuance node requires reconstruction via makeMptID.
     std::vector<xrpl::STObject> nodes;
-    nodes.push_back(createMPTokenNode(xrpl::sfCreatedNode, defaultIssuanceID(), kAccount));
-    nodes.push_back(createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
+    nodes.push_back(util::createMPTokenNode(xrpl::sfCreatedNode, defaultIssuanceID(), kAccount));
+    nodes.push_back(util::createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
     auto const txMeta = createTxMeta(std::move(nodes));
     auto const sttx = createTx(xrpl::ttPAYMENT);
 
@@ -330,9 +293,9 @@ TEST_F(MPTHelpersTest, MultipleIssuancesFanOutAndDedup)
 
     // issuanceA is touched twice and should produce only one index record.
     std::vector<xrpl::STObject> nodes;
-    nodes.push_back(createMPTokenNode(xrpl::sfCreatedNode, issuanceB, kAccount));
-    nodes.push_back(createMPTokenNode(xrpl::sfModifiedNode, issuanceA, kAccount2));
-    nodes.push_back(createMPTokenNode(xrpl::sfDeletedNode, issuanceA, kAccount));
+    nodes.push_back(util::createMPTokenNode(xrpl::sfCreatedNode, issuanceB, kAccount));
+    nodes.push_back(util::createMPTokenNode(xrpl::sfModifiedNode, issuanceA, kAccount2));
+    nodes.push_back(util::createMPTokenNode(xrpl::sfDeletedNode, issuanceA, kAccount));
     auto const txMeta = createTxMeta(std::move(nodes));
     auto const sttx = createTx(xrpl::ttPAYMENT);
 
@@ -355,7 +318,9 @@ TEST_F(MPTHelpersTest, IndexesMPTNodesRegardlessOfTransactionType)
 
     for (auto const type : kTypes) {
         std::vector<xrpl::STObject> nodes;
-        nodes.push_back(createMPTokenNode(xrpl::sfModifiedNode, defaultIssuanceID(), kAccount));
+        nodes.push_back(
+            util::createMPTokenNode(xrpl::sfModifiedNode, defaultIssuanceID(), kAccount)
+        );
         auto const txMeta = createTxMeta(std::move(nodes));
         auto const sttx = createTx(type);
 
@@ -397,8 +362,8 @@ TEST_F(MPTHelpersTest, NoMPTNodesProducesNoRecords)
 TEST_F(MPTHelpersTest, RecordCarriesAllAffectedAccounts)
 {
     std::vector<xrpl::STObject> nodes;
-    nodes.push_back(createMPTokenNode(xrpl::sfCreatedNode, defaultIssuanceID(), kAccount));
-    nodes.push_back(createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
+    nodes.push_back(util::createMPTokenNode(xrpl::sfCreatedNode, defaultIssuanceID(), kAccount));
+    nodes.push_back(util::createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
     nodes.push_back(createAccountRootNode(kAccount2));
     auto const txMeta = createTxMeta(std::move(nodes));
     auto const sttx = createTx(xrpl::ttPAYMENT);
@@ -418,8 +383,8 @@ TEST_F(MPTHelpersTest, ExtractionIsDeterministic)
     auto const issuanceA = xrpl::makeMptID(1, getAccountIdWithString(kIssuer));
 
     std::vector<xrpl::STObject> nodes;
-    nodes.push_back(createMPTokenNode(xrpl::sfCreatedNode, issuanceA, kAccount));
-    nodes.push_back(createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
+    nodes.push_back(util::createMPTokenNode(xrpl::sfCreatedNode, issuanceA, kAccount));
+    nodes.push_back(util::createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
     auto const txMeta = createTxMeta(std::move(nodes));
     auto const sttx = createTx(xrpl::ttPAYMENT);
 

@@ -132,7 +132,7 @@ getMPTokenIssuanceTxsFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
     // Collect each distinct issuance only once per transaction; the same set of affected accounts
     // is attached to every record produced below.
     MPTokenIssuanceIDs issuanceIDs;
-    for (xrpl::STObject const& node : txMeta.getNodes()) {
+    for (auto const& node : txMeta.getNodes()) {
         if (auto const issuanceID = getMPTokenIssuanceIDFromNode(node); issuanceID.has_value())
             issuanceIDs.insert(*issuanceID);
     }
