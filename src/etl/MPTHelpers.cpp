@@ -54,10 +54,10 @@ namespace {
 using MPTokenIssuanceIDs = boost::container::flat_set<xrpl::uint192>;
 
 /**
- * @brief Derive the MPTokenIssuanceID from an affected node in transaction metadata
+ * @brief Derive the MPTokenIssuanceID from an affected node in transaction metadata.
  *
- * @param node An entry of the metadata's AffectedNodes array
- * @return The 192-bit issuance ID if the node is an MPTokenIssuance or MPToken object
+ * @param node An entry of the metadata's AffectedNodes array.
+ * @return The 192-bit issuance ID if the node is an MPTokenIssuance or MPToken object.
  */
 std::optional<xrpl::uint192>
 getMPTokenIssuanceIDFromNode(xrpl::STObject const& node)

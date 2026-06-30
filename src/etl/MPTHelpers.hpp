@@ -43,10 +43,10 @@ getMPTHolderFromObj(std::string const& key, std::string const& blob);
  * metadata has no affected MPT objects. Used by live ETL and reused by the historical backfill
  * migrator.
  *
- * @param txMeta Transaction metadata
- * @param sttx The transaction
+ * @param txMeta Transaction metadata.
+ * @param sttx The transaction.
  * @return One record per distinct MPT issuance referenced by metadata or transaction fields; empty
- * if no MPT issuance reference is found
+ * if no MPT issuance reference is found.
  */
 std::vector<MPTokenIssuanceTransactionsData>
 getMPTokenIssuanceTxsFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
