@@ -9,7 +9,6 @@
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
-#include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/Taggable.hpp"
@@ -400,23 +399,6 @@ isGlobalFrozen(
     BackendInterface const& backend,
     std::uint32_t seq,
     xrpl::AccountID const& issuer,
-    boost::asio::yield_context yield
-);
-
-/**
- * @brief Whether global frozen is set for an MPT issuance
- *
- * @param backend The backend to use
- * @param seq The ledger sequence
- * @param mptIssue The MPT issue
- * @param yield The coroutine context
- * @return true if the global frozen is set; false otherwise
- */
-bool
-isGlobalFrozen(
-    BackendInterface const& backend,
-    std::uint32_t seq,
-    xrpl::MPTIssue const& mptIssue,
     boost::asio::yield_context yield
 );
 

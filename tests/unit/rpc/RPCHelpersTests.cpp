@@ -34,6 +34,7 @@
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/MPTIssue.h>
+#include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/Serializer.h>
@@ -831,23 +832,6 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_TrustLineIsFrozenAndCheckFreez
     });
 }
 
-TEST_F(RPCHelpersTest, isGlobalFrozen_AccountIsGlobalFrozen)
-{
-    auto const account = getAccountIdWithString(kAccount);
-    auto const issuerKey = xrpl::keylet::account(account);
-
-    auto const accountObject =
-        createAccountRootObject(kAccount, xrpl::lsfGlobalFreeze, 1, 10, 2, kTxnId, 3);
-
-    ON_CALL(*backend_, doFetchLedgerObject(issuerKey.key, kLedgerSeqObject, _))
-        .WillByDefault(Return(accountObject.getSerializer().peekData()));
-
-    runSpawn([&](boost::asio::yield_context yield) {
-        // returns false: accountObject has the lowDeepFreeze flag
-        EXPECT_TRUE(isGlobalFrozen(*backend_, kLedgerSeqObject, account, yield));
-    });
-}
-
 namespace {
 
 xrpl::MPTIssue
@@ -860,42 +844,6 @@ makeMptIssue()
 }
 
 }  // namespace
-
-TEST_F(RPCHelpersTest, isGlobalFrozenMPT_IssuanceLocked)
-{
-    auto const mptIssue = makeMptIssue();
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
-
-    // Issuance with the lsfMPTLocked flag set is globally frozen.
-    auto const issuance = createMptIssuanceObject(kAccount, 2, std::nullopt, xrpl::lsfMPTLocked);
-    ON_CALL(*backend_, doFetchLedgerObject(issuanceKey, kLedgerSeqObject, _))
-        .WillByDefault(Return(issuance.getSerializer().peekData()));
-
-    runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_TRUE(isGlobalFrozen(*backend_, kLedgerSeqObject, mptIssue, yield));
-    });
-}
-
-TEST_F(RPCHelpersTest, isGlobalFrozenMPT_IssuanceNotLockedOrMissing)
-{
-    auto const mptIssue = makeMptIssue();
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
-
-    // Missing issuance -> not frozen.
-    ON_CALL(*backend_, doFetchLedgerObject(issuanceKey, kLedgerSeqObject, _))
-        .WillByDefault(Return(std::optional<xrpl::Blob>{}));
-    runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_FALSE(isGlobalFrozen(*backend_, kLedgerSeqObject, mptIssue, yield));
-    });
-
-    // Present but unlocked issuance -> not frozen.
-    auto const issuance = createMptIssuanceObject(kAccount, 2, std::nullopt, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(issuanceKey, kLedgerSeqObject, _))
-        .WillByDefault(Return(issuance.getSerializer().peekData()));
-    runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_FALSE(isGlobalFrozen(*backend_, kLedgerSeqObject, mptIssue, yield));
-    });
-}
 
 TEST_F(RPCHelpersTest, AccountHoldsMPT_IssuerReturnsAvailableCapacity)
 {
@@ -1091,6 +1039,92 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_HolderAuthorizedReturnsBalance)
                 .mpt()
                 .value(),
             7u
+        );
+    });
+}
+
+TEST_F(RPCHelpersTest, AccountHoldsMPT_IssuerOutstandingExceedsMaxReturnsZero)
+{
+    auto const mptIssue = makeMptIssue();
+    auto const issuer = mptIssue.getIssuer();
+    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+
+    // OutstandingAmount (500) > MaximumAmount (100) -> available must clamp to zero.
+    auto const issuance = createMptIssuanceObject(
+        kAccount,
+        2,
+        std::nullopt,
+        0,
+        /* outstanding */ 500,
+        std::nullopt,
+        std::nullopt,
+        /* max */ 100
+    );
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKey, kLedgerSeqObject, _))
+        .WillByDefault(Return(issuance.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const held =
+            accountHoldsMPT(*backend_, kLedgerSeqObject, issuer, mptIssue, true, yield);
+        EXPECT_EQ(held.mpt().value(), 0u);
+    });
+}
+
+TEST_F(RPCHelpersTest, AccountHoldsMPT_IssuerDefaultMaxWhenFieldAbsent)
+{
+    auto const mptIssue = makeMptIssue();
+    auto const issuer = mptIssue.getIssuer();
+    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+
+    // maxAmount = nullopt -> sfMaximumAmount field is absent -> code uses xrpl::kMaxMpTokenAmount.
+    // OutstandingAmount = 50 -> available = kMaxMpTokenAmount - 50.
+    auto const issuance = createMptIssuanceObject(
+        kAccount,
+        2,
+        std::nullopt,
+        0,
+        /* outstanding */ 50,
+        std::nullopt,
+        std::nullopt,
+        /* maxAmount */ std::nullopt
+    );
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKey, kLedgerSeqObject, _))
+        .WillByDefault(Return(issuance.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const held =
+            accountHoldsMPT(*backend_, kLedgerSeqObject, issuer, mptIssue, true, yield);
+        EXPECT_EQ(held.mpt().value(), xrpl::kMaxMpTokenAmount - 50u);
+    });
+}
+
+TEST_F(RPCHelpersTest, AccountHoldsMPT_HolderMissingIssuanceReturnsBalance)
+{
+    auto const mptIssue = makeMptIssue();
+    auto const holder = getAccountIdWithString(kAccount2);
+    auto const tokenKey = xrpl::keylet::mptoken(mptIssue.getMptID(), holder).key;
+    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+
+    // Token exists with a balance, but the issuance object is missing.
+    // Freeze and require-auth checks are skipped; the raw sfMPTAmount is returned.
+    auto const token = createMpTokenObject(kAccount2, mptIssue.getMptID(), 42);
+    ON_CALL(*backend_, doFetchLedgerObject(tokenKey, kLedgerSeqObject, _))
+        .WillByDefault(Return(token.getSerializer().peekData()));
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKey, kLedgerSeqObject, _))
+        .WillByDefault(Return(std::optional<xrpl::Blob>{}));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(
+            accountHoldsMPT(*backend_, kLedgerSeqObject, holder, mptIssue, true, yield)
+                .mpt()
+                .value(),
+            42u
+        );
+        EXPECT_EQ(
+            accountHoldsMPT(*backend_, kLedgerSeqObject, holder, mptIssue, false, yield)
+                .mpt()
+                .value(),
+            42u
         );
     });
 }

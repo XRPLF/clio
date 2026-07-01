@@ -1235,24 +1235,6 @@ transferRate(
     return xrpl::kParityRate;
 }
 
-bool
-isGlobalFrozen(
-    BackendInterface const& backend,
-    std::uint32_t sequence,
-    xrpl::MPTIssue const& mptIssue,
-    boost::asio::yield_context yield
-)
-{
-    auto const key = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
-    auto const blob = backend.fetchLedgerObject(key, sequence, yield);
-    if (!blob)
-        return false;
-
-    xrpl::SerialIter it{blob->data(), blob->size()};
-    xrpl::SLE const sle{it, key};
-    return sle.isFlag(xrpl::lsfMPTLocked);
-}
-
 xrpl::STAmount
 accountHoldsMPT(
     BackendInterface const& backend,
