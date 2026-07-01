@@ -10,11 +10,16 @@
 os={{ os }}
 arch={{ arch }}
 build_type=Debug
-compiler={{compiler}}
+compiler={{ compiler }}
 compiler.version={{ compiler_version }}
 compiler.cppstd=23
 {% if os == "Windows" %}
 compiler.runtime=static
 {% else %}
-compiler.libcxx={{detect_api.detect_libcxx(compiler, version, compiler_exe)}}
+compiler.libcxx={{ detect_api.detect_libcxx(compiler, version, compiler_exe) }}
 {% endif %}
+
+[conf]
+{# By default, conan tries compatibility mode to reuse binaries built with different cppstd versions #}
+user.package:cppstd_version=23
+tools.info.package_id:confs+=["user.package:cppstd_version"]
