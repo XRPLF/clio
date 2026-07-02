@@ -762,6 +762,42 @@ TEST_F(LoadBalancerForwardToRippledPrometheusTests, forwardingCacheEnabled)
     });
 }
 
+TEST_F(LoadBalancerForwardToRippledPrometheusTests, forwardingCacheBypassedForNonBareRequest)
+{
+    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
+    auto loadBalancer = makeLoadBalancer();
+
+    auto const nonBareRequest = boost::json::object{{"command", "server_info"}, {"counters", true}};
+
+    auto& cacheHitCounter = makeMock<CounterInt>("forwarding_cache_hit_counter", "");
+    auto& cacheMissCounter = makeMock<CounterInt>("forwarding_cache_miss_counter", "");
+    auto& successDurationCounter =
+        makeMock<CounterInt>("forwarding_duration_milliseconds_counter", "{status=\"success\"}");
+
+    EXPECT_CALL(cacheMissCounter, add(1)).Times(2);
+    EXPECT_CALL(cacheHitCounter, add(testing::_)).Times(0);
+    EXPECT_CALL(successDurationCounter, add(testing::_)).Times(2);
+
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(
+            nonBareRequest, clientIP_, LoadBalancer::kUserForwardingXUserValue, testing::_
+        )
+    )
+        .Times(2)
+        .WillRepeatedly(Return(response_));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(
+            loadBalancer->forwardToRippled(nonBareRequest, clientIP_, false, yield), response_
+        );
+        EXPECT_EQ(
+            loadBalancer->forwardToRippled(nonBareRequest, clientIP_, false, yield), response_
+        );
+    });
+}
+
 TEST_F(LoadBalancerForwardToRippledPrometheusTests, source0Fails)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);

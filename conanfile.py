@@ -47,7 +47,7 @@ class ClioConan(ConanFile):
         # So they must be direct requirements of clio to get their include dirs;
         # the version pins match xrpl's, so this does not change any package_id.
         self.requires("grpc/1.78.1")
-        self.requires("openssl/3.6.2")
+        self.requires("openssl/3.6.3", force=True)
         # Pin the remaining transitive deps to the exact versions xrpl uses.
         # override=True only sets the version when the package appears
         # transitively (it does not make them direct deps), and matches xrpl's

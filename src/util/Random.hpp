@@ -14,7 +14,7 @@ class RandomGeneratorInterface {
 public:
     virtual ~RandomGeneratorInterface() = default;
 
-    using SeedType = typename std::mt19937_64::result_type;
+    using SeedType = std::mt19937_64::result_type;
 
     /**
      * @brief Generate a random number between min and max

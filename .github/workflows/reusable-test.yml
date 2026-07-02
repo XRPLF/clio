@@ -104,7 +104,7 @@ jobs:
 
     services:
       scylladb:
-        image: ${{ inputs.container != '' && 'scylladb/scylla' || '' }}
+        image: ${{ inputs.container != '' && 'scylladb/scylla:2026.1' || '' }}
         options: >-
           --health-cmd "cqlsh -e 'describe cluster'"
           --health-interval 10s
@@ -156,7 +156,7 @@ jobs:
               --health-retries 5 \
               --publish 9042:9042 \
               --memory 16G \
-              scylladb/scylla
+              scylladb/scylla:2026.1
 
       - name: Wait for scylladb container to be healthy (macOS)
         if: ${{ runner.os == 'macOS' }}

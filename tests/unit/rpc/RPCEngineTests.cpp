@@ -417,17 +417,19 @@ TEST_P(RPCEngineCacheParameterTest, Test)
         handlerProvider
     );
     int callTime = 2;
+    auto const bareParams = boost::json::object{};
     EXPECT_CALL(*handlerProvider, isClioOnly).Times(callTime).WillRepeatedly(Return(false));
     if (testParam.expectedCacheEnabled) {
+        // Cache hit on second call: handler only invoked once.
         EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
         EXPECT_CALL(*handlerProvider, getHandler)
-            .WillOnce(Return(AnyHandler{tests::common::HandlerFake{}}));
+            .WillOnce(Return(AnyHandler{tests::common::NoInputHandlerFake{}}));
 
     } else {
         EXPECT_CALL(*backend_, isTooBusy).Times(callTime).WillRepeatedly(Return(false));
         EXPECT_CALL(*handlerProvider, getHandler)
             .Times(callTime)
-            .WillRepeatedly(Return(AnyHandler{tests::common::HandlerFake{}}));
+            .WillRepeatedly(Return(AnyHandler{tests::common::NoInputHandlerFake{}}));
     }
 
     while (callTime-- != 0) {
@@ -436,7 +438,7 @@ TEST_P(RPCEngineCacheParameterTest, Test)
                 yield,
                 method,
                 1,
-                boost::json::parse(R"JSON({"hello": "world", "limit": 50})JSON").as_object(),
+                bareParams,
                 nullptr,
                 tagFactory,
                 LedgerRange{.minSequence = 0, .maxSequence = 30},
@@ -448,7 +450,63 @@ TEST_P(RPCEngineCacheParameterTest, Test)
             ASSERT_TRUE(res.response.has_value());
             EXPECT_EQ(
                 res.response.value(),
-                boost::json::parse(R"JSON({ "computed": "world_50"})JSON").as_object()
+                boost::json::parse(R"JSON({"computed": "test"})JSON").as_object()
+            );
+        });
+    }
+}
+
+TEST_F(RPCEngineTest, NonBareRequestBypassesCache)
+{
+    auto const cfgCache = ClioConfigDefinition{
+        {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"workers",
+         ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
+        {"rpc.cache_timeout",
+         ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(gValidatePositiveDouble)}
+    };
+
+    auto const notAdmin = false;
+    auto const method = "server_info";
+    std::shared_ptr<RPCEngine<MockCounters>> engine = RPCEngine<MockCounters>::makeRPCEngine(
+        cfgCache,
+        backend_,
+        mockLoadBalancerPtr_,
+        dosGuard,
+        queue,
+        *mockCountersPtr_,
+        handlerProvider
+    );
+
+    auto const nonBareParams =
+        boost::json::parse(R"JSON({"hello": "world", "limit": 50})JSON").as_object();
+
+    int callTime = 2;
+    EXPECT_CALL(*handlerProvider, isClioOnly).Times(callTime).WillRepeatedly(Return(false));
+    EXPECT_CALL(*backend_, isTooBusy).Times(callTime).WillRepeatedly(Return(false));
+    EXPECT_CALL(*handlerProvider, getHandler)
+        .Times(callTime)
+        .WillRepeatedly(Return(AnyHandler{tests::common::HandlerFake{}}));
+
+    while (callTime-- != 0) {
+        runSpawn([&](auto yield) {
+            auto const ctx = web::Context(
+                yield,
+                method,
+                1,
+                nonBareParams,
+                nullptr,
+                tagFactory,
+                LedgerRange{.minSequence = 0, .maxSequence = 30},
+                "127.0.0.2",
+                notAdmin
+            );
+
+            auto const res = engine->buildResponse(ctx);
+            ASSERT_TRUE(res.response.has_value());
+            EXPECT_EQ(
+                res.response.value(),
+                boost::json::parse(R"JSON({"computed": "world_50"})JSON").as_object()
             );
         });
     }

@@ -90,7 +90,7 @@ core.upload:parallel={{os.cpu_count()}}
 Make sure artifactory is setup with Conan.
 
 ```sh
-conan remote add --index 0 xrplf https://conan.ripplex.io
+conan remote add --index 0 xrplf https://conan.xrplf.org/repository/conan/
 ```
 
 Now you should be able to download the prebuilt dependencies (including `xrpl` package) on supported platforms.
@@ -104,7 +104,7 @@ It is implicitly used when running `conan` commands, you don't need to specify i
 
 You have to update this file every time you add a new dependency or change a revision or version of an existing dependency.
 
-To update a lockfile, run from the repository root: `./.github/scripts/conan/regenerate_lockfile.sh`
+To update a lockfile, run from the repository root: `./conan/lockfile/regenerate.sh`
 
 ## Building Clio
 

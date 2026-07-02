@@ -82,7 +82,7 @@ public:
     void
     run(std::size_t numThreads)
     {
-        using OpType = typename CtxType::template StoppableOperation<void>;
+        using OpType = CtxType::template StoppableOperation<void>;
 
         CtxType ctx{numThreads};
         std::vector<OpType> operations;

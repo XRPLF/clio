@@ -44,12 +44,12 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     permissions:
       contents: read
-    uses: XRPLF/actions/.github/workflows/determine-tidy-files.yml@224f3c48d3014d082a1129237b8291ff0b0a331f
+    uses: XRPLF/actions/.github/workflows/determine-tidy-files.yml@d041ac9f1fa9f07a4ba335eb4c1c82233fb3fef6
 
   run-clang-tidy:
     name: Run clang tidy
     needs: [determine-files]
-    if: ${{ always() && !cancelled() && (github.event_name != 'pull_request' || needs.determine-files.outputs.cpp_changed_files != '' || needs.determine-files.outputs.clang_tidy_config_changed == 'true') }}
+    if: ${{ needs.determine-files.outputs.cpp_changed_files != '' || needs.determine-files.outputs.need_full_run == 'true' }}
     runs-on: heavy
     container:
       image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@90f11ee655d1687824fb8793db770477d52afbab
+        uses: XRPLF/actions/prepare-runner@9355d190fd7d4de80fadfd161e6edddc9702cd9f
         with:
           enable_ccache: false
 
@@ -98,7 +98,7 @@ jobs:
         continue-on-error: true
         id: run_clang_tidy
         env:
-          TARGETS: ${{ (needs.determine-files.outputs.clang_tidy_config_changed != 'true' && github.event_name == 'pull_request') && needs.determine-files.outputs.cpp_changed_files || 'benchmarks src tests' }}
+          TARGETS: ${{ needs.determine-files.outputs.need_full_run != 'true' && needs.determine-files.outputs.cpp_changed_files || 'benchmarks src tests' }}
         run: |
           set -o pipefail
           run-clang-tidy -j ${{ steps.nproc.outputs.nproc }} -p "${BUILD_DIR}" -quiet -fix -allow-no-checks ${TARGETS} 2>&1 | tee "${OUTPUT_FILE}"

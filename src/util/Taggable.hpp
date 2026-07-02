@@ -100,7 +100,7 @@ public:
 template <typename Generator>
 class TagDecorator final : public BaseTagDecorator {
     using ParentType = std::optional<std::reference_wrapper<BaseTagDecorator const>>;
-    using TagType = typename Generator::TagType;
+    using TagType = Generator::TagType;
 
     ParentType parent_ = std::nullopt;
     TagType tag_ = Generator::next();

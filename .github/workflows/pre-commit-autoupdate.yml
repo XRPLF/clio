@@ -12,7 +12,7 @@ on:
 
 jobs:
   auto-update:
-    uses: XRPLF/actions/.github/workflows/pre-commit-autoupdate.yml@5e942d61bf32f7557a7c159cfac4712a687b3e3a
+    uses: XRPLF/actions/.github/workflows/pre-commit-autoupdate.yml@c7045074aafe9fb92fa537aa4446f81fbfc17e8b
     with:
       sign_commit: true
       committer: "Clio CI <skuznetsov@ripple.com>"

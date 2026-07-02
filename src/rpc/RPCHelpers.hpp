@@ -775,8 +775,9 @@ logDuration(
         LOG(log.error()) << tag << msg;
     } else if (seconds > 1) {
         LOG(log.warn()) << tag << msg;
-    } else
+    } else {
         LOG(log.info()) << tag << msg;
+    }
 }
 
 /**

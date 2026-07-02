@@ -143,6 +143,13 @@ class LedgerTypes {
             xrpl::ltCREDENTIAL
         ),
         LedgerTypeAttribute::accountOwnedLedgerType(JS(Vault), JS(vault), xrpl::ltVAULT),
+        // loan broker is a pseudo-account object, like AMM and Vault
+        LedgerTypeAttribute::accountOwnedLedgerType(
+            JS(LoanBroker),
+            JS(loan_broker),
+            xrpl::ltLOAN_BROKER
+        ),
+        LedgerTypeAttribute::deletionBlockerLedgerType(JS(Loan), JS(loan), xrpl::ltLOAN),
         LedgerTypeAttribute::chainLedgerType(JS(NegativeUNL), JS(nunl), xrpl::ltNEGATIVE_UNL),
         LedgerTypeAttribute::deletionBlockerLedgerType(
             JS(MPTokenIssuance),

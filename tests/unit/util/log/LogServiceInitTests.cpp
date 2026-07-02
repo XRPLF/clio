@@ -1,4 +1,3 @@
-#include "util/LoggerBuffer.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/config/Array.hpp"
 #include "util/config/ConfigConstraints.hpp"
@@ -70,12 +69,6 @@ protected:
 
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
     };
-
-    std::string
-    getLoggerString()
-    {
-        return buffer_.getStrAndReset();
-    }
 };
 
 TEST_F(LogServiceInitTests, DefaultLogLevel)

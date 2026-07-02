@@ -50,7 +50,7 @@ jobs:
         container: ['{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }']
 
         include:
-          - os: macos15
+          - os: macos-26-apple-clang-21
             compiler: apple-clang
             build_type: Release
             container: ""

@@ -65,15 +65,15 @@ class DefaultExecutionStrategy {
     std::reference_wrapper<HandleType const> handle_;
     std::thread thread_;
 
-    typename BackendCountersType::PtrType counters_;
+    BackendCountersType::PtrType counters_;
 
 public:
-    using ResultOrErrorType = typename HandleType::ResultOrErrorType;
-    using StatementType = typename HandleType::StatementType;
-    using PreparedStatementType = typename HandleType::PreparedStatementType;
-    using FutureType = typename HandleType::FutureType;
-    using FutureWithCallbackType = typename HandleType::FutureWithCallbackType;
-    using ResultType = typename HandleType::ResultType;
+    using ResultOrErrorType = HandleType::ResultOrErrorType;
+    using StatementType = HandleType::StatementType;
+    using PreparedStatementType = HandleType::PreparedStatementType;
+    using FutureType = HandleType::FutureType;
+    using FutureWithCallbackType = HandleType::FutureWithCallbackType;
+    using ResultType = HandleType::ResultType;
     using CompletionTokenType = boost::asio::yield_context;
 
     /**
@@ -83,7 +83,7 @@ public:
     DefaultExecutionStrategy(
         Settings const& settings,
         HandleType const& handle,
-        typename BackendCountersType::PtrType counters = BackendCountersType::make()
+        BackendCountersType::PtrType counters = BackendCountersType::make()
     )
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}

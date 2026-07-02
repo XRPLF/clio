@@ -23,17 +23,17 @@ template <
     typename ErrorHandlerType = impl::DefaultErrorHandler>
 class BasicStrand {
     std::reference_wrapper<ParentContextType> parentContext_;
-    typename ParentContextType::ContextHolderType::Strand context_;
+    ParentContextType::ContextHolderType::Strand context_;
     friend AssociatedExecutorExtractor;
 
 public:
     static constexpr bool kIsNoexcept = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; }));
 
-    using ContextHolderType = typename ParentContextType::ContextHolderType::Strand;
-    using ExecutorType = typename ContextHolderType::Executor;
-    using StopToken = typename StopSourceType::Token;
-    using Timer = typename ParentContextType::ContextHolderType::Timer;  // timers are associated
-                                                                         // with the parent context
+    using ContextHolderType = ParentContextType::ContextHolderType::Strand;
+    using ExecutorType = ContextHolderType::Executor;
+    using StopToken = StopSourceType::Token;
+    using Timer = ParentContextType::ContextHolderType::Timer;  // timers are associated
+                                                                // with the parent context
     using RepeatedOperation = RepeatingOperation<BasicStrand>;
 
     BasicStrand(ParentContextType& parent, auto&& strand)

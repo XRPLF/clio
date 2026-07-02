@@ -10,7 +10,7 @@ PROFILES_DIR="$CONAN_DIR/profiles"
 
 rm -rf "$CONAN_DIR"
 
-conan remote add --index 0 --force xrplf https://conan.ripplex.io
+conan remote add --index 0 --force xrplf https://conan.xrplf.org/repository/conan/
 
 cp "$CURRENT_DIR/global.conf" "$CONAN_DIR/global.conf"
 
@@ -20,11 +20,6 @@ mkdir -p "$PROFILES_DIR"
 # `.github/actions/set-compiler-env`) and the sanitizers via the `SANITIZERS`
 # environment variable. Builds always use the `ci` profile, which includes
 # `sanitizers` and `default`.
+cp "$PROFILES_SRC_DIR/default" "$PROFILES_DIR/default"
 cp "$PROFILES_SRC_DIR/ci" "$PROFILES_DIR/ci"
 cp "$PROFILES_SRC_DIR/sanitizers" "$PROFILES_DIR/sanitizers"
-
-if [[ "$(uname)" == "Darwin" ]]; then
-    cp "$PROFILES_SRC_DIR/apple-clang-17.profile" "$PROFILES_DIR/default"
-else
-    cp "$PROFILES_SRC_DIR/default" "$PROFILES_DIR/default"
-fi

@@ -4,11 +4,14 @@
 
 #include <boost/json/object.hpp>
 
+#include <algorithm>
+#include <array>
 #include <chrono>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace util {
@@ -44,9 +47,37 @@ ResponseExpirationCache::shouldCache(std::string const& cmd)
     return cache_.contains(cmd);
 }
 
-std::optional<boost::json::object>
-ResponseExpirationCache::get(std::string const& cmd) const
+bool
+ResponseExpirationCache::isBareRequest(boost::json::object const& request)
 {
+    // Keys that identify the command or are safe to ignore for caching purposes.
+    //
+    // "command" and "method" merely name the RPC command — they do not affect response content.
+    //
+    // "id" is safe to ignore because the web layer re-applies the current request's id to the
+    // response AFTER the cache lookup (see src/web/RPCServerHandler.hpp), so a cached body never
+    // leaks a stale id back to the client.  Ignoring "id" is also necessary for WebSocket
+    // requests, which almost always carry an id and would otherwise never benefit from caching.
+    //
+    // "api_version" is intentionally NOT in this ignore-set: it can change the response body
+    // content (not just an echoed field), so requests carrying it must bypass the cache entirely.
+    static constexpr auto kIgnoredKeys =
+        std::to_array<std::string_view>({"command", "method", "id"});
+
+    for (auto const& kv : request) {
+        std::string_view const key{kv.key()};
+        if (not std::ranges::contains(kIgnoredKeys, key))
+            return false;
+    }
+    return true;
+}
+
+std::optional<boost::json::object>
+ResponseExpirationCache::get(std::string const& cmd, boost::json::object const& request) const
+{
+    if (not isBareRequest(request))
+        return std::nullopt;
+
     auto it = cache_.find(cmd);
     if (it == cache_.end())
         return std::nullopt;
@@ -59,8 +90,15 @@ ResponseExpirationCache::get(std::string const& cmd) const
 }
 
 void
-ResponseExpirationCache::put(std::string const& cmd, boost::json::object const& response)
+ResponseExpirationCache::put(
+    std::string const& cmd,
+    boost::json::object const& request,
+    boost::json::object const& response
+)
 {
+    if (not isBareRequest(request))
+        return;
+
     if (not shouldCache(cmd))
         return;
 

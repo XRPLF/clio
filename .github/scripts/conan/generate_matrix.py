@@ -6,7 +6,7 @@ LINUX_OS = ["heavy", "heavy-arm64"]
 LINUX_CONTAINERS = ['{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }']
 LINUX_COMPILERS = ["gcc", "clang"]
 
-MACOS_OS = ["macos15"]
+MACOS_OS = ["macos-26-apple-clang-21"]
 MACOS_CONTAINERS = [""]
 MACOS_COMPILERS = ["apple-clang"]
 

@@ -41,6 +41,8 @@ TEST(LedgerUtilsTests, LedgerObjectTypeList)
         JS(oracle),
         JS(credential),
         JS(vault),
+        JS(loan_broker),
+        JS(loan),
         JS(nunl),
         JS(delegate)
     };
@@ -81,7 +83,8 @@ TEST(LedgerUtilsTests, DeletionBlockerTypes)
         xrpl::ltBRIDGE,
         xrpl::ltMPTOKEN_ISSUANCE,
         xrpl::ltMPTOKEN,
-        xrpl::ltPERMISSIONED_DOMAIN
+        xrpl::ltPERMISSIONED_DOMAIN,
+        xrpl::ltLOAN
     };
 
     static_assert(std::size(kDeletionBlockers) == kTestedTypes.size());
@@ -137,6 +140,8 @@ static LedgerEntryTypeParam const kAccountOwnedTestCases[] = {
     {.input = "mptoken", .expected = xrpl::ltMPTOKEN},
     {.input = "permissioned_domain", .expected = xrpl::ltPERMISSIONED_DOMAIN},
     {.input = "vault", .expected = xrpl::ltVAULT},
+    {.input = "loan_broker", .expected = xrpl::ltLOAN_BROKER},
+    {.input = "loan", .expected = xrpl::ltLOAN},
     {.input = "delegate", .expected = xrpl::ltDELEGATE},
 
     // Using canonical name with exact match
@@ -163,6 +168,8 @@ static LedgerEntryTypeParam const kAccountOwnedTestCases[] = {
     {.input = "MPToken", .expected = xrpl::ltMPTOKEN},
     {.input = "PermissionedDomain", .expected = xrpl::ltPERMISSIONED_DOMAIN},
     {.input = "Vault", .expected = xrpl::ltVAULT},
+    {.input = "LoanBroker", .expected = xrpl::ltLOAN_BROKER},
+    {.input = "Loan", .expected = xrpl::ltLOAN},
     {.input = "Delegate", .expected = xrpl::ltDELEGATE}
 };
 
