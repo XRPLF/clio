@@ -64,18 +64,18 @@ getMPTokenIssuanceIDFromNode(xrpl::STObject const& node)
 {
     auto const entryType = node.getFieldU16(xrpl::sfLedgerEntryType);
     if (entryType != xrpl::ltMPTOKEN && entryType != xrpl::ltMPTOKEN_ISSUANCE)
-        return {};
+        return std::nullopt;
 
     auto const& fieldsName =
         node.getFName() == xrpl::sfCreatedNode ? xrpl::sfNewFields : xrpl::sfFinalFields;
     if (not node.isFieldPresent(fieldsName))
-        return {};
+        return std::nullopt;
 
     auto const& fields = node.peekAtField(fieldsName).downcast<xrpl::STObject>();
 
     if (entryType == xrpl::ltMPTOKEN) {
         if (not fields.isFieldPresent(xrpl::sfMPTokenIssuanceID))
-            return {};
+            return std::nullopt;
 
         return fields[xrpl::sfMPTokenIssuanceID];
     }
@@ -83,7 +83,7 @@ getMPTokenIssuanceIDFromNode(xrpl::STObject const& node)
     // MPTokenIssuance objects carry no sfMPTokenIssuanceID, and the node's ledger key is a
     // one-way hash that does not embed the ID, so reconstruct it from sfSequence and sfIssuer
     if (not fields.isFieldPresent(xrpl::sfSequence) || not fields.isFieldPresent(xrpl::sfIssuer))
-        return {};
+        return std::nullopt;
 
     return xrpl::makeMptID(
         fields.getFieldU32(xrpl::sfSequence), fields.getAccountID(xrpl::sfIssuer)
@@ -169,7 +169,7 @@ getMPTHolderFromObj(std::string const& key, std::string const& blob)
     );
 
     if (sle.getFieldU16(xrpl::sfLedgerEntryType) != xrpl::ltMPTOKEN)
-        return {};
+        return std::nullopt;
 
     auto const mptIssuanceID = sle[xrpl::sfMPTokenIssuanceID];
     auto const holder = sle.getAccountID(xrpl::sfAccount);
