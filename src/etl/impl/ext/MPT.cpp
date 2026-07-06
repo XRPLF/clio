@@ -84,7 +84,7 @@ MPTExt::writeMPTDataFromTransactions(model::LedgerData const& data)
     if (not issuanceTxs.empty()) {
         backend_->writeMPTokenIssuanceTransactions(issuanceTxs);
         backend_->writeAccountMPTokenIssuanceTransactions(issuanceTxs);
-        issuanceTxIndexRowsWritten_.get() += static_cast<std::int64_t>(indexRowsWritten);
+        issuanceTxIndexRowsWritten_.get() += static_cast<std::uint64_t>(indexRowsWritten);
     }
 }
 

@@ -201,6 +201,18 @@ TEST_F(MPTHelpersTest, FailedTxWithoutIssuanceReferenceProducesNoRecords)
     EXPECT_TRUE(records.empty());
 }
 
+TEST_F(MPTHelpersTest, FailedTxIgnoresMPTAffectedNodes)
+{
+    std::vector<xrpl::STObject> nodes;
+    nodes.push_back(util::createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
+    nodes.push_back(util::createMPTokenNode(xrpl::sfCreatedNode, defaultIssuanceID(), kAccount));
+    auto const txMeta = createTxMeta(std::move(nodes), xrpl::tecINCOMPLETE);
+
+    auto const records = etl::getMPTokenIssuanceTxsFromTx(txMeta, createTx(xrpl::ttPAYMENT));
+
+    EXPECT_TRUE(records.empty());
+}
+
 TEST_F(MPTHelpersTest, FailedTxWithTopLevelIssuanceIDProducesRecord)
 {
     auto const txMeta = createTxMeta({}, xrpl::tecINCOMPLETE);
