@@ -211,6 +211,9 @@ struct MPTokenIssuanceTransactionsData {
     std::uint32_t ledgerSequence{};
     std::uint32_t transactionIndex{};
     xrpl::uint256 txHash;
+
+    bool
+    operator==(MPTokenIssuanceTransactionsData const&) const = default;
 };
 
 /**

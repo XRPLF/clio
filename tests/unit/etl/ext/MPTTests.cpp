@@ -28,7 +28,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <string>
@@ -83,22 +82,6 @@ constinit auto const kIssuanceID = "002DBD1817E0AF9FDE4F9978B8FCD8A5063630B5737D
 constinit auto const kAccount = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
 constinit auto const kAccount2 = "rnd1nHuzceyQDqnLH8urWNr4QBKt4v7WVk";
 constexpr auto kHighFanoutAccountCount = 1001u;
-
-void
-expectSameRecords(
-    std::vector<MPTokenIssuanceTransactionsData> const& lhs,
-    std::vector<MPTokenIssuanceTransactionsData> const& rhs
-)
-{
-    ASSERT_EQ(lhs.size(), rhs.size());
-    for (std::size_t i = 0; i < lhs.size(); ++i) {
-        EXPECT_EQ(lhs[i].mptIssuanceID, rhs[i].mptIssuanceID);
-        EXPECT_EQ(lhs[i].accounts, rhs[i].accounts);
-        EXPECT_EQ(lhs[i].ledgerSequence, rhs[i].ledgerSequence);
-        EXPECT_EQ(lhs[i].transactionIndex, rhs[i].transactionIndex);
-        EXPECT_EQ(lhs[i].txHash, rhs[i].txHash);
-    }
-}
 
 xrpl::AccountID
 accountIDFromSeed(std::uint32_t seed)
@@ -394,7 +377,7 @@ TEST_F(MPTExtTests, OnLedgerDataFiltersAndWritesMPTs)
     EXPECT_EQ(issuanceTxs[0].mptIssuanceID, xrpl::uint192(kIssuanceID));
     EXPECT_FALSE(issuanceTxs[0].accounts.empty());
     EXPECT_TRUE(issuanceTxs[0].accounts.contains(getAccountIdWithString(kHolderAccount)));
-    expectSameRecords(issuanceTxs, accountIssuanceTxs);  // same vector goes to both tables
+    EXPECT_EQ(issuanceTxs, accountIssuanceTxs);  // same vector goes to both tables
 }
 
 TEST_F(MPTExtTests, OnInitialDataFiltersAndWritesMPTs)
@@ -418,7 +401,7 @@ TEST_F(MPTExtTests, OnInitialDataFiltersAndWritesMPTs)
     EXPECT_EQ(issuanceTxs[0].mptIssuanceID, xrpl::uint192(kIssuanceID));
     EXPECT_FALSE(issuanceTxs[0].accounts.empty());
     EXPECT_TRUE(issuanceTxs[0].accounts.contains(getAccountIdWithString(kHolderAccount)));
-    expectSameRecords(issuanceTxs, accountIssuanceTxs);  // same vector goes to both tables
+    EXPECT_EQ(issuanceTxs, accountIssuanceTxs);  // same vector goes to both tables
 }
 
 TEST_F(MPTExtTests, OnInitialObjectWritesMPT)
@@ -464,7 +447,7 @@ TEST_F(MPTExtTests, OnInitialDataWithMultipleHolders)
         return record.transactionIndex;
     });
     EXPECT_THAT(indices, UnorderedElementsAre(0, 1, 2));
-    expectSameRecords(issuanceTxs, accountIssuanceTxs);
+    EXPECT_EQ(issuanceTxs, accountIssuanceTxs);
 }
 
 TEST_F(MPTExtTests, NoMPTTransactionsWritesNothing)
@@ -529,7 +512,7 @@ TEST_F(MPTExtTests, OnLedgerDataDedupsMultiIssuanceFanout)
         EXPECT_TRUE(record.accounts.contains(getAccountIdWithString(kHolderAccount)));
         EXPECT_EQ(record.ledgerSequence, kSeq);
     }
-    expectSameRecords(issuanceTxs, accountIssuanceTxs);
+    EXPECT_EQ(issuanceTxs, accountIssuanceTxs);
 }
 
 TEST_F(MPTExtTests, OnLedgerDataWritesHighFanoutIssuanceIndexWithoutHolders)
@@ -561,7 +544,7 @@ TEST_F(MPTExtTests, OnLedgerDataWritesHighFanoutIssuanceIndexWithoutHolders)
     EXPECT_EQ(issuanceTxs[0].mptIssuanceID, xrpl::uint192{kMptIssuanceID});
     EXPECT_GT(issuanceTxs[0].accounts.size(), kHighFanoutAccountCount);
     EXPECT_EQ(issuanceTxs[0].ledgerSequence, kSeq);
-    expectSameRecords(issuanceTxs, accountIssuanceTxs);
+    EXPECT_EQ(issuanceTxs, accountIssuanceTxs);
 }
 
 TEST_F(MPTExtTests, OnInitialDataDoesNotWriteFailedMPTokenCreations)
