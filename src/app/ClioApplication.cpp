@@ -22,6 +22,7 @@
 #include "util/build/Build.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
+#include "util/requests/SslContext.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/Server.hpp"
@@ -79,6 +80,13 @@ ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& confi
 int
 ClioApplication::run(bool const useNgWebServer)
 {
+    if (auto const sslContext = util::requests::initClientSslContext();
+        not sslContext.has_value()) {
+        LOG(util::LogService::fatal())
+            << "Failed to create client SSL context: " << sslContext.error();
+        return EXIT_FAILURE;
+    }
+
     auto const threads = config_.get<uint16_t>("io_threads");
     LOG(util::LogService::info()) << "Number of io threads = " << threads;
 

@@ -33,4 +33,22 @@ getMPTHolderFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
 std::optional<MPTHolderData>
 getMPTHolderFromObj(std::string const& key, std::string const& blob);
 
+/**
+ * @brief Pull MPT issuance transaction index data from a transaction.
+ *
+ * @note This scans the transaction's metadata for affected MPTokenIssuance/MPToken ledger objects
+ * and transaction fields for attached MPTokenIssuanceID/MPT issue references. It produces one
+ * record per distinct issuance, each carrying the full set of affected accounts. Transaction fields
+ * are scanned so failed transactions that carry an issuance reference are indexed even when
+ * metadata has no affected MPT objects. Used by live ETL and reused by the historical backfill
+ * migrator.
+ *
+ * @param txMeta Transaction metadata.
+ * @param sttx The transaction.
+ * @return One record per distinct MPT issuance referenced by metadata or transaction fields; empty
+ * if no MPT issuance reference is found.
+ */
+std::vector<MPTokenIssuanceTransactionsData>
+getMPTokenIssuanceTxsFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
+
 }  // namespace etl

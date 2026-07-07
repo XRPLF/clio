@@ -12,7 +12,13 @@
 namespace util::requests::impl {
 
 std::expected<boost::asio::ssl::context, RequestError>
-makeClientSslContext();
+makeClientSslContext(std::optional<std::string> const& rootCertificate);
+
+std::expected<void, std::string>
+initClientSslContext();
+
+boost::asio::ssl::context&
+getClientSslContext();
 
 std::optional<std::string>
 sslErrorToString(boost::beast::error_code const& error);
