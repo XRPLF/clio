@@ -30,8 +30,8 @@ struct MPTTransactionHistoryMigrator {
     /**
      * @brief Run the backfill: full-scan the transactions table and write MPT index rows.
      *
-     * @param backend The migration backend
-     * @param config The migration configuration (the .migration config session)
+     * @param backend The migration backend.
+     * @param config The migration configuration (the .migration config section).
      */
     static void
     runMigration(std::shared_ptr<Backend> const& backend, util::config::ObjectView const& config);
