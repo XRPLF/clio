@@ -1,5 +1,6 @@
 #include "migration/cassandra/MPTTransactionHistoryMigrator.hpp"
 
+#include "data/DBHelpers.hpp"
 #include "etl/MPTHelpers.hpp"
 #include "migration/cassandra/impl/TransactionsAdapter.hpp"
 #include "migration/cassandra/impl/Types.hpp"
@@ -8,8 +9,13 @@
 #include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/TxMeta.h>
 
+#include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <memory>
+#include <mutex>
+#include <utility>
+#include <vector>
 
 namespace migration::cassandra {
 
@@ -23,6 +29,19 @@ MPTTransactionHistoryMigrator::runMigration(
     auto const fullScanJobs = config.get<std::uint32_t>("full_scan_jobs");
     auto const cursorsPerJob = config.get<std::uint32_t>("cursors_per_job");
 
+    // Records are buffered across transactions and flushed in batches so the backend can coalesce
+    // them into full-size write batches, mirroring the per-ledger accumulation of the live ETL
+    // path, instead of submitting one tiny write pair per transaction.
+    static constexpr std::size_t kWriteBatchRecords = 1'000;
+    std::mutex bufferMutex;
+    std::vector<MPTokenIssuanceTransactionsData> buffer;
+
+    auto const writeIndexRecords =
+        [&backend](std::vector<MPTokenIssuanceTransactionsData> const& records) {
+            backend->writeMPTokenIssuanceTransactions(records);
+            backend->writeAccountMPTokenIssuanceTransactions(records);
+        };
+
     // Full-scan the transactions table in parallel; for each transaction reuse the live ETL
     // extractor to derive the touched MPT issuances and affected accounts, then write both index
     // shapes. Token-range-edge re-reads and post-crash reruns re-upsert identical deterministic-key
@@ -30,15 +49,30 @@ MPTTransactionHistoryMigrator::runMigration(
     impl::TransactionsScanner scanner(
         {.ctxThreadsNum = fullScanThreads, .jobsNum = fullScanJobs, .cursorsPerJob = cursorsPerJob},
         impl::TransactionsAdapter(backend, [&](xrpl::STTx const& sttx, xrpl::TxMeta const& txMeta) {
-            auto const indexData = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
+            auto indexData = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
             if (indexData.empty())
                 return;
 
-            backend->writeMPTokenIssuanceTransactions(indexData);
-            backend->writeAccountMPTokenIssuanceTransactions(indexData);
+            std::vector<MPTokenIssuanceTransactionsData> batch;
+            {
+                std::scoped_lock const lock{bufferMutex};
+                buffer.insert(
+                    buffer.end(),
+                    std::make_move_iterator(indexData.begin()),
+                    std::make_move_iterator(indexData.end())
+                );
+                if (buffer.size() < kWriteBatchRecords)
+                    return;
+                batch = std::exchange(buffer, {});
+            }
+            writeIndexRecords(batch);
         })
     );
     scanner.waitForAllAndThrowOnError();
+
+    // All workers are joined, so the remaining buffered records can be flushed without the lock.
+    if (not buffer.empty())
+        writeIndexRecords(buffer);
 
     // Flush queued async writes so the migrator is not marked Migrated before all index rows are
     // durable.
