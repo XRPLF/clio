@@ -2,10 +2,30 @@
 
 #include <cassandra.h>
 
+#include <concepts>
 #include <cstdint>
 #include <ostream>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
+
+namespace data::cassandra::impl {
+
+/**
+ * @brief Throw a std::logic_error if the given driver return code is not CASS_OK.
+ *
+ * @param rc The driver return code.
+ * @param label A label describing the failed operation, included in the error message.
+ */
+inline void
+throwErrorIfNeeded(CassError const rc, std::string_view const label)
+{
+    if (rc != CASS_OK)
+        throw std::logic_error('[' + std::string{label} + "]: " + cass_error_desc(rc));
+}
+
+}  // namespace data::cassandra::impl
 
 namespace data::cassandra {
 

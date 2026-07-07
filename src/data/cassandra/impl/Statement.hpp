@@ -1,5 +1,6 @@
 #pragma once
 
+#include "data/cassandra/Error.hpp"
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/Collection.hpp"
 #include "data/cassandra/impl/ManagedObject.hpp"
@@ -17,7 +18,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -170,14 +170,6 @@ public:
             // type not supported for binding
             static_assert(util::Unsupported<DecayedType>);
         }
-    }
-
-private:
-    static void
-    throwErrorIfNeeded(CassError const rc, std::string_view const label)
-    {
-        if (rc != CASS_OK)
-            throw std::logic_error(fmt::format("[{}]: {}", label, cass_error_desc(rc)));
     }
 };
 
