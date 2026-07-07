@@ -60,8 +60,8 @@ auto const kIssuanceOuT1 = fmt::format(
         "mpt_issuance_id": "{}",
         "issuer": "{}",
         "sequence": 1,
-        "maximum_amount": {},
-        "outstanding_amount": {},
+        "maximum_amount": "{}",
+        "outstanding_amount": "{}",
         "asset_scale": {},
         "mpt_can_escrow": true,
         "mpt_can_trade": true,
@@ -80,9 +80,9 @@ auto const kIssuanceOuT2 = fmt::format(
         "mpt_issuance_id": "{}",
         "issuer": "{}",
         "sequence": 2,
-        "maximum_amount": {},
-        "outstanding_amount": {},
-        "locked_amount": {},
+        "maximum_amount": "{}",
+        "outstanding_amount": "{}",
+        "locked_amount": "{}",
         "transfer_fee": {},
         "mptoken_metadata": "{}",
         "domain_id": "{}",
@@ -370,7 +370,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
     // return non-empty account
     auto const account = getAccountIdWithString(kAccount);
     auto const accountKk = xrpl::keylet::account(account).key;
-    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -378,7 +378,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
     xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
         {xrpl::uint256{kIssuanceIndeX1}, xrpl::uint256{kIssuanceIndeX2}}, kIssuanceIndeX1
     );
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
+    ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
     // mocking mptoken issuance ledger objects
@@ -452,7 +452,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
 
     auto const account = getAccountIdWithString(kAccount);
     auto const accountKk = xrpl::keylet::account(account).key;
-    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -468,7 +468,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
 
     xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kIssuanceIndeX1);
     ownerDir.setFieldU64(xrpl::sfIndexNext, 99);
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
+    ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(7);
 
@@ -662,14 +662,14 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
 
     auto const account = getAccountIdWithString(kAccount);
     auto const accountKk = xrpl::keylet::account(account).key;
-    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
         {xrpl::uint256{kIssuanceIndeX1}, xrpl::uint256{kIssuanceIndeX2}}, kIssuanceIndeX1
     );
-    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{
@@ -750,14 +750,14 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
 
     auto const account = getAccountIdWithString(kAccount);
     auto const accountKk = xrpl::keylet::account(account).key;
-    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
         {xrpl::uint256{kIssuanceIndeX1}, xrpl::uint256{kIssuanceIndeX2}}, kIssuanceIndeX1
     );
-    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{
@@ -838,12 +838,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
 
     auto const account = getAccountIdWithString(kAccount);
     auto const accountKk = xrpl::keylet::account(account).key;
-    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir = createOwnerDirLedgerObject({}, kIssuanceIndeX1);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     runSpawn([this](auto yield) {
@@ -862,6 +862,66 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
     });
 }
 
+// Regression test: UInt64 amount fields must be serialized as base-10 JSON
+// strings (as rippled does) so that values greater than 2^53 are not silently rounded by
+// JSON parsers backed by IEEE-754 doubles.
+TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LargeAmountsSerializedAsStrings)
+{
+    constexpr uint64_t kLargeMaxAmount = 9223372036854775807ULL;    // 2^63 - 1 (max MPT amount)
+    constexpr uint64_t kLargeOutstandingAmount = 9007199254740993ULL;  // 2^53 + 1
+    constexpr uint64_t kLargeLockedAmount = 12345678901234567ULL;   // > 2^53, odd
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
+        .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    xrpl::STObject const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndeX1}}, kIssuanceIndeX1);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
+
+    auto const bbs = std::vector<Blob>{
+        createMptIssuanceObject(
+            kAccount,
+            1,
+            std::nullopt,
+            xrpl::lsfMPTCanLock,
+            kLargeOutstandingAmount,
+            std::nullopt,
+            std::nullopt,
+            kLargeMaxAmount,
+            kLargeLockedAmount
+        )
+            .getSerializer()
+            .peekData()
+    };
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
+
+    runSpawn([this](auto yield) {
+        auto const input =
+            boost::json::parse(fmt::format(R"JSON({{"account": "{}"}})JSON", kAccount));
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+
+        auto const& issuances = output.result->as_object().at("mpt_issuances").as_array();
+        ASSERT_EQ(issuances.size(), 1);
+        auto const& issuance = issuances[0].as_object();
+
+        ASSERT_TRUE(issuance.at("maximum_amount").is_string());
+        EXPECT_EQ(issuance.at("maximum_amount").as_string(), "9223372036854775807");
+        ASSERT_TRUE(issuance.at("outstanding_amount").is_string());
+        EXPECT_EQ(issuance.at("outstanding_amount").as_string(), "9007199254740993");
+        ASSERT_TRUE(issuance.at("locked_amount").is_string());
+        EXPECT_EQ(issuance.at("locked_amount").as_string(), "12345678901234567");
+    });
+}
+
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
 {
     uint32_t const mutableFlags1 = xrpl::lsmfMPTCanMutateCanLock |
@@ -877,14 +937,14 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
 
     auto const account = getAccountIdWithString(kAccount);
     auto const accountKk = xrpl::keylet::account(account).key;
-    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
         {xrpl::uint256{kIssuanceIndeX1}, xrpl::uint256{kIssuanceIndeX2}}, kIssuanceIndeX1
     );
-    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{
@@ -945,7 +1005,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
                         "mpt_issuance_id": "{}",
                         "issuer": "{}",
                         "sequence": 3,
-                        "outstanding_amount": {},
+                        "outstanding_amount": "{}",
                         "transfer_fee": {},
                         "mpt_can_transfer": true,
                         "mpt_can_mutate_can_lock": true,
@@ -957,7 +1017,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
                         "mpt_issuance_id": "{}",
                         "issuer": "{}",
                         "sequence": 5,
-                        "outstanding_amount": {},
+                        "outstanding_amount": "{}",
                         "transfer_fee": {},
                         "mptoken_metadata": "{}",
                         "mpt_can_transfer": true,
@@ -1035,13 +1095,13 @@ TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
 
     auto const account = getAccountIdWithString(kAccount);
     auto const accountKk = xrpl::keylet::account(account).key;
-    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir =
         createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndeX1}}, kIssuanceIndeX1);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs =
@@ -1130,13 +1190,13 @@ TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
 
     auto const account = getAccountIdWithString(kAccount);
     auto const accountKk = xrpl::keylet::account(account).key;
-    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir =
         createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndeX1}}, kIssuanceIndeX1);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{createMptIssuanceObject(

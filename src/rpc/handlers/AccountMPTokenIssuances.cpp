@@ -17,6 +17,7 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STInteger.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/jss.h>
 
@@ -236,11 +237,22 @@ tag_invoke(
         }
     };
 
+    // UInt64 amount fields must be serialized as base-10 strings (matching rippled's
+    // STUInt64::getJson) so that JSON parsers using IEEE-754 doubles do not silently lose
+    // precision for values greater than 2^53.
+    auto const setUint64IfPresent =
+        [&](boost::json::string_view field, xrpl::SField const& sField, auto const& value) {
+            if (value.has_value())
+                obj[field] =
+                    toBoostJson(xrpl::STUInt64{sField, *value}.getJson(xrpl::JsonOptions::Values::None
+                    ));
+        };
+
     setIfPresent("transfer_fee", issuance.transferFee);
     setIfPresent("asset_scale", issuance.assetScale);
-    setIfPresent("maximum_amount", issuance.maximumAmount);
-    setIfPresent("outstanding_amount", issuance.outstandingAmount);
-    setIfPresent("locked_amount", issuance.lockedAmount);
+    setUint64IfPresent("maximum_amount", xrpl::sfMaximumAmount, issuance.maximumAmount);
+    setUint64IfPresent("outstanding_amount", xrpl::sfOutstandingAmount, issuance.outstandingAmount);
+    setUint64IfPresent("locked_amount", xrpl::sfLockedAmount, issuance.lockedAmount);
     setIfPresent("mptoken_metadata", issuance.mptokenMetadata);
     setIfPresent("domain_id", issuance.domainID);
 

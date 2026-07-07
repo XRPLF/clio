@@ -18,6 +18,7 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STInteger.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/jss.h>
 
@@ -176,12 +177,22 @@ tag_invoke(
     AccountMPTokensHandler::MPTokenResponse const& mptoken
 )
 {
+    // UInt64 amount fields must be serialized as base-10 strings (matching rippled's
+    // STUInt64::getJson) so that JSON parsers using IEEE-754 doubles do not silently lose
+    // precision for values greater than 2^53.
+    auto const uint64ToString = [](xrpl::SField const& field, std::uint64_t value) {
+        return toBoostJson(xrpl::STUInt64{field, value}.getJson(xrpl::JsonOptions::Values::None));
+    };
+
     auto obj = boost::json::object{
         {"mpt_id", mptoken.mpTokenId},
         {JS(account), mptoken.account},
         {JS(mpt_issuance_id), mptoken.mpTokenIssuanceId},
-        {JS(mpt_amount), mptoken.mptAmount},
+        {JS(mpt_amount), uint64ToString(xrpl::sfMPTAmount, mptoken.mptAmount)},
     };
+
+    if (mptoken.lockedAmount.has_value())
+        obj["locked_amount"] = uint64ToString(xrpl::sfLockedAmount, *mptoken.lockedAmount);
 
     auto const setIfPresent = [&](boost::json::string_view field, auto const& value) {
         if (value.has_value()) {
@@ -189,7 +200,6 @@ tag_invoke(
         }
     };
 
-    setIfPresent("locked_amount", mptoken.lockedAmount);
     setIfPresent("mpt_locked", mptoken.mptLocked);
     setIfPresent("mpt_authorized", mptoken.mptAuthorized);
 
