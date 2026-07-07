@@ -2,6 +2,7 @@
 
 #include "migration/cassandra/CassandraMigrationBackend.hpp"
 #include "migration/cassandra/impl/FullTableScannerAdapterBase.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <xrpl/basics/Blob.h>
@@ -31,11 +32,11 @@ struct TableTransactionsDesc {
 
 /**
  * @brief The adapter for the transactions table. This class is responsible for reading the
- * transactions from the FullTableScanner and converting the blobs to the STTx and TxMeta.
+ * transactions from the FullTableScanner and deserializing them into STTx and TxMeta.
  */
 class TransactionsAdapter : public impl::FullTableScannerAdapterBase<TableTransactionsDesc> {
 public:
-    using OnTransactionRead = std::function<void(xrpl::STTx, xrpl::TxMeta)>;
+    using OnTransactionRead = std::function<void(xrpl::STTx const&, xrpl::TxMeta const&)>;
 
     /**
      * @brief Construct a new Transactions Adapter object
@@ -61,6 +62,7 @@ public:
     onRowRead(TableTransactionsDesc::Row const& row) override;
 
 private:
+    util::Logger log_{"Migration"};
     OnTransactionRead onTransactionRead_;
 };
 
