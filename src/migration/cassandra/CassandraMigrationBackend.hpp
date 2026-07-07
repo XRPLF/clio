@@ -42,9 +42,9 @@ class CassandraMigrationBackend : public data::cassandra::CassandraBackend {
     std::shared_ptr<data::cassandra::PreparedStatement>
     getPreparedFullScanStatement()
     {
-        auto const statementKey = fmt::format(
-            "{}:{}:{}", TableDesc::kTableName, TableDesc::kPartitionKey, TableDesc::kSelectColumns
-        );
+        // The table name uniquely identifies the statement: partition key and select columns are
+        // fixed per TableDesc.
+        std::string const statementKey = TableDesc::kTableName;
 
         std::scoped_lock const lock{fullScanStatementsMutex_};
         if (auto const statement = fullScanStatements_.find(statementKey);
@@ -102,24 +102,22 @@ public:
         auto statement = statementPrepared->bind(start, end);
         statement.setPagingSize(kFullScanPageSize);
 
-        std::uint64_t rowsRead = 0;
+        bool sawRows = false;
         while (true) {
             auto const res = this->executor_.read(yield, statement);
             if (not res) {
                 // Fail closed: a swallowed read error would leave a gap in the scanned data while
                 // the migrator is still marked Migrated. Throwing aborts the migration so its
                 // status stays NotMigrated and the operator can rerun.
-                LOG(log_.error()) << "Could not fetch data from table: " << TableDesc::kTableName
-                                  << " range: " << start << " - " << end << ";" << res.error();
-                throw std::runtime_error(
-                    fmt::format(
-                        "Migration scan failed to read table '{}' in token range [{}, {}]: {}",
-                        TableDesc::kTableName,
-                        start,
-                        end,
-                        res.error().message()
-                    )
+                auto const errorMessage = fmt::format(
+                    "Migration scan failed to read table '{}' in token range [{}, {}]: {}",
+                    TableDesc::kTableName,
+                    start,
+                    end,
+                    res.error().message()
                 );
+                LOG(log_.error()) << errorMessage;
+                throw std::runtime_error(errorMessage);
             }
 
             auto const& results = res.value();
@@ -130,7 +128,7 @@ public:
                      typename TableDesc::Row{}
                  )) {
                 callback(row);
-                ++rowsRead;
+                sawRows = true;
             }
 
             if (not results.hasMorePages())
@@ -139,8 +137,8 @@ public:
             statement.setPagingState(results);
         }
 
-        if (rowsRead == 0) {
-            LOG(log_.debug()) << "No rows returned  - table: " << TableDesc::kTableName
+        if (not sawRows) {
+            LOG(log_.debug()) << "No rows returned - table: " << TableDesc::kTableName
                               << " range: " << start << " - " << end;
         }
     }
