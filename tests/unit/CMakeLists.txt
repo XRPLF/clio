@@ -48,6 +48,7 @@ target_sources(
         etl/LoadBalancerTests.cpp
         etl/LoadingTests.cpp
         etl/MonitorTests.cpp
+        etl/MPTHelpersTests.cpp
         etl/NetworkValidatedLedgersTests.cpp
         etl/NFTHelpersTests.cpp
         etl/RegistryTests.cpp

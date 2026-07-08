@@ -117,18 +117,16 @@ std::expected<std::string, RequestError>
 RequestBuilder::doSslRequest(asio::yield_context yield, beast::http::verb method)
 {
     auto streamData = impl::SslTcpStreamData::create(yield);
-    if (not streamData.has_value())
-        return std::unexpected{std::move(streamData).error()};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-    if (!SSL_set_tlsext_host_name(streamData->stream.native_handle(), host_.c_str())) {
+    if (!SSL_set_tlsext_host_name(streamData.stream.native_handle(), host_.c_str())) {
 #pragma GCC diagnostic pop
         beast::error_code errorCode;
         errorCode.assign(static_cast<int>(::ERR_get_error()), asio::error::get_ssl_category());
         return std::unexpected{RequestError{"SSL setup failed", errorCode}};
     }
-    return doRequestImpl(std::move(streamData).value(), yield, method);
+    return doRequestImpl(std::move(streamData), yield, method);
 }
 
 std::expected<std::string, RequestError>
