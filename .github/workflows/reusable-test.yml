@@ -114,7 +114,7 @@ jobs:
 
     services:
       scylladb:
-        image: ${{ inputs.container != '' && 'scylladb/scylla' || '' }}
+        image: ${{ inputs.container != '' && 'scylladb/scylla:2026.1' || '' }}
         options: >-
           --health-cmd "cqlsh -e 'describe cluster'"
           --health-interval 10s
@@ -138,15 +138,15 @@ jobs:
         run: |
           docker rm --force scylladb || true
           docker run \
-            --detach \
-            --name scylladb \
-            --health-cmd "cqlsh -e 'describe cluster'" \
-            --health-interval 10s \
-            --health-timeout 5s \
-            --health-retries 5 \
-            --publish 9042:9042 \
-            --memory 16G \
-            scylladb/scylla
+              --detach \
+              --name scylladb \
+              --health-cmd "cqlsh -e 'describe cluster'" \
+              --health-interval 10s \
+              --health-timeout 5s \
+              --health-retries 5 \
+              --publish 9042:9042 \
+              --memory 16G \
+              scylladb/scylla:2026.1
 
           until [ "$(docker inspect -f '{{.State.Health.Status}}' scylladb)" == "healthy" ]; do
             sleep 5
