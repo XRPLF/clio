@@ -1,5 +1,6 @@
 #include "migration/MigrationApplication.hpp"
 
+#include "migration/MigrationManagerInterface.hpp"
 #include "migration/MigratiorStatus.hpp"
 #include "migration/impl/MigrationManagerFactory.hpp"
 #include "util/OverloadSet.hpp"
@@ -9,6 +10,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -35,6 +37,14 @@ MigratorApplication::MigratorApplication(
     }
 
     migrationManager_ = std::move(expectedMigrationManager.value());
+}
+
+MigratorApplication::MigratorApplication(
+    MigrateSubCmd command,
+    std::shared_ptr<migration::MigrationManagerInterface> migrationManager
+)
+    : migrationManager_(std::move(migrationManager)), cmd_(std::move(command))
+{
 }
 
 int

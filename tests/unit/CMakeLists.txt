@@ -84,6 +84,7 @@ target_sources(
         # Migration
         migration/cassandra/FullTableScannerTests.cpp
         migration/cassandra/SpecTests.cpp
+        migration/MigrationApplicationTests.cpp
         migration/MigratorRegisterTests.cpp
         migration/MigratorStatusTests.cpp
         migration/MigrationInspectorFactoryTests.cpp
