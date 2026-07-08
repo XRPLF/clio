@@ -834,17 +834,15 @@ TEST_F(RPCAccountMPTokensHandlerTest, LargeAmountsSerializedAsStrings)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    auto const bbs = std::vector<Blob>{
-        createMpTokenObject(
-            kAccount,
-            xrpl::uint192(kIssuanceIdHex),
-            kLargeMptAmount,
-            xrpl::lsfMPTLocked,
-            kLargeLockedAmount
-        )
-            .getSerializer()
-            .peekData()
-    };
+    auto const bbs = std::vector<Blob>{createMpTokenObject(
+                                           kAccount,
+                                           xrpl::uint192(kIssuanceIdHex),
+                                           kLargeMptAmount,
+                                           xrpl::lsfMPTLocked,
+                                           kLargeLockedAmount
+    )
+                                           .getSerializer()
+                                           .peekData()};
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     runSpawn([this](auto yield) {

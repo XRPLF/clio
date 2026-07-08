@@ -243,10 +243,10 @@ tag_invoke(
     auto const setUint64IfPresent =
         [&](boost::json::string_view field, xrpl::SField const& sField, auto const& value) {
             if (value.has_value()) {
-                obj[field] =
-                    toBoostJson(xrpl::STUInt64{sField, *value}.getJson(xrpl::JsonOptions::Values::None
-                    ));
-}
+                obj[field] = toBoostJson(
+                    xrpl::STUInt64{sField, *value}.getJson(xrpl::JsonOptions::Values::None)
+                );
+            }
         };
 
     setIfPresent("transfer_fee", issuance.transferFee);

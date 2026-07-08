@@ -867,9 +867,9 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
 // JSON parsers backed by IEEE-754 doubles.
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LargeAmountsSerializedAsStrings)
 {
-    constexpr uint64_t kLargeMaxAmount = 9223372036854775807ULL;    // 2^63 - 1 (max MPT amount)
+    constexpr uint64_t kLargeMaxAmount = 9223372036854775807ULL;       // 2^63 - 1 (max MPT amount)
     constexpr uint64_t kLargeOutstandingAmount = 9007199254740993ULL;  // 2^53 + 1
-    constexpr uint64_t kLargeLockedAmount = 12345678901234567ULL;   // > 2^53, odd
+    constexpr uint64_t kLargeLockedAmount = 12345678901234567ULL;      // > 2^53, odd
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -885,21 +885,19 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LargeAmountsSerializedAsStrings)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    auto const bbs = std::vector<Blob>{
-        createMptIssuanceObject(
-            kAccount,
-            1,
-            std::nullopt,
-            xrpl::lsfMPTCanLock,
-            kLargeOutstandingAmount,
-            std::nullopt,
-            std::nullopt,
-            kLargeMaxAmount,
-            kLargeLockedAmount
-        )
-            .getSerializer()
-            .peekData()
-    };
+    auto const bbs = std::vector<Blob>{createMptIssuanceObject(
+                                           kAccount,
+                                           1,
+                                           std::nullopt,
+                                           xrpl::lsfMPTCanLock,
+                                           kLargeOutstandingAmount,
+                                           std::nullopt,
+                                           std::nullopt,
+                                           kLargeMaxAmount,
+                                           kLargeLockedAmount
+    )
+                                           .getSerializer()
+                                           .peekData()};
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     runSpawn([this](auto yield) {
