@@ -883,22 +883,24 @@ struct AccountMPTokenIssuancesAmountSerializationTest
 INSTANTIATE_TEST_SUITE_P(
     RPCAccountMPTokenIssuancesAmountSerializationGroup,
     AccountMPTokenIssuancesAmountSerializationTest,
-    ValuesIn(std::vector<AccountMPTokenIssuancesAmountSerializationTestCaseBundle>{
-        {.testName = "LargeAmounts",
-         .maxAmount = 9223372036854775807ULL,       // 2^63 - 1 (max MPT amount)
-         .outstandingAmount = 9007199254740993ULL,  // 2^53 + 1
-         .lockedAmount = 12345678901234567ULL,      // > 2^53, odd
-         .expectedMaxAmount = "9223372036854775807",
-         .expectedOutstandingAmount = "9007199254740993",
-         .expectedLockedAmount = "12345678901234567"},
-        {.testName = "ExactDoubleBoundary",
-         .maxAmount = 9007199254740992ULL,  // 2^53
-         .outstandingAmount = 9007199254740992ULL,
-         .lockedAmount = 9007199254740992ULL,
-         .expectedMaxAmount = "9007199254740992",
-         .expectedOutstandingAmount = "9007199254740992",
-         .expectedLockedAmount = "9007199254740992"}
-    }),
+    ValuesIn(
+        std::vector<AccountMPTokenIssuancesAmountSerializationTestCaseBundle>{
+            {.testName = "LargeAmounts",
+             .maxAmount = 9223372036854775807ULL,       // 2^63 - 1 (max MPT amount)
+             .outstandingAmount = 9007199254740993ULL,  // 2^53 + 1
+             .lockedAmount = 12345678901234567ULL,      // > 2^53, odd
+             .expectedMaxAmount = "9223372036854775807",
+             .expectedOutstandingAmount = "9007199254740993",
+             .expectedLockedAmount = "12345678901234567"},
+            {.testName = "ExactDoubleBoundary",
+             .maxAmount = 9007199254740992ULL,  // 2^53
+             .outstandingAmount = 9007199254740992ULL,
+             .lockedAmount = 9007199254740992ULL,
+             .expectedMaxAmount = "9007199254740992",
+             .expectedOutstandingAmount = "9007199254740992",
+             .expectedLockedAmount = "9007199254740992"}
+        }
+    ),
     tests::util::kNameGenerator
 );
 

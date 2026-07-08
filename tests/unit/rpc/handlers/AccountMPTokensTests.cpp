@@ -831,18 +831,20 @@ struct AccountMPTokensAmountSerializationTest
 INSTANTIATE_TEST_SUITE_P(
     RPCAccountMPTokensAmountSerializationGroup,
     AccountMPTokensAmountSerializationTest,
-    ValuesIn(std::vector<AccountMPTokensAmountSerializationTestCaseBundle>{
-        {.testName = "LargeAmounts",
-         .mptAmount = 9223372036854775807ULL,  // 2^63 - 1 (max MPT amount)
-         .lockedAmount = 9007199254740993ULL,  // 2^53 + 1
-         .expectedMptAmount = "9223372036854775807",
-         .expectedLockedAmount = "9007199254740993"},
-        {.testName = "ExactDoubleBoundary",
-         .mptAmount = 9007199254740992ULL,  // 2^53
-         .lockedAmount = 9007199254740992ULL,
-         .expectedMptAmount = "9007199254740992",
-         .expectedLockedAmount = "9007199254740992"}
-    }),
+    ValuesIn(
+        std::vector<AccountMPTokensAmountSerializationTestCaseBundle>{
+            {.testName = "LargeAmounts",
+             .mptAmount = 9223372036854775807ULL,  // 2^63 - 1 (max MPT amount)
+             .lockedAmount = 9007199254740993ULL,  // 2^53 + 1
+             .expectedMptAmount = "9223372036854775807",
+             .expectedLockedAmount = "9007199254740993"},
+            {.testName = "ExactDoubleBoundary",
+             .mptAmount = 9007199254740992ULL,  // 2^53
+             .lockedAmount = 9007199254740992ULL,
+             .expectedMptAmount = "9007199254740992",
+             .expectedLockedAmount = "9007199254740992"}
+        }
+    ),
     tests::util::kNameGenerator
 );
 
