@@ -812,13 +812,43 @@ TEST_F(RPCAccountMPTokensHandlerTest, EmptyResult)
     });
 }
 
-// Regression test: UInt64 amount fields must be serialized as base-10 JSON
-// strings (as rippled does) so that values greater than 2^53 are not silently rounded by
-// JSON parsers backed by IEEE-754 doubles.
-TEST_F(RPCAccountMPTokensHandlerTest, LargeAmountsSerializedAsStrings)
+// Regression test: UInt64 amount fields must be serialized as base-10 JSON strings (as rippled
+// does) so that values greater than 2^53 are not silently rounded by JSON parsers backed by
+// IEEE-754 doubles. 2^53 itself is still exactly representable as a double, but it must be emitted
+// as a string like every other amount so the wire format stays consistent regardless of magnitude.
+struct AccountMPTokensAmountSerializationTestCaseBundle {
+    std::string testName;
+    uint64_t mptAmount;
+    uint64_t lockedAmount;
+    std::string expectedMptAmount;
+    std::string expectedLockedAmount;
+};
+
+struct AccountMPTokensAmountSerializationTest
+    : RPCAccountMPTokensHandlerTest,
+      WithParamInterface<AccountMPTokensAmountSerializationTestCaseBundle> {};
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCAccountMPTokensAmountSerializationGroup,
+    AccountMPTokensAmountSerializationTest,
+    ValuesIn(std::vector<AccountMPTokensAmountSerializationTestCaseBundle>{
+        {.testName = "LargeAmounts",
+         .mptAmount = 9223372036854775807ULL,  // 2^63 - 1 (max MPT amount)
+         .lockedAmount = 9007199254740993ULL,  // 2^53 + 1
+         .expectedMptAmount = "9223372036854775807",
+         .expectedLockedAmount = "9007199254740993"},
+        {.testName = "ExactDoubleBoundary",
+         .mptAmount = 9007199254740992ULL,  // 2^53
+         .lockedAmount = 9007199254740992ULL,
+         .expectedMptAmount = "9007199254740992",
+         .expectedLockedAmount = "9007199254740992"}
+    }),
+    tests::util::kNameGenerator
+);
+
+TEST_P(AccountMPTokensAmountSerializationTest, SerializedAsStrings)
 {
-    constexpr uint64_t kLargeMptAmount = 9223372036854775807ULL;  // 2^63 - 1 (max MPT amount)
-    constexpr uint64_t kLargeLockedAmount = 9007199254740993ULL;  // 2^53 + 1
+    auto const testBundle = GetParam();
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -837,15 +867,15 @@ TEST_F(RPCAccountMPTokensHandlerTest, LargeAmountsSerializedAsStrings)
     auto const bbs = std::vector<Blob>{createMpTokenObject(
                                            kAccount,
                                            xrpl::uint192(kIssuanceIdHex),
-                                           kLargeMptAmount,
+                                           testBundle.mptAmount,
                                            xrpl::lsfMPTLocked,
-                                           kLargeLockedAmount
+                                           testBundle.lockedAmount
     )
                                            .getSerializer()
                                            .peekData()};
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    runSpawn([this](auto yield) {
+    runSpawn([&, this](auto yield) {
         auto const input =
             boost::json::parse(fmt::format(R"JSON({{"account": "{}"}})JSON", kAccount));
         auto const handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
@@ -857,8 +887,8 @@ TEST_F(RPCAccountMPTokensHandlerTest, LargeAmountsSerializedAsStrings)
         auto const& token = mptokens[0].as_object();
 
         ASSERT_TRUE(token.at("mpt_amount").is_string());
-        EXPECT_EQ(token.at("mpt_amount").as_string(), "9223372036854775807");
+        EXPECT_EQ(token.at("mpt_amount").as_string(), testBundle.expectedMptAmount);
         ASSERT_TRUE(token.at("locked_amount").is_string());
-        EXPECT_EQ(token.at("locked_amount").as_string(), "9007199254740993");
+        EXPECT_EQ(token.at("locked_amount").as_string(), testBundle.expectedLockedAmount);
     });
 }

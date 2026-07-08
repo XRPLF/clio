@@ -862,14 +862,49 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
     });
 }
 
-// Regression test: UInt64 amount fields must be serialized as base-10 JSON
-// strings (as rippled does) so that values greater than 2^53 are not silently rounded by
-// JSON parsers backed by IEEE-754 doubles.
-TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LargeAmountsSerializedAsStrings)
+// Regression test: UInt64 amount fields must be serialized as base-10 JSON strings (as rippled
+// does) so that values greater than 2^53 are not silently rounded by JSON parsers backed by
+// IEEE-754 doubles. 2^53 itself is still exactly representable as a double, but it must be emitted
+// as a string like every other amount so the wire format stays consistent regardless of magnitude.
+struct AccountMPTokenIssuancesAmountSerializationTestCaseBundle {
+    std::string testName;
+    uint64_t maxAmount;
+    uint64_t outstandingAmount;
+    uint64_t lockedAmount;
+    std::string expectedMaxAmount;
+    std::string expectedOutstandingAmount;
+    std::string expectedLockedAmount;
+};
+
+struct AccountMPTokenIssuancesAmountSerializationTest
+    : RPCAccountMPTokenIssuancesHandlerTest,
+      WithParamInterface<AccountMPTokenIssuancesAmountSerializationTestCaseBundle> {};
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCAccountMPTokenIssuancesAmountSerializationGroup,
+    AccountMPTokenIssuancesAmountSerializationTest,
+    ValuesIn(std::vector<AccountMPTokenIssuancesAmountSerializationTestCaseBundle>{
+        {.testName = "LargeAmounts",
+         .maxAmount = 9223372036854775807ULL,       // 2^63 - 1 (max MPT amount)
+         .outstandingAmount = 9007199254740993ULL,  // 2^53 + 1
+         .lockedAmount = 12345678901234567ULL,      // > 2^53, odd
+         .expectedMaxAmount = "9223372036854775807",
+         .expectedOutstandingAmount = "9007199254740993",
+         .expectedLockedAmount = "12345678901234567"},
+        {.testName = "ExactDoubleBoundary",
+         .maxAmount = 9007199254740992ULL,  // 2^53
+         .outstandingAmount = 9007199254740992ULL,
+         .lockedAmount = 9007199254740992ULL,
+         .expectedMaxAmount = "9007199254740992",
+         .expectedOutstandingAmount = "9007199254740992",
+         .expectedLockedAmount = "9007199254740992"}
+    }),
+    tests::util::kNameGenerator
+);
+
+TEST_P(AccountMPTokenIssuancesAmountSerializationTest, SerializedAsStrings)
 {
-    constexpr uint64_t kLargeMaxAmount = 9223372036854775807ULL;       // 2^63 - 1 (max MPT amount)
-    constexpr uint64_t kLargeOutstandingAmount = 9007199254740993ULL;  // 2^53 + 1
-    constexpr uint64_t kLargeLockedAmount = 12345678901234567ULL;      // > 2^53, odd
+    auto const testBundle = GetParam();
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -890,17 +925,17 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LargeAmountsSerializedAsStrings)
                                            1,
                                            std::nullopt,
                                            xrpl::lsfMPTCanLock,
-                                           kLargeOutstandingAmount,
+                                           testBundle.outstandingAmount,
                                            std::nullopt,
                                            std::nullopt,
-                                           kLargeMaxAmount,
-                                           kLargeLockedAmount
+                                           testBundle.maxAmount,
+                                           testBundle.lockedAmount
     )
                                            .getSerializer()
                                            .peekData()};
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    runSpawn([this](auto yield) {
+    runSpawn([&, this](auto yield) {
         auto const input =
             boost::json::parse(fmt::format(R"JSON({{"account": "{}"}})JSON", kAccount));
         auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
@@ -912,11 +947,13 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LargeAmountsSerializedAsStrings)
         auto const& issuance = issuances[0].as_object();
 
         ASSERT_TRUE(issuance.at("maximum_amount").is_string());
-        EXPECT_EQ(issuance.at("maximum_amount").as_string(), "9223372036854775807");
+        EXPECT_EQ(issuance.at("maximum_amount").as_string(), testBundle.expectedMaxAmount);
         ASSERT_TRUE(issuance.at("outstanding_amount").is_string());
-        EXPECT_EQ(issuance.at("outstanding_amount").as_string(), "9007199254740993");
+        EXPECT_EQ(
+            issuance.at("outstanding_amount").as_string(), testBundle.expectedOutstandingAmount
+        );
         ASSERT_TRUE(issuance.at("locked_amount").is_string());
-        EXPECT_EQ(issuance.at("locked_amount").as_string(), "12345678901234567");
+        EXPECT_EQ(issuance.at("locked_amount").as_string(), testBundle.expectedLockedAmount);
     });
 }
 
