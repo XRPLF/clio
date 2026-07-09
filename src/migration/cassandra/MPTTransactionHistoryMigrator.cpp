@@ -4,6 +4,7 @@
 #include "etl/MPTHelpers.hpp"
 #include "migration/cassandra/impl/TransactionsAdapter.hpp"
 #include "migration/cassandra/impl/Types.hpp"
+#include "util/Batching.hpp"
 #include "util/config/ObjectView.hpp"
 
 #include <xrpl/protocol/STTx.h>
@@ -11,9 +12,7 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
 #include <memory>
-#include <mutex>
 #include <utility>
 #include <vector>
 
@@ -33,14 +32,13 @@ MPTTransactionHistoryMigrator::runMigration(
     // them into full-size write batches, mirroring the per-ledger accumulation of the live ETL
     // path, instead of submitting one tiny write pair per transaction.
     static constexpr std::size_t kWriteBatchRecords = 1'000;
-    std::mutex bufferMutex;
-    std::vector<MPTokenIssuanceTransactionsData> buffer;
-
-    auto const writeIndexRecords =
+    util::BatchBuffer<MPTokenIssuanceTransactionsData> batchBuffer{
+        kWriteBatchRecords,
         [&backend](std::vector<MPTokenIssuanceTransactionsData> const& records) {
             backend->writeMPTokenIssuanceTransactions(records);
             backend->writeAccountMPTokenIssuanceTransactions(records);
-        };
+        }
+    };
 
     // Full-scan the transactions table in parallel; for each transaction reuse the live ETL
     // extractor to derive the touched MPT issuances and affected accounts, then write both index
@@ -52,27 +50,13 @@ MPTTransactionHistoryMigrator::runMigration(
             auto indexData = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
             if (indexData.empty())
                 return;
-
-            std::vector<MPTokenIssuanceTransactionsData> batch;
-            {
-                std::scoped_lock const lock{bufferMutex};
-                buffer.insert(
-                    buffer.end(),
-                    std::make_move_iterator(indexData.begin()),
-                    std::make_move_iterator(indexData.end())
-                );
-                if (buffer.size() < kWriteBatchRecords)
-                    return;
-                batch = std::exchange(buffer, {});
-            }
-            writeIndexRecords(batch);
+            batchBuffer.add(std::move(indexData));
         })
     );
     scanner.waitForAllAndThrowOnError();
 
-    // All workers are joined, so the remaining buffered records can be flushed without the lock.
-    if (not buffer.empty())
-        writeIndexRecords(buffer);
+    // All workers are joined; flush the remaining buffered records.
+    batchBuffer.flush();
 
     // Flush queued async writes so the migrator is not marked Migrated before all index rows are
     // durable.
