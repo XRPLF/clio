@@ -12,7 +12,9 @@
 
 namespace util::config {
 
-/** @brief Custom clio config types */
+/**
+ * @brief Custom clio config types
+ */
 enum class ConfigType { Integer, String, Double, Boolean };
 
 /**
@@ -25,7 +27,9 @@ enum class ConfigType { Integer, String, Double, Boolean };
 std::ostream&
 operator<<(std::ostream& stream, ConfigType type);
 
-/** @brief Represents the supported Config Values */
+/**
+ * @brief Represents the supported Config Values
+ */
 using Value = std::variant<int64_t, std::string, bool, double>;
 
 /**

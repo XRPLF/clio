@@ -177,7 +177,9 @@ public:
     StoppableOperation&
     operator=(StoppableOperation&&) = default;
 
-    /** @brief Requests the operation to stop */
+    /**
+     * @brief Requests the operation to stop
+     */
     void
     requestStop() noexcept
     {

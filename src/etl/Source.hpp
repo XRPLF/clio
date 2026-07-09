@@ -77,7 +77,9 @@ public:
     [[nodiscard]] virtual boost::json::object
     toJson() const = 0;
 
-    /** @return String representation of the source (for debug) */
+    /**
+     * @return String representation of the source (for debug)
+     */
     [[nodiscard]] virtual std::string
     toString() const = 0;
 

@@ -216,19 +216,27 @@ public:
     [[nodiscard]] bool
     isFallback() const override;
 
-    /** @copydoc WriterStateInterface::isFallbackRecovery */
+    /**
+     * @copydoc WriterStateInterface::isFallbackRecovery
+     */
     [[nodiscard]] bool
     isFallbackRecovery() const override;
 
-    /** @copydoc WriterStateInterface::setFallbackRecovery */
+    /**
+     * @copydoc WriterStateInterface::setFallbackRecovery
+     */
     void
     setFallbackRecovery(bool newValue) override;
 
-    /** @copydoc WriterStateInterface::isEtlStarted */
+    /**
+     * @copydoc WriterStateInterface::isEtlStarted
+     */
     [[nodiscard]] bool
     isEtlStarted() const override;
 
-    /** @copydoc WriterStateInterface::isCacheFull */
+    /**
+     * @copydoc WriterStateInterface::isCacheFull
+     */
     [[nodiscard]] bool
     isCacheFull() const override;
 

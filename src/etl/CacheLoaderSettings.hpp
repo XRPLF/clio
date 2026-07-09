@@ -13,10 +13,14 @@ namespace etl {
  * @brief Settings for the cache loader
  */
 struct CacheLoaderSettings {
-    /** @brief Ways to load the cache */
+    /**
+     * @brief Ways to load the cache
+     */
     enum class LoadStyle { ASYNC, SYNC, NONE };
 
-    /** @brief Settings for cache file operations */
+    /**
+     * @brief Settings for cache file operations
+     */
     struct CacheFileSettings {
         std::string
             path; /**< path to the file to load cache from on start and save cache to on shutdown */
@@ -41,15 +45,21 @@ struct CacheLoaderSettings {
     auto
     operator<=>(CacheLoaderSettings const&) const = default;
 
-    /** @returns True if the load style is SYNC; false otherwise */
+    /**
+     * @return True if the load style is SYNC; false otherwise
+     */
     [[nodiscard]] bool
     isSync() const;
 
-    /** @returns True if the load style is ASYNC; false otherwise */
+    /**
+     * @return True if the load style is ASYNC; false otherwise
+     */
     [[nodiscard]] bool
     isAsync() const;
 
-    /** @returns True if the cache is disabled; false otherwise */
+    /**
+     * @return True if the cache is disabled; false otherwise
+     */
     [[nodiscard]] bool
     isDisabled() const;
 };
@@ -58,7 +68,7 @@ struct CacheLoaderSettings {
  * @brief Create a CacheLoaderSettings object from a Config object
  *
  * @param config The configuration object
- * @returns The CacheLoaderSettings object
+ * @return The CacheLoaderSettings object
  */
 [[nodiscard]] CacheLoaderSettings
 makeCacheLoaderSettings(util::config::ClioConfigDefinition const& config);

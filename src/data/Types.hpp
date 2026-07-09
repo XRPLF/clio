@@ -294,13 +294,19 @@ struct AmendmentKey {
     {
     }
 
-    /** @brief Conversion to string */
+    /**
+     * @brief Conversion to string
+     */
     operator std::string const&() const;
 
-    /** @brief Conversion to string_view */
+    /**
+     * @brief Conversion to string_view
+     */
     operator std::string_view() const;
 
-    /** @brief Conversion to uint256 */
+    /**
+     * @brief Conversion to uint256
+     */
     operator xrpl::uint256() const;
 
     /**

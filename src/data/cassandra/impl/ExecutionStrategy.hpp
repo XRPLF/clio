@@ -169,7 +169,7 @@ public:
      *
      * @param preparedStatement Statement to prepare and execute
      * @param args Args to bind to the prepared statement
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      */
     template <typename... Args>
     void
@@ -185,7 +185,7 @@ public:
      * Retries forever with retry policy specified by @ref AsyncExecutor
      *
      * @param statement Statement to execute
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      */
     void
     write(StatementType&& statement)
@@ -215,7 +215,7 @@ public:
      * Retries forever with retry policy specified by @ref AsyncExecutor.
      *
      * @param statements Vector of statements to execute as a batch
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      */
     void
     write(std::vector<StatementType>&& statements)
@@ -254,7 +254,7 @@ public:
      * Retries forever with retry policy specified by @ref AsyncExecutor.
      *
      * @param statements Vector of statements to execute
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      */
     void
     writeEach(std::vector<StatementType>&& statements)
@@ -272,7 +272,7 @@ public:
      * @param token Completion token (yield_context)
      * @param preparedStatement Statement to prepare and execute
      * @param args Args to bind to the prepared statement
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      * @return ResultType or error wrapped in Expected
      */
     template <typename... Args>
@@ -289,7 +289,7 @@ public:
      *
      * @param token Completion token (yield_context)
      * @param statements Statements to execute in a batch
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      * @return ResultType or error wrapped in Expected
      */
     [[maybe_unused]] ResultOrErrorType
@@ -346,7 +346,7 @@ public:
      *
      * @param token Completion token (yield_context)
      * @param statement Statement to execute
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      * @return ResultType or error wrapped in Expected
      */
     [[maybe_unused]] ResultOrErrorType
@@ -402,7 +402,7 @@ public:
      *
      * @param token Completion token (yield_context)
      * @param statements Statements to execute
-     * @throw DatabaseTimeout on db error
+     * @throws DatabaseTimeout on db error
      * @return Vector of results
      */
     std::vector<ResultType>

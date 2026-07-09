@@ -134,7 +134,7 @@ public:
         LOG(log_.info()) << "Created (revamped) CassandraBackend";
     }
 
-    /*
+    /**
      * @brief Move constructor is deleted because handle_ is shared by reference with executor
      */
     CassandraBackendFamily(CassandraBackendFamily&&) = delete;

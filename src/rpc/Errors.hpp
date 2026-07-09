@@ -13,7 +13,9 @@
 
 namespace rpc {
 
-/** @brief Custom clio RPC Errors. */
+/**
+ * @brief Custom clio RPC Errors.
+ */
 enum class ClioError {
     // normal clio errors start with 5000
     RpcMalformedCurrency = 5000,
@@ -43,14 +45,18 @@ enum class ClioError {
     EtlInvalidResponse = 7003,
 };
 
-/** @brief Holds info about a particular @ref ClioError. */
+/**
+ * @brief Holds info about a particular @ref ClioError.
+ */
 struct ClioErrorInfo {
     ClioError const code;
     std::string_view const error;
     std::string_view const message;
 };
 
-/** @brief Clio uses compatible Rippled error codes for most RPC errors. */
+/**
+ * @brief Clio uses compatible Rippled error codes for most RPC errors.
+ */
 using RippledError = xrpl::ErrorCodeI;
 
 /**
@@ -61,7 +67,9 @@ using RippledError = xrpl::ErrorCodeI;
  */
 using CombinedError = std::variant<RippledError, ClioError>;
 
-/** @brief A status returned from any RPC handler. */
+/**
+ * @brief A status returned from any RPC handler.
+ */
 struct Status {
     CombinedError code = RippledError::RpcSuccess;
     std::string error;
@@ -177,7 +185,9 @@ struct Status {
     operator<<(std::ostream& stream, Status const& status);
 };
 
-/** @brief Warning codes that can be returned by clio. */
+/**
+ * @brief Warning codes that can be returned by clio.
+ */
 // NOLINTNEXTLINE(cppcoreguidelines-use-enum-class)
 enum WarningCode {
     WarnUnknown = -1,
@@ -187,7 +197,9 @@ enum WarningCode {
     WarnRpcDeprecated = 2004
 };
 
-/** @brief Holds information about a clio warning. */
+/**
+ * @brief Holds information about a clio warning.
+ */
 struct WarningInfo {
     constexpr WarningInfo() = default;
 
@@ -205,7 +217,9 @@ struct WarningInfo {
     std::string_view const message = "unknown warning";
 };
 
-/** @brief Invalid parameters error. */
+/**
+ * @brief Invalid parameters error.
+ */
 class InvalidParamsError : public std::exception {
     std::string msg_;
 
@@ -231,7 +245,9 @@ public:
     }
 };
 
-/** @brief Account not found error. */
+/**
+ * @brief Account not found error.
+ */
 class AccountNotFoundError : public std::exception {
     std::string account_;
 
@@ -257,7 +273,9 @@ public:
     }
 };
 
-/** @brief A globally available @ref rpc::Status that represents a successful state. */
+/**
+ * @brief A globally available @ref rpc::Status that represents a successful state.
+ */
 static Status gOk;
 
 /**

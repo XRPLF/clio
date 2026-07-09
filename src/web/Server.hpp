@@ -129,7 +129,9 @@ public:
         LOG(log_.info()) << "Detector failed (" << message << "): " << ec.message();
     }
 
-    /** @brief Initiate the detection. */
+    /**
+     * @brief Initiate the detection.
+     */
     void
     run()
     {
@@ -305,14 +307,18 @@ public:
         }
     }
 
-    /** @brief Start accepting incoming connections. */
+    /**
+     * @brief Start accepting incoming connections.
+     */
     void
     run()
     {
         doAccept();
     }
 
-    /** @brief Stop accepting new connections */
+    /**
+     * @brief Stop accepting new connections
+     */
     void
     stop(boost::asio::yield_context)
     {
@@ -359,7 +365,9 @@ private:
     }
 };
 
-/** @brief The final type of the HttpServer used by Clio. */
+/**
+ * @brief The final type of the HttpServer used by Clio.
+ */
 template <typename HandlerType>
 using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
 

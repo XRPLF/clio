@@ -64,7 +64,9 @@
 
 namespace rpc {
 
-/** @brief Enum for NFT json manipulation */
+/**
+ * @brief Enum for NFT json manipulation
+ */
 enum class NFTokenjson { ENABLE, DISABLE };
 
 /**
