@@ -20,7 +20,7 @@ namespace util::prometheus {
 class MetricsFamily {
 public:
     static std::unique_ptr<MetricBuilderInterface>
-        defaultMetricBuilder; /**< The default metric builder */
+        defaultMetricBuilder;  ///< The default metric builder
 
     /**
      * @brief Construct a new MetricsFamily object

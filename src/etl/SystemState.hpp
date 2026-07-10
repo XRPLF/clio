@@ -65,8 +65,8 @@ struct SystemState {
      * across components.
      */
     enum class WriteCommand {
-        StartWriting, /**< Request to attempt taking over as the ETL writer */
-        StopWriting   /**< Request to give up the ETL writer role (e.g., due to write conflict) */
+        StartWriting,  ///< Request to attempt taking over as the ETL writer
+        StopWriting    ///< Request to give up the ETL writer role (e.g., due to write conflict)
     };
 
     /**
