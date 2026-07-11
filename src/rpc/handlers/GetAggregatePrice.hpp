@@ -181,6 +181,7 @@ public:
 private:
     /**
      * @brief Calls callback on the oracle ledger entry
+     *
      * If the oracle entry does not contains the price pair, search up to three previous metadata
      * objects. Stops early if the callback returns true.
      */
