@@ -18,7 +18,7 @@ concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && 
  * @brief Checks that the list of given values contains no duplicates
  *
  * @param values The list of values to check
- * @returns true if no duplicates exist; false otherwise
+ * @return true if no duplicates exist; false otherwise
  */
 static consteval auto
 hasNoDuplicates(auto&&... values)
@@ -33,7 +33,7 @@ hasNoDuplicates(auto&&... values)
  * @brief Checks that the list of given type contains no duplicates
  *
  * @tparam Types The types to check
- * @returns true if no duplicates exist; false otherwise
+ * @return true if no duplicates exist; false otherwise
  */
 template <typename... Types>
 constexpr bool

@@ -669,7 +669,9 @@ public:
         boost::asio::yield_context yield
     ) const = 0;
 
-    /** @brief Return type for fetchClioNodesData() method */
+    /**
+     * @brief Return type for fetchClioNodesData() method
+     */
     using ClioNodesDataFetchResult =
         std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>;
 

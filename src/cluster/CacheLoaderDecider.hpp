@@ -23,10 +23,14 @@ namespace cluster {
  * This ensures at most one node in the cluster loads the cache at a time.
  */
 class CacheLoaderDecider {
-    /** @brief Thread pool for spawning asynchronous tasks */
+    /**
+     * @brief Thread pool for spawning asynchronous tasks
+     */
     boost::asio::thread_pool& ctx_;
 
-    /** @brief Interface for controlling cache loading permission of this node */
+    /**
+     * @brief Interface for controlling cache loading permission of this node
+     */
     std::unique_ptr<data::LedgerCacheLoadingStateInterface> cacheLoadingState_;
 
 public:

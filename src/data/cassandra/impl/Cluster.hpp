@@ -56,50 +56,78 @@ struct Settings {
         std::string bundle;  // no meaningful default
     };
 
-    /** @brief Enables or disables cassandra driver logger */
+    /**
+     * @brief Enables or disables cassandra driver logger
+     */
     bool enableLog = false;
 
-    /** @brief Connect timeout specified in milliseconds */
+    /**
+     * @brief Connect timeout specified in milliseconds
+     */
     std::chrono::milliseconds connectionTimeout =
         std::chrono::milliseconds{kDefaultConnectionTimeout};
 
-    /** @brief Request timeout specified in milliseconds */
+    /**
+     * @brief Request timeout specified in milliseconds
+     */
     std::chrono::milliseconds requestTimeout = std::chrono::milliseconds{0};  // no timeout at all
 
-    /** @brief Connection information; either ContactPoints or SecureConnectionBundle */
+    /**
+     * @brief Connection information; either ContactPoints or SecureConnectionBundle
+     */
     std::variant<ContactPoints, SecureConnectionBundle> connectionInfo = ContactPoints{};
 
-    /** @brief The number of threads for the driver to pool */
+    /**
+     * @brief The number of threads for the driver to pool
+     */
     uint32_t threads = std::thread::hardware_concurrency();
 
-    /** @brief The maximum number of outstanding write requests at any given moment */
+    /**
+     * @brief The maximum number of outstanding write requests at any given moment
+     */
     uint32_t maxWriteRequestsOutstanding = kDefaultMaxWriteRequestsOutstanding;
 
-    /** @brief The maximum number of outstanding read requests at any given moment */
+    /**
+     * @brief The maximum number of outstanding read requests at any given moment
+     */
     uint32_t maxReadRequestsOutstanding = kDefaultMaxReadRequestsOutstanding;
 
-    /** @brief The number of connection per host to always have active */
+    /**
+     * @brief The number of connection per host to always have active
+     */
     uint32_t coreConnectionsPerHost = 3u;
 
-    /** @brief Size of batches when writing */
+    /**
+     * @brief Size of batches when writing
+     */
     std::size_t writeBatchSize = kDefaultBatchSize;
 
-    /** @brief Provider to know if we are using scylladb or keyspace */
+    /**
+     * @brief Provider to know if we are using scylladb or keyspace
+     */
     Provider provider = kDefaultProvider;
 
-    /** @brief Size of the IO queue */
+    /**
+     * @brief Size of the IO queue
+     */
     std::optional<uint32_t> queueSizeIO =
         std::nullopt;  // NOLINT(readability-redundant-member-init)
 
-    /** @brief SSL certificate */
+    /**
+     * @brief SSL certificate
+     */
     std::optional<std::string> certificate =
         std::nullopt;  // NOLINT(readability-redundant-member-init)
 
-    /** @brief Username/login */
+    /**
+     * @brief Username/login
+     */
     std::optional<std::string> username =
         std::nullopt;  // NOLINT(readability-redundant-member-init)
 
-    /** @brief Password to match the `username` */
+    /**
+     * @brief Password to match the `username`
+     */
     std::optional<std::string> password =
         std::nullopt;  // NOLINT(readability-redundant-member-init)
 

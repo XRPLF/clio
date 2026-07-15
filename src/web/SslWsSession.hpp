@@ -72,7 +72,9 @@ public:
         ConnectionBase::isAdmin_ = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
     }
 
-    /** @return The secure websocket stream. */
+    /**
+     * @return The secure websocket stream.
+     */
     StreamType&
     ws()
     {
@@ -139,7 +141,9 @@ public:
 
     ~SslWsUpgrader() = default;
 
-    /** @brief Initiate the upgrade. */
+    /**
+     * @brief Initiate the upgrade.
+     */
     void
     run()
     {

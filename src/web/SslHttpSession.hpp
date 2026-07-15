@@ -93,14 +93,18 @@ public:
 
     ~SslHttpSession() override = default;
 
-    /** @return The SSL stream. */
+    /**
+     * @return The SSL stream.
+     */
     boost::asio::ssl::stream<boost::beast::tcp_stream>&
     stream()
     {
         return stream_;
     }
 
-    /** @brief Initiates the handshake. */
+    /**
+     * @brief Initiates the handshake.
+     */
     void
     run()
     {
@@ -135,7 +139,9 @@ public:
         this->doRead();
     }
 
-    /** @brief Closes the underlying connection. */
+    /**
+     * @brief Closes the underlying connection.
+     */
     void
     doClose()
     {
@@ -158,7 +164,9 @@ public:
         // At this point the connection is closed gracefully
     }
 
-    /** @brief Upgrades connection to secure websocket. */
+    /**
+     * @brief Upgrades connection to secure websocket.
+     */
     void
     upgrade()
     {

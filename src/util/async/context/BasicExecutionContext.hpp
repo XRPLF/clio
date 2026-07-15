@@ -119,7 +119,9 @@ class BasicExecutionContext : public ExecutionContextTag {
     /** @endcond */
 
 public:
-    /** @brief Whether operations on this execution context are noexcept */
+    /**
+     * @brief Whether operations on this execution context are noexcept
+     */
     static constexpr bool kIsNoexcept = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; })) and
         noexcept(ErrorHandlerType::catchAndAssert([] { throw 0; }));
 

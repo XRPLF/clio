@@ -170,7 +170,7 @@ public:
 
     static constexpr std::chrono::milliseconds kDefaultTimeout{
         30000
-    }; /**< Default timeout for requests */
+    };  ///< Default timeout for requests
 
 private:
     std::expected<std::string, RequestError>

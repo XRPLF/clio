@@ -8,7 +8,9 @@
 
 namespace util::config {
 
-/** @brief Displays the different errors when parsing user config */
+/**
+ * @brief Displays the different errors when parsing user config
+ */
 struct Error {
     /**
      * @brief Constructs an Error with a custom error message.

@@ -71,7 +71,9 @@ public:
 
     ~PlainWsSession() override = default;
 
-    /** @return The websocket stream. */
+    /**
+     * @return The websocket stream.
+     */
     StreamType&
     ws()
     {
@@ -137,7 +139,9 @@ public:
     {
     }
 
-    /** @brief Initiate the upgrade. */
+    /**
+     * @brief Initiate the upgrade.
+     */
     void
     run()
     {

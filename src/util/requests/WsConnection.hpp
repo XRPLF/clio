@@ -72,7 +72,7 @@ public:
         std::chrono::steady_clock::duration timeout = kDefaultTimeout
     ) = 0;
 
-    static constexpr std::chrono::seconds kDefaultTimeout{5}; /**< Default timeout for connecting */
+    static constexpr std::chrono::seconds kDefaultTimeout{5};  ///< Default timeout for connecting
 };
 using WsConnectionPtr = std::unique_ptr<WsConnection>;
 
@@ -169,7 +169,7 @@ public:
     [[nodiscard]] std::expected<WsConnectionPtr, RequestError>
     connect(boost::asio::yield_context yield) const;
 
-    static constexpr std::chrono::seconds kDefaultTimeout{5}; /**< Default timeout for connecting */
+    static constexpr std::chrono::seconds kDefaultTimeout{5};  ///< Default timeout for connecting
 
 private:
     template <typename StreamDataType>
