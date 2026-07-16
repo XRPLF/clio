@@ -286,5 +286,7 @@ uint256ToString(xrpl::uint256 const& input)
     return {reinterpret_cast<char const*>(input.data()), xrpl::uint256::size()};
 }
 
-/** @brief The ripple epoch start timestamp. Midnight on 1st January 2000. */
+/**
+ * @brief The ripple epoch start timestamp. Midnight on 1st January 2000.
+ */
 static constexpr std::uint32_t kRippleEpochStart = 946684800;

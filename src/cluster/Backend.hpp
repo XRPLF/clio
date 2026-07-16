@@ -36,7 +36,8 @@ namespace cluster {
  */
 class Backend {
 public:
-    /** @brief Type representing cluster data result - either a vector of nodes or an error message
+    /**
+     * @brief Type representing cluster data result - either a vector of nodes or an error message
      */
     using ClusterData = std::expected<std::vector<ClioNode>, std::string>;
 

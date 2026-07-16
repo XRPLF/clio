@@ -72,7 +72,7 @@ public:
      */
     using DefaultCassandraFamily::DefaultCassandraFamily;
 
-    /*
+    /**
      * @brief Move constructor is deleted because handle_ is shared by reference with executor
      */
     BasicCassandraBackend(BasicCassandraBackend&&) = delete;

@@ -44,14 +44,18 @@ struct SystemState {
         "Whether the process is in strict read-only mode"
     );
 
-    /** @brief Whether the process is writing to the database. */
+    /**
+     * @brief Whether the process is writing to the database.
+     */
     util::prometheus::Bool isWriting = PrometheusService::boolMetric(
         "etl_writing",
         util::prometheus::Labels{},
         "Whether the process is writing to the database"
     );
 
-    /** @brief Shows whether ETL started monitor and ready to become a writer if needed */
+    /**
+     * @brief Shows whether ETL started monitor and ready to become a writer if needed
+     */
     std::atomic_bool etlStarted{false};
 
     /**
@@ -61,8 +65,8 @@ struct SystemState {
      * across components.
      */
     enum class WriteCommand {
-        StartWriting, /**< Request to attempt taking over as the ETL writer */
-        StopWriting   /**< Request to give up the ETL writer role (e.g., due to write conflict) */
+        StartWriting,  ///< Request to attempt taking over as the ETL writer
+        StopWriting    ///< Request to give up the ETL writer role (e.g., due to write conflict)
     };
 
     /**

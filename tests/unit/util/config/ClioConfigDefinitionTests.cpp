@@ -180,7 +180,9 @@ TEST_F(ConfigDescriptionAssertTest, NonExistingKeyTest)
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = definition.get("etl_sources.[]"); });
 }
 
-/** @brief Testing override the default values with the ones in Json */
+/**
+ * @brief Testing override the default values with the ones in Json
+ */
 struct OverrideConfigVals : testing::Test {
     OverrideConfigVals()
     {

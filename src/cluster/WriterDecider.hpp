@@ -66,10 +66,14 @@ public:
     static constexpr std::chrono::steady_clock::duration kRecoveryTime = std::chrono::hours{1};
 
 private:
-    /** @brief Thread pool for spawning asynchronous tasks */
+    /**
+     * @brief Thread pool for spawning asynchronous tasks
+     */
     boost::asio::thread_pool& ctx_;
 
-    /** @brief Interface for controlling the writer state of this node */
+    /**
+     * @brief Interface for controlling the writer state of this node
+     */
     std::unique_ptr<etl::WriterStateInterface> writerState_;
 
     /**
