@@ -812,7 +812,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, EmptyResult)
     });
 }
 
-// Regression test: UInt64 amount fields must be serialized as base-10 JSON strings (as rippled
+// Regression test: UInt64 amount fields must be serialized as base-10 JSON strings (as xrpld
 // does) so that values greater than 2^53 are not silently rounded by JSON parsers backed by
 // IEEE-754 doubles. 2^53 itself is still exactly representable as a double, but it must be emitted
 // as a string like every other amount so the wire format stays consistent regardless of magnitude.
@@ -820,8 +820,6 @@ struct AccountMPTokensAmountSerializationTestCaseBundle {
     std::string testName;
     uint64_t mptAmount;
     uint64_t lockedAmount;
-    std::string expectedMptAmount;
-    std::string expectedLockedAmount;
 };
 
 struct AccountMPTokensAmountSerializationTest
@@ -834,15 +832,9 @@ INSTANTIATE_TEST_SUITE_P(
     ValuesIn(
         std::vector<AccountMPTokensAmountSerializationTestCaseBundle>{
             {.testName = "LargeAmounts",
-             .mptAmount = 9223372036854775807ULL,  // 2^63 - 1 (max MPT amount)
-             .lockedAmount = 9007199254740993ULL,  // 2^53 + 1
-             .expectedMptAmount = "9223372036854775807",
-             .expectedLockedAmount = "9007199254740993"},
-            {.testName = "ExactDoubleBoundary",
-             .mptAmount = 9007199254740992ULL,  // 2^53
-             .lockedAmount = 9007199254740992ULL,
-             .expectedMptAmount = "9007199254740992",
-             .expectedLockedAmount = "9007199254740992"}
+             .mptAmount = (1ULL << 63) - 1,  // max MPT amount
+             .lockedAmount = (1ULL << 53) + 1},
+            {.testName = "ExactDoubleBoundary", .mptAmount = 1ULL << 53, .lockedAmount = 1ULL << 53}
         }
     ),
     tests::util::kNameGenerator
@@ -866,15 +858,14 @@ TEST_P(AccountMPTokensAmountSerializationTest, SerializedAsStrings)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    auto const bbs = std::vector<Blob>{createMpTokenObject(
-                                           kAccount,
-                                           xrpl::uint192(kIssuanceIdHex),
-                                           testBundle.mptAmount,
-                                           xrpl::lsfMPTLocked,
-                                           testBundle.lockedAmount
-    )
-                                           .getSerializer()
-                                           .peekData()};
+    xrpl::STObject const mptoken = createMpTokenObject(
+        kAccount,
+        xrpl::uint192(kIssuanceIdHex),
+        testBundle.mptAmount,
+        xrpl::lsfMPTLocked,
+        testBundle.lockedAmount
+    );
+    auto const bbs = std::vector<Blob>{mptoken.getSerializer().peekData()};
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     runSpawn([&, this](auto yield) {
@@ -889,8 +880,8 @@ TEST_P(AccountMPTokensAmountSerializationTest, SerializedAsStrings)
         auto const& token = mptokens[0].as_object();
 
         ASSERT_TRUE(token.at("mpt_amount").is_string());
-        EXPECT_EQ(token.at("mpt_amount").as_string(), testBundle.expectedMptAmount);
+        EXPECT_EQ(token.at("mpt_amount").as_string(), std::to_string(testBundle.mptAmount));
         ASSERT_TRUE(token.at("locked_amount").is_string());
-        EXPECT_EQ(token.at("locked_amount").as_string(), testBundle.expectedLockedAmount);
+        EXPECT_EQ(token.at("locked_amount").as_string(), std::to_string(testBundle.lockedAmount));
     });
 }

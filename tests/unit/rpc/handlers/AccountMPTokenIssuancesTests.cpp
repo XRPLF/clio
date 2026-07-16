@@ -862,7 +862,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
     });
 }
 
-// Regression test: UInt64 amount fields must be serialized as base-10 JSON strings (as rippled
+// Regression test: UInt64 amount fields must be serialized as base-10 JSON strings (as xrpld
 // does) so that values greater than 2^53 are not silently rounded by JSON parsers backed by
 // IEEE-754 doubles. 2^53 itself is still exactly representable as a double, but it must be emitted
 // as a string like every other amount so the wire format stays consistent regardless of magnitude.
@@ -871,9 +871,6 @@ struct AccountMPTokenIssuancesAmountSerializationTestCaseBundle {
     uint64_t maxAmount;
     uint64_t outstandingAmount;
     uint64_t lockedAmount;
-    std::string expectedMaxAmount;
-    std::string expectedOutstandingAmount;
-    std::string expectedLockedAmount;
 };
 
 struct AccountMPTokenIssuancesAmountSerializationTest
@@ -886,19 +883,13 @@ INSTANTIATE_TEST_SUITE_P(
     ValuesIn(
         std::vector<AccountMPTokenIssuancesAmountSerializationTestCaseBundle>{
             {.testName = "LargeAmounts",
-             .maxAmount = 9223372036854775807ULL,       // 2^63 - 1 (max MPT amount)
-             .outstandingAmount = 9007199254740993ULL,  // 2^53 + 1
-             .lockedAmount = 12345678901234567ULL,      // > 2^53, odd
-             .expectedMaxAmount = "9223372036854775807",
-             .expectedOutstandingAmount = "9007199254740993",
-             .expectedLockedAmount = "12345678901234567"},
+             .maxAmount = (1ULL << 63) - 1,  // max MPT amount
+             .outstandingAmount = (1ULL << 53) + 1,
+             .lockedAmount = (1ULL << 53) + 12345},  // arbitrary odd value above 2^53
             {.testName = "ExactDoubleBoundary",
-             .maxAmount = 9007199254740992ULL,  // 2^53
-             .outstandingAmount = 9007199254740992ULL,
-             .lockedAmount = 9007199254740992ULL,
-             .expectedMaxAmount = "9007199254740992",
-             .expectedOutstandingAmount = "9007199254740992",
-             .expectedLockedAmount = "9007199254740992"}
+             .maxAmount = 1ULL << 53,
+             .outstandingAmount = 1ULL << 53,
+             .lockedAmount = 1ULL << 53}
         }
     ),
     tests::util::kNameGenerator
@@ -922,19 +913,18 @@ TEST_P(AccountMPTokenIssuancesAmountSerializationTest, SerializedAsStrings)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    auto const bbs = std::vector<Blob>{createMptIssuanceObject(
-                                           kAccount,
-                                           1,
-                                           std::nullopt,
-                                           xrpl::lsfMPTCanLock,
-                                           testBundle.outstandingAmount,
-                                           std::nullopt,
-                                           std::nullopt,
-                                           testBundle.maxAmount,
-                                           testBundle.lockedAmount
-    )
-                                           .getSerializer()
-                                           .peekData()};
+    xrpl::STObject const mptIssuance = createMptIssuanceObject(
+        kAccount,
+        1,
+        std::nullopt,
+        xrpl::lsfMPTCanLock,
+        testBundle.outstandingAmount,
+        std::nullopt,
+        std::nullopt,
+        testBundle.maxAmount,
+        testBundle.lockedAmount
+    );
+    auto const bbs = std::vector<Blob>{mptIssuance.getSerializer().peekData()};
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     runSpawn([&, this](auto yield) {
@@ -949,13 +939,16 @@ TEST_P(AccountMPTokenIssuancesAmountSerializationTest, SerializedAsStrings)
         auto const& issuance = issuances[0].as_object();
 
         ASSERT_TRUE(issuance.at("maximum_amount").is_string());
-        EXPECT_EQ(issuance.at("maximum_amount").as_string(), testBundle.expectedMaxAmount);
+        EXPECT_EQ(issuance.at("maximum_amount").as_string(), std::to_string(testBundle.maxAmount));
         ASSERT_TRUE(issuance.at("outstanding_amount").is_string());
         EXPECT_EQ(
-            issuance.at("outstanding_amount").as_string(), testBundle.expectedOutstandingAmount
+            issuance.at("outstanding_amount").as_string(),
+            std::to_string(testBundle.outstandingAmount)
         );
         ASSERT_TRUE(issuance.at("locked_amount").is_string());
-        EXPECT_EQ(issuance.at("locked_amount").as_string(), testBundle.expectedLockedAmount);
+        EXPECT_EQ(
+            issuance.at("locked_amount").as_string(), std::to_string(testBundle.lockedAmount)
+        );
     });
 }
 
