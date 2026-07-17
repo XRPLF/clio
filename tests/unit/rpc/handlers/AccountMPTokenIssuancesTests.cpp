@@ -883,13 +883,13 @@ INSTANTIATE_TEST_SUITE_P(
     ValuesIn(
         std::vector<AccountMPTokenIssuancesAmountSerializationTestCaseBundle>{
             {.testName = "LargeAmounts",
-             .maxAmount = (1ULL << 63) - 1,  // max MPT amount
-             .outstandingAmount = (1ULL << 53) + 1,
-             .lockedAmount = (1ULL << 53) + 12345},  // arbitrary odd value above 2^53
+             .maxAmount = std::pow(2, 63) - 1,  // max MPT amount
+             .outstandingAmount = std::pow(2, 53) + 1,
+             .lockedAmount = std::pow(2, 53) + 12345},  // arbitrary odd value above 2^53
             {.testName = "ExactDoubleBoundary",
-             .maxAmount = 1ULL << 53,
-             .outstandingAmount = 1ULL << 53,
-             .lockedAmount = 1ULL << 53}
+             .maxAmount = std::pow(2, 53),
+             .outstandingAmount = std::pow(2, 53),
+             .lockedAmount = std::pow(2, 53)}
         }
     ),
     tests::util::kNameGenerator

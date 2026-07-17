@@ -832,9 +832,11 @@ INSTANTIATE_TEST_SUITE_P(
     ValuesIn(
         std::vector<AccountMPTokensAmountSerializationTestCaseBundle>{
             {.testName = "LargeAmounts",
-             .mptAmount = (1ULL << 63) - 1,  // max MPT amount
-             .lockedAmount = (1ULL << 53) + 1},
-            {.testName = "ExactDoubleBoundary", .mptAmount = 1ULL << 53, .lockedAmount = 1ULL << 53}
+             .mptAmount = std::pow(2, 63) - 1,  // max MPT amount
+             .lockedAmount = std::pow(2, 53) + 1},
+            {.testName = "ExactDoubleBoundary",
+             .mptAmount = std::pow(2, 53),
+             .lockedAmount = std::pow(2, 53)}
         }
     ),
     tests::util::kNameGenerator
