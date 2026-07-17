@@ -21,6 +21,7 @@
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STObject.h>
 
+#include <cmath>
 #include <cstdint>
 #include <functional>
 #include <optional>
@@ -883,13 +884,14 @@ INSTANTIATE_TEST_SUITE_P(
     ValuesIn(
         std::vector<AccountMPTokenIssuancesAmountSerializationTestCaseBundle>{
             {.testName = "LargeAmounts",
-             .maxAmount = std::pow(2, 63) - 1,  // max MPT amount
-             .outstandingAmount = std::pow(2, 53) + 1,
-             .lockedAmount = std::pow(2, 53) + 12345},  // arbitrary odd value above 2^53
+             .maxAmount = static_cast<uint64_t>(std::pow(2, 63)) - 1,  // max MPT amount
+             .outstandingAmount = static_cast<uint64_t>(std::pow(2, 53)) + 1,
+             .lockedAmount = static_cast<uint64_t>(std::pow(2, 53)) +
+                 12345},  // odd value above 2^53
             {.testName = "ExactDoubleBoundary",
-             .maxAmount = std::pow(2, 53),
-             .outstandingAmount = std::pow(2, 53),
-             .lockedAmount = std::pow(2, 53)}
+             .maxAmount = static_cast<uint64_t>(std::pow(2, 53)),
+             .outstandingAmount = static_cast<uint64_t>(std::pow(2, 53)),
+             .lockedAmount = static_cast<uint64_t>(std::pow(2, 53))}
         }
     ),
     tests::util::kNameGenerator
