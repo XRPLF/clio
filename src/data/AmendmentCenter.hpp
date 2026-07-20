@@ -139,6 +139,11 @@ struct Amendments {
     REGISTER(fixBatchInnerSigs);
     REGISTER(fixCleanup3_1_3);
     REGISTER(fixCleanup3_2_0);
+    REGISTER(ConfidentialTransfer);
+    REGISTER(LendingProtocolV1_1);
+    REGISTER(BatchV1_1);
+    REGISTER(Sponsor);
+    REGISTER(fixCleanup3_3_0);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);
