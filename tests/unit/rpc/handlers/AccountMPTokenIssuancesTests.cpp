@@ -864,12 +864,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
 
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
 {
-    uint32_t const mutableFlags1 = xrpl::lsmfMPTCanMutateCanLock |
-        xrpl::lsmfMPTCanMutateRequireAuth | xrpl::lsmfMPTCanMutateCanEscrow |
-        xrpl::lsmfMPTCanMutateCanTrade;
+    uint32_t const mutableFlags1 = xrpl::lsmfMPTCanEnableCanLock |
+        xrpl::lsmfMPTCanEnableRequireAuth | xrpl::lsmfMPTCanEnableCanEscrow |
+        xrpl::lsmfMPTCanEnableCanTrade;
 
-    uint32_t const mutableFlags2 = xrpl::lsmfMPTCanMutateCanTransfer |
-        xrpl::lsmfMPTCanMutateCanClawback | xrpl::lsmfMPTCanMutateMetadata |
+    uint32_t const mutableFlags2 = xrpl::lsmfMPTCanEnableCanTransfer |
+        xrpl::lsmfMPTCanEnableCanClawback | xrpl::lsmfMPTCanMutateMetadata |
         xrpl::lsmfMPTCanMutateTransferFee;
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
@@ -1088,22 +1088,22 @@ generateSingleMutableFlagTests()
 {
     return std::vector<SingleMutableFlagTest>{
         {.testName = "CanMutateCanLock",
-         .mutableFlag = xrpl::lsmfMPTCanMutateCanLock,
+         .mutableFlag = xrpl::lsmfMPTCanEnableCanLock,
          .expectedJsonKey = "mpt_can_mutate_can_lock"},
         {.testName = "CanMutateRequireAuth",
-         .mutableFlag = xrpl::lsmfMPTCanMutateRequireAuth,
+         .mutableFlag = xrpl::lsmfMPTCanEnableRequireAuth,
          .expectedJsonKey = "mpt_can_mutate_require_auth"},
         {.testName = "CanMutateCanEscrow",
-         .mutableFlag = xrpl::lsmfMPTCanMutateCanEscrow,
+         .mutableFlag = xrpl::lsmfMPTCanEnableCanEscrow,
          .expectedJsonKey = "mpt_can_mutate_can_escrow"},
         {.testName = "CanMutateCanTrade",
-         .mutableFlag = xrpl::lsmfMPTCanMutateCanTrade,
+         .mutableFlag = xrpl::lsmfMPTCanEnableCanTrade,
          .expectedJsonKey = "mpt_can_mutate_can_trade"},
         {.testName = "CanMutateCanTransfer",
-         .mutableFlag = xrpl::lsmfMPTCanMutateCanTransfer,
+         .mutableFlag = xrpl::lsmfMPTCanEnableCanTransfer,
          .expectedJsonKey = "mpt_can_mutate_can_transfer"},
         {.testName = "CanMutateCanClawback",
-         .mutableFlag = xrpl::lsmfMPTCanMutateCanClawback,
+         .mutableFlag = xrpl::lsmfMPTCanEnableCanClawback,
          .expectedJsonKey = "mpt_can_mutate_can_clawback"},
         {.testName = "CanMutateMetadata",
          .mutableFlag = xrpl::lsmfMPTCanMutateMetadata,

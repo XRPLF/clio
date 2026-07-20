@@ -63,12 +63,12 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
                 field = true;
         };
 
-        setMutableFlag(issuance.mptCanMutateCanLock, xrpl::lsmfMPTCanMutateCanLock);
-        setMutableFlag(issuance.mptCanMutateRequireAuth, xrpl::lsmfMPTCanMutateRequireAuth);
-        setMutableFlag(issuance.mptCanMutateCanEscrow, xrpl::lsmfMPTCanMutateCanEscrow);
-        setMutableFlag(issuance.mptCanMutateCanTrade, xrpl::lsmfMPTCanMutateCanTrade);
-        setMutableFlag(issuance.mptCanMutateCanTransfer, xrpl::lsmfMPTCanMutateCanTransfer);
-        setMutableFlag(issuance.mptCanMutateCanClawback, xrpl::lsmfMPTCanMutateCanClawback);
+        setMutableFlag(issuance.mptCanMutateCanLock, xrpl::lsmfMPTCanEnableCanLock);
+        setMutableFlag(issuance.mptCanMutateRequireAuth, xrpl::lsmfMPTCanEnableRequireAuth);
+        setMutableFlag(issuance.mptCanMutateCanEscrow, xrpl::lsmfMPTCanEnableCanEscrow);
+        setMutableFlag(issuance.mptCanMutateCanTrade, xrpl::lsmfMPTCanEnableCanTrade);
+        setMutableFlag(issuance.mptCanMutateCanTransfer, xrpl::lsmfMPTCanEnableCanTransfer);
+        setMutableFlag(issuance.mptCanMutateCanClawback, xrpl::lsmfMPTCanEnableCanClawback);
         setMutableFlag(issuance.mptCanMutateMetadata, xrpl::lsmfMPTCanMutateMetadata);
         setMutableFlag(issuance.mptCanMutateTransferFee, xrpl::lsmfMPTCanMutateTransferFee);
     }
