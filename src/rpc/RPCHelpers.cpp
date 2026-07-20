@@ -1033,13 +1033,20 @@ xrpLiquid(
 
     std::uint32_t const ownerCount = sle.getFieldU32(xrpl::sfOwnerCount);
 
+    // A sponsored account pays no base reserve of its own, and an account pays one extra base
+    // reserve for every account it sponsors. Before the Sponsor amendment activates neither field
+    // is ever set, so this evaluates to 1 and matches the previous behaviour.
+    std::uint32_t const accountCount = (sle.isFieldPresent(xrpl::sfSponsor) ? 0 : 1) +
+        sle.getFieldU32(xrpl::sfSponsoringAccountCount);
+
     auto balance = sle.getFieldAmount(xrpl::sfBalance);
 
     xrpl::STAmount const amount = [&]() {
         // AMM doesn't require the reserves
         if ((sle.getFlags() & xrpl::lsfAMMNode) != 0u)
             return balance;
-        auto const reserve = backend.fetchFees(sequence, yield)->accountReserve(ownerCount);
+        auto const reserve =
+            backend.fetchFees(sequence, yield)->accountReserve(ownerCount, accountCount);
         xrpl::STAmount amount = balance - reserve;
         if (balance < reserve)
             amount.clear();
