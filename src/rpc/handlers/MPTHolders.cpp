@@ -49,7 +49,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
     auto const mptID = xrpl::uint192{input.mptID.c_str()};
 
     auto const issuanceLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        xrpl::keylet::mptIssuance(mptID).key, lgrInfo.seq, ctx.yield
+        xrpl::keylet::mptokenIssuance(mptID).key, lgrInfo.seq, ctx.yield
     );
     if (!issuanceLedgerObject)
         return Error{Status{RippledError::RpcObjectNotFound, "objectNotFound"}};
@@ -68,7 +68,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
     boost::json::array const mpts;
     for (auto const& mpt : dbResponse.mptokens) {
         xrpl::STLedgerEntry const sle{
-            xrpl::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key
+            xrpl::SerialIter{mpt.data(), mpt.size()}, keylet::mptokenIssuance(mptID).key
         };
         boost::json::object mptJson;
 

@@ -709,7 +709,7 @@ generateNormalPathBookOffersTestBundles()
                     // fee settings: base ->3 inc->2, account2 has 2 objects ,total
                     // reserve ->7
                     // owner_funds should be 193
-                    {xrpl::keylet::fees().key, feeLedgerObject}
+                    {xrpl::keylet::feeSettings().key, feeLedgerObject}
                 },
             .ledgerObjectCalls = 5,
             .mockedOffers = std::vector<xrpl::STObject>{gets10XRPPays20USDOffer},
@@ -775,7 +775,7 @@ generateNormalPathBookOffersTestBundles()
                     // fee settings: base ->3 inc->2, account2 has 2 objects
                     // ,total
                     // reserve ->7
-                    {xrpl::keylet::fees().key, feeLedgerObject}
+                    {xrpl::keylet::feeSettings().key, feeLedgerObject}
                 },
             .ledgerObjectCalls = 5,
             .mockedOffers = std::vector<xrpl::STObject>{gets10XRPPays20USDOffer},
@@ -1033,7 +1033,7 @@ generateNormalPathBookOffersTestBundles()
                          .getSerializer()
                          .peekData()},
                     // trust line between gets issuer and owner,owner has 8 USD
-                    {xrpl::keylet::line(account2, account, xrpl::toCurrency("USD")).key,
+                    {xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
                      trustline8Balance.getSerializer().peekData()},
                 },
             .ledgerObjectCalls = 6,
@@ -1103,7 +1103,7 @@ generateNormalPathBookOffersTestBundles()
                          .getSerializer()
                          .peekData()},
                     // trust line between gets issuer and owner,owner has 30 USD
-                    {xrpl::keylet::line(account2, account, xrpl::toCurrency("USD")).key,
+                    {xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
                      trustline30Balance.getSerializer().peekData()},
                 },
             .ledgerObjectCalls = 6,
@@ -1258,7 +1258,7 @@ generateNormalPathBookOffersTestBundles()
                          .getSerializer()
                          .peekData()},
                     // trust line between gets issuer and owner,owner has 8 USD
-                    {xrpl::keylet::line(account2, account, xrpl::toCurrency("USD")).key,
+                    {xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
                      frozenTrustLine.getSerializer().peekData()},
                 },
             .ledgerObjectCalls = 6,
@@ -1392,7 +1392,7 @@ generateNormalPathBookOffersTestBundles()
                      )
                          .getSerializer()
                          .peekData()},
-                    {xrpl::keylet::line(account2, account, xrpl::toCurrency("USD")).key,
+                    {xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
                      frozenTrustLine.getSerializer().peekData()},
 
                 },
@@ -1583,7 +1583,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
             createAccountRootObject(kAccount2, 0, 2, 200, 2, kIndex1, 2).getSerializer().peekData()
         ));
 
-    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, seq, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, seq, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(issuer).key, seq, _))
@@ -1669,7 +1669,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
             createAccountRootObject(kAccount2, 0, 2, 200, 2, kIndex1, 2).getSerializer().peekData()
         ));
 
-    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, seq, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, seq, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(issuer).key, seq, _))

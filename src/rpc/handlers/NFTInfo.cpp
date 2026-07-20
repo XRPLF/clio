@@ -64,7 +64,7 @@ NFTInfoHandler::process(NFTInfoHandler::Input const& input, Context const& ctx) 
     output.transferFee = nft::getTransferFee(nft.tokenID);
     output.issuer = toBase58(nft::getIssuer(nft.tokenID));
     output.taxon = nft::toUInt32(nft::getTaxon(nft.tokenID));
-    output.serial = nft::getSerial(nft.tokenID);
+    output.serial = nft::getSequence(nft.tokenID);
     output.uri = strHex(nft.uri);
 
     return output;

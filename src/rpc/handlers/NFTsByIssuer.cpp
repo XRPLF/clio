@@ -92,7 +92,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
         nftJson["transfer_fee"] = nft::getTransferFee(nft.tokenID);
         nftJson[JS(issuer)] = toBase58(nft::getIssuer(nft.tokenID));
         nftJson[JS(nft_taxon)] = nft::toUInt32(nft::getTaxon(nft.tokenID));
-        nftJson[JS(nft_serial)] = nft::getSerial(nft.tokenID);
+        nftJson[JS(nft_serial)] = nft::getSequence(nft.tokenID);
 
         output.nfts.push_back(nftJson);
     }

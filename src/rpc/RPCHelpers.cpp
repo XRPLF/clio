@@ -594,8 +594,8 @@ traverseNFTObjects(
     std::function<void(xrpl::SLE)> atOwnedNode
 )
 {
-    auto const firstNFTPage = xrpl::keylet::nftpageMin(accountID);
-    auto const lastNFTPage = xrpl::keylet::nftpageMax(accountID);
+    auto const firstNFTPage = xrpl::keylet::nftokenPageMin(accountID);
+    auto const lastNFTPage = xrpl::keylet::nftokenPageMax(accountID);
 
     // check if nextPage is valid
     if (nextPage != beast::kZero and firstNFTPage.key != (nextPage & ~xrpl::nft::kPageMask))
@@ -966,7 +966,7 @@ isFrozen(
         ))
         return true;
 
-    auto const trustLineKeylet = xrpl::keylet::line(account, issuer, currency);
+    auto const trustLineKeylet = xrpl::keylet::trustLine(account, issuer, currency);
     return issuer != account &&
         fetchAndCheckAnyFlagsExists(
                backend,
@@ -993,7 +993,7 @@ isDeepFrozen(
     if (issuer == account)
         return false;
 
-    auto const trustLineKeylet = xrpl::keylet::line(account, issuer, currency);
+    auto const trustLineKeylet = xrpl::keylet::trustLine(account, issuer, currency);
 
     return fetchAndCheckAnyFlagsExists(
         backend, sequence, trustLineKeylet, {xrpl::lsfHighDeepFreeze, xrpl::lsfLowDeepFreeze}, yield
@@ -1091,7 +1091,7 @@ ammAccountHolds(
     if (xrpl::isXRP(currency))
         return {xrpLiquid(backend, sequence, account, yield)};
 
-    auto const key = xrpl::keylet::line(account, issuer, currency).key;
+    auto const key = xrpl::keylet::trustLine(account, issuer, currency).key;
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob) {
@@ -1136,7 +1136,7 @@ accountHolds(
     if (xrpl::isXRP(currency))
         return {xrpLiquid(backend, sequence, account, yield)};
 
-    auto const key = xrpl::keylet::line(account, issuer, currency).key;
+    auto const key = xrpl::keylet::trustLine(account, issuer, currency).key;
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob) {

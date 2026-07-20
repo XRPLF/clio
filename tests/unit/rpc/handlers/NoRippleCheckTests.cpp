@@ -589,7 +589,7 @@ TEST_F(
     auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kSeq, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kSeq, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
@@ -759,7 +759,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kSeq, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kSeq, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 

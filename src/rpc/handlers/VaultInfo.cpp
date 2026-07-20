@@ -119,7 +119,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
         xrpl::SerialIter{vaultLedgerObject->data(), vaultLedgerObject->size()}, vaultKeylet->key
     };
 
-    auto const issuanceKeylet = xrpl::keylet::mptIssuance(vaultSle[xrpl::sfShareMPTID]).key;
+    auto const issuanceKeylet = xrpl::keylet::mptokenIssuance(vaultSle[xrpl::sfShareMPTID]).key;
     auto const issuanceObject =
         sharedPtrBackend_->fetchLedgerObject(issuanceKeylet, lgrInfo.seq, ctx.yield);
 

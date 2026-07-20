@@ -353,7 +353,7 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context 
 {
     xrpl::Fees fees;
 
-    auto key = xrpl::keylet::fees().key;
+    auto key = xrpl::keylet::feeSettings().key;
     auto bytes = fetchLedgerObject(key, seq, yield);
 
     if (!bytes) {

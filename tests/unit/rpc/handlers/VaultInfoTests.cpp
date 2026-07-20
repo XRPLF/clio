@@ -268,7 +268,7 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
     );
 
     auto const vaultKeylet = xrpl::keylet::vault(xrpl::uint256{kVaultId}).key;
-    auto const mptIssuance = xrpl::keylet::mptIssuance(mptSharesID).key;
+    auto const mptIssuance = xrpl::keylet::mptokenIssuance(mptSharesID).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSeq, _))
         .WillOnce(Return(vault.getSerializer().peekData()));
@@ -361,7 +361,7 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
     // Set up keylet based on vaultID
     auto const issuance = createMptIssuanceObject(kAccount, kSeq, "metadata");
     auto const vaultKeylet = xrpl::keylet::vault(xrpl::uint256{kVaultId}).key;
-    auto const mptIssuance = xrpl::keylet::mptIssuance(mptSharesID).key;
+    auto const mptIssuance = xrpl::keylet::mptokenIssuance(mptSharesID).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSeq, _))
         .WillOnce(Return(vault.getSerializer().peekData()));
@@ -456,7 +456,7 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
     auto const account = getAccountIdWithString(kAccount);
     auto const accountKeylet = xrpl::keylet::account(account).key;
     auto const vaultKeylet = xrpl::keylet::vault(account, kSeq).key;
-    auto const mptIssuance = xrpl::keylet::mptIssuance(mptSharesID).key;
+    auto const mptIssuance = xrpl::keylet::mptokenIssuance(mptSharesID).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKeylet, kSeq, _))
         .WillOnce(Return(accountRoot.getSerializer().peekData()));

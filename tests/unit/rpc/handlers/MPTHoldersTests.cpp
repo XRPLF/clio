@@ -393,7 +393,7 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
-    auto const issuanceKk = xrpl::keylet::mptIssuance(xrpl::uint192(kMptId)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -447,7 +447,7 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
-    auto const issuanceKk = xrpl::keylet::mptIssuance(xrpl::uint192(kMptId)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -498,7 +498,7 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
     auto ledgerInfo = createLedgerHeader(kLedgerHash, specificLedger);
     ON_CALL(*backend_, fetchLedgerBySequence(specificLedger, _)).WillByDefault(Return(ledgerInfo));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    auto const issuanceKk = xrpl::keylet::mptIssuance(xrpl::uint192(kMptId)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, specificLedger, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -554,7 +554,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
-    auto const issuanceKk = xrpl::keylet::mptIssuance(xrpl::uint192(kMptId)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -607,7 +607,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
-    auto const issuanceKk = xrpl::keylet::mptIssuance(xrpl::uint192(kMptId)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -658,7 +658,7 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
-    auto const issuanceKk = xrpl::keylet::mptIssuance(xrpl::uint192(kMptId)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 

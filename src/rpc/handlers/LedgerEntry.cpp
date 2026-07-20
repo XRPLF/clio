@@ -87,7 +87,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         );
 
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::line(*id1, *id2, currency).key;
+        key = xrpl::keylet::trustLine(*id1, *id2, currency).key;
     } else if (input.escrow) {
         auto const id = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.escrow->at(JS(owner)))
@@ -186,7 +186,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         key = *input.credential;
     } else if (input.mptIssuance) {
         auto const mptIssuanceID = xrpl::uint192{std::string_view(*(input.mptIssuance))};
-        key = xrpl::keylet::mptIssuance(mptIssuanceID).key;
+        key = xrpl::keylet::mptokenIssuance(mptIssuanceID).key;
     } else if (input.mptoken) {
         auto const holder = xrpl::parseBase58<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.mptoken->at(JS(account)))
@@ -216,7 +216,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         );
         auto const seq = util::integralValueAs<uint32_t>(input.loanBroker->at(JS(seq)));
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::loanbroker(*account, seq).key;
+        key = xrpl::keylet::loanBroker(*account, seq).key;
     } else if (input.loan) {
         auto const id = xrpl::uint256{
             boost::json::value_to<std::string>(input.loan->at(JS(loan_broker_id))).data()
