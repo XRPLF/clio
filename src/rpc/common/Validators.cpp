@@ -300,7 +300,7 @@ CustomValidator CustomValidators::credentialTypeValidator =
             }};
         }
 
-        auto const& credTypeHex = xrpl::strViewUnHex(value.as_string());
+        auto const& credTypeHex = xrpl::strUnHex(value.as_string());
         if (!credTypeHex.has_value()) {
             return Error{Status{
                 ClioError::RpcMalformedAuthorizedCredentials, std::string(key) + " NotHexString"
