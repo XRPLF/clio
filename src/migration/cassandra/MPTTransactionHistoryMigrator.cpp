@@ -43,11 +43,7 @@ MPTTransactionHistoryMigrator::runMigration(
         }
     };
 
-    // Deserialization failures are counted, not silently skipped: the transactions table is written
-    // by Clio's own ETL from validated ledgers, so an undecodable row means corruption or a code
-    // bug. Counting makes a systematic failure (e.g. a whole-table decode break) visible instead of
-    // completing cleanly with an empty index. Atomic because the adapter invokes the callback
-    // concurrently across scan workers.
+    // Atomic because the adapter invokes the callback concurrently across scan workers.
     std::atomic<std::uint64_t> undecodableRows{0};
 
     // Full-scan the transactions table in parallel; for each transaction reuse the live ETL
@@ -76,11 +72,8 @@ MPTTransactionHistoryMigrator::runMigration(
     // durable.
     backend->waitForWritesToFinish();
 
-    // Abort if any row failed to deserialize so the migrator stays NotMigrated (the status is only
-    // written when runMigration returns normally). The transactions table is Clio's own ETL output
-    // from validated ledgers, so an undecodable row means corruption or a code bug that must be
-    // investigated rather than silently omitted from the index. Successfully-indexed rows are
-    // already durable; because the scan is idempotent a rerun re-upserts them without duplication.
+    // Abort on any decode failure so the migrator stays NotMigrated (status is only written when
+    // runMigration returns normally). The scan is idempotent, so a rerun re-upserts safely.
     if (auto const skipped = undecodableRows.load(); skipped > 0) {
         throw std::runtime_error(
             fmt::format(

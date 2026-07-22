@@ -17,13 +17,9 @@ TransactionsAdapter::onRowRead(TableTransactionsDesc::Row const& row)
 {
     auto const& [txHash, date, ledgerSeq, metaBlob, txBlob] = row;
 
-    // The transactions table is written by Clio's own ETL from validated ledgers, so a row that
-    // cannot be parsed signals storage corruption or a code bug (e.g. a schema/column change) --
-    // not a benign condition. Catch only deserialization errors (xrpl throws std::runtime_error for
-    // these) and report them to the owner via onDecodeFailure_; the owner decides the policy
-    // (count, threshold, abort). Anything else -- notably std::bad_alloc from the allocation-heavy
-    // parse -- is a transient infrastructure failure that must propagate and fail the scan closed
-    // in migrateInTokenRange rather than be mistaken for a bad row.
+    // Catch only deserialization errors (xrpl throws std::runtime_error) and report them via
+    // onDecodeFailure_; the owner decides the policy. Other exceptions (e.g. std::bad_alloc)
+    // propagate to fail the scan closed in migrateInTokenRange.
     std::optional<xrpl::STTx> sttx;
     std::optional<xrpl::TxMeta> txMeta;
     try {
