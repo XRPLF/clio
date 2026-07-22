@@ -102,7 +102,8 @@ public:
     {
         using std::to_string;
         auto throwBindingErrorIfNeeded = [idx](CassError rc, std::string_view label) {
-            throwErrorIfNeeded(rc, fmt::format("{} at idx {}", label, idx));
+            if (rc != CASS_OK)
+                throwErrorIfNeeded(rc, fmt::format("{} at idx {}", label, idx));
         };
 
         auto bindBytes = [this, idx](auto const* data, size_t size) {
