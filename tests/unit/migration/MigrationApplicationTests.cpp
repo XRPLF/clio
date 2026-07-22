@@ -2,18 +2,23 @@
 #include "migration/MigratiorStatus.hpp"
 #include "util/MockMigrationManager.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <cstdlib>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 using namespace app;
+using namespace util::config;
 using testing::Return;
 using testing::StrictMock;
 
@@ -93,4 +98,15 @@ TEST_F(MigrationApplicationTest, MigrateRunsMigration)
 
     auto app = makeApp(MigrateSubCmd::migration(kMigratorName));
     EXPECT_EQ(app.run(), EXIT_SUCCESS);
+}
+
+// The config-based constructor throws when the migration manager cannot be built. An unsupported
+// database type is rejected before any backend connection is attempted, so this stays a unit test.
+TEST_F(MigrationApplicationTest, ConfigConstructorThrowsOnInvalidDatabaseType)
+{
+    ClioConfigDefinition const config{
+        {{"database.type", ConfigValue{ConfigType::String}.defaultValue("not-a-real-db")}}
+    };
+
+    EXPECT_THROW(MigratorApplication(config, MigrateSubCmd::status()), std::runtime_error);
 }
