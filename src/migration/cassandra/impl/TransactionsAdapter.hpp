@@ -37,19 +37,24 @@ struct TableTransactionsDesc {
 class TransactionsAdapter : public impl::FullTableScannerAdapterBase<TableTransactionsDesc> {
 public:
     using OnTransactionRead = std::function<void(xrpl::STTx const&, xrpl::TxMeta const&)>;
+    using OnDecodeFailure = std::function<void()>;
 
     /**
      * @brief Construct a new Transactions Adapter object
      *
      * @param backend The backend
      * @param onTxRead The callback to call when a transaction is read
+     * @param onDecodeFailure The callback to call when a transaction fails to deserialize; the
+     * owner decides the policy (count, abort, etc.). Invoked concurrently across scan workers.
      */
     explicit TransactionsAdapter(
         std::shared_ptr<CassandraMigrationBackend> backend,
-        OnTransactionRead onTxRead
+        OnTransactionRead onTxRead,
+        OnDecodeFailure onDecodeFailure
     )
         : FullTableScannerAdapterBase<TableTransactionsDesc>(backend)
         , onTransactionRead_{std::move(onTxRead)}
+        , onDecodeFailure_{std::move(onDecodeFailure)}
     {
     }
 
@@ -64,6 +69,7 @@ public:
 private:
     util::Logger log_{"Migration"};
     OnTransactionRead onTransactionRead_;
+    OnDecodeFailure onDecodeFailure_;
 };
 
 }  // namespace migration::cassandra::impl

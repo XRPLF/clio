@@ -10,7 +10,6 @@
 #include <xrpl/protocol/TxMeta.h>
 
 #include <cstdint>
-#include <optional>
 #include <utility>
 
 using namespace migration::cassandra::impl;
@@ -54,15 +53,19 @@ makeRow(xrpl::Blob metaBlob, xrpl::Blob txBlob)
 TEST(TransactionsAdapterTest, ValidRowInvokesCallback)
 {
     auto const txBlob = serializedPaymentTx();
-    std::optional<xrpl::STTx> seenTx;
-    std::optional<xrpl::TxMeta> seenMeta;
-
+    bool called = false;
     bool decodeFailed = false;
+    xrpl::uint256 seenTxId;
+    xrpl::uint256 seenMetaTxId;
+    std::uint32_t seenLgrSeq = 0;
+
     TransactionsAdapter adapter{
         nullptr,
         [&](xrpl::STTx const& sttx, xrpl::TxMeta const& txMeta) {
-            seenTx.emplace(sttx);
-            seenMeta.emplace(txMeta);
+            called = true;
+            seenTxId = sttx.getTransactionID();
+            seenMetaTxId = txMeta.getTxID();
+            seenLgrSeq = txMeta.getLgrSeq();
         },
         [&] { decodeFailed = true; }
     };
@@ -70,13 +73,12 @@ TEST(TransactionsAdapterTest, ValidRowInvokesCallback)
     adapter.onRowRead(makeRow(serializedPaymentMeta(), txBlob));
 
     EXPECT_FALSE(decodeFailed);
-    ASSERT_TRUE(seenTx.has_value());
-    ASSERT_TRUE(seenMeta.has_value());
+    ASSERT_TRUE(called);
 
     xrpl::STTx const expectedTx{xrpl::SerialIter{txBlob.data(), txBlob.size()}};
-    EXPECT_EQ(seenTx->getTransactionID(), expectedTx.getTransactionID());
-    EXPECT_EQ(seenMeta->getTxID(), expectedTx.getTransactionID());
-    EXPECT_EQ(seenMeta->getLgrSeq(), kLedgerSeq);
+    EXPECT_EQ(seenTxId, expectedTx.getTransactionID());
+    EXPECT_EQ(seenMetaTxId, expectedTx.getTransactionID());
+    EXPECT_EQ(seenLgrSeq, kLedgerSeq);
 }
 
 // A transaction blob that fails to deserialize does not invoke the transaction callback and instead

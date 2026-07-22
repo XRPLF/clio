@@ -7,12 +7,15 @@
 #include "util/Batching.hpp"
 #include "util/config/ObjectView.hpp"
 
+#include <fmt/format.h>
 #include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/TxMeta.h>
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -40,18 +43,29 @@ MPTTransactionHistoryMigrator::runMigration(
         }
     };
 
+    // Deserialization failures are counted, not silently skipped: the transactions table is written
+    // by Clio's own ETL from validated ledgers, so an undecodable row means corruption or a code
+    // bug. Counting makes a systematic failure (e.g. a whole-table decode break) visible instead of
+    // completing cleanly with an empty index. Atomic because the adapter invokes the callback
+    // concurrently across scan workers.
+    std::atomic<std::uint64_t> undecodableRows{0};
+
     // Full-scan the transactions table in parallel; for each transaction reuse the live ETL
     // extractor to derive the touched MPT issuances and affected accounts, then write both index
     // shapes. Token-range-edge re-reads and post-crash reruns re-upsert identical deterministic-key
     // rows, so the scan is idempotent without explicit deduplication.
     impl::TransactionsScanner scanner(
         {.ctxThreadsNum = fullScanThreads, .jobsNum = fullScanJobs, .cursorsPerJob = cursorsPerJob},
-        impl::TransactionsAdapter(backend, [&](xrpl::STTx const& sttx, xrpl::TxMeta const& txMeta) {
-            auto indexData = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
-            if (indexData.empty())
-                return;
-            batchBuffer.add(std::move(indexData));
-        })
+        impl::TransactionsAdapter(
+            backend,
+            [&](xrpl::STTx const& sttx, xrpl::TxMeta const& txMeta) {
+                auto indexData = etl::getMPTokenIssuanceTxsFromTx(txMeta, sttx);
+                if (indexData.empty())
+                    return;
+                batchBuffer.add(std::move(indexData));
+            },
+            [&] { ++undecodableRows; }
+        )
     );
     scanner.waitForAllAndThrowOnError();
 
@@ -61,6 +75,21 @@ MPTTransactionHistoryMigrator::runMigration(
     // Flush queued async writes so the migrator is not marked Migrated before all index rows are
     // durable.
     backend->waitForWritesToFinish();
+
+    // Abort if any row failed to deserialize so the migrator stays NotMigrated (the status is only
+    // written when runMigration returns normally). The transactions table is Clio's own ETL output
+    // from validated ledgers, so an undecodable row means corruption or a code bug that must be
+    // investigated rather than silently omitted from the index. Successfully-indexed rows are
+    // already durable; because the scan is idempotent a rerun re-upserts them without duplication.
+    if (auto const skipped = undecodableRows.load(); skipped > 0) {
+        throw std::runtime_error(
+            fmt::format(
+                "MPT backfill: {} transactions failed to deserialize; aborting so the migrator "
+                "stays NotMigrated",
+                skipped
+            )
+        );
+    }
 }
 
 }  // namespace migration::cassandra
