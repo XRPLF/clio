@@ -41,26 +41,26 @@ EOF
 }
 
 case $1 in
--h | --help)
-    print_help
-    ;;
+    -h | --help)
+        print_help
+        ;;
 
--t | --terminal)
-    open_terminal
-    ;;
+    -t | --terminal)
+        open_terminal
+        ;;
 
--s | --stop)
-    stop_container
-    ;;
+    -s | --stop)
+        stop_container
+        ;;
 
--*)
-    echo "Unknown option: $1"
-    print_help
-    ;;
+    -*)
+        echo "Unknown option: $1"
+        print_help
+        ;;
 
-*)
-    run "$@"
-    ;;
+    *)
+        run "$@"
+        ;;
 esac
 
 popd >/dev/null

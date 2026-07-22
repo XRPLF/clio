@@ -164,7 +164,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
     }
 
     if (shouldCloseGracefully) {
-        connectionRef.setTimeout(kCLOSE_CONNECTION_TIMEOUT);
+        connectionRef.setTimeout(kCloseConnectionTimeout);
         connectionRef.close(yield);
         LOG(log_.trace()) << connectionRef.tag() << "Closed gracefully";
     }
@@ -195,7 +195,7 @@ ConnectionHandler::stopConnection(Connection& connection, boost::asio::yield_con
         connection
     };
     connection.send(std::move(response), yield);
-    connection.setTimeout(kCLOSE_CONNECTION_TIMEOUT);
+    connection.setTimeout(kCloseConnectionTimeout);
     connection.close(yield);
     LOG(log.trace()) << connection.tag() << "Connection closed";
 }

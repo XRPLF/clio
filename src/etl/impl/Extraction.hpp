@@ -1,5 +1,6 @@
 #pragma once
 
+#include "etl/AmendmentBlockHandlerInterface.hpp"
 #include "etl/ExtractorInterface.hpp"
 #include "etl/LedgerFetcherInterface.hpp"
 #include "etl/Models.hpp"
@@ -59,6 +60,7 @@ maybeExtractSuccessors(PBLedgerResponseType const& data);
 // fetches the data in gRPC and transforms to local representation
 class Extractor : public ExtractorInterface {
     std::shared_ptr<LedgerFetcherInterface> fetcher_;
+    std::shared_ptr<AmendmentBlockHandlerInterface> amendmentBlockHandler_;
 
     util::Logger log_{"ETL"};
 
@@ -66,8 +68,15 @@ private:
     [[nodiscard]] static auto
     unpack();
 
+    [[nodiscard]] std::optional<model::LedgerData>
+    guardedUnpack(std::optional<PBLedgerResponseType>&& response, uint32_t seq);
+
 public:
-    Extractor(std::shared_ptr<LedgerFetcherInterface> fetcher) : fetcher_(std::move(fetcher))
+    Extractor(
+        std::shared_ptr<LedgerFetcherInterface> fetcher,
+        std::shared_ptr<AmendmentBlockHandlerInterface> amendmentBlockHandler
+    )
+        : fetcher_(std::move(fetcher)), amendmentBlockHandler_(std::move(amendmentBlockHandler))
     {
     }
 

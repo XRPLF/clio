@@ -34,7 +34,7 @@ operator<<(std::ostream& stream, Status const& status)
                 if (!status.message.empty()) {
                     stream << ", Message: " << status.message;
                 } else {
-                    stream << ", Message: " << ripple::RPC::get_error_info(err).message;
+                    stream << ", Message: " << xrpl::RPC::getErrorInfo(err).message;
                 }
             },
             [&stream, &status](ClioError err) {
@@ -60,7 +60,7 @@ operator<<(std::ostream& stream, Status const& status)
 WarningInfo const&
 getWarningInfo(WarningCode code)
 {
-    static constexpr WarningInfo kINFOS[]{
+    static constexpr WarningInfo kInfos[]{
         {WarningCode::WarnUnknown, "Unknown warning"},
         {WarningCode::WarnRpcClio,
          "This is a clio server. clio only serves validated data. If you want to talk to rippled, "
@@ -74,7 +74,7 @@ getWarningInfo(WarningCode code)
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
-    if (auto it = ranges::find_if(kINFOS, matchByCode); it != end(kINFOS))
+    if (auto it = ranges::find_if(kInfos, matchByCode); it != end(kInfos))
         return *it;
 
     throw(out_of_range("Invalid WarningCode"));
@@ -93,7 +93,7 @@ makeWarning(WarningCode code)
 ClioErrorInfo const&
 getErrorInfo(ClioError code)
 {
-    static constexpr ClioErrorInfo kINFOS[]{
+    static constexpr ClioErrorInfo kInfos[]{
         {.code = ClioError::RpcMalformedCurrency,
          .error = "malformedCurrency",
          .message = "Malformed currency."},
@@ -150,7 +150,7 @@ getErrorInfo(ClioError code)
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
-    if (auto it = ranges::find_if(kINFOS, matchByCode); it != end(kINFOS))
+    if (auto it = ranges::find_if(kInfos, matchByCode); it != end(kInfos))
         return *it;
 
     throw(out_of_range("Invalid error code"));
@@ -164,11 +164,11 @@ makeError(
 )
 {
     boost::json::object json;
-    auto const& info = ripple::RPC::get_error_info(err);
+    auto const& info = xrpl::RPC::getErrorInfo(err);
 
-    json["error"] = customError.value_or(info.token.c_str()).data();
+    json["error"] = customError.value_or(info.token.cStr()).data();
     json["error_code"] = static_cast<uint32_t>(err);
-    json["error_message"] = customMessage.value_or(info.message.c_str()).data();
+    json["error_message"] = customMessage.value_or(info.message.cStr()).data();
     json["status"] = "error";
     json["type"] = "response";
 
@@ -204,7 +204,7 @@ makeError(Status const& status)
     auto res = visit(
         util::OverloadSet{
             [&status, &wrapOptional](RippledError err) {
-                if (err == ripple::rpcUNKNOWN) {
+                if (err == xrpl::RpcUnknown) {
                     return boost::json::object{
                         {"error", status.message}, {"type", "response"}, {"status", "error"}
                     };

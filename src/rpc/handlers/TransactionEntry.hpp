@@ -35,7 +35,7 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::optional<ripple::LedgerHeader> ledgerHeader;
+        std::optional<xrpl::LedgerHeader> ledgerHeader;
         // TODO: use a better type for this
         boost::json::object metadata;
         boost::json::object tx;
@@ -74,7 +74,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(tx_hash),
              meta::WithCustomError{
                  validation::Required{}, Status(ClioError::RpcFieldNotFoundTransaction)
@@ -84,7 +84,7 @@ public:
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
         };
 
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
     /**

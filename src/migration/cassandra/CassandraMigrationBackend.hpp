@@ -60,24 +60,24 @@ public:
     )
     {
         LOG(log_.debug()) << "Travsering token range: " << start << " - " << end
-                          << " ; table: " << TableDesc::kTABLE_NAME;
+                          << " ; table: " << TableDesc::kTableName;
         // for each table we only have one prepared statement
-        static auto kSTATEMENT_PREPARED = migrationSchema_.getPreparedFullScanStatement(
-            handle_, TableDesc::kTABLE_NAME, TableDesc::kPARTITION_KEY
+        static auto kStatementPrepared = migrationSchema_.getPreparedFullScanStatement(
+            handle_, TableDesc::kTableName, TableDesc::kPartitionKey
         );
 
-        auto const statement = kSTATEMENT_PREPARED.bind(start, end);
+        auto const statement = kStatementPrepared.bind(start, end);
 
         auto const res = this->executor_.read(yield, statement);
         if (not res) {
-            LOG(log_.error()) << "Could not fetch data from table: " << TableDesc::kTABLE_NAME
+            LOG(log_.error()) << "Could not fetch data from table: " << TableDesc::kTableName
                               << " range: " << start << " - " << end << ";" << res.error();
             return;
         }
 
         auto const& results = res.value();
         if (not results.hasRows()) {
-            LOG(log_.debug()) << "No rows returned  - table: " << TableDesc::kTABLE_NAME
+            LOG(log_.debug()) << "No rows returned  - table: " << TableDesc::kTableName
                               << " range: " << start << " - " << end;
             return;
         }

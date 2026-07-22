@@ -23,18 +23,17 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
 
-constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr auto kACCOUNT3 = "rB9BMzh27F3Q6a5FtGPDayQoCCEdiRdqcK";
-constexpr auto kINDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
-constexpr auto kINDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
-constexpr auto kTXN_ID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto kAccount2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr auto kAccount3 = "rB9BMzh27F3Q6a5FtGPDayQoCCEdiRdqcK";
+constexpr auto kIndex1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr auto kIndex2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
+constexpr auto kTxnId = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 
 }  // namespace
 
@@ -49,13 +48,13 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitNotInt)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "limit": "t"
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -70,13 +69,13 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitNegative)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "limit": -1
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -91,13 +90,13 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitZero)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "limit": 0
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -112,14 +111,14 @@ TEST_F(RPCAccountChannelsHandlerTest, NonHexLedgerHash)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "limit": 10,
                     "ledger_hash": "xxx"
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -135,14 +134,14 @@ TEST_F(RPCAccountChannelsHandlerTest, NonStringLedgerHash)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "limit": 10,
                     "ledger_hash": 123
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -158,14 +157,14 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidLedgerIndexString)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "limit": 10,
                     "ledger_index": "notvalidated"
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -181,13 +180,13 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerNotString)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "marker": 9
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -206,13 +205,13 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidMarker)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "marker": "123invalid"
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -224,13 +223,13 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidMarker)
     });
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "marker": 401
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -246,7 +245,7 @@ TEST_F(RPCAccountChannelsHandlerTest, AccountInvalidFormat)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(R"JSON({
+        auto const input = boost::json::parse(R"JSON({
             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
         })JSON");
         auto const output = handler.process(input, Context{yield});
@@ -262,7 +261,7 @@ TEST_F(RPCAccountChannelsHandlerTest, AccountNotString)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(R"JSON({
+        auto const input = boost::json::parse(R"JSON({
             "account": 12
         })JSON");
         auto const output = handler.process(input, Context{yield});
@@ -278,18 +277,18 @@ TEST_F(RPCAccountChannelsHandlerTest, AccountNotString)
 TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash return empty
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "ledger_hash": "{}"
             }})JSON",
-            kACCOUNT,
-            kLEDGER_HASH
+            kAccount,
+            kLedgerHash
         )
     );
     runSpawn([&, this](auto yield) {
@@ -308,15 +307,15 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     // mock fetchLedgerBySequence return empty
     ON_CALL(*backend_, fetchLedgerBySequence)
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "ledger_index": "4"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
     runSpawn([&, this](auto yield) {
@@ -333,15 +332,15 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     // mock fetchLedgerBySequence return empty
     ON_CALL(*backend_, fetchLedgerBySequence)
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "ledger_index": 4
         }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
     runSpawn([&, this](auto yield) {
@@ -359,18 +358,18 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIntIndex)
 TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 31);
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "ledger_hash": "{}"
             }})JSON",
-            kACCOUNT,
-            kLEDGER_HASH
+            kAccount,
+            kLedgerHash
         )
     );
     runSpawn([&, this](auto yield) {
@@ -389,13 +388,13 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIndex2)
     // no need to check from db,call fetchLedgerBySequence 0 time
     // differ from previous logic
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "ledger_index": "31"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
     runSpawn([&, this](auto yield) {
@@ -411,21 +410,21 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIndex2)
 // error case account not exist
 TEST_F(RPCAccountChannelsHandlerTest, NonExistAccount)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return empty
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "ledger_hash": "{}"
             }})JSON",
-            kACCOUNT,
-            kLEDGER_HASH
+            kAccount,
+            kLedgerHash
         )
     );
     runSpawn([&, this](auto yield) {
@@ -441,7 +440,7 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistAccount)
 // normal case when only provide account
 TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
 {
-    static constexpr auto kCORRECT_OUTPUT = R"JSON({
+    static constexpr auto kCorrectOutput = R"JSON({
         "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
@@ -471,21 +470,21 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
         ]
     })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto account = getAccountIdWithString(kAccount);
+    auto accountKk = xrpl::keylet::account(account).key;
+    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
-    ripple::STObject const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}}, kINDEX1);
+    xrpl::STObject const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
 
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -493,58 +492,58 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+    xrpl::STObject const channel1 =
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(kCORRECT_OUTPUT), *output.result);
+        EXPECT_EQ(boost::json::parse(kCorrectOutput), *output.result);
     });
 }
 
 // normal case : limit is used
 TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(3);
     // fetch account object return something
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto account = getAccountIdWithString(kAccount);
+    auto accountKk = xrpl::keylet::account(account).key;
+    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
 
     // return owner index
-    std::vector<ripple::uint256> indexes;
+    std::vector<xrpl::uint256> indexes;
     std::vector<Blob> bbs;
 
     auto repetitions = 50;
     while ((repetitions--) != 0) {
-        indexes.emplace_back(kINDEX1);
-        ripple::STObject const channel =
-            createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+        indexes.emplace_back(kIndex1);
+        xrpl::STObject const channel =
+            createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
         bbs.push_back(channel.getSerializer().peekData());
     }
-    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kIndex1);
     // it should not appear in return marker,marker is the current page
-    ownerDir.setFieldU64(ripple::sfIndexNext, 99);
+    ownerDir.setFieldU64(xrpl::sfIndexNext, 99);
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(7);
@@ -554,13 +553,13 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
 
     runSpawn([this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "limit": 20
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -575,13 +574,13 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "limit": 9
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -590,13 +589,13 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "{}",
                     "limit": 401
                 }})JSON",
-                kACCOUNT
+                kAccount
             )
         );
         auto const output = handler.process(input, Context{yield});
@@ -607,41 +606,41 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
 // normal case : destination is used
 TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto account = getAccountIdWithString(kAccount);
+    auto accountKk = xrpl::keylet::account(account).key;
+    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
 
     // return owner index
-    std::vector<ripple::uint256> indexes;
+    std::vector<xrpl::uint256> indexes;
     std::vector<Blob> bbs;
 
     // 10 pay channel to Account2
     auto repetitions = 10;
     while ((repetitions--) != 0) {
-        indexes.emplace_back(kINDEX1);
-        ripple::STObject const channel =
-            createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+        indexes.emplace_back(kIndex1);
+        xrpl::STObject const channel =
+            createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
         bbs.push_back(channel.getSerializer().peekData());
     }
 
     // 20 pay channel to Account3
     repetitions = 20;
     while ((repetitions--) != 0) {
-        indexes.emplace_back(kINDEX1);
-        ripple::STObject const channel =
-            createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT3, 100, 10, 32, kTXN_ID, 28);
+        indexes.emplace_back(kIndex1);
+        xrpl::STObject const channel =
+            createPaymentChannelLedgerObject(kAccount, kAccount3, 100, 10, 32, kTxnId, 28);
         bbs.push_back(channel.getSerializer().peekData());
     }
 
-    ripple::STObject const ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
+    xrpl::STObject const ownerDir = createOwnerDirLedgerObject(indexes, kIndex1);
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -649,15 +648,15 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": 30,
                 "destination_account": "{}"
             }})JSON",
-            kACCOUNT,
-            kACCOUNT3
+            kAccount,
+            kAccount3
         )
     );
     runSpawn([&, this](auto yield) {
@@ -671,30 +670,30 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
 // normal case : but the lines is empty
 TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto account = getAccountIdWithString(kAccount);
+    auto accountKk = xrpl::keylet::account(account).key;
+    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
 
     // return owner index
-    ripple::STObject const ownerDir = createOwnerDirLedgerObject({}, kINDEX1);
+    xrpl::STObject const ownerDir = createOwnerDirLedgerObject({}, kIndex1);
 
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
     runSpawn([&, this](auto yield) {
@@ -708,7 +707,7 @@ TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
 // Return expiration cancel_offer source_tag destination_tag when available
 TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
 {
-    static constexpr auto kCORRECT_OUTPUT = R"JSON({
+    static constexpr auto kCorrectOutput = R"JSON({
         "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
@@ -746,21 +745,21 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
         ]
     })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto account = getAccountIdWithString(kAccount);
+    auto accountKk = xrpl::keylet::account(account).key;
+    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
 
     // return owner index
-    ripple::STObject const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}}, kINDEX1);
+    xrpl::STObject const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
 
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -768,42 +767,42 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject channel1 =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
-    channel1.setFieldU32(ripple::sfExpiration, 100);
-    channel1.setFieldU32(ripple::sfCancelAfter, 200);
-    channel1.setFieldU32(ripple::sfSourceTag, 300);
-    channel1.setFieldU32(ripple::sfDestinationTag, 400);
+    xrpl::STObject channel1 =
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
+    channel1.setFieldU32(xrpl::sfExpiration, 100);
+    channel1.setFieldU32(xrpl::sfCancelAfter, 200);
+    channel1.setFieldU32(xrpl::sfSourceTag, 300);
+    channel1.setFieldU32(xrpl::sfDestinationTag, 400);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(kCORRECT_OUTPUT), *output.result);
+        EXPECT_EQ(boost::json::parse(kCorrectOutput), *output.result);
     });
 }
 
 // normal case : test marker output correct
 TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
 {
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto ownerDirKk = ripple::keylet::ownerDir(account).key;
-    static constexpr auto kNEXT_PAGE = 99;
-    static constexpr auto kLIMIT = 15;
-    auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto account = getAccountIdWithString(kAccount);
+    auto accountKk = xrpl::keylet::account(account).key;
+    auto ownerDirKk = xrpl::keylet::ownerDir(account).key;
+    static constexpr auto kNextPage = 99;
+    static constexpr auto kLimit = 15;
+    auto ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNextPage).key;
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
@@ -813,14 +812,14 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+    xrpl::STObject const channel1 =
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
     // owner dir contains 10 indexes
     int objectsCount = 10;
-    std::vector<ripple::uint256> indexes;
+    std::vector<xrpl::uint256> indexes;
     while (objectsCount != 0) {
         // return owner index
-        indexes.emplace_back(kINDEX1);
+        indexes.emplace_back(kIndex1);
         objectsCount--;
     }
     // return 15 objects
@@ -830,28 +829,28 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
         objectsCount--;
     }
 
-    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
-    ownerDir.setFieldU64(ripple::sfIndexNext, kNEXT_PAGE);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kIndex1);
+    ownerDir.setFieldU64(xrpl::sfIndexNext, kNextPage);
     // first page 's next page is 99
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    ripple::STObject ownerDir2 = createOwnerDirLedgerObject(indexes, kINDEX1);
+    xrpl::STObject ownerDir2 = createOwnerDirLedgerObject(indexes, kIndex1);
     // second page's next page is 0
-    ownerDir2.setFieldU64(ripple::sfIndexNext, 0);
+    ownerDir2.setFieldU64(xrpl::sfIndexNext, 0);
     ON_CALL(*backend_, doFetchLedgerObject(ownerDir2Kk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir2.getSerializer().peekData()));
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {}
             }})JSON",
-            kACCOUNT,
-            kLIMIT
+            kAccount,
+            kLimit
         )
     );
     runSpawn([&, this](auto yield) {
@@ -860,7 +859,7 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
         ASSERT_TRUE(output);
         EXPECT_EQ(
             boost::json::value_to<std::string>(output.result->as_object().at("marker")),
-            fmt::format("{},{}", kINDEX1, kNEXT_PAGE)
+            fmt::format("{},{}", kIndex1, kNextPage)
         );
         EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), 15);
     });
@@ -869,12 +868,12 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
 // normal case : handler marker correctly
 TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
 {
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    static constexpr auto kNEXT_PAGE = 99;
-    static constexpr auto kLIMIT = 15;
-    auto ownerDirKk = ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto account = getAccountIdWithString(kAccount);
+    auto accountKk = xrpl::keylet::account(account).key;
+    static constexpr auto kNextPage = 99;
+    static constexpr auto kLimit = 15;
+    auto ownerDirKk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNextPage).key;
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
@@ -884,36 +883,36 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
-    int objectsCount = kLIMIT;
-    std::vector<ripple::uint256> indexes;
+    xrpl::STObject const channel1 =
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
+    int objectsCount = kLimit;
+    std::vector<xrpl::uint256> indexes;
     while (objectsCount != 0) {
         // return owner index
-        indexes.emplace_back(kINDEX1);
+        indexes.emplace_back(kIndex1);
         bbs.push_back(channel1.getSerializer().peekData());
         objectsCount--;
     }
 
-    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
-    ownerDir.setFieldU64(ripple::sfIndexNext, 0);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kIndex1);
+    ownerDir.setFieldU64(xrpl::sfIndexNext, 0);
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {},
                 "marker": "{},{}"
             }})JSON",
-            kACCOUNT,
-            kLIMIT,
-            kINDEX1,
-            kNEXT_PAGE
+            kAccount,
+            kLimit,
+            kIndex1,
+            kNextPage
         )
     );
     runSpawn([&, this](auto yield) {
@@ -923,27 +922,27 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
         EXPECT_TRUE(output.result->as_object().if_contains("marker") == nullptr);
         // the first item is the marker itself, so the result will have limit-1
         // items
-        EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), kLIMIT - 1);
+        EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), kLimit - 1);
     });
 }
 
 TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto account = getAccountIdWithString(kAccount);
+    auto accountKk = xrpl::keylet::account(account).key;
+    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
-    ripple::STObject const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}}, kINDEX1);
+    xrpl::STObject const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
 
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -951,21 +950,21 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+    xrpl::STObject const channel1 =
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {}
             }})JSON",
-            kACCOUNT,
-            AccountChannelsHandler::kLIMIT_MIN - 1
+            kAccount,
+            AccountChannelsHandler::kLimitMin - 1
         )
     );
     runSpawn([&, this](auto yield) {
@@ -974,28 +973,28 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), 2);
         EXPECT_EQ(
-            output.result->as_object().at("limit").as_uint64(), AccountChannelsHandler::kLIMIT_MIN
+            output.result->as_object().at("limit").as_uint64(), AccountChannelsHandler::kLimitMin
         );
     });
 }
 
 TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto account = getAccountIdWithString(kAccount);
+    auto accountKk = xrpl::keylet::account(account).key;
+    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
-    ripple::STObject const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}}, kINDEX1);
+    xrpl::STObject const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex2}}, kIndex1);
 
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -1003,21 +1002,21 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+    xrpl::STObject const channel1 =
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {}
             }})JSON",
-            kACCOUNT,
-            AccountChannelsHandler::kLIMIT_MAX + 1
+            kAccount,
+            AccountChannelsHandler::kLimitMax + 1
         )
     );
     runSpawn([&, this](auto yield) {
@@ -1026,7 +1025,7 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), 2);
         EXPECT_EQ(
-            output.result->as_object().at("limit").as_uint64(), AccountChannelsHandler::kLIMIT_MAX
+            output.result->as_object().at("limit").as_uint64(), AccountChannelsHandler::kLimitMax
         );
     });
 }

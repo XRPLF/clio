@@ -74,9 +74,9 @@ private:
 
     util::StopHelper stopHelper_;
 
-    static constexpr std::chrono::seconds kWS_TIMEOUT{30};
-    static constexpr std::chrono::seconds kRETRY_MAX_DELAY{30};
-    static constexpr std::chrono::seconds kRETRY_DELAY{1};
+    static constexpr std::chrono::seconds kWsTimeout{30};
+    static constexpr std::chrono::seconds kRetryMaxDelay{30};
+    static constexpr std::chrono::seconds kRetryDelay{1};
 
 public:
     /**
@@ -104,8 +104,8 @@ public:
         OnConnectHook onConnect,
         OnDisconnectHook onDisconnect,
         OnLedgerClosedHook onLedgerClosed,
-        std::chrono::steady_clock::duration const wsTimeout = SubscriptionSource::kWS_TIMEOUT,
-        std::chrono::steady_clock::duration const retryDelay = SubscriptionSource::kRETRY_DELAY
+        std::chrono::steady_clock::duration const wsTimeout = SubscriptionSource::kWsTimeout,
+        std::chrono::steady_clock::duration const retryDelay = SubscriptionSource::kRetryDelay
     );
 
     /**

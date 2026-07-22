@@ -12,7 +12,7 @@
 #include <vector>
 
 namespace {
-constexpr auto kBATCH_DELETER = [](CassBatch* ptr) { cass_batch_free(ptr); };
+constexpr auto kBatchDeleter = [](CassBatch* ptr) { cass_batch_free(ptr); };
 }  // namespace
 
 namespace data::cassandra::impl {
@@ -29,7 +29,7 @@ namespace data::cassandra::impl {
  * https://docs.datastax.com/en/developer/cpp-driver-dse/1.10/features/basics/batches/index.html
  */
 Batch::Batch(std::vector<Statement> const& statements)
-    : ManagedObject{cass_batch_new(CASS_BATCH_TYPE_UNLOGGED), kBATCH_DELETER}
+    : ManagedObject{cass_batch_new(CASS_BATCH_TYPE_UNLOGGED), kBatchDeleter}
 {
     cass_batch_set_is_idempotent(*this, cass_true);
 

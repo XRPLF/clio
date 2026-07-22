@@ -9,7 +9,9 @@ namespace web::dosguard {
  */
 class WhitelistHandlerInterface {
 public:
-    /** @brief Virtual destructor */
+    /**
+     * @brief Virtual destructor
+     */
     virtual ~WhitelistHandlerInterface() = default;
 
     /**

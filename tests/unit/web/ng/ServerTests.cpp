@@ -27,7 +27,6 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
-#include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/websocket/error.hpp>
 #include <boost/json/object.hpp>
@@ -140,7 +139,7 @@ INSTANTIATE_TEST_CASE_P(
             true
         }
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 struct ServerTest : util::prometheus::WithPrometheus, SyncAsioContextTest {
@@ -567,7 +566,7 @@ INSTANTIATE_TEST_SUITE_P(
         ServerHttpTestBundle{"GET", http::verb::get},
         ServerHttpTestBundle{"POST", http::verb::post}
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_F(ServerTest, WsClientDisconnects)

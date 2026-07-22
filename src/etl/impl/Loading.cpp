@@ -83,8 +83,8 @@ Loader::onInitialLoadGotMoreObjects(
     std::optional<std::string> lastKey
 )
 {
-    static constexpr std::size_t kLOG_STRIDE = 1000u;
-    static auto kINITIAL_LOAD_START_TIME = std::chrono::steady_clock::now();
+    static constexpr std::size_t kLogStride = 1000u;
+    static auto kInitialLoadStartTime = std::chrono::steady_clock::now();
 
     try {
         LOG(log_.trace()) << "On initial load: got more objects for seq " << seq
@@ -99,12 +99,12 @@ Loader::onInitialLoadGotMoreObjects(
 
         initialLoadWrittenObjects_ += data.size();
         ++initialLoadWrites_;
-        if (initialLoadWrites_ % kLOG_STRIDE == 0u && initialLoadWrites_ != 0u) {
+        if (initialLoadWrites_ % kLogStride == 0u && initialLoadWrites_ != 0u) {
             auto elapsedSinceStart = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - kINITIAL_LOAD_START_TIME
+                std::chrono::steady_clock::now() - kInitialLoadStartTime
             );
             auto elapsedSeconds =
-                elapsedSinceStart.count() / static_cast<double>(util::kMILLISECONDS_PER_SECOND);
+                elapsedSinceStart.count() / static_cast<double>(util::kMillisecondsPerSecond);
             auto objectsPerSecond = elapsedSeconds > 0.0
                 ? static_cast<double>(initialLoadWrittenObjects_) / elapsedSeconds
                 : 0.0;
@@ -120,7 +120,7 @@ Loader::onInitialLoadGotMoreObjects(
     }
 }
 
-std::optional<ripple::LedgerHeader>
+std::optional<xrpl::LedgerHeader>
 Loader::loadInitialLedger(model::LedgerData const& data)
 {
     try {

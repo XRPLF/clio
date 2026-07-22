@@ -24,15 +24,15 @@ struct ProductionHandlerProviderTest : util::prometheus::WithPrometheus, MockBac
     util::config::ClioConfigDefinition config{
         {"api_version.default",
          util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(
-             rpc::kAPI_VERSION_DEFAULT
+             rpc::kApiVersionDefault
          )},
         {"api_version.min",
          util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(
-             rpc::kAPI_VERSION_MIN
+             rpc::kApiVersionMin
          )},
         {"api_version.max",
          util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(
-             rpc::kAPI_VERSION_MAX
+             rpc::kApiVersionMax
          )},
     };
     StrictMockSubscriptionManagerSharedPtr subscriptionManagerMock;

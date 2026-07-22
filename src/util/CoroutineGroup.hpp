@@ -79,7 +79,7 @@ public:
      *
      * @return size_t The number of coroutines in the group
      */
-    size_t
+    [[nodiscard]] size_t
     size() const;
 
     /**
@@ -87,7 +87,7 @@ public:
      *
      * @return true If the group is full false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isFull() const;
 
 private:

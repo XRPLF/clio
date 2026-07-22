@@ -184,7 +184,7 @@ INSTANTIATE_TEST_SUITE_P(
             .testName = "UpdateFails"
         }
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_F(BlockingCacheTest, InvalidateWhenStateIsNoValue)

@@ -57,14 +57,14 @@ public:
             rg::unique(diffs, [](auto const& a, auto const& b) { return a.key == b.key; });
         diffs.erase(removalCursor, last);
 
-        std::vector<ripple::uint256> cursors{data::kFIRST_KEY};
+        std::vector<xrpl::uint256> cursors{data::kFirstKey};
         rg::copy(
             diffs                                                                   //
                 | vs::filter([](auto const& obj) { return not obj.blob.empty(); })  //
                 | vs::transform([](auto const& obj) { return obj.key; }),
             std::back_inserter(cursors)
         );
-        cursors.push_back(data::kLAST_KEY);  // last pair should cover the remaining range
+        cursors.push_back(data::kLastKey);  // last pair should cover the remaining range
 
         std::vector<CursorPair> pairs;
         pairs.reserve(cursors.size());

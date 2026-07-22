@@ -11,7 +11,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <optional>
@@ -21,8 +20,8 @@ using namespace etl::impl;
 using namespace data;
 
 namespace {
-constexpr auto kSTART_SEQ = 123u;
-constexpr auto kNO_NEW_LEDGER_REPORT_DELAY = std::chrono::milliseconds(1u);
+constexpr auto kStartSeq = 123u;
+constexpr auto kNoNewLedgerReportDelay = std::chrono::milliseconds(1u);
 }  // namespace
 
 struct MonitorTests : util::prometheus::WithPrometheus, MockBackendTest {
@@ -33,13 +32,13 @@ protected:
     testing::StrictMock<testing::MockFunction<void()>> dbStalledMock_;
 
     etl::impl::Monitor monitor_ =
-        etl::impl::Monitor(ctx_, backend_, ledgers_, kSTART_SEQ, kNO_NEW_LEDGER_REPORT_DELAY);
+        etl::impl::Monitor(ctx_, backend_, ledgers_, kStartSeq, kNoNewLedgerReportDelay);
 };
 
 TEST_F(MonitorTests, ConsumesAndNotifiesForAllOutstandingSequencesAtOnce)
 {
     uint8_t count = 3;
-    LedgerRange const range(kSTART_SEQ, kSTART_SEQ + count - 1);
+    LedgerRange const range(kStartSeq, kStartSeq + count - 1);
 
     std::binary_semaphore unblock(0);
 
@@ -58,7 +57,7 @@ TEST_F(MonitorTests, ConsumesAndNotifiesForAllOutstandingSequencesAtOnce)
 TEST_F(MonitorTests, NotifiesForEachSequence)
 {
     uint8_t count = 3;
-    LedgerRange range(kSTART_SEQ, kSTART_SEQ);
+    LedgerRange range(kStartSeq, kStartSeq);
 
     std::binary_semaphore unblock(0);
 
@@ -80,7 +79,7 @@ TEST_F(MonitorTests, NotifiesForEachSequence)
 
 TEST_F(MonitorTests, NotifiesWhenForcedByNewSequenceAvailableFromNetwork)
 {
-    LedgerRange const range(kSTART_SEQ, kSTART_SEQ);
+    LedgerRange const range(kStartSeq, kStartSeq);
     std::binary_semaphore unblock(0);
     std::function<void(uint32_t)> pusher;
 
@@ -93,13 +92,13 @@ TEST_F(MonitorTests, NotifiesWhenForcedByNewSequenceAvailableFromNetwork)
 
     auto subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
     monitor_.run(std::chrono::seconds{10});  // expected to be force-invoked sooner than in 10 sec
-    pusher(kSTART_SEQ);                      // pretend network validated a new ledger
+    pusher(kStartSeq);                       // pretend network validated a new ledger
     unblock.acquire();
 }
 
 TEST_F(MonitorTests, NotifiesWhenForcedByLedgerLoaded)
 {
-    LedgerRange const range(kSTART_SEQ, kSTART_SEQ);
+    LedgerRange const range(kStartSeq, kStartSeq);
     std::binary_semaphore unblock(0);
 
     EXPECT_CALL(*ledgers_, subscribe(testing::_));
@@ -107,18 +106,18 @@ TEST_F(MonitorTests, NotifiesWhenForcedByLedgerLoaded)
     EXPECT_CALL(actionMock_, Call).WillOnce([&] { unblock.release(); });
 
     auto subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
-    monitor_.run(std::chrono::seconds{10});  // expected to be force-invoked sooner than in 10 sec
-    monitor_.notifySequenceLoaded(kSTART_SEQ);  // notify about newly committed ledger
+    monitor_.run(std::chrono::seconds{10});    // expected to be force-invoked sooner than in 10 sec
+    monitor_.notifySequenceLoaded(kStartSeq);  // notify about newly committed ledger
     unblock.acquire();
 }
 
 TEST_F(MonitorTests, ResumesMonitoringFromNextSequenceAfterWriteConflict)
 {
-    constexpr uint32_t kCONFLICT_SEQ = 456u;
-    constexpr uint32_t kEXPECTED_NEXT_SEQ = kCONFLICT_SEQ + 1;
+    constexpr uint32_t kConflictSeq = 456u;
+    constexpr uint32_t kExpectedNextSeq = kConflictSeq + 1;
 
-    LedgerRange const rangeBeforeConflict(kSTART_SEQ, kSTART_SEQ);
-    LedgerRange const rangeAfterConflict(kEXPECTED_NEXT_SEQ, kEXPECTED_NEXT_SEQ);
+    LedgerRange const rangeBeforeConflict(kStartSeq, kStartSeq);
+    LedgerRange const rangeAfterConflict(kExpectedNextSeq, kExpectedNextSeq);
     std::binary_semaphore unblock(0);
 
     EXPECT_CALL(*ledgers_, subscribe(testing::_));
@@ -131,14 +130,14 @@ TEST_F(MonitorTests, ResumesMonitoringFromNextSequenceAfterWriteConflict)
             .WillRepeatedly(testing::Return(rangeAfterConflict));
     }
 
-    EXPECT_CALL(actionMock_, Call(kEXPECTED_NEXT_SEQ)).WillOnce([&](uint32_t seq) {
-        EXPECT_EQ(seq, kEXPECTED_NEXT_SEQ);
+    EXPECT_CALL(actionMock_, Call(kExpectedNextSeq)).WillOnce([&](uint32_t seq) {
+        EXPECT_EQ(seq, kExpectedNextSeq);
         unblock.release();
     });
 
     auto subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
     monitor_.run(std::chrono::nanoseconds{100});
-    monitor_.notifyWriteConflict(kCONFLICT_SEQ);
+    monitor_.notifyWriteConflict(kConflictSeq);
     unblock.acquire();
 }
 

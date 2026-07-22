@@ -30,7 +30,7 @@ TEST_F(CliArgsTests, Parse_NoArgs)
 
     int const returnCode = 123;
     EXPECT_CALL(onRunMock, Call).WillOnce([](CliArgs::Action::Run const& run) {
-        EXPECT_EQ(run.configPath, CliArgs::kDEFAULT_CONFIG_PATH);
+        EXPECT_EQ(run.configPath, CliArgs::kDefaultConfigPath);
         EXPECT_FALSE(run.useNgWebServer);
         return returnCode;
     });
@@ -53,7 +53,7 @@ TEST_F(CliArgsTests, Parse_NgWebServer)
 
         int const returnCode = 123;
         EXPECT_CALL(onRunMock, Call).WillOnce([](CliArgs::Action::Run const& run) {
-            EXPECT_EQ(run.configPath, CliArgs::kDEFAULT_CONFIG_PATH);
+            EXPECT_EQ(run.configPath, CliArgs::kDefaultConfigPath);
             EXPECT_TRUE(run.useNgWebServer);
             return returnCode;
         });
@@ -209,14 +209,11 @@ TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescriptionFileContent)
     inFile.close();
 
     auto const fileContent = buffer.str();
-    EXPECT_TRUE(fileContent.find("# Clio Config Description") != std::string::npos);
-    EXPECT_TRUE(
-        fileContent.find(
-            "This document provides a list of all available Clio configuration properties in "
-            "detail."
-        ) != std::string::npos
-    );
-    EXPECT_TRUE(fileContent.find("## Configuration Details") != std::string::npos);
+    EXPECT_TRUE(fileContent.contains("# Clio Config Description"));
+    EXPECT_TRUE(fileContent.contains(
+        "This document provides a list of all available Clio configuration properties in detail."
+    ));
+    EXPECT_TRUE(fileContent.contains("## Configuration Details"));
 
     // all keys that exist in clio config should be listed in config description file
     for (auto const& key : getClioConfig())

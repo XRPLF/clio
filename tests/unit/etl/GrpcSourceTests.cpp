@@ -57,8 +57,8 @@ struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXr
     }
 
     class KeyStore {
-        std::vector<ripple::uint256> keys_;
-        using Store = std::map<std::string, std::queue<ripple::uint256>, std::greater<>>;
+        std::vector<xrpl::uint256> keys_;
+        using Store = std::map<std::string, std::queue<xrpl::uint256>, std::greater<>>;
 
         util::Mutex<Store> store_;
 
@@ -71,7 +71,7 @@ struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXr
             auto store = store_.lock();
             for (auto mi = 0uz; mi < markers.size(); ++mi) {
                 for (auto i = 0uz; i < totalPerMarker; ++i) {
-                    auto const mapKey = ripple::strHex(markers.at(mi)).substr(0, 2);
+                    auto const mapKey = xrpl::strHex(markers.at(mi)).substr(0, 2);
                     store->operator[](mapKey).push(keys_.at((mi * totalPerMarker) + i));
                 }
             }
@@ -82,7 +82,7 @@ struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXr
         {
             auto store = store_.lock<std::scoped_lock>();
 
-            auto const mapKey = ripple::strHex(marker).substr(0, 2);
+            auto const mapKey = xrpl::strHex(marker).substr(0, 2);
             auto it = store->lower_bound(mapKey);
             ASSERT(it != store->end(), "Lower bound not found for '{}'", mapKey);
 
@@ -101,7 +101,7 @@ struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXr
         {
             auto store = store_.lock<std::scoped_lock>();
 
-            auto const mapKey = ripple::strHex(marker).substr(0, 2);
+            auto const mapKey = xrpl::strHex(marker).substr(0, 2);
             auto it = store->lower_bound(mapKey);
             ASSERT(it != store->end(), "Lower bound not found for '{}'", mapKey);
 
@@ -179,7 +179,7 @@ TEST_F(GrpcSourceLoadInitialLedgerTests, GetLedgerDataNotFound)
 
 TEST_F(GrpcSourceLoadInitialLedgerTests, ObserverCalledCorrectly)
 {
-    auto const key = ripple::uint256{4};
+    auto const key = xrpl::uint256{4};
     auto const keyStr = uint256ToString(key);
     auto const object = createTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
     auto const objectData = object.getSerializer().peekData();
@@ -349,7 +349,7 @@ TEST_F(GrpcSourceStopTests, LoadInitialLedgerStopsWhenRequested)
 
 TEST_F(GrpcSourceTests, DeadlineIsHandledCorrectly)
 {
-    static constexpr auto kDEADLINE = std::chrono::milliseconds{5};
+    static constexpr auto kDeadline = std::chrono::milliseconds{5};
 
     uint32_t const sequence = 123u;
     bool const getObjects = true;
@@ -358,7 +358,7 @@ TEST_F(GrpcSourceTests, DeadlineIsHandledCorrectly)
     std::binary_semaphore sem(0);
 
     auto grpcSource = std::make_unique<etl::impl::GrpcSource>(
-        "localhost", std::to_string(getXRPLMockPort()), kDEADLINE
+        "localhost", std::to_string(getXRPLMockPort()), kDeadline
     );
 
     // Note: this may not be called at all if gRPC cancels before it gets a chance to call the stub
@@ -375,7 +375,7 @@ TEST_F(GrpcSourceTests, DeadlineIsHandledCorrectly)
 
     auto const [status, response] =
         grpcSource->fetchLedger(sequence, getObjects, getObjectNeighbors);
-    ASSERT_FALSE(status.ok());  // timed out after kDEADLINE
+    ASSERT_FALSE(status.ok());  // timed out after kDeadline
 
     sem.release();  // we don't need to hold GetLedger thread any longer
     grpcSource.reset();

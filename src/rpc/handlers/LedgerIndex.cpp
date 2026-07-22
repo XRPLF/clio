@@ -32,8 +32,8 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
         auto const ledger = sharedPtrBackend_->fetchLedgerBySequence(index, ctx.yield);
         return Output{
             .ledgerIndex = index,
-            .ledgerHash = ripple::strHex(ledger->hash),
-            .closeTimeIso = ripple::to_string_iso(ledger->closeTime)
+            .ledgerHash = xrpl::strHex(ledger->hash),
+            .closeTimeIso = xrpl::toStringIso(ledger->closeTime)
         };
     };
 
@@ -42,7 +42,7 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
         return fillOutputByIndex(maxIndex);
 
     auto const convertISOTimeStrToTicks = [](std::string const& isoTimeStr) {
-        auto const systemTime = util::systemTpFromUtcStr(isoTimeStr, kDATE_FORMAT);
+        auto const systemTime = util::systemTpFromUtcStr(isoTimeStr, kDateFormat);
         // systemTime must be valid after validation passed
         return systemTime->time_since_epoch().count();
     };
@@ -57,7 +57,7 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
 
     // If the given date is earlier than the first valid ledger, return lgrNotFound
     if (earlierThan(minIndex))
-        return Error{Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotInRange"}};
+        return Error{Status{RippledError::RpcLgrNotFound, "ledgerNotInRange"}};
 
     auto const view = std::ranges::iota_view{minIndex, maxIndex + 1};
 

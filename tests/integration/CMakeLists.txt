@@ -28,3 +28,5 @@ set_target_properties(
     clio_integration_tests
     PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+patch_nix_binary(clio_integration_tests)

@@ -24,18 +24,18 @@ using namespace data;
 
 namespace {
 
-constexpr auto kRANGE_MIN = 10;
-constexpr auto kRANGE_MAX = 30;
-constexpr auto kSEQ = 30;
-constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr auto kAPI_VERSION = 2;
+constexpr auto kRangeMin = 10;
+constexpr auto kRangeMax = 30;
+constexpr auto kSeq = 30;
+constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kApiVersion = 2;
 
 }  // namespace
 
 struct RPCFeatureHandlerTest : HandlerBaseTest {
     RPCFeatureHandlerTest()
     {
-        backend_->setRange(kRANGE_MIN, kRANGE_MAX);
+        backend_->setRange(kRangeMin, kRangeMax);
     }
 
 protected:
@@ -146,7 +146,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCFeatureGroup1,
     RPCFeatureHandlerParamTest,
     testing::ValuesIn(generateTestValuesForParametersTest()),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(RPCFeatureHandlerParamTest, InvalidParams)
@@ -156,7 +156,7 @@ TEST_P(RPCFeatureHandlerParamTest, InvalidParams)
         auto const handler = AnyHandler{FeatureHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = boost::json::parse(testBundle.testJson);
         auto const output =
-            handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
+            handler.process(req, Context{.yield = yield, .apiVersion = kApiVersion});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -167,7 +167,7 @@ TEST_P(RPCFeatureHandlerParamTest, InvalidParams)
 
 TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaIntSequence)
 {
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, testing::_))
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMax, testing::_))
         .WillOnce(testing::Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
@@ -177,7 +177,7 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaIntSequence)
                 R"JSON({{
                     "ledger_index": {}
                 }})JSON",
-                kRANGE_MAX
+                kRangeMax
             )
         );
         auto const output = handler.process(req, Context{yield});
@@ -190,7 +190,7 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaStringSequence)
 {
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, testing::_))
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMax, testing::_))
         .WillOnce(testing::Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
@@ -200,7 +200,7 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaStringSequence)
                 R"JSON({{
                     "ledger_index": "{}"
                 }})JSON",
-                kRANGE_MAX
+                kRangeMax
             )
         );
         auto const output = handler.process(req, Context{yield});
@@ -213,7 +213,7 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaHash)
 {
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, testing::_))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, testing::_))
         .WillOnce(testing::Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
@@ -223,7 +223,7 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaHash)
                 R"JSON({{
                     "ledger_hash": "{}"
                 }})JSON",
-                kLEDGER_HASH
+                kLedgerHash
             )
         );
         auto const output = handler.process(req, Context{yield});
@@ -273,10 +273,10 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaNameWithSingleSupportedAndEnabledRes
     auto const enabled = std::vector<bool>{true};
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, getAll).WillOnce(testing::ReturnRef(all));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSEQ))
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSeq))
         .WillOnce(testing::Return(enabled));
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     auto const expectedOutput = fmt::format(
@@ -290,8 +290,8 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaNameWithSingleSupportedAndEnabledRes
             "ledger_index": {},
             "validated": true
         }})JSON",
-        kLEDGER_HASH,
-        kSEQ
+        kLedgerHash,
+        kSeq
     );
 
     runSpawn([this, &expectedOutput](auto yield) {
@@ -325,10 +325,10 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaHashWithSingleResult)
     auto const enabled = std::vector<bool>{true};
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, getAll).WillOnce(testing::ReturnRef(all));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSEQ))
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSeq))
         .WillOnce(testing::Return(enabled));
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     auto const expectedOutput = fmt::format(
@@ -342,8 +342,8 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaHashWithSingleResult)
             "ledger_index": {},
             "validated": true
         }})JSON",
-        kLEDGER_HASH,
-        kSEQ
+        kLedgerHash,
+        kSeq
     );
 
     runSpawn([this, &expectedOutput](auto yield) {
@@ -371,7 +371,7 @@ TEST_F(RPCFeatureHandlerTest, BadFeaturePath)
     auto const keys = std::vector<data::AmendmentKey>{"nonexistent"};
     EXPECT_CALL(*mockAmendmentCenterPtr_, getAll).WillOnce(testing::ReturnRef(all));
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     runSpawn([this](auto yield) {
@@ -391,7 +391,7 @@ TEST_F(RPCFeatureHandlerTest, BadFeaturePath)
 TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByNameReturnsSupportedFalse)
 {
     auto const ownerPaysFeeKey =
-        ripple::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
+        xrpl::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
     auto const all = std::vector<data::Amendment>{{
         .name = Amendments::OwnerPaysFee,
         .feature = data::Amendment::getAmendmentId(Amendments::OwnerPaysFee),
@@ -403,10 +403,10 @@ TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByNameReturnsSupported
     auto const enabled = std::vector<bool>{false};
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, getAll).WillOnce(testing::ReturnRef(all));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSEQ))
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSeq))
         .WillOnce(testing::Return(enabled));
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     auto const expectedOutput = fmt::format(
@@ -421,8 +421,8 @@ TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByNameReturnsSupported
             "validated": true
         }})JSON",
         ownerPaysFeeKey,
-        kLEDGER_HASH,
-        kSEQ
+        kLedgerHash,
+        kSeq
     );
 
     runSpawn([this, &expectedOutput](auto yield) {
@@ -439,7 +439,7 @@ TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByNameReturnsSupported
 TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByHashReturnsSupportedFalse)
 {
     auto const ownerPaysFeeKey =
-        ripple::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
+        xrpl::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
     auto const all = std::vector<data::Amendment>{{
         .name = Amendments::OwnerPaysFee,
         .feature = data::Amendment::getAmendmentId(Amendments::OwnerPaysFee),
@@ -451,10 +451,10 @@ TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByHashReturnsSupported
     auto const enabled = std::vector<bool>{true};
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, getAll).WillOnce(testing::ReturnRef(all));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSEQ))
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSeq))
         .WillOnce(testing::Return(enabled));
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     auto const expectedOutput = fmt::format(
@@ -469,8 +469,8 @@ TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByHashReturnsSupported
             "validated": true
         }})JSON",
         ownerPaysFeeKey,
-        kLEDGER_HASH,
-        kSEQ
+        kLedgerHash,
+        kSeq
     );
 
     runSpawn([this, &ownerPaysFeeKey, &expectedOutput](auto yield) {
@@ -506,10 +506,10 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathWithMultipleResults)
     auto const enabled = std::vector<bool>{true, false};
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, getAll).WillOnce(testing::ReturnRef(all));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSEQ))
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSeq))
         .WillOnce(testing::Return(enabled));
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     auto const amendments = createAmendmentsObject(
@@ -534,8 +534,8 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathWithMultipleResults)
             "ledger_index": {},
             "validated": true
         }})JSON",
-        kLEDGER_HASH,
-        kSEQ
+        kLedgerHash,
+        kSeq
     );
 
     runSpawn([this, &expectedOutput](auto yield) {

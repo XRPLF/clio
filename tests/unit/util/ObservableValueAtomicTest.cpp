@@ -157,15 +157,15 @@ TEST_F(ObservableValueAtomicTest, ThreadSafetyBasic)
         values.push_back(value);
     });
 
-    static constexpr auto kNUM_THREADS = 4;
-    static constexpr auto kINCREMENTS_PER_THREAD = 100;
+    static constexpr auto kNumThreads = 4;
+    static constexpr auto kIncrementsPerThread = 100;
 
     std::vector<std::thread> threads;
-    threads.reserve(kNUM_THREADS);
+    threads.reserve(kNumThreads);
 
-    for (int i = 0; i < kNUM_THREADS; ++i) {
+    for (int i = 0; i < kNumThreads; ++i) {
         threads.emplace_back([&obs]() {
-            for (int j = 0; j < kINCREMENTS_PER_THREAD; ++j) {
+            for (int j = 0; j < kIncrementsPerThread; ++j) {
                 int const expected = obs.get();
                 int const newValue = expected + 1;
                 obs.set(newValue);
@@ -194,15 +194,15 @@ TEST_F(ObservableValueAtomicTest, ThreadSafetyWithDirectAccess)
 
     auto connection = obs.observe([&](int const&) { notificationCount.fetch_add(1); });
 
-    static constexpr auto kNUM_THREADS = 4;
-    static constexpr auto kOPERATIONS_PER_THREAD = 50;
+    static constexpr auto kNumThreads = 4;
+    static constexpr auto kOperationsPerThread = 50;
 
     std::vector<std::thread> threads;
-    threads.reserve(kNUM_THREADS);
+    threads.reserve(kNumThreads);
 
-    for (int i = 0; i < kNUM_THREADS; ++i) {
+    for (int i = 0; i < kNumThreads; ++i) {
         threads.emplace_back([&obs]() {
-            for (int j = 0; j < kOPERATIONS_PER_THREAD; ++j) {
+            for (int j = 0; j < kOperationsPerThread; ++j) {
                 int const current = obs.get();
                 obs.set(current + 1);
                 std::this_thread::sleep_for(std::chrono::microseconds(1));
@@ -262,15 +262,15 @@ TEST_F(ObservableValueAtomicTest, RaceConditionNotificationIntegrity)
         values.push_back(value);
     });
 
-    static constexpr auto kNUM_THREADS = 10;
-    static constexpr auto kOPERATIONS_PER_THREAD = 20;
+    static constexpr auto kNumThreads = 10;
+    static constexpr auto kOperationsPerThread = 20;
 
     std::vector<std::thread> threads;
-    threads.reserve(kNUM_THREADS);
+    threads.reserve(kNumThreads);
 
-    for (int i = 0; i < kNUM_THREADS; ++i) {
+    for (int i = 0; i < kNumThreads; ++i) {
         threads.emplace_back([&obs]() {
-            for (int j = 0; j < kOPERATIONS_PER_THREAD; ++j) {
+            for (int j = 0; j < kOperationsPerThread; ++j) {
                 obs.set(j % 3);
                 std::this_thread::sleep_for(std::chrono::microseconds(1));
             }
@@ -306,12 +306,12 @@ TEST_F(ObservableValueAtomicTest, DeterministicNotificationTest)
         values.push_back(value);
     });
 
-    static constexpr auto kNUM_THREADS = 5;
+    static constexpr auto kNumThreads = 5;
 
     std::vector<std::thread> threads;
-    threads.reserve(kNUM_THREADS);
+    threads.reserve(kNumThreads);
 
-    for (int i = 0; i < kNUM_THREADS; ++i) {
+    for (int i = 0; i < kNumThreads; ++i) {
         threads.emplace_back([&obs, i]() { obs.set(i + 1); });
     }
 
@@ -319,19 +319,19 @@ TEST_F(ObservableValueAtomicTest, DeterministicNotificationTest)
         thread.join();
 
     // Each thread sets a unique value, so expect exactly kNumThreads notifications
-    EXPECT_EQ(notificationCount.load(), kNUM_THREADS);
+    EXPECT_EQ(notificationCount.load(), kNumThreads);
 
     std::scoped_lock const lock(valuesMutex);
-    EXPECT_EQ(values.size(), kNUM_THREADS);
+    EXPECT_EQ(values.size(), kNumThreads);
 
     for (auto const& value : values) {
         EXPECT_GE(value, 1);
-        EXPECT_LE(value, kNUM_THREADS);
+        EXPECT_LE(value, kNumThreads);
     }
 
     int const finalValue = obs.get();
     EXPECT_GE(finalValue, 1);
-    EXPECT_LE(finalValue, kNUM_THREADS);
+    EXPECT_LE(finalValue, kNumThreads);
 }
 
 TEST_F(ObservableValueAtomicTest, NoNotificationForSameValue)
@@ -341,12 +341,12 @@ TEST_F(ObservableValueAtomicTest, NoNotificationForSameValue)
 
     auto connection = obs.observe([&](int const&) { notificationCount.fetch_add(1); });
 
-    static constexpr auto kNUM_THREADS = 10;
+    static constexpr auto kNumThreads = 10;
 
     std::vector<std::thread> threads;
-    threads.reserve(kNUM_THREADS);
+    threads.reserve(kNumThreads);
 
-    for (int i = 0; i < kNUM_THREADS; ++i) {
+    for (int i = 0; i < kNumThreads; ++i) {
         threads.emplace_back([&obs]() { obs.set(42); });
     }
 
@@ -370,14 +370,14 @@ TEST_F(ObservableValueAtomicTest, AtomicRaceConditionCorrectness)
         values.push_back(value);
     });
 
-    static constexpr auto kNUM_THREADS = 3;
+    static constexpr auto kNumThreads = 3;
 
     std::vector<std::thread> threads;
-    threads.reserve(kNUM_THREADS);
+    threads.reserve(kNumThreads);
 
     // Test that direct access properly notifies for all value changes
     // Each thread will make unique changes to avoid race condition conflicts
-    for (int i = 0; i < kNUM_THREADS; ++i) {
+    for (int i = 0; i < kNumThreads; ++i) {
         threads.emplace_back([&obs, i]() {
             int const baseValue = (i + 1) * 10;  // 10, 20, 30
             obs.set(baseValue);                  // Store unique values
@@ -390,10 +390,10 @@ TEST_F(ObservableValueAtomicTest, AtomicRaceConditionCorrectness)
 
     // We should get some notifications (exact count depends on race conditions)
     // but at least one per thread since they use unique base values
-    EXPECT_GE(notificationCount.load(), kNUM_THREADS);
+    EXPECT_GE(notificationCount.load(), kNumThreads);
 
     std::scoped_lock const lock(valuesMutex);
-    EXPECT_GE(values.size(), kNUM_THREADS);
+    EXPECT_GE(values.size(), kNumThreads);
 
     for (auto const& value : values)
         EXPECT_GT(value, 0);

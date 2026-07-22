@@ -17,44 +17,44 @@ namespace util::build {
 #error "BUILD_DATE must be defined"
 #endif
 
-static constexpr char kVERSION_STRING[] = CLIO_VERSION;
-static constexpr char kGIT_COMMIT_HASH[] = GIT_COMMIT_HASH;
-static constexpr char kGIT_BUILD_BRANCH[] = GIT_BUILD_BRANCH;
-static constexpr char kBUILD_DATE[] = BUILD_DATE;
+static constexpr char kVersionString[] = CLIO_VERSION;
+static constexpr char kGitCommitHash[] = GIT_COMMIT_HASH;
+static constexpr char kGitBuildBranch[] = GIT_BUILD_BRANCH;
+static constexpr char kBuildDate[] = BUILD_DATE;
 
 std::string const&
 getClioVersionString()
 {
-    static std::string const kVALUE = kVERSION_STRING;
-    return kVALUE;
+    static std::string const kValue = kVersionString;
+    return kValue;
 }
 
 std::string const&
 getClioFullVersionString()
 {
-    static std::string const kVALUE = "clio-" + getClioVersionString();
-    return kVALUE;
+    static std::string const kValue = "clio-" + getClioVersionString();
+    return kValue;
 }
 
 std::string const&
 getGitCommitHash()
 {
-    static std::string const kVALUE = kGIT_COMMIT_HASH;
-    return kVALUE;
+    static std::string const kValue = kGitCommitHash;
+    return kValue;
 }
 
 std::string const&
 getGitBuildBranch()
 {
-    static std::string const kVALUE = kGIT_BUILD_BRANCH;
-    return kVALUE;
+    static std::string const kValue = kGitBuildBranch;
+    return kValue;
 }
 
 std::string const&
 getBuildDate()
 {
-    static std::string const kVALUE = kBUILD_DATE;
-    return kVALUE;
+    static std::string const kValue = kBuildDate;
+    return kValue;
 }
 
 }  // namespace util::build

@@ -37,8 +37,8 @@ class LedgerDataHandler {
 
 public:
     // constants
-    static constexpr uint32_t kLIMIT_BINARY = 2048;
-    static constexpr uint32_t kLIMIT_JSON = 256;
+    static constexpr uint32_t kLimitBinary = 2048;
+    static constexpr uint32_t kLimitJson = 256;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -64,11 +64,11 @@ public:
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         bool binary = false;
-        uint32_t limit = LedgerDataHandler::kLIMIT_JSON;  // max 256 for json ; 2048 for binary
-        std::optional<ripple::uint256> marker;
+        uint32_t limit = LedgerDataHandler::kLimitJson;  // max 256 for json ; 2048 for binary
+        std::optional<xrpl::uint256> marker;
         std::optional<uint32_t> diffMarker;
         bool outOfOrder = false;
-        ripple::LedgerEntryType type = ripple::LedgerEntryType::ltANY;
+        xrpl::LedgerEntryType type = xrpl::LedgerEntryType::ltANY;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -92,7 +92,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {"out_of_order", validation::Type<bool>{}},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
@@ -104,7 +104,7 @@ public:
             {JS(type), validation::CustomValidators::ledgerTypeValidator},
             {JS(ledger), check::Deprecated{}},
         };
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
     /**

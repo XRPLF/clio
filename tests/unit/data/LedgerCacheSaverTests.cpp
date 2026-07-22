@@ -25,7 +25,7 @@ using namespace util::config;
 
 struct LedgerCacheSaverTest : virtual testing::Test {
     testing::StrictMock<MockLedgerCache> cache;
-    constexpr static auto kFILE_PATH = "./cache.bin";
+    constexpr static auto kFilePath = "./cache.bin";
 
     static ClioConfigDefinition
     generateConfig(bool cacheFilePathHasValue, bool asyncSave)
@@ -41,7 +41,7 @@ struct LedgerCacheSaverTest : virtual testing::Test {
                 boost::json::parse(
                     fmt::format(
                         R"JSON({{"cache": {{"file": {{"path": "{}", "async_save": {} }} }} }})JSON",
-                        kFILE_PATH,
+                        kFilePath,
                         asyncSave
                     )
                 )
@@ -59,7 +59,7 @@ TEST_F(LedgerCacheSaverTest, SaveSuccessfully)
     auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
     LedgerCacheSaver saver{config, cache};
 
-    EXPECT_CALL(cache, saveToFile(kFILE_PATH))
+    EXPECT_CALL(cache, saveToFile(kFilePath))
         .WillOnce(testing::Return(std::expected<void, std::string>{}));
 
     saver.save();
@@ -71,7 +71,7 @@ TEST_F(LedgerCacheSaverTest, SaveWithError)
     auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
     LedgerCacheSaver saver{config, cache};
 
-    EXPECT_CALL(cache, saveToFile(kFILE_PATH))
+    EXPECT_CALL(cache, saveToFile(kFilePath))
         .WillOnce(
             testing::Return(std::expected<void, std::string>(std::unexpected("Failed to save")))
         );
@@ -96,7 +96,7 @@ TEST_F(LedgerCacheSaverTest, DestructorWaitsForCompletion)
     std::binary_semaphore semaphore{1};
     std::atomic_bool saveCompleted{false};
 
-    EXPECT_CALL(cache, saveToFile(kFILE_PATH)).WillOnce([&]() {
+    EXPECT_CALL(cache, saveToFile(kFilePath)).WillOnce([&]() {
         semaphore.release();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         saveCompleted = true;
@@ -117,7 +117,7 @@ TEST_F(LedgerCacheSaverTest, WaitToFinishCanBeCalledMultipleTimes)
     auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
     LedgerCacheSaver saver{config, cache};
 
-    EXPECT_CALL(cache, saveToFile(kFILE_PATH));
+    EXPECT_CALL(cache, saveToFile(kFilePath));
 
     saver.save();
     saver.waitToFinish();
@@ -140,7 +140,7 @@ TEST_F(LedgerCacheSaverAssertTest, MultipleSavesNotAllowed)
     LedgerCacheSaver saver{config, cache};
     std::binary_semaphore semaphore{0};
 
-    EXPECT_CALL(cache, saveToFile(kFILE_PATH)).WillOnce([&](auto&&) {
+    EXPECT_CALL(cache, saveToFile(kFilePath)).WillOnce([&](auto&&) {
         semaphore.acquire();
         return std::expected<void, std::string>{};
     });
@@ -157,7 +157,7 @@ TEST_F(LedgerCacheSaverTest, SyncSaveWaitsForCompletion)
 
     std::atomic_bool saveCompleted{false};
 
-    EXPECT_CALL(cache, saveToFile(kFILE_PATH)).WillOnce([&]() {
+    EXPECT_CALL(cache, saveToFile(kFilePath)).WillOnce([&]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         saveCompleted = true;
         return std::expected<void, std::string>{};
@@ -176,7 +176,7 @@ TEST_F(LedgerCacheSaverTest, AsyncSaveDoesNotWaitForCompletion)
     std::binary_semaphore continueExecution{0};
     std::atomic_bool saveCompleted{false};
 
-    EXPECT_CALL(cache, saveToFile(kFILE_PATH)).WillOnce([&]() {
+    EXPECT_CALL(cache, saveToFile(kFilePath)).WillOnce([&]() {
         saveStarted.release();
         continueExecution.acquire();
         saveCompleted = true;

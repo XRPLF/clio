@@ -18,14 +18,14 @@
 namespace data::cassandra::impl {
 
 class Tuple : public ManagedObject<CassTuple> {
-    static constexpr auto kDELETER = [](CassTuple* ptr) { cass_tuple_free(ptr); };
+    static constexpr auto kDeleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };
 
 public:
     /* implicit */ Tuple(CassTuple* ptr);
 
     template <typename... Types>
     explicit Tuple(std::tuple<Types...>&& value)
-        : ManagedObject{cass_tuple_new(std::tuple_size<std::tuple<Types...>>{}), kDELETER}
+        : ManagedObject{cass_tuple_new(std::tuple_size<std::tuple<Types...>>{}), kDeleter}
     {
         std::apply(std::bind_front(&Tuple::bind<Types...>, this), std::move(value));
     }
@@ -62,14 +62,14 @@ public:
         else if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
             auto const rc = cass_tuple_set_int64(*this, idx, std::forward<Type>(value));
             throwErrorIfNeeded(rc, "Bind int64");
-        } else if constexpr (std::is_same_v<DecayedType, ripple::uint256>) {
+        } else if constexpr (std::is_same_v<DecayedType, xrpl::uint256>) {
             auto const rc = cass_tuple_set_bytes(
                 *this,
                 idx,
                 static_cast<cass_byte_t const*>(static_cast<unsigned char const*>(value.data())),
                 value.size()
             );
-            throwErrorIfNeeded(rc, "Bind ripple::uint256");
+            throwErrorIfNeeded(rc, "Bind xrpl::uint256");
         } else {
             // type not supported for binding
             static_assert(util::Unsupported<DecayedType>);

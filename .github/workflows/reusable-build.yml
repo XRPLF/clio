@@ -13,10 +13,16 @@ on:
         required: true
         type: string
 
-      conan_profile:
-        description: Conan profile to use
+      compiler:
+        description: 'Compiler to build with ("gcc", "clang" or "apple-clang")'
         required: true
         type: string
+
+      sanitizers:
+        description: 'Sanitizers to enable ("address", "thread", "undefinedbehavior" or empty)'
+        required: false
+        type: string
+        default: ""
 
       build_type:
         description: Build type
@@ -37,11 +43,6 @@ on:
 
       code_coverage:
         description: Whether to enable code coverage
-        required: true
-        type: boolean
-
-      static:
-        description: Whether to build static binaries
         required: true
         type: boolean
 
@@ -90,52 +91,56 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: XRPLF/actions/cleanup-workspace@c7d9ce5ebb03c752a354889ecd870cadfc2b1cd4
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@90f11ee655d1687824fb8793db770477d52afbab
+        uses: XRPLF/actions/prepare-runner@e4b6449d55a61c002d7c3fdfa6c20f721ede0606
         with:
           enable_ccache: ${{ inputs.download_ccache }}
 
       - name: Print build environment
         uses: XRPLF/actions/print-build-env@59dec886e4afb05a1724443af08baccbc045b574
 
-      - name: Setup conan on macOS
-        if: ${{ runner.os == 'macOS' }}
-        run: ./.github/scripts/conan/init.sh
-
-      - name: Generate cache key
-        uses: ./.github/actions/cache-key
-        id: cache_key
+      - name: Set compiler environment
+        if: ${{ runner.os == 'Linux' }}
+        uses: ./.github/actions/set-compiler-env
         with:
-          conan_profile: ${{ inputs.conan_profile }}
+          compiler: ${{ inputs.compiler }}
+
+      - name: Setup conan
+        run: conan/init.sh
+
+      - name: Generate build identifier
+        uses: ./.github/actions/build-identifier
+        id: build_identifier
+        with:
           build_type: ${{ inputs.build_type }}
+          compiler: ${{ inputs.compiler }}
           code_coverage: ${{ inputs.code_coverage }}
+          sanitizers: ${{ inputs.sanitizers }}
 
       - name: Restore ccache cache
         if: ${{ inputs.download_ccache && github.ref != 'refs/heads/develop' }}
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ${{ steps.cache_key.outputs.key }}
+          key: ${{ steps.build_identifier.outputs.cache_key }}
           restore-keys: |
-            ${{ steps.cache_key.outputs.restore_keys }}
+            ${{ steps.build_identifier.outputs.build_identifier }}
 
       - name: Run conan
         uses: ./.github/actions/conan
         with:
-          conan_profile: ${{ inputs.conan_profile }}
           build_type: ${{ inputs.build_type }}
+          sanitizers: ${{ inputs.sanitizers }}
 
       - name: Run CMake
         uses: ./.github/actions/cmake
         with:
-          conan_profile: ${{ inputs.conan_profile }}
           build_type: ${{ inputs.build_type }}
           code_coverage: ${{ inputs.code_coverage }}
-          static: ${{ inputs.static }}
           time_trace: ${{ inputs.analyze_build_time }}
           package: ${{ inputs.package }}
           version: ${{ inputs.version }}
@@ -149,14 +154,14 @@ jobs:
         if: ${{ inputs.analyze_build_time }}
         run: |
           ClangBuildAnalyzer --all build/ build_time_report.bin
-          ClangBuildAnalyzer --analyze build_time_report.bin > build_time_report.txt
+          ClangBuildAnalyzer --analyze build_time_report.bin >build_time_report.txt
           cat build_time_report.txt
 
       - name: Upload build time analyze report
         if: ${{ inputs.analyze_build_time }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: build_time_report_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          name: build_time_report_${{ steps.build_identifier.outputs.build_identifier }}
           path: build_time_report.txt
 
       - name: Show ccache's statistics and zero it
@@ -167,45 +172,45 @@ jobs:
 
       - name: Save ccache cache
         if: ${{ inputs.upload_ccache && github.ref == 'refs/heads/develop' }}
-        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ${{ steps.cache_key.outputs.key }}
+          key: ${{ steps.build_identifier.outputs.cache_key }}
 
       - name: Strip unit_tests
-        if: ${{ !endsWith(inputs.conan_profile, 'san') && !inputs.code_coverage && !inputs.analyze_build_time }}
+        if: ${{ inputs.sanitizers == '' && !inputs.code_coverage && !inputs.analyze_build_time }}
         run: strip build/clio_tests
 
       - name: Strip integration_tests
-        if: ${{ !endsWith(inputs.conan_profile, 'san') && !inputs.code_coverage && !inputs.analyze_build_time }}
+        if: ${{ inputs.sanitizers == '' && !inputs.code_coverage && !inputs.analyze_build_time }}
         run: strip build/clio_integration_tests
 
       - name: Upload clio_server
         if: ${{ inputs.upload_clio_server && !inputs.code_coverage && !inputs.analyze_build_time }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          name: clio_server_${{ steps.build_identifier.outputs.build_identifier }}
           path: build/clio_server
 
       - name: Upload clio_tests
         if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          name: clio_tests_${{ steps.build_identifier.outputs.build_identifier }}
           path: build/clio_tests
 
       - name: Upload clio_integration_tests
         if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          name: clio_integration_tests_${{ steps.build_identifier.outputs.build_identifier }}
           path: build/clio_integration_tests
 
       - name: Upload Clio Linux package
         if: ${{ inputs.package }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clio_deb_package_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          name: clio_deb_package_${{ steps.build_identifier.outputs.build_identifier }}
           path: build/*.deb
 
       # This is run as part of the build job, because it requires the following:
@@ -227,13 +232,13 @@ jobs:
           set -e
           EXPECTED_VERSION="clio-${INPUT_VERSION}"
           if [[ "${BUILD_TYPE}" == "Debug" ]]; then
-            EXPECTED_VERSION="${EXPECTED_VERSION}+DEBUG"
+              EXPECTED_VERSION="${EXPECTED_VERSION}+DEBUG"
           fi
 
           actual_version=$(./build/clio_server --version | head -n 1)
           if [[ "${actual_version}" != "${EXPECTED_VERSION}" ]]; then
-            echo "Expected version '${EXPECTED_VERSION}', but got '${actual_version}'"
-            exit 1
+              echo "Expected version '${EXPECTED_VERSION}', but got '${actual_version}'"
+              exit 1
           fi
 
   # `codecov/codecov-action` will rerun `gcov` if it's available and build directory is present

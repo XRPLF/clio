@@ -37,13 +37,13 @@ namespace rpc {
  * @brief Represents an entry in the book_changes' changes array.
  */
 struct BookChange {
-    ripple::STAmount sideAVolume;
-    ripple::STAmount sideBVolume;
-    ripple::STAmount highRate;
-    ripple::STAmount lowRate;
-    ripple::STAmount openRate;
-    ripple::STAmount closeRate;
-    std::optional<ripple::uint256> domain;
+    xrpl::STAmount sideAVolume;
+    xrpl::STAmount sideBVolume;
+    xrpl::STAmount highRate;
+    xrpl::STAmount lowRate;
+    xrpl::STAmount openRate;
+    xrpl::STAmount closeRate;
+    std::optional<xrpl::uint256> domain;
 };
 
 /**
@@ -90,59 +90,59 @@ private:
 
     private:
         void
-        handleAffectedNode(ripple::STObject const& node)
+        handleAffectedNode(xrpl::STObject const& node)
         {
             auto const& metaType = node.getFName();
-            auto const nodeType = node.getFieldU16(ripple::sfLedgerEntryType);
+            auto const nodeType = node.getFieldU16(xrpl::sfLedgerEntryType);
 
-            // we only care about ripple::ltOFFER objects being modified or
+            // we only care about xrpl::ltOFFER objects being modified or
             // deleted
-            if (nodeType != ripple::ltOFFER || metaType == ripple::sfCreatedNode)
+            if (nodeType != xrpl::ltOFFER || metaType == xrpl::sfCreatedNode)
                 return;
 
             // if either FF or PF are missing we can't compute
             // but generally these are cancelled rather than crossed
             // so skipping them is consistent
-            if (!node.isFieldPresent(ripple::sfFinalFields) ||
-                !node.isFieldPresent(ripple::sfPreviousFields))
+            if (!node.isFieldPresent(xrpl::sfFinalFields) ||
+                !node.isFieldPresent(xrpl::sfPreviousFields))
                 return;
 
             auto const& finalFields =
-                node.peekAtField(ripple::sfFinalFields).downcast<ripple::STObject>();
+                node.peekAtField(xrpl::sfFinalFields).downcast<xrpl::STObject>();
             auto const& previousFields =
-                node.peekAtField(ripple::sfPreviousFields).downcast<ripple::STObject>();
+                node.peekAtField(xrpl::sfPreviousFields).downcast<xrpl::STObject>();
 
             // defensive case that should never be hit
-            if (!finalFields.isFieldPresent(ripple::sfTakerGets) ||
-                !finalFields.isFieldPresent(ripple::sfTakerPays) ||
-                !previousFields.isFieldPresent(ripple::sfTakerGets) ||
-                !previousFields.isFieldPresent(ripple::sfTakerPays))
+            if (!finalFields.isFieldPresent(xrpl::sfTakerGets) ||
+                !finalFields.isFieldPresent(xrpl::sfTakerPays) ||
+                !previousFields.isFieldPresent(xrpl::sfTakerGets) ||
+                !previousFields.isFieldPresent(xrpl::sfTakerPays))
                 return;
 
             // filter out any offers deleted by explicit offer cancels
-            if (metaType == ripple::sfDeletedNode && offerCancel_ &&
-                finalFields.getFieldU32(ripple::sfSequence) == *offerCancel_)
+            if (metaType == xrpl::sfDeletedNode && offerCancel_ &&
+                finalFields.getFieldU32(xrpl::sfSequence) == *offerCancel_)
                 return;
 
             // compute the difference in gets and pays actually
             // affected onto the offer
-            auto const deltaGets = finalFields.getFieldAmount(ripple::sfTakerGets) -
-                previousFields.getFieldAmount(ripple::sfTakerGets);
-            auto const deltaPays = finalFields.getFieldAmount(ripple::sfTakerPays) -
-                previousFields.getFieldAmount(ripple::sfTakerPays);
+            auto const deltaGets = finalFields.getFieldAmount(xrpl::sfTakerGets) -
+                previousFields.getFieldAmount(xrpl::sfTakerGets);
+            auto const deltaPays = finalFields.getFieldAmount(xrpl::sfTakerPays) -
+                previousFields.getFieldAmount(xrpl::sfTakerPays);
 
-            transformAndStore(deltaGets, deltaPays, finalFields[~ripple::sfDomainID]);
+            transformAndStore(deltaGets, deltaPays, finalFields[~xrpl::sfDomainID]);
         }
 
         void
         transformAndStore(
-            ripple::STAmount const& deltaGets,
-            ripple::STAmount const& deltaPays,
-            std::optional<ripple::uint256> const& domain
+            xrpl::STAmount const& deltaGets,
+            xrpl::STAmount const& deltaPays,
+            std::optional<xrpl::uint256> const& domain
         )
         {
-            auto const g = to_string(deltaGets.issue());
-            auto const p = to_string(deltaPays.issue());
+            auto const g = to_string(deltaGets.get<xrpl::Issue>());
+            auto const p = to_string(deltaPays.get<xrpl::Issue>());
 
             auto const noswap = [&]() {
                 if (isXRP(deltaGets))
@@ -154,15 +154,15 @@ private:
             auto second = noswap ? deltaPays : deltaGets;
 
             // defensively programmed, should (probably) never happen
-            if (second == beast::zero)
+            if (second == beast::kZero)
                 return;
 
-            auto const rate = divide(first, second, ripple::noIssue());
+            auto const rate = divide(first, second, xrpl::noIssue());
 
-            if (first < beast::zero)
+            if (first < beast::kZero)
                 first = -first;
 
-            if (second < beast::zero)
+            if (second < beast::kZero)
                 second = -second;
 
             auto const key = noswap ? (g + '|' + p) : (p + '|' + g);
@@ -197,24 +197,24 @@ private:
         handleBookChange(data::TransactionAndMetadata const& blob)
         {
             auto const [tx, meta] = rpc::deserializeTxPlusMeta(blob);
-            if (!tx || !meta || !tx->isFieldPresent(ripple::sfTransactionType))
+            if (!tx || !meta || !tx->isFieldPresent(xrpl::sfTransactionType))
                 return;
 
             offerCancel_ = shouldCancelOffer(tx);
-            for (auto const& node : meta->getFieldArray(ripple::sfAffectedNodes))
+            for (auto const& node : meta->getFieldArray(xrpl::sfAffectedNodes))
                 handleAffectedNode(node);
         }
 
         static std::optional<uint32_t>
-        shouldCancelOffer(std::shared_ptr<ripple::STTx const> const& tx)
+        shouldCancelOffer(std::shared_ptr<xrpl::STTx const> const& tx)
         {
-            switch (tx->getFieldU16(ripple::sfTransactionType)) {
+            switch (tx->getFieldU16(xrpl::sfTransactionType)) {
                 // in future if any other ways emerge to cancel an offer
                 // this switch makes them easy to add
-                case ripple::ttOFFER_CANCEL:
-                case ripple::ttOFFER_CREATE:
-                    if (tx->isFieldPresent(ripple::sfOfferSequence))
-                        return tx->getFieldU32(ripple::sfOfferSequence);
+                case xrpl::ttOFFER_CANCEL:
+                case xrpl::ttOFFER_CREATE:
+                    if (tx->isFieldPresent(xrpl::sfOfferSequence))
+                        return tx->getFieldU32(xrpl::sfOfferSequence);
                     [[fallthrough]];
                 default:
                     return std::nullopt;
@@ -232,12 +232,12 @@ private:
 inline void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const& change)
 {
-    auto amountStr = [](ripple::STAmount const& amount) -> std::string {
+    auto amountStr = [](xrpl::STAmount const& amount) -> std::string {
         return isXRP(amount) ? to_string(amount.xrp()) : to_string(amount.iou());
     };
 
-    auto currencyStr = [](ripple::STAmount const& amount) -> std::string {
-        return isXRP(amount) ? "XRP_drops" : to_string(amount.issue());
+    auto currencyStr = [](xrpl::STAmount const& amount) -> std::string {
+        return isXRP(amount) ? "XRP_drops" : to_string(amount.get<xrpl::Issue>());
     };
 
     jv = {
@@ -252,7 +252,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
     };
 
     if (change.domain.has_value())
-        jv.as_object()[JS(domain)] = ripple::to_string(*change.domain);
+        jv.as_object()[JS(domain)] = xrpl::to_string(*change.domain);
 }
 
 /**
@@ -264,7 +264,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
  */
 [[nodiscard]] boost::json::object
 computeBookChanges(
-    ripple::LedgerHeader const& lgrInfo,
+    xrpl::LedgerHeader const& lgrInfo,
     std::vector<data::TransactionAndMetadata> const& transactions
 );
 

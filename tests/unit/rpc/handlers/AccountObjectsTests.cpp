@@ -30,27 +30,26 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
 
-constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr auto kISSUER = "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW";
-constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr auto kINDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
-constexpr auto kTXN_ID = "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
-constexpr auto kTOKEN_ID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA";
-constexpr auto kMAX_SEQ = 30;
-constexpr auto kMIN_SEQ = 10;
+constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto kIssuer = "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW";
+constexpr auto kAccount2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kIndex1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
+constexpr auto kTxnId = "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
+constexpr auto kTokenId = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA";
+constexpr auto kMaxSeq = 30;
+constexpr auto kMinSeq = 10;
 
 }  // namespace
 
 struct RPCAccountObjectsHandlerTest : HandlerBaseTest {
     RPCAccountObjectsHandlerTest()
     {
-        backend_->setRange(kMIN_SEQ, kMAX_SEQ);
+        backend_->setRange(kMinSeq, kMaxSeq);
     }
 };
 
@@ -191,7 +190,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountObjectsGroup1,
     AccountObjectsParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(AccountObjectsParameterTest, InvalidParams)
@@ -199,7 +198,7 @@ TEST_P(AccountObjectsParameterTest, InvalidParams)
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
-        auto const req = json::parse(testBundle.testJson);
+        auto const req = boost::json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -211,21 +210,21 @@ TEST_P(AccountObjectsParameterTest, InvalidParams)
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
 {
     // return empty ledgerHeader
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _))
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMaxSeq, _))
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "ledger_index": 30
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -236,20 +235,20 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
 {
     // return empty ledgerHeader
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMaxSeq, _)).WillOnce(Return(std::nullopt));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "ledger_index": "30"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -260,22 +259,22 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
 {
     // return empty ledgerHeader
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "ledger_hash": "{}"
             }})JSON",
-            kACCOUNT,
-            kLEDGER_HASH
+            kAccount,
+            kLedgerHash
         )
     );
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -285,22 +284,22 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
 
 TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
     EXPECT_CALL(*backend_, doFetchLedgerObject).WillOnce(Return(std::optional<Blob>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -310,7 +309,7 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
 
 TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
 {
-    static constexpr auto kEXPECTED_OUT = R"JSON({
+    static constexpr auto kExpectedOut = R"JSON({
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
         "validated": true,
@@ -342,118 +341,118 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
         ]
     })JSON";
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     bbs.push_back(line1.getSerializer().peekData());
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, Limit)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    static constexpr auto kLIMIT = 10;
-    auto count = kLIMIT * 2;
+    static constexpr auto kLimit = 10;
+    auto count = kLimit * 2;
     // put 20 items in owner dir, but only return 10
     auto const ownerDir =
-        createOwnerDirLedgerObject(std::vector(count, ripple::uint256{kINDEX1}), kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+        createOwnerDirLedgerObject(std::vector(count, xrpl::uint256{kIndex1}), kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     while (count-- != 0) {
         auto const line1 = createRippleStateLedgerObject(
-            "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+            "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
         );
         bbs.push_back(line1.getSerializer().peekData());
     }
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {}
             }})JSON",
-            kACCOUNT,
-            kLIMIT
+            kAccount,
+            kLimit
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), kLIMIT);
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), kLimit);
         EXPECT_EQ(
-            output.result->as_object().at("marker").as_string(), fmt::format("{},{}", kINDEX1, 0)
+            output.result->as_object().at("marker").as_string(), fmt::format("{},{}", kIndex1, 0)
         );
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, Marker)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kAccount)).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    static constexpr auto kLIMIT = 20;
-    static constexpr auto kPAGE = 2;
-    auto count = kLIMIT;
+    static constexpr auto kLimit = 20;
+    static constexpr auto kPage = 2;
+    auto count = kLimit;
     auto const ownerDir =
-        createOwnerDirLedgerObject(std::vector(count, ripple::uint256{kINDEX1}), kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
-    auto const hintIndex = ripple::keylet::page(ownerDirKk, kPAGE).key;
+        createOwnerDirLedgerObject(std::vector(count, xrpl::uint256{kIndex1}), kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
+    auto const hintIndex = xrpl::keylet::page(ownerDirKk, kPage).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(hintIndex, 30, _))
         .Times(2)
         .WillRepeatedly(Return(ownerDir.getSerializer().peekData()));
@@ -461,147 +460,147 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
     std::vector<Blob> bbs;
     while (count-- != 0) {
         auto const line1 = createRippleStateLedgerObject(
-            "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+            "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
         );
         bbs.push_back(line1.getSerializer().peekData());
     }
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "marker": "{},{}"
             }})JSON",
-            kACCOUNT,
-            kINDEX1,
-            kPAGE
+            kAccount,
+            kIndex1,
+            kPage
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), kLIMIT - 1);
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), kLimit - 1);
         EXPECT_FALSE(output.result->as_object().contains("marker"));
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    static constexpr auto kCOUNT = 10;
-    static constexpr auto kNEXTPAGE = 1;
-    auto cc = kCOUNT;
-    auto ownerDir = createOwnerDirLedgerObject(std::vector(cc, ripple::uint256{kINDEX1}), kINDEX1);
+    static constexpr auto kCount = 10;
+    static constexpr auto kNextpage = 1;
+    auto cc = kCount;
+    auto ownerDir = createOwnerDirLedgerObject(std::vector(cc, xrpl::uint256{kIndex1}), kIndex1);
     // set next page
-    ownerDir.setFieldU64(ripple::sfIndexNext, kNEXTPAGE);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    auto const page1 = ripple::keylet::page(ownerDirKk, kNEXTPAGE).key;
+    ownerDir.setFieldU64(xrpl::sfIndexNext, kNextpage);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const page1 = xrpl::keylet::page(ownerDirKk, kNextpage).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject(page1, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     // 10 items per page, 2 pages
-    cc = kCOUNT * 2;
+    cc = kCount * 2;
     while (cc-- != 0) {
         auto const line1 = createRippleStateLedgerObject(
-            "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+            "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
         );
         bbs.push_back(line1.getSerializer().peekData());
     }
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {}
             }})JSON",
-            kACCOUNT,
-            2 * kCOUNT
+            kAccount,
+            2 * kCount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), kCOUNT * 2);
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), kCount * 2);
         EXPECT_EQ(
             output.result->as_object().at("marker").as_string(),
-            fmt::format("{},{}", kINDEX1, kNEXTPAGE)
+            fmt::format("{},{}", kIndex1, kNextpage)
         );
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     // put 1 state and 1 offer
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     auto const offer = createOfferLedgerObject(
-        kACCOUNT,
+        kAccount,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
-        kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
-        kINDEX1
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
     );
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "type": "offer"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 1);
     });
@@ -609,50 +608,50 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     // put 1 state and 1 amm
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     bbs.push_back(line1.getSerializer().peekData());
 
     auto const ammObject =
-        createAmmObject(kACCOUNT, "XRP", toBase58(ripple::xrpAccount()), "JPY", kACCOUNT2);
+        createAmmObject(kAccount, "XRP", toBase58(xrpl::xrpAccount()), "JPY", kAccount2);
     bbs.push_back(ammObject.getSerializer().peekData());
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "type": "amm"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         auto const& accountObjects = output.result->as_object().at("account_objects").as_array();
         ASSERT_EQ(accountObjects.size(), 1);
@@ -662,56 +661,56 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     auto const offer = createOfferLedgerObject(
-        kACCOUNT,
+        kAccount,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
-        kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
-        kINDEX1
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
     );
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "type": "check"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 0);
     });
@@ -719,39 +718,39 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const account = getAccountIdWithString(kAccount);
 
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     auto const line = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     auto const channel =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
     auto const offer = createOfferLedgerObject(
-        kACCOUNT,
+        kAccount,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
-        kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
-        kINDEX1
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
     );
 
     std::vector<Blob> bbs;
@@ -761,19 +760,19 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "deletion_blockers_only": true
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 2);
     });
@@ -781,29 +780,29 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     auto const line = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     auto const channel =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
 
     std::vector<Blob> bbs;
     bbs.push_back(line.getSerializer().peekData());
@@ -811,20 +810,20 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "deletion_blockers_only": true,
                 "type": "payment_channel"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 1);
     });
@@ -832,43 +831,43 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     auto const offer1 = createOfferLedgerObject(
-        kACCOUNT,
+        kAccount,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
-        kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
-        kINDEX1
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
     );
     auto const offer2 = createOfferLedgerObject(
-        kACCOUNT,
+        kAccount,
         20,
         30,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
-        kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
-        kINDEX1
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
     );
 
     std::vector<Blob> bbs;
@@ -877,19 +876,19 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "deletion_blockers_only": true
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 0);
     });
@@ -900,42 +899,42 @@ TEST_F(
     DeletionBlockersOnlyFilterWithIncompatibleTypeYieldsEmptyResult
 )
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     auto const offer1 = createOfferLedgerObject(
-        kACCOUNT,
+        kAccount,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
-        kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
-        kINDEX1
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
     );
     auto const offer2 = createOfferLedgerObject(
-        kACCOUNT,
+        kAccount,
         20,
         30,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
-        kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
-        kINDEX1
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
     );
 
     std::vector<Blob> bbs;
@@ -944,20 +943,20 @@ TEST_F(
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "deletion_blockers_only": true,
                 "type": "offer"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 0);
     });
@@ -965,7 +964,7 @@ TEST_F(
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
 {
-    static constexpr auto kEXPECTED_OUT = R"JSON({
+    static constexpr auto kExpectedOut = R"JSON({
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
         "validated": true,
@@ -1028,157 +1027,158 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
         ]
     })JSON";
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft page 1
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     auto const nftPage2KK =
-        ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{kINDEX1}).key;
+        xrpl::keylet::nftokenPage(xrpl::keylet::nftokenPageMin(account), xrpl::uint256{kIndex1})
+            .key;
     auto const nftpage1 = createNftTokenPage(
-        std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, nftPage2KK
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, nftPage2KK
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _))
         .WillOnce(Return(nftpage1.getSerializer().peekData()));
 
     // nft page 2 , end
     auto const nftpage2 = createNftTokenPage(
-        std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, std::nullopt
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, std::nullopt
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftPage2KK, 30, _))
         .WillOnce(Return(nftpage2.getSerializer().peekData()));
 
     std::vector<Blob> bbs;
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     bbs.push_back(line1.getSerializer().peekData());
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto current = ripple::keylet::nftpage_max(account).key;
-    std::string first{kINDEX1};
+    auto current = xrpl::keylet::nftokenPageMax(account).key;
+    std::string first{kIndex1};
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = ripple::keylet::nftpage(
-                            ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}
+        auto previous = xrpl::keylet::nftokenPage(
+                            xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
         )
                             .key;
         auto const nftpage = createNftTokenPage(
-            std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, previous
+            std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
         EXPECT_CALL(*backend_, doFetchLedgerObject(current, 30, _))
             .WillOnce(Return(nftpage.getSerializer().peekData()));
         current = previous;
     }
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {}
             }})JSON",
-            kACCOUNT,
+            kAccount,
             10
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value().as_object().at("account_objects").as_array().size(), 10);
         EXPECT_EQ(
             output.result.value().as_object().at("marker").as_string(),
-            fmt::format("{},{}", ripple::strHex(current), std::numeric_limits<uint32_t>::max())
+            fmt::format("{},{}", xrpl::strHex(current), std::numeric_limits<uint32_t>::max())
         );
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto current = ripple::keylet::nftpage_max(account).key;
-    std::string first{kINDEX1};
+    auto current = xrpl::keylet::nftokenPageMax(account).key;
+    std::string first{kIndex1};
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = ripple::keylet::nftpage(
-                            ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}
+        auto previous = xrpl::keylet::nftokenPage(
+                            xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
         )
                             .key;
         auto const nftpage = createNftTokenPage(
-            std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, previous
+            std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
         EXPECT_CALL(*backend_, doFetchLedgerObject(current, 30, _))
             .WillOnce(Return(nftpage.getSerializer().peekData()));
         current = previous;
     }
     auto const nftpage11 = createNftTokenPage(
-        std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, std::nullopt
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, std::nullopt
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(current, 30, _))
         .WillOnce(Return(nftpage11.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {}
             }})JSON",
-            kACCOUNT,
+            kAccount,
             11
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value().as_object().at("account_objects").as_array().size(), 11);
         //"0000000000000000000000000000000000000000000000000000000000000000,4294967295"
@@ -1186,7 +1186,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
             output.result.value().as_object().at("marker").as_string(),
             fmt::format(
                 "{},{}",
-                ripple::strHex(ripple::uint256(beast::zero)),
+                xrpl::strHex(xrpl::uint256(beast::kZero)),
                 std::numeric_limits<uint32_t>::max()
             )
         );
@@ -1195,61 +1195,61 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    std::string first{kINDEX1};
-    auto current = ripple::keylet::nftpage(
-                       ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}
+    std::string first{kIndex1};
+    auto current = xrpl::keylet::nftokenPage(
+                       xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
     )
                        .key;
     auto const marker = current;
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = ripple::keylet::nftpage(
-                            ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}
+        auto previous = xrpl::keylet::nftokenPage(
+                            xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
         )
                             .key;
         auto const nftpage = createNftTokenPage(
-            std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, previous
+            std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
         EXPECT_CALL(*backend_, doFetchLedgerObject(current, 30, _))
             .WillOnce(Return(nftpage.getSerializer().peekData()));
         current = previous;
     }
     auto const nftpage11 = createNftTokenPage(
-        std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, std::nullopt
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, std::nullopt
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(current, 30, _))
         .WillOnce(Return(nftpage11.getSerializer().peekData()));
 
     auto const ownerDir = createOwnerDirLedgerObject(
-        {ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}}, kINDEX1
+        {xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}}, kIndex1
     );
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const line = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     auto const channel =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
     auto const offer = createOfferLedgerObject(
-        kACCOUNT,
+        kAccount,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
-        kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
-        kINDEX1
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
     );
 
     std::vector<Blob> bbs;
@@ -1259,21 +1259,21 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "marker": "{},{}"
             }})JSON",
-            kACCOUNT,
-            ripple::strHex(marker),
+            kAccount,
+            xrpl::strHex(marker),
             std::numeric_limits<uint32_t>::max()
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
             output.result.value().as_object().at("account_objects").as_array().size(), 11 + 3
@@ -1285,35 +1285,35 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 // when limit reached, happen to be the end of NFT page list
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = createOwnerDirLedgerObject(
-        {ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}}, kINDEX1
+        {xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}}, kIndex1
     );
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const line = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     auto const channel =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
     auto const offer = createOfferLedgerObject(
-        kACCOUNT,
+        kAccount,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
-        kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
-        kINDEX1
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
     );
 
     std::vector<Blob> bbs;
@@ -1323,21 +1323,21 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "marker": "{},{}"
             }})JSON",
-            kACCOUNT,
-            ripple::strHex(ripple::uint256{beast::zero}),
+            kAccount,
+            xrpl::strHex(xrpl::uint256{beast::kZero}),
             std::numeric_limits<uint32_t>::max()
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value().as_object().at("account_objects").as_array().size(), 3);
         EXPECT_FALSE(output.result.value().as_object().contains("marker"));
@@ -1346,29 +1346,29 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "marker": "{},{}"
             }})JSON",
-            kACCOUNT,
-            kINDEX1,
+            kAccount,
+            kIndex1,
             std::numeric_limits<std::uint32_t>::max()
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -1378,34 +1378,34 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     // return null for this marker
-    auto const accountNftMax = ripple::keylet::nftpage_max(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountNftMax, kMAX_SEQ, _))
+    auto const accountNftMax = xrpl::keylet::nftokenPageMax(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountNftMax, kMaxSeq, _))
         .WillOnce(Return(std::nullopt));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "marker": "{},{}"
             }})JSON",
-            kACCOUNT,
-            ripple::strHex(accountNftMax),
+            kAccount,
+            xrpl::strHex(accountNftMax),
             std::numeric_limits<std::uint32_t>::max()
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -1415,60 +1415,60 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    std::string first{kINDEX1};
-    auto current = ripple::keylet::nftpage(
-                       ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}
+    std::string first{kIndex1};
+    auto current = xrpl::keylet::nftokenPage(
+                       xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
     )
                        .key;
     auto const marker = current;
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = ripple::keylet::nftpage(
-                            ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}
+        auto previous = xrpl::keylet::nftokenPage(
+                            xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
         )
                             .key;
         auto const nftpage = createNftTokenPage(
-            std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, previous
+            std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
         EXPECT_CALL(*backend_, doFetchLedgerObject(current, 30, _))
             .WillOnce(Return(nftpage.getSerializer().peekData()));
         current = previous;
     }
     auto const nftpage11 = createNftTokenPage(
-        std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, std::nullopt
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, std::nullopt
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(current, 30, _))
         .WillOnce(Return(nftpage11.getSerializer().peekData()));
 
     auto const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+        createOwnerDirLedgerObject({xrpl::uint256{kIndex1}, xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const line = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     auto const channel =
-        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
     auto const offer = createOfferLedgerObject(
-        kACCOUNT,
+        kAccount,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
-        kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
-        kINDEX1
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
     );
 
     std::vector<Blob> bbs;
@@ -1478,35 +1478,35 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "marker": "{},{}",
                 "limit": 12
             }})JSON",
-            kACCOUNT,
-            ripple::strHex(marker),
+            kAccount,
+            xrpl::strHex(marker),
             std::numeric_limits<uint32_t>::max()
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value().as_object().at("account_objects").as_array().size(), 12);
         // marker not in NFT "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC,0"
         EXPECT_EQ(
             output.result.value().as_object().at("marker").as_string(),
-            fmt::format("{},{}", kINDEX1, 0)
+            fmt::format("{},{}", kIndex1, 0)
         );
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
 {
-    static constexpr auto kEXPECTED_OUT = R"JSON({
+    static constexpr auto kExpectedOut = R"JSON({
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
         "validated": true,
@@ -1547,118 +1547,119 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
         ]
     })JSON";
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft page 1
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     auto const nftPage2KK =
-        ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{kINDEX1}).key;
+        xrpl::keylet::nftokenPage(xrpl::keylet::nftokenPageMin(account), xrpl::uint256{kIndex1})
+            .key;
     auto const nftpage1 = createNftTokenPage(
-        std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, nftPage2KK
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, nftPage2KK
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _))
         .WillOnce(Return(nftpage1.getSerializer().peekData()));
 
     // nft page 2 , end
     auto const nftpage2 = createNftTokenPage(
-        std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, std::nullopt
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, std::nullopt
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftPage2KK, 30, _))
         .WillOnce(Return(nftpage2.getSerializer().peekData()));
 
     std::vector<Blob> bbs;
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     bbs.push_back(line1.getSerializer().peekData());
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "type": "nft_page"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    static constexpr auto kLIMIT = 10;
-    auto count = kLIMIT * 2;
+    static constexpr auto kLimit = 10;
+    auto count = kLimit * 2;
     // put 20 items in owner dir, but only return 10
     auto const ownerDir =
-        createOwnerDirLedgerObject(std::vector(count, ripple::uint256{kINDEX1}), kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+        createOwnerDirLedgerObject(std::vector(count, xrpl::uint256{kIndex1}), kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     std::vector<Blob> bbs;
     while (count-- != 0) {
         auto const line1 = createRippleStateLedgerObject(
-            "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+            "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
         );
         bbs.push_back(line1.getSerializer().peekData());
     }
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {},
                 "marker": "{},{}"
             }})JSON",
-            kACCOUNT,
-            kLIMIT,
-            ripple::strHex(ripple::uint256{beast::zero}),
+            kAccount,
+            kLimit,
+            xrpl::strHex(xrpl::uint256{beast::kZero}),
             std::numeric_limits<uint32_t>::max()
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), kLIMIT);
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), kLimit);
         EXPECT_EQ(
-            output.result->as_object().at("marker").as_string(), fmt::format("{},{}", kINDEX1, 0)
+            output.result->as_object().at("marker").as_string(), fmt::format("{},{}", kIndex1, 0)
         );
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
 {
-    static auto const kEXPECTED_OUT = fmt::format(
+    static auto const kExpectedOut = fmt::format(
         R"JSON({{
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
@@ -1690,56 +1691,56 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
                 }}
             ]
         }})JSON",
-        AccountObjectsHandler::kLIMIT_MIN
+        AccountObjectsHandler::kLimitMin
     );
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     bbs.push_back(line1.getSerializer().peekData());
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {}
             }})JSON",
-            kACCOUNT,
-            AccountObjectsHandler::kLIMIT_MIN - 1
+            kAccount,
+            AccountObjectsHandler::kLimitMin - 1
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
 {
-    static auto const kEXPECTED_OUT = fmt::format(
+    static auto const kExpectedOut = fmt::format(
         R"JSON({{
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
@@ -1771,92 +1772,92 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
                 }}
             ]
         }})JSON",
-        AccountObjectsHandler::kLIMIT_MAX
+        AccountObjectsHandler::kLimitMax
     );
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     auto const line1 = createRippleStateLedgerObject(
-        "USD", kISSUER, 100, kACCOUNT, 10, kACCOUNT2, 20, kTXN_ID, 123, 0
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
     );
     bbs.push_back(line1.getSerializer().peekData());
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "limit": {}
             }})JSON",
-            kACCOUNT,
-            AccountObjectsHandler::kLIMIT_MAX + 1
+            kAccount,
+            AccountObjectsHandler::kLimitMax + 1
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTIssuanceType)
 {
-    auto const ledgerinfo = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerinfo = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     // put 1 mpt issuance
-    auto const issuanceObject = createMptIssuanceObject(kACCOUNT, 2, "metadata");
+    auto const issuanceObject = createMptIssuanceObject(kAccount, 2, "metadata");
     bbs.push_back(issuanceObject.getSerializer().peekData());
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "type": "mpt_issuance"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         auto const& accountObjects = output.result->as_object().at("account_objects").as_array();
         ASSERT_EQ(accountObjects.size(), 1);
@@ -1865,51 +1866,51 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTIssuanceType)
         // make sure mptID is synethetically parsed if object is mptIssuance
         EXPECT_EQ(
             accountObjects.front().at("mpt_issuance_id").as_string(),
-            ripple::to_string(ripple::makeMptID(2, getAccountIdWithString(kACCOUNT)))
+            xrpl::to_string(xrpl::makeMptID(2, getAccountIdWithString(kAccount)))
         );
     });
 }
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTokenType)
 {
-    auto const ledgerinfo = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
+    auto const ledgerinfo = createLedgerHeader(kLedgerHash, kMaxSeq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _))
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMaxSeq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
-    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     // put 1 mpt issuance
     auto const mptokenObject =
-        createMpTokenObject(kACCOUNT, ripple::makeMptID(2, getAccountIdWithString(kACCOUNT)));
+        createMpTokenObject(kAccount, xrpl::makeMptID(2, getAccountIdWithString(kAccount)));
     bbs.push_back(mptokenObject.getSerializer().peekData());
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "account": "{}",
                 "type": "mptoken"
             }})JSON",
-            kACCOUNT
+            kAccount
         )
     );
 
     auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         auto const& accountObjects = output.result->as_object().at("account_objects").as_array();
         ASSERT_EQ(accountObjects.size(), 1);

@@ -62,7 +62,7 @@ public:
 
 private:
     static constexpr std::array<char const*, static_cast<size_t>(Status::NumStatuses)>
-        kSTATUS_STR_MAP = {"Migrated", "NotMigrated", "NotKnown"};
+        kStatusStrMap = {"Migrated", "NotMigrated", "NotKnown"};
 
     Status status_;
 };

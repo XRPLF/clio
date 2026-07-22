@@ -57,7 +57,7 @@ ProxyIpResolver::resolveClientIp(std::string const& connectionIp, HttpHeaders co
         return extractClientIp(headers);
     }
 
-    if (auto it = headers.find(kPROXY_TOKEN_HEADER); it != headers.end()) {
+    if (auto it = headers.find(kProxyTokenHeader); it != headers.end()) {
         auto const tokenHash = util::sha256sum(it->value());
         if (proxyTokens_.contains(tokenHash)) {
             return extractClientIp(headers);
@@ -78,22 +78,22 @@ ProxyIpResolver::extractClientIp(HttpHeaders const& headers)
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Forwarded#using_the_forwarded_header
     auto const headerValue = util::toLower(it->value());
 
-    static constexpr std::string_view kFOR_PREFIX = "for=";
-    auto const startPos = headerValue.rfind(kFOR_PREFIX);
+    static constexpr std::string_view kForPrefix = "for=";
+    auto const startPos = headerValue.rfind(kForPrefix);
     if (startPos == std::string::npos) {
         return std::nullopt;
     }
-    auto value = it->value().substr(startPos + kFOR_PREFIX.size());
+    auto value = it->value().substr(startPos + kForPrefix.size());
 
-    static constexpr char kSECTION_DELIMITER = ';';
-    static constexpr char kCHAIN_DELIMITER = ',';
-    auto const sectionEnd = value.find(kSECTION_DELIMITER);
-    auto const chainEnd = value.find(kCHAIN_DELIMITER);
+    static constexpr char kSectionDelimiter = ';';
+    static constexpr char kChainDelimiter = ',';
+    auto const sectionEnd = value.find(kSectionDelimiter);
+    auto const chainEnd = value.find(kChainDelimiter);
     auto const endPos = std::min(sectionEnd, chainEnd);
     auto const ip = value.substr(0, endPos);
 
-    static constexpr auto kMIN_IP_LENGTH = 7;  // minimum 3 dots + 4 digits
-    if (ip.size() < kMIN_IP_LENGTH) {
+    static constexpr auto kMinIpLength = 7;  // minimum 3 dots + 4 digits
+    if (ip.size() < kMinIpLength) {
         return std::nullopt;
     }
 

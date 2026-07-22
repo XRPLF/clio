@@ -179,7 +179,7 @@ INSTANTIATE_TEST_CASE_P(
             .expectedResult = std::unexpected{"'validated' ledger index is requested"}
         }
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(GetLedgerIndexParameterTest, getLedgerIndexParams)

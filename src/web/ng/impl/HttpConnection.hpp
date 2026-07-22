@@ -59,7 +59,7 @@ template <typename StreamType>
 class HttpConnection : public UpgradableConnection {
     StreamType stream_;
     std::optional<boost::beast::http::request<boost::beast::http::string_body>> request_;
-    std::chrono::steady_clock::duration timeout_{kDEFAULT_TIMEOUT};
+    std::chrono::steady_clock::duration timeout_{kDefaultTimeout};
 
     using MessageType = boost::beast::http::response<boost::beast::http::string_body>;
     SendingQueue<MessageType> sendingQueue_;

@@ -76,7 +76,7 @@ public:
      *
      * @return The current value
      */
-    ValueType
+    [[nodiscard]] ValueType
     value() const
     {
         return value_;

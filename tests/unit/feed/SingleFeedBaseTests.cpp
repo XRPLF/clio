@@ -13,7 +13,7 @@
 #include <memory>
 
 namespace {
-constexpr auto kFEED = R"JSON({"test": "test"})JSON";
+constexpr auto kFeed = R"JSON({"test": "test"})JSON";
 }  // namespace
 
 using namespace feed::impl;
@@ -64,24 +64,24 @@ using SingleFeedBaseTest = FeedBaseTest<NamedSingleFeedTest>;
 TEST_F(SingleFeedBaseTest, Test)
 {
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kFEED)));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kFeed)));
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
-    testFeedPtr->pub(kFEED);
+    testFeedPtr->pub(kFeed);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
-    testFeedPtr->pub(kFEED);
+    testFeedPtr->pub(kFeed);
 }
 
 TEST_F(SingleFeedBaseTest, TestAutoDisconnect)
 {
     web::SubscriptionContextInterface::OnDisconnectSlot slot;
     EXPECT_CALL(*mockSessionPtr, onDisconnect).WillOnce(testing::SaveArg<0>(&slot));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kFEED)));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kFeed)));
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
-    testFeedPtr->pub(kFEED);
+    testFeedPtr->pub(kFeed);
 
     slot(sessionPtr.get());
     sessionPtr.reset();

@@ -27,7 +27,7 @@ class RequestBuilder {
     util::Logger log_{"RequestBuilder"};
     std::string host_;
     std::string port_;
-    std::chrono::milliseconds timeout_{kDEFAULT_TIMEOUT};
+    std::chrono::milliseconds timeout_{kDefaultTimeout};
     boost::beast::http::request<boost::beast::http::string_body> request_;
 
 public:
@@ -168,9 +168,9 @@ public:
     std::expected<std::string, RequestError>
     post(boost::asio::yield_context yield);
 
-    static constexpr std::chrono::milliseconds kDEFAULT_TIMEOUT{
+    static constexpr std::chrono::milliseconds kDefaultTimeout{
         30000
-    }; /**< Default timeout for requests */
+    };  ///< Default timeout for requests
 
 private:
     std::expected<std::string, RequestError>

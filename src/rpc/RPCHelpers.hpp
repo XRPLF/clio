@@ -21,7 +21,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/regex.hpp>
-#include <boost/regex/v5/regex_fwd.hpp>
 #include <boost/regex/v5/regex_match.hpp>
 #include <fmt/format.h>
 #include <xrpl/basics/Number.h>
@@ -65,16 +64,18 @@
 
 namespace rpc {
 
-/** @brief Enum for NFT json manipulation */
+/**
+ * @brief Enum for NFT json manipulation
+ */
 enum class NFTokenjson { ENABLE, DISABLE };
 
 /**
- * @brief Get a ripple::AccountID from its string representation
+ * @brief Get a xrpl::AccountID from its string representation
  *
  * @param account The string representation of the account
  * @return The account ID or std::nullopt if the string is not a valid account
  */
-std::optional<ripple::AccountID>
+std::optional<xrpl::AccountID>
 accountFromStringStrict(std::string const& account);
 
 /**
@@ -85,7 +86,7 @@ accountFromStringStrict(std::string const& account);
  * @return true if the SLE is owned by the account
  */
 bool
-isOwnedByAccount(ripple::SLE const& sle, ripple::AccountID const& accountID);
+isOwnedByAccount(xrpl::SLE const& sle, xrpl::AccountID const& accountID);
 
 /**
  * @brief Get the start hint for the account
@@ -95,7 +96,7 @@ isOwnedByAccount(ripple::SLE const& sle, ripple::AccountID const& accountID);
  * @return The start hint
  */
 std::uint64_t
-getStartHint(ripple::SLE const& sle, ripple::AccountID const& accountID);
+getStartHint(xrpl::SLE const& sle, xrpl::AccountID const& accountID);
 
 /**
  * @brief Parse the account cursor from the JSON
@@ -113,7 +114,7 @@ parseAccountCursor(std::optional<std::string> jsonCursor);
  * @param blobs The TransactionAndMetadata to deserialize
  * @return The deserialized objects
  */
-std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>>
+std::pair<std::shared_ptr<xrpl::STTx const>, std::shared_ptr<xrpl::STObject const>>
 deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs);
 
 // TODO this function should probably be in a different file and namespace
@@ -124,7 +125,7 @@ deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs);
  * @param seq The sequence number to set
  * @return The deserialized objects
  */
-std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::TxMeta const>>
+std::pair<std::shared_ptr<xrpl::STTx const>, std::shared_ptr<xrpl::TxMeta const>>
 deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs, std::uint32_t seq);
 
 /**
@@ -175,8 +176,8 @@ insertDeliverMaxAlias(boost::json::object& txJson, std::uint32_t apiVersion);
 bool
 insertDeliveredAmount(
     boost::json::object& metaJson,
-    std::shared_ptr<ripple::STTx const> const& txn,
-    std::shared_ptr<ripple::TxMeta const> const& meta,
+    std::shared_ptr<xrpl::STTx const> const& txn,
+    std::shared_ptr<xrpl::TxMeta const> const& meta,
     uint32_t date
 );
 
@@ -195,9 +196,9 @@ insertDeliveredAmount(
 bool
 insertMPTIssuanceID(
     boost::json::object& txnJson,
-    std::shared_ptr<ripple::STTx const> const& txn,
+    std::shared_ptr<xrpl::STTx const> const& txn,
     boost::json::object& metaJson,
-    std::shared_ptr<ripple::TxMeta const> const& meta
+    std::shared_ptr<xrpl::TxMeta const> const& meta
 );
 
 /**
@@ -207,7 +208,7 @@ insertMPTIssuanceID(
  * @return The JSON object
  */
 boost::json::object
-toJson(ripple::STBase const& obj);
+toJson(xrpl::STBase const& obj);
 
 /**
  * @brief Convert SLE to JSON
@@ -216,7 +217,7 @@ toJson(ripple::STBase const& obj);
  * @return The JSON object
  */
 boost::json::object
-toJson(ripple::SLE const& sle);
+toJson(xrpl::SLE const& sle);
 
 /**
  * @brief Convert a LedgerHeader to JSON object.
@@ -227,7 +228,7 @@ toJson(ripple::SLE const& sle);
  * @return The JSON object.
  */
 boost::json::object
-toJson(ripple::LedgerHeader const& info, bool binary, std::uint32_t apiVersion);
+toJson(xrpl::LedgerHeader const& info, bool binary, std::uint32_t apiVersion);
 
 /**
  * @brief Convert a TxMeta to JSON object.
@@ -236,9 +237,9 @@ toJson(ripple::LedgerHeader const& info, bool binary, std::uint32_t apiVersion);
  * @return The JSON object.
  */
 boost::json::object
-toJson(ripple::TxMeta const& meta);
+toJson(xrpl::TxMeta const& meta);
 
-using RippledJson = Json::Value;
+using RippledJson = json::Value;
 
 /**
  * @brief Convert a RippledJson to boost::json::value
@@ -260,8 +261,8 @@ toBoostJson(RippledJson const& value);
  */
 boost::json::object
 generatePubLedgerMessage(
-    ripple::LedgerHeader const& lgrInfo,
-    ripple::Fees const& fees,
+    xrpl::LedgerHeader const& lgrInfo,
+    xrpl::Fees const& fees,
     std::string const& ledgerRange,
     std::uint32_t txnCount
 );
@@ -273,7 +274,7 @@ generatePubLedgerMessage(
  * @param ctx The context of the request
  * @return The ledger info or an error status
  */
-std::expected<ripple::LedgerHeader, Status>
+std::expected<xrpl::LedgerHeader, Status>
 ledgerHeaderFromRequest(
     std::shared_ptr<data::BackendInterface const> const& backend,
     web::Context const& ctx
@@ -289,7 +290,7 @@ ledgerHeaderFromRequest(
  * @param maxSeq The maximum sequence to search
  * @return The ledger info or an error status
  */
-std::expected<ripple::LedgerHeader, Status>
+std::expected<xrpl::LedgerHeader, Status>
 getLedgerHeaderFromHashOrSeq(
     BackendInterface const& backend,
     boost::asio::yield_context yield,
@@ -314,13 +315,13 @@ getLedgerHeaderFromHashOrSeq(
 std::expected<AccountCursor, Status>
 traverseOwnedNodes(
     BackendInterface const& backend,
-    ripple::Keylet const& owner,
-    ripple::uint256 const& hexMarker,
+    xrpl::Keylet const& owner,
+    xrpl::uint256 const& hexMarker,
     std::uint32_t startHint,
     std::uint32_t sequence,
     std::uint32_t limit,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE)> atOwnedNode
+    std::function<void(xrpl::SLE)> atOwnedNode
 );
 
 /**
@@ -341,12 +342,12 @@ traverseOwnedNodes(
 std::expected<AccountCursor, Status>
 traverseOwnedNodes(
     BackendInterface const& backend,
-    ripple::AccountID const& accountID,
+    xrpl::AccountID const& accountID,
     std::uint32_t sequence,
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE)> atOwnedNode,
+    std::function<void(xrpl::SLE)> atOwnedNode,
     bool nftIncluded = false
 );
 
@@ -359,11 +360,11 @@ traverseOwnedNodes(
  * @param context The context of the request
  * @return The SLE or nullptr if not found
  */
-std::shared_ptr<ripple::SLE const>
+std::shared_ptr<xrpl::SLE const>
 read(
     std::shared_ptr<data::BackendInterface const> const& backend,
-    ripple::Keylet const& keylet,
-    ripple::LedgerHeader const& lgrInfo,
+    xrpl::Keylet const& keylet,
+    xrpl::LedgerHeader const& lgrInfo,
     web::Context const& context
 );
 
@@ -373,7 +374,7 @@ read(
  * @param transaction The transaction
  * @return A vector of accounts associated with the transaction
  */
-std::vector<ripple::AccountID>
+std::vector<xrpl::AccountID>
 getAccountsFromTransaction(boost::json::object const& transaction);
 
 /**
@@ -384,7 +385,7 @@ getAccountsFromTransaction(boost::json::object const& transaction);
  * @return The blob
  */
 std::vector<unsigned char>
-ledgerHeaderToBlob(ripple::LedgerHeader const& info, bool includeHash = false);
+ledgerHeaderToBlob(xrpl::LedgerHeader const& info, bool includeHash = false);
 
 /**
  * @brief Whether global frozen is set
@@ -399,7 +400,7 @@ bool
 isGlobalFrozen(
     BackendInterface const& backend,
     std::uint32_t seq,
-    ripple::AccountID const& issuer,
+    xrpl::AccountID const& issuer,
     boost::asio::yield_context yield
 );
 
@@ -418,9 +419,9 @@ bool
 isFrozen(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& account,
-    ripple::Currency const& currency,
-    ripple::AccountID const& issuer,
+    xrpl::AccountID const& account,
+    xrpl::Currency const& currency,
+    xrpl::AccountID const& issuer,
     boost::asio::yield_context yield
 );
 
@@ -438,7 +439,7 @@ bool
 fetchAndCheckAnyFlagsExists(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::Keylet const& keylet,
+    xrpl::Keylet const& keylet,
     std::vector<std::uint32_t> const& flags,
     boost::asio::yield_context yield
 );
@@ -461,9 +462,9 @@ bool
 isDeepFrozen(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& account,
-    ripple::Currency const& currency,
-    ripple::AccountID const& issuer,
+    xrpl::AccountID const& account,
+    xrpl::Currency const& currency,
+    xrpl::AccountID const& issuer,
     boost::asio::yield_context yield
 );
 
@@ -482,9 +483,9 @@ bool
 isLPTokenFrozen(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& account,
-    ripple::Issue const& asset,
-    ripple::Issue const& asset2,
+    xrpl::AccountID const& account,
+    xrpl::Issue const& asset,
+    xrpl::Issue const& asset2,
     boost::asio::yield_context yield
 );
 
@@ -499,13 +500,13 @@ isLPTokenFrozen(
  * @param yield The coroutine context
  * @return The account funds
  */
-ripple::STAmount
+xrpl::STAmount
 accountFunds(
     BackendInterface const& backend,
     data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
-    ripple::STAmount const& amount,
-    ripple::AccountID const& id,
+    xrpl::STAmount const& amount,
+    xrpl::AccountID const& id,
     boost::asio::yield_context yield
 );
 
@@ -522,14 +523,14 @@ accountFunds(
  * @param yield The coroutine context
  * @return The amount account holds
  */
-ripple::STAmount
+xrpl::STAmount
 accountHolds(
     BackendInterface const& backend,
     data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
-    ripple::AccountID const& account,
-    ripple::Currency const& currency,
-    ripple::AccountID const& issuer,
+    xrpl::AccountID const& account,
+    xrpl::Currency const& currency,
+    xrpl::AccountID const& issuer,
     bool zeroIfFrozen,
     boost::asio::yield_context yield
 );
@@ -546,13 +547,13 @@ accountHolds(
  * @param yield The coroutine context
  * @return The amount account holds
  */
-ripple::STAmount
+xrpl::STAmount
 ammAccountHolds(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& account,
-    ripple::Currency const& currency,
-    ripple::AccountID const& issuer,
+    xrpl::AccountID const& account,
+    xrpl::Currency const& currency,
+    xrpl::AccountID const& issuer,
     bool const zeroIfFrozen,
     boost::asio::yield_context yield
 );
@@ -566,11 +567,11 @@ ammAccountHolds(
  * @param yield The coroutine context
  * @return The transfer rate
  */
-ripple::Rate
+xrpl::Rate
 transferRate(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& issuer,
+    xrpl::AccountID const& issuer,
     boost::asio::yield_context yield
 );
 
@@ -583,11 +584,11 @@ transferRate(
  * @param yield The coroutine context
  * @return The XRP liquidity
  */
-ripple::XRPAmount
+xrpl::XRPAmount
 xrpLiquid(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& id,
+    xrpl::AccountID const& id,
     boost::asio::yield_context yield
 );
 
@@ -606,8 +607,8 @@ xrpLiquid(
 boost::json::array
 postProcessOrderBook(
     std::vector<data::LedgerObject> const& offers,
-    ripple::Book const& book,
-    ripple::AccountID const& takerID,
+    xrpl::Book const& book,
+    xrpl::AccountID const& takerID,
     data::BackendInterface const& backend,
     data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t ledgerSequence,
@@ -624,12 +625,12 @@ postProcessOrderBook(
  * @param domain The domain
  * @return The book or an error status
  */
-std::expected<ripple::Book, Status>
+std::expected<xrpl::Book, Status>
 parseBook(
-    ripple::Currency pays,
-    ripple::AccountID payIssuer,
-    ripple::Currency gets,
-    ripple::AccountID getIssuer,
+    xrpl::Currency pays,
+    xrpl::AccountID payIssuer,
+    xrpl::Currency gets,
+    xrpl::AccountID getIssuer,
     std::optional<std::string> const& domain
 );
 
@@ -639,7 +640,7 @@ parseBook(
  * @param request The request
  * @return The book or an error status
  */
-std::expected<ripple::Book, Status>
+std::expected<xrpl::Book, Status>
 parseBook(boost::json::object const& request);
 
 /**
@@ -648,17 +649,17 @@ parseBook(boost::json::object const& request);
  * @param taker The taker as json
  * @return The taker account or an error status
  */
-std::expected<ripple::AccountID, Status>
+std::expected<xrpl::AccountID, Status>
 parseTaker(boost::json::value const& taker);
 
 /**
- * @brief Parse the json object into a ripple::Issue object.
+ * @brief Parse the json object into a xrpl::Issue object.
  * @param issue The json object to parse. The accepted format is { "currency" : "USD", "issuer" :
  * "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59" } or {"currency" : "XRP"}
- * @return The ripple::Issue object.
- * @exception raise Json::error exception if the json object is not in the accepted format.
+ * @return The xrpl::Issue object.
+ * @exception raise json::error exception if the json object is not in the accepted format.
  */
-ripple::Issue
+xrpl::Issue
 parseIssue(boost::json::object const& issue);
 
 /**
@@ -685,7 +686,7 @@ isAdminCmd(std::string const& method, boost::json::object const& request);
  * @param request The request
  * @return The NFTID or an error status
  */
-std::expected<ripple::uint256, Status>
+std::expected<xrpl::uint256, Status>
 getNFTID(boost::json::object const& request);
 
 /**
@@ -713,8 +714,8 @@ decodeCTID(T const ctid) noexcept
     auto const getCTID64 = [](T const ctid) noexcept -> std::optional<uint64_t> {
         if constexpr (std::is_convertible_v<T, std::string>) {
             std::string const ctidString(ctid);
-            static constexpr std::size_t kCTID_STRING_LENGTH = 16;
-            if (ctidString.length() != kCTID_STRING_LENGTH)
+            static constexpr std::size_t kCtidStringLength = 16;
+            if (ctidString.length() != kCtidStringLength)
                 return {};
 
             if (!boost::regex_match(ctidString, boost::regex("^[0-9A-F]+$")))
@@ -731,10 +732,10 @@ decodeCTID(T const ctid) noexcept
 
     auto const ctidValue = getCTID64(ctid).value_or(0);
 
-    static constexpr uint64_t kCTID_PREFIX = 0xC000'0000'0000'0000ULL;
-    static constexpr uint64_t kCTID_PREFIX_MASK = 0xF000'0000'0000'0000ULL;
+    static constexpr uint64_t kCtidPrefix = 0xC000'0000'0000'0000ULL;
+    static constexpr uint64_t kCtidPrefixMask = 0xF000'0000'0000'0000ULL;
 
-    if ((ctidValue & kCTID_PREFIX_MASK) != kCTID_PREFIX)
+    if ((ctidValue & kCtidPrefixMask) != kCtidPrefix)
         return {};
 
     uint32_t const ledgerSeq = (ctidValue >> 32) & 0xFFFF'FFFUL;
@@ -762,7 +763,7 @@ logDuration(
     using boost::json::serialize;
 
     static util::Logger const log{"RPC"};  // NOLINT(readability-identifier-naming)
-    static constexpr std::int64_t kDURATION_ERROR_THRESHOLD_SECONDS = 10;
+    static constexpr std::int64_t kDurationErrorThresholdSeconds = 10;
 
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
@@ -772,12 +773,13 @@ logDuration(
         serialize(util::removeSecret(request))
     );
 
-    if (seconds > kDURATION_ERROR_THRESHOLD_SECONDS) {
+    if (seconds > kDurationErrorThresholdSeconds) {
         LOG(log.error()) << tag << msg;
     } else if (seconds > 1) {
         LOG(log.warn()) << tag << msg;
-    } else
+    } else {
         LOG(log.info()) << tag << msg;
+    }
 }
 
 /**
@@ -786,7 +788,7 @@ logDuration(
  * @param value JSON value to parse from
  * @return The parsed seed if successful; std::nullopt otherwise
  */
-std::optional<ripple::Seed>
+std::optional<xrpl::Seed>
 parseRippleLibSeed(boost::json::value const& value);
 
 /**
@@ -805,11 +807,11 @@ std::expected<AccountCursor, Status>
 traverseNFTObjects(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::AccountID const& accountID,
-    ripple::uint256 nextPage,
+    xrpl::AccountID const& accountID,
+    xrpl::uint256 nextPage,
     std::uint32_t limit,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE)> atOwnedNode
+    std::function<void(xrpl::SLE)> atOwnedNode
 );
 
 /**
@@ -830,8 +832,8 @@ parseStringAsUInt(std::string const& value);  // TODO: move to string utils or s
  */
 bool
 canHaveDeliveredAmount(
-    std::shared_ptr<ripple::STTx const> const& txn,
-    std::shared_ptr<ripple::TxMeta const> const& meta
+    std::shared_ptr<xrpl::STTx const> const& txn,
+    std::shared_ptr<xrpl::TxMeta const> const& meta
 );
 
 /**
@@ -843,10 +845,10 @@ canHaveDeliveredAmount(
  * @param date The date of the ledger
  * @return The delivered amount or std::nullopt if not available
  */
-std::optional<ripple::STAmount>
+std::optional<xrpl::STAmount>
 getDeliveredAmount(
-    std::shared_ptr<ripple::STTx const> const& txn,
-    std::shared_ptr<ripple::TxMeta const> const& meta,
+    std::shared_ptr<xrpl::STTx const> const& txn,
+    std::shared_ptr<xrpl::TxMeta const> const& meta,
     std::uint32_t ledgerSequence,
     uint32_t date
 );

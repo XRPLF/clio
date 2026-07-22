@@ -28,20 +28,19 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
 
-constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr auto kACCOUNT3 = "raHGBERMka3KZsfpTQUAtumxmvpqhFLyrk";
-constexpr auto kISSUER = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
-constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr auto kINDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
-constexpr auto kINDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
-constexpr auto kTXN_ID = "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
-constexpr auto kAPI_VERSION = 2;
+constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto kAccount2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr auto kAccount3 = "raHGBERMka3KZsfpTQUAtumxmvpqhFLyrk";
+constexpr auto kIssuer = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
+constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kIndex1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
+constexpr auto kIndex2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr auto kTxnId = "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
+constexpr auto kApiVersion = 2;
 
 struct ParameterTestBundle {
     std::string testName;
@@ -68,7 +67,8 @@ TEST_P(ParameterTest, CheckError)
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(bundle.testJson), Context{.yield = yield, .apiVersion = bundle.apiVersion}
+            boost::json::parse(bundle.testJson),
+            Context{.yield = yield, .apiVersion = bundle.apiVersion}
         );
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -111,7 +111,7 @@ generateParameterTestBundles()
                     "account": "{}",
                     "ledger_index": "meh"
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed"
@@ -123,7 +123,7 @@ generateParameterTestBundles()
                     "account": "{}",
                     "ledger_hash": "meh"
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed"
@@ -135,7 +135,7 @@ generateParameterTestBundles()
                     "account": "{}",
                     "ledger_hash": 12
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString"
@@ -147,7 +147,7 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": 12
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidHotWallet",
             .expectedErrorMessage = "hotwalletNotStringOrArray"
@@ -159,7 +159,7 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": [12]
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidHotWallet",
             .expectedErrorMessage = "hotwalletMalformed"
@@ -171,7 +171,7 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": ["12"]
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidHotWallet",
             .expectedErrorMessage = "hotwalletMalformed"
@@ -183,7 +183,7 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": "12"
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidHotWallet",
             .expectedErrorMessage = "hotwalletMalformed"
@@ -195,11 +195,11 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": 12
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "hotwalletNotStringOrArray",
-            .apiVersion = kAPI_VERSION
+            .apiVersion = kApiVersion
         },
         ParameterTestBundle{
             .testName = "WalletsNotStringAccountV2",
@@ -208,11 +208,11 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": [12]
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "hotwalletMalformed",
-            .apiVersion = kAPI_VERSION
+            .apiVersion = kApiVersion
         },
         ParameterTestBundle{
             .testName = "WalletsInvalidAccountV2",
@@ -221,11 +221,11 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": ["12"]
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "hotwalletMalformed",
-            .apiVersion = kAPI_VERSION
+            .apiVersion = kApiVersion
         },
         ParameterTestBundle{
             .testName = "WalletInvalidAccountV2",
@@ -234,11 +234,11 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": "12"
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "hotwalletMalformed",
-            .apiVersion = kAPI_VERSION
+            .apiVersion = kApiVersion
         },
     };
 }
@@ -247,7 +247,7 @@ INSTANTIATE_TEST_SUITE_P(
     RPCGatewayBalancesHandler,
     ParameterTest,
     testing::ValuesIn(generateParameterTestBundles()),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
@@ -255,18 +255,18 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
     auto const seq = 123;
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence(seq, _))
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(
+            boost::json::parse(
                 fmt::format(
                     R"JSON({{
                         "account": "{}",
                         "ledger_index": "{}"
                     }})JSON",
-                    kACCOUNT,
+                    kAccount,
                     seq
                 )
             ),
@@ -284,18 +284,18 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
     auto const seq = 123;
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence(seq, _))
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(
+            boost::json::parse(
                 fmt::format(
                     R"JSON({{
                         "account": "{}",
                         "ledger_index": {}
                     }})JSON",
-                    kACCOUNT,
+                    kAccount,
                     seq
                 )
             ),
@@ -310,20 +310,20 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
 
 TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
 {
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(
+            boost::json::parse(
                 fmt::format(
                     R"JSON({{
                         "account": "{}",
                         "ledger_hash": "{}"
                     }})JSON",
-                    kACCOUNT,
-                    kLEDGER_HASH
+                    kAccount,
+                    kLedgerHash
                 )
             ),
             Context{yield}
@@ -339,22 +339,22 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
 {
     auto const seq = 300;
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, seq);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, seq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillOnce(Return(ledgerHeader));
 
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kAccount)).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, seq, _))
         .WillOnce(Return(std::optional<Blob>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(
+            boost::json::parse(
                 fmt::format(
                     R"JSON({{
                         "account": "{}"
                     }})JSON",
-                    kACCOUNT
+                    kAccount
                 )
             ),
             Context{yield}
@@ -368,8 +368,8 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
 
 struct NormalTestBundle {
     std::string testName;
-    ripple::STObject mockedDir;
-    std::vector<ripple::STObject> mockedObjects;
+    xrpl::STObject mockedDir;
+    std::vector<xrpl::STObject> mockedObjects;
     std::string expectedJson;
     std::string hotwallet;
 };
@@ -383,17 +383,17 @@ TEST_P(NormalPathTest, CheckOutput)
     auto const seq = 300;
 
     // return valid ledgerHeader
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, seq);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, seq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillOnce(Return(ledgerHeader));
 
     // return valid account
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kAccount)).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, seq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     // return valid owner dir
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, seq, _))
         .WillOnce(Return(bundle.mockedDir.getSerializer().peekData()));
 
@@ -406,20 +406,20 @@ TEST_P(NormalPathTest, CheckOutput)
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(
+            boost::json::parse(
                 fmt::format(
                     R"JSON({{
                         "account": "{}",
                         {}
                     }})JSON",
-                    kACCOUNT,
+                    kAccount,
                     bundle.hotwallet
                 )
             ),
             Context{yield}
         );
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result.value(), json::parse(bundle.expectedJson));
+        EXPECT_EQ(output.result.value(), boost::json::parse(bundle.expectedJson));
     });
 }
 
@@ -427,50 +427,49 @@ static auto
 generateNormalPathTestBundles()
 {
     auto frozenState = createRippleStateLedgerObject(
-        "JPY", kISSUER, -50, kACCOUNT, 10, kACCOUNT3, 20, kTXN_ID, 123
+        "JPY", kIssuer, -50, kAccount, 10, kAccount3, 20, kTxnId, 123
     );
-    frozenState.setFieldU32(ripple::sfFlags, ripple::lsfLowFreeze);
+    frozenState.setFieldU32(xrpl::sfFlags, xrpl::lsfLowFreeze);
 
-    auto overflowState = createRippleStateLedgerObject(
-        "JPY", kISSUER, 50, kACCOUNT, 10, kACCOUNT3, 20, kTXN_ID, 123
-    );
+    auto overflowState =
+        createRippleStateLedgerObject("JPY", kIssuer, 50, kAccount, 10, kAccount3, 20, kTxnId, 123);
     int64_t const min64 = -9922966390934554;
     overflowState.setFieldAmount(
-        ripple::sfBalance, ripple::STAmount(getIssue("JPY", kISSUER), min64, 80)
+        xrpl::sfBalance, xrpl::STAmount(getIssue("JPY", kIssuer), min64, 80)
     );
     return std::vector<NormalTestBundle>{
         NormalTestBundle{
             .testName = "AllBranches",
             .mockedDir = createOwnerDirLedgerObject(
-                {ripple::uint256{kINDEX2},
-                 ripple::uint256{kINDEX2},
-                 ripple::uint256{kINDEX2},
-                 ripple::uint256{kINDEX2},
-                 ripple::uint256{kINDEX2},
-                 ripple::uint256{kINDEX2}},
-                kINDEX1
+                {xrpl::uint256{kIndex2},
+                 xrpl::uint256{kIndex2},
+                 xrpl::uint256{kIndex2},
+                 xrpl::uint256{kIndex2},
+                 xrpl::uint256{kIndex2},
+                 xrpl::uint256{kIndex2}},
+                kIndex1
             ),
             .mockedObjects =
                 std::vector{
                     // hotwallet
                     createRippleStateLedgerObject(
-                        "USD", kISSUER, -10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
+                        "USD", kIssuer, -10, kAccount, 100, kAccount2, 200, kTxnId, 123
                     ),
                     // hotwallet
                     createRippleStateLedgerObject(
-                        "CNY", kISSUER, -20, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
+                        "CNY", kIssuer, -20, kAccount, 100, kAccount2, 200, kTxnId, 123
                     ),
                     // positive balance -> asset
                     createRippleStateLedgerObject(
-                        "EUR", kISSUER, 30, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123
+                        "EUR", kIssuer, 30, kAccount, 100, kAccount3, 200, kTxnId, 123
                     ),
                     // positive balance -> asset
                     createRippleStateLedgerObject(
-                        "JPY", kISSUER, 40, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123
+                        "JPY", kIssuer, 40, kAccount, 100, kAccount3, 200, kTxnId, 123
                     ),
                     // obligation
                     createRippleStateLedgerObject(
-                        "JPY", kISSUER, -50, kACCOUNT, 10, kACCOUNT3, 20, kTXN_ID, 123
+                        "JPY", kIssuer, -50, kAccount, 10, kAccount3, 20, kTxnId, 123
                     ),
                     frozenState
 
@@ -516,18 +515,18 @@ generateNormalPathTestBundles()
                     "ledger_index": 300,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})JSON",
-                kACCOUNT2,
-                kACCOUNT3,
-                kACCOUNT3,
-                kACCOUNT
+                kAccount2,
+                kAccount3,
+                kAccount3,
+                kAccount
             ),
-            .hotwallet = fmt::format(R"("hotwallet": "{}")", kACCOUNT2)
+            .hotwallet = fmt::format(R"("hotwallet": "{}")", kAccount2)
         },
         NormalTestBundle{
             .testName = "NoHotwallet",
-            .mockedDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1),
+            .mockedDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1),
             .mockedObjects = std::vector{createRippleStateLedgerObject(
-                "JPY", kISSUER, -50, kACCOUNT, 10, kACCOUNT3, 20, kTXN_ID, 123
+                "JPY", kIssuer, -50, kAccount, 10, kAccount3, 20, kTxnId, 123
             )},
             .expectedJson = fmt::format(
                 R"JSON({{
@@ -538,14 +537,14 @@ generateNormalPathTestBundles()
                     "ledger_index": 300,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .hotwallet = R"("ledger_index" : "validated")"
         },
         NormalTestBundle{
             .testName = "ObligationOverflow",
             .mockedDir = createOwnerDirLedgerObject(
-                {ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1
+                {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
             ),
             .mockedObjects = std::vector{overflowState, overflowState},
             .expectedJson = fmt::format(
@@ -557,34 +556,34 @@ generateNormalPathTestBundles()
                     "ledger_index": 300,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})JSON",
-                kACCOUNT
+                kAccount
             ),
             .hotwallet = R"("ledger_index" : "validated")"
         },
         NormalTestBundle{
             .testName = "HighID",
             .mockedDir = createOwnerDirLedgerObject(
-                {ripple::uint256{kINDEX2},
-                 ripple::uint256{kINDEX2},
-                 ripple::uint256{kINDEX2},
-                 ripple::uint256{kINDEX2}},
-                kINDEX1
+                {xrpl::uint256{kIndex2},
+                 xrpl::uint256{kIndex2},
+                 xrpl::uint256{kIndex2},
+                 xrpl::uint256{kIndex2}},
+                kIndex1
             ),
             .mockedObjects =
                 std::vector{
                     // hotwallet
                     createRippleStateLedgerObject(
-                        "USD", kISSUER, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123
+                        "USD", kIssuer, 10, kAccount2, 100, kAccount, 200, kTxnId, 123
                     ),
                     // hotwallet
                     createRippleStateLedgerObject(
-                        "CNY", kISSUER, 20, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123
+                        "CNY", kIssuer, 20, kAccount2, 100, kAccount, 200, kTxnId, 123
                     ),
                     createRippleStateLedgerObject(
-                        "EUR", kISSUER, 30, kACCOUNT3, 100, kACCOUNT, 200, kTXN_ID, 123
+                        "EUR", kIssuer, 30, kAccount3, 100, kAccount, 200, kTxnId, 123
                     ),
                     createRippleStateLedgerObject(
-                        "JPY", kISSUER, -50, kACCOUNT3, 10, kACCOUNT, 20, kTXN_ID, 123
+                        "JPY", kIssuer, -50, kAccount3, 10, kAccount, 20, kTxnId, 123
                     )
                 },
             .expectedJson = fmt::format(
@@ -616,28 +615,27 @@ generateNormalPathTestBundles()
                     "ledger_index": 300,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})JSON",
-                kACCOUNT2,
-                kACCOUNT3,
-                kACCOUNT
+                kAccount2,
+                kAccount3,
+                kAccount
             ),
-            .hotwallet = fmt::format(R"("hotwallet": "{}")", kACCOUNT2)
+            .hotwallet = fmt::format(R"("hotwallet": "{}")", kAccount2)
         },
         NormalTestBundle{
             .testName = "HotWalletArray",
             .mockedDir = createOwnerDirLedgerObject(
-                {ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}},
-                kINDEX1
+                {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
             ),
             .mockedObjects =
                 std::vector{
                     createRippleStateLedgerObject(
-                        "USD", kISSUER, -10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
+                        "USD", kIssuer, -10, kAccount, 100, kAccount2, 200, kTxnId, 123
                     ),
                     createRippleStateLedgerObject(
-                        "CNY", kISSUER, -20, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
+                        "CNY", kIssuer, -20, kAccount, 100, kAccount2, 200, kTxnId, 123
                     ),
                     createRippleStateLedgerObject(
-                        "EUR", kISSUER, -30, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123
+                        "EUR", kIssuer, -30, kAccount, 100, kAccount3, 200, kTxnId, 123
                     )
 
                 },
@@ -665,11 +663,11 @@ generateNormalPathTestBundles()
                     "ledger_index": 300,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})JSON",
-                kACCOUNT3,
-                kACCOUNT2,
-                kACCOUNT
+                kAccount3,
+                kAccount2,
+                kAccount
             ),
-            .hotwallet = fmt::format(R"("hotwallet": ["{}", "{}"])", kACCOUNT2, kACCOUNT3)
+            .hotwallet = fmt::format(R"("hotwallet": ["{}", "{}"])", kAccount2, kAccount3)
         },
     };
 }
@@ -678,13 +676,13 @@ INSTANTIATE_TEST_SUITE_P(
     RPCGatewayBalancesHandler,
     NormalPathTest,
     testing::ValuesIn(generateNormalPathTestBundles()),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 struct EscrowTestBundle {
     std::string testName;
-    ripple::STObject mockedDir;
-    std::vector<ripple::STObject> mockedObjects;
+    xrpl::STObject mockedDir;
+    std::vector<xrpl::STObject> mockedObjects;
     std::string expectedJson;
 };
 
@@ -696,14 +694,14 @@ TEST_P(EscrowTest, CheckEscrowOutput)
     auto const& bundle = GetParam();
     auto const seq = 300;
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, seq);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, seq);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillOnce(Return(ledgerHeader));
 
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kAccount)).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, seq, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kAccount)).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, seq, _))
         .WillOnce(Return(bundle.mockedDir.getSerializer().peekData()));
 
@@ -716,18 +714,18 @@ TEST_P(EscrowTest, CheckEscrowOutput)
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(
+            boost::json::parse(
                 fmt::format(
                     R"JSON({{
                         "account": "{}"
                     }})JSON",
-                    kACCOUNT
+                    kAccount
                 )
             ),
             Context{yield}
         );
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result.value(), json::parse(bundle.expectedJson));
+        EXPECT_EQ(output.result.value(), boost::json::parse(bundle.expectedJson));
     });
 }
 
@@ -735,21 +733,21 @@ static auto
 generateEscrowTestBundles()
 {
     // Escrow with 100 XRP
-    auto escrow1 = createEscrowLedgerObject(kACCOUNT, kACCOUNT2);
-    escrow1.setFieldAmount(ripple::sfAmount, ripple::STAmount(100, false));
+    auto escrow1 = createEscrowLedgerObject(kAccount, kAccount2);
+    escrow1.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(100, false));
 
     // Escrow with 200 XRP
-    auto escrow2 = createEscrowLedgerObject(kACCOUNT, kACCOUNT3);
-    escrow2.setFieldAmount(ripple::sfAmount, ripple::STAmount(200, false));
+    auto escrow2 = createEscrowLedgerObject(kAccount, kAccount3);
+    escrow2.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(200, false));
 
     // Escrow with a non-XRP currency
-    auto escrow3 = createEscrowLedgerObject(kACCOUNT, kACCOUNT2);
-    escrow3.setFieldAmount(ripple::sfAmount, ripple::STAmount(getIssue("USD", kISSUER), 50));
+    auto escrow3 = createEscrowLedgerObject(kAccount, kAccount2);
+    escrow3.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(getIssue("USD", kIssuer), 50));
 
     return std::vector<EscrowTestBundle>{
         EscrowTestBundle{
             .testName = "SingleEscrowXRP",
-            .mockedDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1),
+            .mockedDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1),
             .mockedObjects = std::vector{escrow1},
             .expectedJson = fmt::format(
                 R"JSON({{
@@ -758,14 +756,14 @@ generateEscrowTestBundles()
                     "ledger_index": 300,
                     "ledger_hash": "{}"
                 }})JSON",
-                kACCOUNT,
-                kLEDGER_HASH
+                kAccount,
+                kLedgerHash
             )
         },
         EscrowTestBundle{
             .testName = "MultipleEscrowXRP",
             .mockedDir = createOwnerDirLedgerObject(
-                {ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1
+                {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
             ),
             .mockedObjects = std::vector{escrow1, escrow2},
             .expectedJson = fmt::format(
@@ -775,13 +773,13 @@ generateEscrowTestBundles()
                     "ledger_index": 300,
                     "ledger_hash": "{}"
                 }})JSON",
-                kACCOUNT,
-                kLEDGER_HASH
+                kAccount,
+                kLedgerHash
             )
         },
         EscrowTestBundle{
             .testName = "EscrowNonXRP",
-            .mockedDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1),
+            .mockedDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1),
             .mockedObjects = std::vector{escrow3},
             .expectedJson = fmt::format(
                 R"JSON({{
@@ -790,15 +788,14 @@ generateEscrowTestBundles()
                     "ledger_index": 300,
                     "ledger_hash": "{}"
                 }})JSON",
-                kACCOUNT,
-                kLEDGER_HASH
+                kAccount,
+                kLedgerHash
             )
         },
         EscrowTestBundle{
             .testName = "EscrowMixedCurrencies",
             .mockedDir = createOwnerDirLedgerObject(
-                {ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}},
-                kINDEX1
+                {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
             ),
             .mockedObjects = std::vector{escrow1, escrow2, escrow3},
             .expectedJson = fmt::format(
@@ -808,8 +805,8 @@ generateEscrowTestBundles()
                     "ledger_index": 300,
                     "ledger_hash": "{}"
                 }})JSON",
-                kACCOUNT,
-                kLEDGER_HASH
+                kAccount,
+                kLedgerHash
             )
         }
     };
@@ -819,5 +816,5 @@ INSTANTIATE_TEST_SUITE_P(
     RPCGatewayBalancesHandler,
     EscrowTest,
     testing::ValuesIn(generateEscrowTestBundles()),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );

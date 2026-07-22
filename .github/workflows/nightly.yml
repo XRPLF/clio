@@ -37,7 +37,7 @@ jobs:
       - name: Get current date
         id: get_date
         run: |
-          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+          echo "date=$(date +'%Y%m%d')" >>$GITHUB_OUTPUT
 
   build-and-test:
     name: Build and Test
@@ -47,33 +47,30 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos15
-            conan_profile: apple-clang
+          - os: macos-26-apple-clang-21
+            compiler: apple-clang
             build_type: Release
-            static: false
           - os: heavy
-            conan_profile: gcc
+            compiler: gcc
             build_type: Release
-            static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
           - os: heavy
-            conan_profile: gcc
+            compiler: gcc
             build_type: Debug
-            static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
           - os: heavy
-            conan_profile: gcc.ubsan
+            compiler: gcc
+            sanitizers: undefinedbehavior
             build_type: Release
-            static: false
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
 
     uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
-      conan_profile: ${{ matrix.conan_profile }}
+      compiler: ${{ matrix.compiler }}
+      sanitizers: ${{ matrix.sanitizers }}
       build_type: ${{ matrix.build_type }}
-      static: ${{ matrix.static }}
       run_unit_tests: true
       run_integration_tests: true
       upload_clio_server: true
@@ -88,13 +85,12 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
-      conan_profile: gcc
+      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
+      compiler: gcc
       build_type: Release
       download_ccache: false
       upload_ccache: false
       code_coverage: false
-      static: true
       upload_clio_server: false
       package: true
       version: nightly-${{ needs.get_date.outputs.date }}
@@ -110,23 +106,20 @@ jobs:
       matrix:
         include:
           - os: heavy
-            conan_profile: clang
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
-            static: true
-          - os: macos15
-            conan_profile: apple-clang
+            compiler: clang
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
+          - os: macos-26-apple-clang-21
+            compiler: apple-clang
             container: ""
-            static: false
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
-      conan_profile: ${{ matrix.conan_profile }}
+      compiler: ${{ matrix.compiler }}
       build_type: Release
       download_ccache: false
       upload_ccache: false
       code_coverage: false
-      static: ${{ matrix.static }}
       upload_clio_server: false
       targets: all
       analyze_build_time: true
@@ -157,7 +150,7 @@ jobs:
         type=raw,value=${{ github.sha }}
       artifact_name: clio_server_Linux_Release_gcc
       strip_binary: true
-      publish_image: ${{ github.event_name != 'pull_request' }}
+      push_image: ${{ github.repository == 'XRPLF/clio' && github.event_name != 'pull_request' }}
 
   create_issue_on_failure:
     needs: [build-and-test, nightly_release, build_and_publish_docker_image]
@@ -169,12 +162,12 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Create an issue
-        uses: XRPLF/actions/create-issue@fbcc16eb7f20dc3199eaf1aed0d3523a5ba9008c
+        uses: XRPLF/actions/create-issue@2b8bc36af85b88bca0dd7bfac2e2dc05f94ad712
         with:
           title: "Nightly release failed 🌙"
-          body: ""
+          body: "Please check the nightly release workflow for details."
           labels: "bug"
           assignees: "godexsoft,kuznetsss,mathbunnyru"

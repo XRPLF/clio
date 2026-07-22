@@ -17,17 +17,16 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
 
-constexpr auto kINDEX = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
-constexpr auto kTXN_ID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
-constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
-constexpr auto kAPI_VERSION = 2;
+constexpr auto kIndex = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
+constexpr auto kTxnId = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto kAccount2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr auto kCurrency = "0158415500000000C1F76FF6ECB0BAC600000000";
+constexpr auto kApiVersion = 2;
 
 }  // namespace
 
@@ -42,7 +41,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const output = handler.process(json::parse("{}"), Context{yield});
+        auto const output = handler.process(boost::json::parse("{}"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "fieldNotFoundTransaction");
@@ -55,7 +54,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
         auto const output =
-            handler.process(json::parse(R"JSON({"tx_hash": "123"})JSON"), Context{yield});
+            handler.process(boost::json::parse(R"JSON({"tx_hash": "123"})JSON"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -66,18 +65,18 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash return empty
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kINDEX}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kIndex}, _))
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "ledger_hash": "{}",
                 "tx_hash": "{}"
             }})JSON",
-            kINDEX,
-            kTXN_ID
+            kIndex,
+            kTxnId
         )
     );
     runSpawn([&, this](auto yield) {
@@ -95,15 +94,15 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 {
     // mock fetchLedgerBySequence return empty
     ON_CALL(*backend_, fetchLedgerBySequence)
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "ledger_index": "4",
                 "tx_hash": "{}"
             }})JSON",
-            kTXN_ID
+            kTxnId
         )
     );
     runSpawn([&, this](auto yield) {
@@ -118,19 +117,19 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 
 TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 {
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(createLedgerHeader(kINDEX, 30)));
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(createLedgerHeader(kIndex, 30)));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _))
+    ON_CALL(*backend_, fetchTransaction(xrpl::uint256{kTxnId}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
     EXPECT_CALL(*backend_, fetchTransaction).Times(1);
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "tx_hash": "{}"
                 }})JSON",
-                kTXN_ID
+                kTxnId
             )
         );
         auto const output = handler.process(req, Context{yield});
@@ -145,28 +144,28 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 {
     TransactionAndMetadata tx;
     tx.metadata =
-        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+        createMetaDataForCreateOffer(kCurrency, kAccount, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+        createCreateOfferTransactionObject(kAccount, 2, 100, kCurrency, kAccount2, 200, 300)
             .getSerializer()
             .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 10;
-    ON_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillByDefault(Return(tx));
+    ON_CALL(*backend_, fetchTransaction(xrpl::uint256{kTxnId}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*backend_, fetchTransaction).Times(1);
 
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(createLedgerHeader(kINDEX, 30)));
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(createLedgerHeader(kIndex, 30)));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "tx_hash": "{}",
                     "ledger_index": "30"
                 }})JSON",
-                kTXN_ID
+                kTxnId
             )
         );
         auto const output = handler.process(req, Context{yield});
@@ -179,7 +178,7 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 
 TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
 {
-    static constexpr auto kOUTPUT = R"JSON({
+    static constexpr auto kOutput = R"JSON({
         "metadata": {
             "AffectedNodes": [
                 {
@@ -220,41 +219,41 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
 
     TransactionAndMetadata tx;
     tx.metadata =
-        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+        createMetaDataForCreateOffer(kCurrency, kAccount, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+        createCreateOfferTransactionObject(kAccount, 2, 100, kCurrency, kAccount2, 200, 300)
             .getSerializer()
             .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 30;
-    ON_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillByDefault(Return(tx));
+    ON_CALL(*backend_, fetchTransaction(xrpl::uint256{kTxnId}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*backend_, fetchTransaction).Times(1);
 
     ON_CALL(*backend_, fetchLedgerBySequence)
-        .WillByDefault(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
+        .WillByDefault(Return(createLedgerHeader(kIndex, tx.ledgerSequence)));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "tx_hash": "{}",
                     "ledger_index": {}
                 }})JSON",
-                kTXN_ID,
+                kTxnId,
                 tx.ledgerSequence
             )
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(kOUTPUT), *output.result);
+        EXPECT_EQ(boost::json::parse(kOutput), *output.result);
     });
 }
 
 TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
 {
-    static constexpr auto kOUTPUT = R"JSON({
+    static constexpr auto kOutput = R"JSON({
         "meta": {
             "AffectedNodes": [
                 {
@@ -296,32 +295,32 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
 
     TransactionAndMetadata tx;
     tx.metadata =
-        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+        createMetaDataForCreateOffer(kCurrency, kAccount, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+        createCreateOfferTransactionObject(kAccount, 2, 100, kCurrency, kAccount2, 200, 300)
             .getSerializer()
             .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 30;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTxnId}, _)).WillOnce(Return(tx));
     EXPECT_CALL(*backend_, fetchLedgerBySequence)
-        .WillOnce(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
+        .WillOnce(Return(createLedgerHeader(kIndex, tx.ledgerSequence)));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const req = json::parse(
+        auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "tx_hash": "{}",
                     "ledger_index": {}
                 }})JSON",
-                kTXN_ID,
+                kTxnId,
                 tx.ledgerSequence
             )
         );
         auto const output =
-            handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
+            handler.process(req, Context{.yield = yield, .apiVersion = kApiVersion});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(kOUTPUT), *output.result);
+        EXPECT_EQ(boost::json::parse(kOutput), *output.result);
     });
 }

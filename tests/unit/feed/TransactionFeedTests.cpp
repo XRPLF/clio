@@ -31,18 +31,18 @@ using namespace data;
 
 namespace {
 
-constexpr auto kACCOUNT1 = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
-constexpr auto kISSUER = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
-constexpr auto kTXN_ID = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
-constexpr auto kAMM_ACCOUNT = "rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs";
-constexpr auto kLPTOKEN_CURRENCY = "037C35306B24AAB7FF90848206E003279AA47090";
-constexpr auto kNETWORK_ID = 0u;
-constexpr auto kNFT_MINT_ID = "000B013A95F14B0044F78A264E41713C64B5F89242540EE208C3098E00000D65";
+constexpr auto kAccount1 = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto kAccount2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kCurrency = "0158415500000000C1F76FF6ECB0BAC600000000";
+constexpr auto kIssuer = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
+constexpr auto kTxnId = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr auto kAmmAccount = "rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs";
+constexpr auto kLptokenCurrency = "037C35306B24AAB7FF90848206E003279AA47090";
+constexpr auto kNetworkId = 0u;
+constexpr auto kNftMintId = "000B013A95F14B0044F78A264E41713C64B5F89242540EE208C3098E00000D65";
 
-constexpr auto kTRAN_V1 =
+constexpr auto kTranV1 =
     R"JSON({
         "transaction": {
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -93,7 +93,7 @@ constexpr auto kTRAN_V1 =
         "engine_result_message": "The transaction was applied. Only final in a validated ledger."
     })JSON";
 
-constexpr auto kTRAN_V2 =
+constexpr auto kTranV2 =
     R"JSON({
         "tx_json": {
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -143,7 +143,7 @@ constexpr auto kTRAN_V2 =
         "engine_result_message": "The transaction was applied. Only final in a validated ledger."
     })JSON";
 
-constexpr auto kNFT_MINT_TRAN_V1 =
+constexpr auto kNftMintTranV1 =
     R"JSON({
         "transaction": {
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -218,21 +218,21 @@ TEST_F(FeedTransactionTest, SubTransactionV1)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV1)));
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(sessionPtr);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 }
 
@@ -242,21 +242,21 @@ TEST_F(FeedTransactionTest, SubTransactionForProposedTx)
     testFeedPtr->subProposed(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV1)));
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsubProposed(sessionPtr);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubTransactionV2)
@@ -265,156 +265,156 @@ TEST_F(FeedTransactionTest, SubTransactionV2)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV2)));
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubAccountV1)
 {
-    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account = getAccountIdWithString(kAccount1);
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
 
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV1)));
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubForProposedAccount)
 {
-    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account = getAccountIdWithString(kAccount1);
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->subProposed(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
 
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV1)));
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsubProposed(account, sessionPtr);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubAccountV2)
 {
-    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account = getAccountIdWithString(kAccount1);
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
 
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV2)));
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
 {
-    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account = getAccountIdWithString(kAccount1);
     EXPECT_CALL(*mockSessionPtr, onDisconnect).Times(2);
     testFeedPtr->sub(account, sessionPtr);
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
 
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).Times(2).WillRepeatedly(testing::Return(2));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(2);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV2))).Times(2);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubBookV1)
 {
-    auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    auto const issue1 = getIssue(kCurrency, kIssuer);
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    auto obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    auto obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
 
-    auto metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 3, 1, 1, 3);
+    auto metaObj = createMetaDataForBookChange(kCurrency, kIssuer, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    static constexpr auto kORDERBOOK_PUBLISH =
+    static constexpr auto kOrderbookPublish =
         R"JSON({
             "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -469,14 +469,14 @@ TEST_F(FeedTransactionTest, SubBookV1)
         })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kOrderbookPublish))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     // trigger by offer cancel meta data
-    metaObj = createMetaDataForCancelOffer(kCURRENCY, kISSUER, 22, 3, 1);
+    metaObj = createMetaDataForCancelOffer(kCurrency, kIssuer, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    static constexpr auto kORDERBOOK_CANCEL_PUBLISH =
+    static constexpr auto kOrderbookCancelPublish =
         R"JSON({
             "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -523,11 +523,11 @@ TEST_F(FeedTransactionTest, SubBookV1)
         })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_CANCEL_PUBLISH))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kOrderbookCancelPublish))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     // trigger by offer create meta data
-    static constexpr auto kORDERBOOK_CREATE_PUBLISH =
+    static constexpr auto kOrderbookCreatePublish =
         R"JSON({
             "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -572,38 +572,38 @@ TEST_F(FeedTransactionTest, SubBookV1)
             "close_time_iso": "2000-01-01T00:00:00Z",
             "engine_result_message": "The transaction was applied. Only final in a validated ledger."
         })JSON";
-    metaObj = createMetaDataForCreateOffer(kCURRENCY, kISSUER, 22, 3, 1);
+    metaObj = createMetaDataForCreateOffer(kCurrency, kIssuer, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_CREATE_PUBLISH))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kOrderbookCreatePublish))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubBookV2)
 {
-    auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    auto const issue1 = getIssue(kCurrency, kIssuer);
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    auto obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    auto obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
 
-    auto const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 3, 1, 1, 3);
+    auto const metaObj = createMetaDataForBookChange(kCurrency, kIssuer, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    static constexpr auto kORDERBOOK_PUBLISH =
+    static constexpr auto kOrderbookPublish =
         R"JSON({
             "tx_json": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -657,91 +657,91 @@ TEST_F(FeedTransactionTest, SubBookV2)
         })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kOrderbookPublish))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
 {
-    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account = getAccountIdWithString(kAccount1);
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account, sessionPtr);
 
-    auto const account2 = getAccountIdWithString(kACCOUNT2);
+    auto const account2 = getAccountIdWithString(kAccount2);
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account2, sessionPtr);
 
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV2))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV2))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
 {
-    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account = getAccountIdWithString(kAccount1);
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account, sessionPtr);
 
-    auto const account2 = getAccountIdWithString(kACCOUNT2);
+    auto const account2 = getAccountIdWithString(kAccount2);
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account2, sessionPtr);
 
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV2))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV2))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
@@ -754,23 +754,23 @@ TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV2))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubRepeat)
@@ -795,8 +795,8 @@ TEST_F(FeedTransactionTest, SubRepeat)
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    auto const account = getAccountIdWithString(kACCOUNT1);
-    auto const account2 = getAccountIdWithString(kACCOUNT2);
+    auto const account = getAccountIdWithString(kAccount1);
+    auto const account2 = getAccountIdWithString(kAccount2);
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account, sessionPtr);
@@ -816,8 +816,8 @@ TEST_F(FeedTransactionTest, SubRepeat)
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    auto const issue1 = getIssue(kCurrency, kIssuer);
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
@@ -840,39 +840,39 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj =
-        createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
+    xrpl::STObject const obj =
+        createCreateOfferTransactionObject(kAccount1, 1, 32, kCurrency, kIssuer, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray const metaArray{0};
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 22);
+    xrpl::STArray const metaArray{0};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 22);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    ripple::STObject line(ripple::sfIndexes);
-    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
-    line.setFieldAmount(ripple::sfLowLimit, ripple::STAmount(10, false));
-    line.setFieldAmount(ripple::sfHighLimit, ripple::STAmount(100, false));
-    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{kTXN_ID});
-    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
-    line.setFieldU32(ripple::sfFlags, 0);
-    auto const issue2 = getIssue(kCURRENCY, kISSUER);
-    line.setFieldAmount(ripple::sfBalance, ripple::STAmount(issue2, 100));
+    xrpl::STObject line(xrpl::sfIndexes);
+    line.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltRIPPLE_STATE);
+    line.setFieldAmount(xrpl::sfLowLimit, xrpl::STAmount(10, false));
+    line.setFieldAmount(xrpl::sfHighLimit, xrpl::STAmount(100, false));
+    line.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{kTxnId});
+    line.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 3);
+    line.setFieldU32(xrpl::sfFlags, 0);
+    auto const issue2 = getIssue(kCurrency, kIssuer);
+    line.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(issue2, 100));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
-    auto const issueAccount = getAccountIdWithString(kISSUER);
-    auto const kk = ripple::keylet::account(issueAccount).key;
+    auto const issueAccount = getAccountIdWithString(kIssuer);
+    auto const kk = xrpl::keylet::account(issueAccount).key;
     ON_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .WillByDefault(testing::Return(line.getSerializer().peekData()));
-    ripple::STObject const accountRoot = createAccountRootObject(kISSUER, 0, 1, 10, 2, kTXN_ID, 3);
+    xrpl::STObject const accountRoot = createAccountRootObject(kIssuer, 0, 1, 10, 2, kTxnId, 3);
     ON_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
-    static constexpr auto kTRANSACTION_FOR_OWNER_FUND =
+    static constexpr auto kTransactionForOwnerFund =
         R"JSON({
             "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -908,7 +908,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
         })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTransactionForOwnerFund))).Times(1);
     EXPECT_CALL(
         *mockAmendmentCenterPtr_,
         isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_)
@@ -918,7 +918,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
         isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_)
     )
         .WillByDefault(testing::Return(false));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, PublishesNFTokenMintTx)
@@ -926,23 +926,23 @@ TEST_F(FeedTransactionTest, PublishesNFTokenMintTx)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
 
     // Creates an NFTokenMint transaction
-    auto const trans = createMintNftTxWithMetadata(kACCOUNT1, 1, 12, 123, kNFT_MINT_ID);
+    auto const trans = createMintNftTxWithMetadata(kAccount1, 1, 12, 123, kNftMintId);
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kNFT_MINT_TRAN_V1)));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kNftMintTranV1)));
 
-    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
-static constexpr auto kTRAN_FROZEN =
+static constexpr auto kTranFrozen =
     R"JSON({
         "transaction": {
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -982,40 +982,40 @@ TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj =
-        createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
+    xrpl::STObject const obj =
+        createCreateOfferTransactionObject(kAccount1, 1, 32, kCurrency, kIssuer, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray const metaArray{0};
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 22);
+    xrpl::STArray const metaArray{0};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 22);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    ripple::STObject line(ripple::sfIndexes);
-    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
-    line.setFieldAmount(ripple::sfLowLimit, ripple::STAmount(10, false));
-    line.setFieldAmount(ripple::sfHighLimit, ripple::STAmount(100, false));
-    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{kTXN_ID});
-    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
-    line.setFieldU32(ripple::sfFlags, ripple::lsfHighFreeze);
-    line.setFieldAmount(ripple::sfBalance, ripple::STAmount(getIssue(kCURRENCY, kISSUER), 100));
+    xrpl::STObject line(xrpl::sfIndexes);
+    line.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltRIPPLE_STATE);
+    line.setFieldAmount(xrpl::sfLowLimit, xrpl::STAmount(10, false));
+    line.setFieldAmount(xrpl::sfHighLimit, xrpl::STAmount(100, false));
+    line.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{kTxnId});
+    line.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 3);
+    line.setFieldU32(xrpl::sfFlags, xrpl::lsfHighFreeze);
+    line.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(getIssue(kCurrency, kIssuer), 100));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
-    auto const issueAccount = getAccountIdWithString(kISSUER);
-    auto const kk = ripple::keylet::account(issueAccount).key;
+    auto const issueAccount = getAccountIdWithString(kIssuer);
+    auto const kk = xrpl::keylet::account(issueAccount).key;
     ON_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .WillByDefault(testing::Return(line.getSerializer().peekData()));
-    ripple::STObject const accountRoot = createAccountRootObject(kISSUER, 0, 1, 10, 2, kTXN_ID, 3);
+    xrpl::STObject const accountRoot = createAccountRootObject(kIssuer, 0, 1, 10, 2, kTxnId, 3);
     ON_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_FROZEN))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranFrozen))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
@@ -1023,46 +1023,46 @@ TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj =
-        createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
+    xrpl::STObject const obj =
+        createCreateOfferTransactionObject(kAccount1, 1, 32, kCurrency, kIssuer, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray const metaArray{0};
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 22);
+    xrpl::STArray const metaArray{0};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 22);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    ripple::STObject line(ripple::sfIndexes);
-    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
-    line.setFieldAmount(ripple::sfLowLimit, ripple::STAmount(10, false));
-    line.setFieldAmount(ripple::sfHighLimit, ripple::STAmount(100, false));
-    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{kTXN_ID});
-    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
-    line.setFieldU32(ripple::sfFlags, ripple::lsfHighFreeze);
-    auto const issueAccount = getAccountIdWithString(kISSUER);
-    line.setFieldAmount(ripple::sfBalance, ripple::STAmount(getIssue(kCURRENCY, kISSUER), 100));
+    xrpl::STObject line(xrpl::sfIndexes);
+    line.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltRIPPLE_STATE);
+    line.setFieldAmount(xrpl::sfLowLimit, xrpl::STAmount(10, false));
+    line.setFieldAmount(xrpl::sfHighLimit, xrpl::STAmount(100, false));
+    line.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{kTxnId});
+    line.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 3);
+    line.setFieldU32(xrpl::sfFlags, xrpl::lsfHighFreeze);
+    auto const issueAccount = getAccountIdWithString(kIssuer);
+    line.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(getIssue(kCurrency, kIssuer), 100));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
-    auto const kk = ripple::keylet::account(issueAccount).key;
+    auto const kk = xrpl::keylet::account(issueAccount).key;
     ON_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .WillByDefault(testing::Return(line.getSerializer().peekData()));
-    ripple::STObject const accountRoot =
-        createAccountRootObject(kISSUER, ripple::lsfGlobalFreeze, 1, 10, 2, kTXN_ID, 3);
+    xrpl::STObject const accountRoot =
+        createAccountRootObject(kIssuer, xrpl::lsfGlobalFreeze, 1, 10, 2, kTxnId, 3);
     ON_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_FROZEN))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranFrozen))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubBothProposedAndValidatedAccount)
 {
-    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account = getAccountIdWithString(kAccount1);
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account, sessionPtr);
@@ -1071,24 +1071,24 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidatedAccount)
     testFeedPtr->subProposed(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV1))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(account, sessionPtr);
     testFeedPtr->unsubProposed(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubBothProposedAndValidated)
@@ -1100,22 +1100,22 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidated)
     testFeedPtr->subProposed(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).Times(2).WillRepeatedly(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(2);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV1))).Times(2);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(sessionPtr);
     testFeedPtr->unsubProposed(sessionPtr);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubProposedDisconnect)
@@ -1124,46 +1124,46 @@ TEST_F(FeedTransactionTest, SubProposedDisconnect)
     testFeedPtr->subProposed(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV1))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     sessionPtr.reset();
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, SubProposedAccountDisconnect)
 {
-    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account = getAccountIdWithString(kAccount1);
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->subProposed(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+    trans1.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
                           .getSerializer()
                           .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTranV1))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     sessionPtr.reset();
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 // This test exercises `accountHold` for amendment fixFrozenLPTokenTransfer, so that the output
@@ -1173,45 +1173,45 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj =
-        createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kLPTOKEN_CURRENCY, kAMM_ACCOUNT, 1, 3);
+    xrpl::STObject const obj =
+        createCreateOfferTransactionObject(kAccount1, 1, 32, kLptokenCurrency, kAmmAccount, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray const metaArray{0};
-    ripple::STObject metaObj(ripple::sfTransactionMetaData);
-    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
-    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
-    metaObj.setFieldU32(ripple::sfTransactionIndex, 22);
+    xrpl::STArray const metaArray{0};
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 22);
     trans1.metadata = metaObj.getSerializer().peekData();
 
-    ripple::STObject line(ripple::sfIndexes);
-    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
-    line.setFieldAmount(ripple::sfLowLimit, ripple::STAmount(10, false));
-    line.setFieldAmount(ripple::sfHighLimit, ripple::STAmount(100, false));
-    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{kTXN_ID});
-    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
-    line.setFieldU32(ripple::sfFlags, 0);
-    auto const issue2 = getIssue(kLPTOKEN_CURRENCY, kAMM_ACCOUNT);
-    line.setFieldAmount(ripple::sfBalance, ripple::STAmount(issue2, 100));
+    xrpl::STObject line(xrpl::sfIndexes);
+    line.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltRIPPLE_STATE);
+    line.setFieldAmount(xrpl::sfLowLimit, xrpl::STAmount(10, false));
+    line.setFieldAmount(xrpl::sfHighLimit, xrpl::STAmount(100, false));
+    line.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{kTxnId});
+    line.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 3);
+    line.setFieldU32(xrpl::sfFlags, 0);
+    auto const issue2 = getIssue(kLptokenCurrency, kAmmAccount);
+    line.setFieldAmount(xrpl::sfBalance, xrpl::STAmount(issue2, 100));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .Times(2)
         .WillRepeatedly(testing::Return(line.getSerializer().peekData()));
 
-    auto const ammID = ripple::uint256{54321};
+    auto const ammID = xrpl::uint256{54321};
 
     // create an amm account because in `accountHolds` checks for the ammID
-    auto const ammAccount = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const kk = ripple::keylet::account(ammAccount).key;
-    ripple::STObject const ammAccountRoot =
-        createAccountRootObject(kAMM_ACCOUNT, 0, 1, 10, 2, kTXN_ID, 3, 0, ammID);
+    auto const ammAccount = getAccountIdWithString(kAmmAccount);
+    auto const kk = xrpl::keylet::account(ammAccount).key;
+    xrpl::STObject const ammAccountRoot =
+        createAccountRootObject(kAmmAccount, 0, 1, 10, 2, kTxnId, 3, 0, ammID);
     EXPECT_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
         .Times(2)
         .WillRepeatedly(testing::Return(ammAccountRoot.getSerializer().peekData()));
 
-    static constexpr auto kTRANSACTION_FOR_OWNER_FUND =
+    static constexpr auto kTransactionForOwnerFund =
         R"JSON({
             "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -1247,7 +1247,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
         })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTransactionForOwnerFund))).Times(1);
 
     EXPECT_CALL(
         *mockAmendmentCenterPtr_,
@@ -1255,30 +1255,29 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     )
         .WillOnce(testing::Return(true));
 
-    auto const ammObj = createAmmObject(
-        kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), kCURRENCY, kISSUER
-    );
+    auto const ammObj =
+        createAmmObject(kAmmAccount, "XRP", xrpl::toBase58(xrpl::xrpAccount()), kCurrency, kIssuer);
     EXPECT_CALL(
-        *backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)
+        *backend_, doFetchLedgerObject(xrpl::keylet::amm(ammID).key, testing::_, testing::_)
     )
         .WillOnce(testing::Return(ammObj.getSerializer().peekData()));
 
     // create the issuer account that enacted global freeze
-    auto const issuerAccount = getAccountIdWithString(kISSUER);
-    ripple::STObject const issuerAccountRoot =
-        createAccountRootObject(kISSUER, 4194304, 1, 10, 2, kTXN_ID, 3);
+    auto const issuerAccount = getAccountIdWithString(kIssuer);
+    xrpl::STObject const issuerAccountRoot =
+        createAccountRootObject(kIssuer, 4194304, 1, 10, 2, kTxnId, 3);
     EXPECT_CALL(
         *backend_,
-        doFetchLedgerObject(ripple::keylet::account(issuerAccount).key, testing::_, testing::_)
+        doFetchLedgerObject(xrpl::keylet::account(issuerAccount).key, testing::_, testing::_)
     )
         .WillOnce(testing::Return(issuerAccountRoot.getSerializer().peekData()));
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, PublishesMPTokenIssuanceCreateTx)
 {
-    constexpr auto kMPTOKEN_ISSUANCE_CREATE_TRAN_V1 =
+    constexpr auto kMptokenIssuanceCreateTranV1 =
         R"JSON({
             "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -1330,23 +1329,23 @@ TEST_F(FeedTransactionTest, PublishesMPTokenIssuanceCreateTx)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
-    auto const trans = createMPTIssuanceCreateTxWithMetadata(kACCOUNT1, 12, 1);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const trans = createMPTIssuanceCreateTxWithMetadata(kAccount1, 12, 1);
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMPTOKEN_ISSUANCE_CREATE_TRAN_V1)));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptokenIssuanceCreateTranV1)));
 
-    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 TEST_F(FeedTransactionTest, PublishesMPTokenAuthorizeTx)
 {
-    constexpr auto kMPTOKEN_AUTHORIZE_TRAN_V1 =
+    constexpr auto kMptokenAuthorizeTranV1 =
         R"JSON({
             "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -1390,18 +1389,18 @@ TEST_F(FeedTransactionTest, PublishesMPTokenAuthorizeTx)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     // The issuance ID that this transaction is authorizing
-    auto const mptIssuanceID = ripple::makeMptID(1, getAccountIdWithString(kACCOUNT1));
-    auto const trans = createMPTokenAuthorizeTxWithMetadata(kACCOUNT1, mptIssuanceID, 15, 5);
+    auto const mptIssuanceID = xrpl::makeMptID(1, getAccountIdWithString(kAccount1));
+    auto const trans = createMPTokenAuthorizeTxWithMetadata(kAccount1, mptIssuanceID, 15, 5);
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMPTOKEN_AUTHORIZE_TRAN_V1)));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptokenAuthorizeTranV1)));
 
-    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 
     testFeedPtr->unsub(sessionPtr);
-    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
 struct TransactionFeedMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
@@ -1429,13 +1428,13 @@ TEST_F(TransactionFeedMockPrometheusTest, subUnsub)
     testFeedPtr_->sub(sessionPtr_);
     testFeedPtr_->unsub(sessionPtr_);
 
-    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account = getAccountIdWithString(kAccount1);
     EXPECT_CALL(*mockSessionPtr_, onDisconnect);
     testFeedPtr_->sub(account, sessionPtr_);
     testFeedPtr_->unsub(account, sessionPtr_);
 
-    auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    auto const issue1 = getIssue(kCurrency, kIssuer);
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
     EXPECT_CALL(*mockSessionPtr_, onDisconnect);
     testFeedPtr_->sub(book, sessionPtr_);
     testFeedPtr_->unsub(book, sessionPtr_);
@@ -1464,11 +1463,11 @@ TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
         });
     testFeedPtr_->sub(sessionPtr_);
 
-    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account = getAccountIdWithString(kAccount1);
     testFeedPtr_->sub(account, sessionPtr_);
 
-    auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    auto const issue1 = getIssue(kCurrency, kIssuer);
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
     testFeedPtr_->sub(book, sessionPtr_);
 
     // Emulate onDisconnect signal is called

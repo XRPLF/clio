@@ -14,9 +14,9 @@ on:
         type: boolean
         description: Whether to strip clio binary
         default: true
-      publish_image:
+      push_image:
         type: boolean
-        description: Whether to publish docker image
+        description: Whether to push docker image
         required: true
 
   workflow_dispatch:
@@ -43,12 +43,12 @@ defaults:
     shell: bash
 
 jobs:
-  build_and_publish_image:
+  build_and_push_image:
     name: Build and publish image
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Download Clio binary from artifact
         if: ${{ inputs.artifact_name != null }}
@@ -65,8 +65,8 @@ jobs:
         run: |
           wget "${BINARY_URL}" -P ./docker/clio/artifact/
           if [ "$(sha256sum ./docker/clio/clio_server | awk '{print $1}')" != "${BINARY_SHA256}" ]; then
-            echo "Binary sha256 sum doesn't match"
-            exit 1
+              echo "Binary sha256 sum doesn't match"
+              exit 1
           fi
       - name: Unpack binary
         run: |
@@ -74,9 +74,9 @@ jobs:
           cd docker/clio/artifact
           artifact=$(find . -type f)
           if [[ $artifact == *.zip ]]; then
-            unzip $artifact
+              unzip $artifact
           elif [[ $artifact == *.tar.gz ]]; then
-            tar -xvf $artifact
+              tar -xvf $artifact
           fi
           chmod +x ./clio_server
           mv ./clio_server ../
@@ -90,7 +90,7 @@ jobs:
       - name: Set GHCR_REPO
         id: set-ghcr-repo
         run: |
-          echo "GHCR_REPO=$(echo ghcr.io/${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_OUTPUT}
+          echo "GHCR_REPO=$(echo ghcr.io/${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >>${GITHUB_OUTPUT}
 
       - name: Build Docker image
         uses: ./.github/actions/build-docker-image
@@ -102,7 +102,7 @@ jobs:
           images: |
             ghcr.io/${{ steps.set-ghcr-repo.outputs.GHCR_REPO }}/clio
             ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio' || '' }}
-          push_image: ${{ inputs.publish_image }}
+          push_image: ${{ inputs.push_image }}
           directory: docker/clio
           tags: ${{ inputs.tags }}
           platforms: linux/amd64

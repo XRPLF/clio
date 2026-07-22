@@ -3,17 +3,18 @@ import itertools
 import json
 
 LINUX_OS = ["heavy", "heavy-arm64"]
-LINUX_CONTAINERS = [
-    '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
-]
+LINUX_CONTAINERS = ['{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }']
 LINUX_COMPILERS = ["gcc", "clang"]
 
-MACOS_OS = ["macos15"]
+MACOS_OS = ["macos-26-apple-clang-21"]
 MACOS_CONTAINERS = [""]
 MACOS_COMPILERS = ["apple-clang"]
 
 BUILD_TYPES = ["Release", "Debug"]
-SANITIZER_EXT = [".asan", ".tsan", ".ubsan", ""]
+
+# Values of the `SANITIZERS` environment variable read by the `sanitizers` conan
+# profile. An empty string builds without any sanitizers.
+SANITIZERS = ["address", "thread", "undefinedbehavior", ""]
 
 
 def generate_matrix():
@@ -23,13 +24,13 @@ def generate_matrix():
         itertools.product(LINUX_OS, LINUX_CONTAINERS, LINUX_COMPILERS),
         itertools.product(MACOS_OS, MACOS_CONTAINERS, MACOS_COMPILERS),
     ):
-        for sanitizer_ext, build_type in itertools.product(SANITIZER_EXT, BUILD_TYPES):
+        for sanitizers, build_type in itertools.product(SANITIZERS, BUILD_TYPES):
             configurations.append(
                 {
                     "os": os,
                     "container": container,
                     "compiler": compiler,
-                    "sanitizer_ext": sanitizer_ext,
+                    "sanitizers": sanitizers,
                     "build_type": build_type,
                 }
             )

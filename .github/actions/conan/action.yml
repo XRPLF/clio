@@ -6,9 +6,6 @@ inputs:
     description: Build directory
     required: false
     default: "build"
-  conan_profile:
-    description: Conan profile name
-    required: true
   force_conan_source_build:
     description: Whether conan should build all dependencies from source
     required: true
@@ -17,6 +14,10 @@ inputs:
     description: Build type for third-party libraries and clio. Could be 'Release', 'Debug'
     required: true
     default: "Release"
+  sanitizers:
+    description: Sanitizer to enable, read by the 'sanitizers' conan profile (e.g. 'address', 'thread', 'undefinedbehavior')
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -27,11 +28,11 @@ runs:
         BUILD_DIR: "${{ inputs.build_dir }}"
         CONAN_BUILD_OPTION: "${{ inputs.force_conan_source_build == 'true' && '*' || 'missing' }}"
         BUILD_TYPE: "${{ inputs.build_type }}"
-        CONAN_PROFILE: "${{ inputs.conan_profile }}"
+        SANITIZERS: "${{ inputs.sanitizers }}"
       run: |
         conan \
-          install . \
-          -of "${BUILD_DIR}" \
-          -b "${CONAN_BUILD_OPTION}" \
-          -s "build_type=${BUILD_TYPE}" \
-          --profile:all "${CONAN_PROFILE}"
+            install . \
+            -of "${BUILD_DIR}" \
+            -b "${CONAN_BUILD_OPTION}" \
+            -s "build_type=${BUILD_TYPE}" \
+            --profile:all ci

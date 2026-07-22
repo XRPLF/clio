@@ -16,7 +16,7 @@ using namespace testing;
 
 namespace {
 
-constexpr auto kSEQ = 30;
+constexpr auto kSeq = 30;
 
 struct CursorProviderTest : util::prometheus::WithPrometheus, MockBackendTestNaggy {
     DiffProvider diffProvider;
@@ -44,11 +44,11 @@ TEST_P(ParametrizedCursorProviderTest, GetCursorsWithDifferentProviderSettings)
     ON_CALL(*backend_, fetchLedgerDiff(_, _)).WillByDefault(Return(diffs));
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).Times(numDiffs);
 
-    auto const cursors = provider.getCursors(kSEQ);
+    auto const cursors = provider.getCursors(kSeq);
     ASSERT_EQ(cursors.size(), diffs.size() + 1);
 
-    EXPECT_EQ(cursors.front().start, kFIRST_KEY);
-    EXPECT_EQ(cursors.back().end, kLAST_KEY);
+    EXPECT_EQ(cursors.front().start, kFirstKey);
+    EXPECT_EQ(cursors.back().end, kLastKey);
 }
 
 TEST_F(CursorProviderTest, EmptyCursorIsHandledCorrectly)
@@ -59,9 +59,9 @@ TEST_F(CursorProviderTest, EmptyCursorIsHandledCorrectly)
     ON_CALL(*backend_, fetchLedgerDiff(_, _)).WillByDefault(Return(diffs));
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).Times(0);
 
-    auto const cursors = provider.getCursors(kSEQ);
+    auto const cursors = provider.getCursors(kSeq);
 
     ASSERT_EQ(cursors.size(), 1);
-    EXPECT_EQ(cursors.front().start, kFIRST_KEY);
-    EXPECT_EQ(cursors.back().end, kLAST_KEY);
+    EXPECT_EQ(cursors.front().start, kFirstKey);
+    EXPECT_EQ(cursors.back().end, kLastKey);
 }

@@ -10,8 +10,8 @@ class Empty {};
 
 struct SimpleTestTable {
     using Row = std::tuple<std::uint32_t, std::uint32_t>;
-    static constexpr char const* kPARTITION_KEY = "key";
-    static constexpr char const* kTABLE_NAME = "test";
+    static constexpr char const* kPartitionKey = "key";
+    static constexpr char const* kTableName = "test";
 };
 }  // namespace
 TEST(MigrationSpec, TableSpec)

@@ -30,16 +30,16 @@ class NFTOffersHandlerBase {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static constexpr auto kLIMIT_MIN = 50;
-    static constexpr auto kLIMIT_MAX = 500;
-    static constexpr auto kLIMIT_DEFAULT = 250;
+    static constexpr auto kLimitMin = 50;
+    static constexpr auto kLimitMax = 500;
+    static constexpr auto kLimitDefault = 250;
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
         std::string nftID;
-        std::vector<ripple::SLE> offers;
+        std::vector<xrpl::SLE> offers;
 
         // validated should be sent via framework
         bool validated = true;
@@ -54,7 +54,7 @@ public:
         std::string nftID;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = kLIMIT_DEFAULT;
+        uint32_t limit = kLimitDefault;
         std::optional<std::string> marker;
     };
 
@@ -79,7 +79,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(nft_id),
              validation::Required{},
              validation::CustomValidators::uint256HexStringValidator},
@@ -88,11 +88,11 @@ public:
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
+             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
             {JS(marker), validation::CustomValidators::uint256HexStringValidator},
         };
 
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
 protected:
@@ -108,8 +108,8 @@ protected:
     [[nodiscard]] Result
     iterateOfferDirectory(
         Input input,
-        ripple::uint256 const& tokenID,
-        ripple::Keylet const& directory,
+        xrpl::uint256 const& tokenID,
+        xrpl::Keylet const& directory,
         boost::asio::yield_context yield
     ) const;
 

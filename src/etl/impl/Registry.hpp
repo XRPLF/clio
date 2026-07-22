@@ -57,7 +57,7 @@ concept HasInitialObjectHook = requires(T p) {
 };
 
 template <typename T>
-concept ContainsSpec = std::decay_t<T>::spec::kSPEC_TAG;
+concept ContainsSpec = std::decay_t<T>::spec::kSpecTag;
 
 template <typename T>
 concept ContainsValidHook =

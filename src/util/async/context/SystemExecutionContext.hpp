@@ -20,8 +20,8 @@ public:
     [[nodiscard]] static auto&
     instance()
     {
-        static util::async::PoolExecutionContext kSYSTEM_EXECUTION_CONTEXT{};
-        return kSYSTEM_EXECUTION_CONTEXT;
+        static util::async::PoolExecutionContext kSystemExecutionContext{};
+        return kSystemExecutionContext;
     }
 };
 

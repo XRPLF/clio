@@ -241,7 +241,7 @@ public:
         } catch (std::exception const&) {
             return web::ng::Response{
                 boost::beast::http::status::internal_server_error,
-                rpc::makeError(rpc::RippledError::rpcINTERNAL),
+                rpc::makeError(rpc::RippledError::RpcInternal),
                 request
             };
         }

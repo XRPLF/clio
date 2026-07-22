@@ -6,9 +6,6 @@ inputs:
     description: Build directory
     required: false
     default: "build"
-  conan_profile:
-    description: Conan profile name
-    required: true
   build_type:
     description: Build type for third-party libraries and clio. Could be 'Release', 'Debug'
     required: true
@@ -23,10 +20,6 @@ inputs:
     default: "true"
   code_coverage:
     description: Whether to enable code coverage
-    required: true
-    default: "false"
-  static:
-    description: Whether Clio is to be statically linked
     required: true
     default: "false"
   time_trace:
@@ -50,15 +43,9 @@ runs:
       env:
         BUILD_DIR: "${{ inputs.build_dir }}"
         BUILD_TYPE: "${{ inputs.build_type }}"
-        SANITIZER_OPTION: |-
-          ${{ endsWith(inputs.conan_profile, '.asan') && '-Dsan=address' ||
-              endsWith(inputs.conan_profile, '.tsan') && '-Dsan=thread' ||
-              endsWith(inputs.conan_profile, '.ubsan') && '-Dsan=undefined' ||
-              '' }}
         INTEGRATION_TESTS: "${{ inputs.integration_tests == 'true' && 'ON' || 'OFF' }}"
         BENCHMARK: "${{ inputs.benchmark == 'true' && 'ON' || 'OFF' }}"
         COVERAGE: "${{ inputs.code_coverage == 'true' && 'ON' || 'OFF' }}"
-        STATIC: "${{ inputs.static == 'true' && 'ON' || 'OFF' }}"
         TIME_TRACE: "${{ inputs.time_trace == 'true' && 'ON' || 'OFF' }}"
         PACKAGE: "${{ inputs.package == 'true' && 'ON' || 'OFF' }}"
         # GitHub creates a merge commit for a PR
@@ -76,16 +63,14 @@ runs:
         FORCE_CLIO_VERSION: ${{ inputs.version }}
       run: |
         cmake \
-          -B "${BUILD_DIR}" \
-          -S . \
-          -G Ninja \
-          -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
-          -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
-          "${SANITIZER_OPTION}" \
-          -Dtests=ON \
-          -Dintegration_tests="${INTEGRATION_TESTS}" \
-          -Dbenchmark="${BENCHMARK}" \
-          -Dcoverage="${COVERAGE}" \
-          -Dstatic="${STATIC}" \
-          -Dtime_trace="${TIME_TRACE}" \
-          -Dpackage="${PACKAGE}"
+            -B "${BUILD_DIR}" \
+            -S . \
+            -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+            -Dtests=ON \
+            -Dintegration_tests="${INTEGRATION_TESTS}" \
+            -Dbenchmark="${BENCHMARK}" \
+            -Dcoverage="${COVERAGE}" \
+            -Dtime_trace="${TIME_TRACE}" \
+            -Dpackage="${PACKAGE}"

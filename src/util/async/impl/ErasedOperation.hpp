@@ -3,8 +3,8 @@
 #include "util/Assert.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
+#include "util/async/impl/Any.hpp"
 
-#include <any>
 #include <expected>
 #include <memory>
 #include <type_traits>
@@ -37,7 +37,7 @@ public:
         pimpl_->wait();
     }
 
-    std::expected<std::any, ExecutionError>
+    std::expected<Any, ExecutionError>
     get()
     {
         return pimpl_->get();
@@ -64,7 +64,7 @@ private:
 
         virtual void
         wait() noexcept = 0;
-        virtual std::expected<std::any, ExecutionError>
+        virtual std::expected<Any, ExecutionError>
         get() = 0;
         virtual void
         abort() = 0;
@@ -93,14 +93,14 @@ private:
             }
         }
 
-        std::expected<std::any, ExecutionError>
+        std::expected<Any, ExecutionError>
         get() override
         {
             if constexpr (not SomeOperationWithData<OpType>) {
                 ASSERT(false, "Called get() on an operation that does not support it");
                 std::unreachable();
             } else {
-                // Note: return type of the operation was already wrapped to std::any by
+                // Note: return type of the operation was already wrapped to impl::Any by
                 // AnyExecutionContext
                 return operation.get();
             }

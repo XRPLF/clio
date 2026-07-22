@@ -87,7 +87,7 @@ SignalsHandler::notifyGracefulShutdownComplete()
 void
 SignalsHandler::setHandler(void (*handler)(int))
 {
-    for (int const signal : kHANDLED_SIGNALS)
+    for (int const signal : kHandledSignals)
         std::signal(signal, handler == nullptr ? SIG_DFL : handler);
 }
 

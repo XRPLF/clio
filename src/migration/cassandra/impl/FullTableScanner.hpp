@@ -123,10 +123,10 @@ public:
      * @brief The full table scanner settings.
      */
     struct FullTableScannerSettings {
-        std::uint32_t ctxThreadsNum; /**< number of threads used in the execution context */
-        std::uint32_t jobsNum; /**< number of coroutines to run, it is the number of concurrent
-                                  database reads */
-        std::uint32_t cursorsPerJob; /**< number of cursors per coroutine */
+        std::uint32_t ctxThreadsNum;  ///< number of threads used in the execution context
+        std::uint32_t jobsNum;  ///< number of coroutines to run, it is the number of concurrent
+                                ///< database reads
+        std::uint32_t cursorsPerJob;  ///< number of cursors per coroutine
     };
 
     /**

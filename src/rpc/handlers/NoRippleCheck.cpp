@@ -17,6 +17,7 @@
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
@@ -56,16 +57,16 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
     auto const& lgrInfo = *expectedLgrInfo;
     auto const accountID = accountFromStringStrict(input.account);
     auto const keylet =
-        ripple::keylet::account(*accountID).key;  // NOLINT(bugprone-unchecked-optional-access)
+        xrpl::keylet::account(*accountID).key;  // NOLINT(bugprone-unchecked-optional-access)
     auto const accountObj = sharedPtrBackend_->fetchLedgerObject(keylet, lgrInfo.seq, ctx.yield);
 
     if (!accountObj)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
-    auto it = ripple::SerialIter{accountObj->data(), accountObj->size()};
-    auto sle = ripple::SLE{it, keylet};
-    auto accountSeq = sle.getFieldU32(ripple::sfSequence);
-    bool const bDefaultRipple = (sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple) != 0u;
+    auto it = xrpl::SerialIter{accountObj->data(), accountObj->size()};
+    auto sle = xrpl::SLE{it, keylet};
+    auto accountSeq = sle.getFieldU32(xrpl::sfSequence);
+    bool const bDefaultRipple = (sle.getFieldU32(xrpl::sfFlags) & xrpl::lsfDefaultRipple) != 0u;
     auto const fees =
         input.transactions ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield) : std::nullopt;
 
@@ -74,10 +75,10 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
     if (input.transactions)
         output.transactions.emplace(boost::json::array());
 
-    auto const getBaseTx = [&](ripple::AccountID const& accountID, std::uint32_t accountSeq) {
+    auto const getBaseTx = [&](xrpl::AccountID const& accountID, std::uint32_t accountSeq) {
         boost::json::object tx;
         tx[JS(Sequence)] = accountSeq;
-        tx[JS(Account)] = ripple::toBase58(accountID);
+        tx[JS(Account)] = xrpl::toBase58(accountID);
         tx[JS(Fee)] = toBoostJson(fees->base.jsonClipped());
 
         return tx;
@@ -96,7 +97,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
             auto tx =
                 getBaseTx(*accountID, accountSeq++);  // NOLINT(bugprone-unchecked-optional-access)
             tx[JS(TransactionType)] = "AccountSet";
-            tx[JS(SetFlag)] = ripple::asfDefaultRipple;
+            tx[JS(SetFlag)] = xrpl::asfDefaultRipple;
             output.transactions->push_back(tx);
         }
     }
@@ -110,15 +111,15 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
         std::numeric_limits<std::uint32_t>::max(),
         {},
         ctx.yield,
-        [&](ripple::SLE const ownedItem) {
+        [&](xrpl::SLE const ownedItem) {
             // don't push to result if limit is reached
-            if (limit != 0 && ownedItem.getType() == ripple::ltRIPPLE_STATE) {
+            if (limit != 0 && ownedItem.getType() == xrpl::ltRIPPLE_STATE) {
                 bool const bLow =
-                    accountID == ownedItem.getFieldAmount(ripple::sfLowLimit).getIssuer();
+                    accountID == ownedItem.getFieldAmount(xrpl::sfLowLimit).getIssuer();
 
                 bool const bNoRipple =
-                    (ownedItem.getFieldU32(ripple::sfFlags) &
-                     (bLow ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
+                    (ownedItem.getFieldU32(xrpl::sfFlags) &
+                     (bLow ? xrpl::lsfLowNoRipple : xrpl::lsfHighNoRipple)) != 0u;
 
                 std::string problem;
                 bool needFix = false;
@@ -132,31 +133,33 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
                 if (needFix) {
                     --limit;
 
-                    ripple::AccountID const peer =
-                        ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit)
+                    xrpl::AccountID const peer =
+                        ownedItem.getFieldAmount(bLow ? xrpl::sfHighLimit : xrpl::sfLowLimit)
                             .getIssuer();
-                    ripple::STAmount const peerLimit =
-                        ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit);
+                    xrpl::STAmount const peerLimit =
+                        ownedItem.getFieldAmount(bLow ? xrpl::sfHighLimit : xrpl::sfLowLimit);
 
                     problem += fmt::format(
                         "{} line to {}",
-                        to_string(peerLimit.getCurrency()),
+                        to_string(peerLimit.get<xrpl::Issue>().currency),
                         to_string(peerLimit.getIssuer())
                     );
                     output.problems.emplace_back(problem);
 
                     if (input.transactions) {
-                        ripple::STAmount limitAmount(ownedItem.getFieldAmount(
-                            bLow ? ripple::sfLowLimit : ripple::sfHighLimit
-                        ));
-                        limitAmount.setIssuer(peer);
+                        xrpl::STAmount limitAmount(
+                            ownedItem.getFieldAmount(bLow ? xrpl::sfLowLimit : xrpl::sfHighLimit)
+                        );
+                        limitAmount.setIssue(
+                            xrpl::Issue{limitAmount.get<xrpl::Issue>().currency, peer}
+                        );
 
                         auto tx = getBaseTx(*accountID, accountSeq++);
 
                         tx[JS(TransactionType)] = "TrustSet";
                         tx[JS(LimitAmount)] =
-                            toBoostJson(limitAmount.getJson(ripple::JsonOptions::none));
-                        tx[JS(Flags)] = bNoRipple ? ripple::tfClearNoRipple : ripple::tfSetNoRipple;
+                            toBoostJson(limitAmount.getJson(xrpl::JsonOptions::Values::None));
+                        tx[JS(Flags)] = bNoRipple ? xrpl::tfClearNoRipple : xrpl::tfSetNoRipple;
 
                         output.transactions->push_back(tx);
                     }
@@ -168,7 +171,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
     );
 
     output.ledgerIndex = lgrInfo.seq;
-    output.ledgerHash = ripple::strHex(lgrInfo.hash);
+    output.ledgerHash = xrpl::strHex(lgrInfo.hash);
 
     return output;
 }

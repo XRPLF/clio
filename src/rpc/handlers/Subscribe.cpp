@@ -49,33 +49,31 @@ SubscribeHandler::SubscribeHandler(
 RpcSpecConstRef
 SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 {
-    static auto const kBOOKS_VALIDATOR = validation::CustomValidator{
+    static auto const kBooksValidator = validation::CustomValidator{
         [](boost::json::value const& value, std::string_view key) -> MaybeError {
             if (!value.is_array()) {
-                return Error{
-                    Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}
-                };
+                return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotArray"}};
             }
 
             for (auto const& book : value.as_array()) {
                 if (!book.is_object()) {
                     return Error{
-                        Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}
+                        Status{RippledError::RpcInvalidParams, std::string(key) + "ItemNotObject"}
                     };
                 }
 
                 if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
-                    return Error{Status{RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
+                    return Error{Status{RippledError::RpcInvalidParams, "bothNotBool"}};
 
                 if (book.as_object().contains("snapshot") &&
                     !book.as_object().at("snapshot").is_bool())
-                    return Error{Status{RippledError::rpcINVALID_PARAMS, "snapshotNotBool"}};
+                    return Error{Status{RippledError::RpcInvalidParams, "snapshotNotBool"}};
 
                 if (book.as_object().contains("taker")) {
                     if (auto err =
                             meta::WithCustomError(
                                 validation::CustomValidators::accountValidator,
-                                Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."}
+                                Status{RippledError::RpcBadIssuer, "Issuer account malformed."}
                             )
                                 .verify(book.as_object(), "taker");
                         !err)
@@ -91,17 +89,17 @@ SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
         }
     };
 
-    static auto const kRPC_SPEC = RpcSpec{
+    static auto const kRpcSpec = RpcSpec{
         {JS(streams), validation::CustomValidators::subscribeStreamValidator},
         {JS(accounts), validation::CustomValidators::subscribeAccountsValidator},
         {JS(accounts_proposed), validation::CustomValidators::subscribeAccountsValidator},
-        {JS(books), kBOOKS_VALIDATOR},
+        {JS(books), kBooksValidator},
         {"user", check::Deprecated{}},
         {JS(password), check::Deprecated{}},
         {JS(rt_accounts), check::Deprecated{}}
     };
 
-    return kRPC_SPEC;
+    return kRpcSpec;
 }
 
 SubscribeHandler::Result
@@ -192,7 +190,7 @@ SubscribeHandler::subscribeToBooks(
     Output& output
 ) const
 {
-    static constexpr auto kFETCH_LIMIT = 200;
+    static constexpr auto kFetchLimit = 200;
 
     std::optional<data::LedgerRange> rng;
 
@@ -206,14 +204,14 @@ SubscribeHandler::subscribeToBooks(
             auto const getOrderBook = [&](auto const& book, auto& snapshots) {
                 auto const bookBase = getBookBase(book);
                 auto const [offers, _] = sharedPtrBackend_->fetchBookOffers(
-                    bookBase, rng->maxSequence, kFETCH_LIMIT, yield
+                    bookBase, rng->maxSequence, kFetchLimit, yield
                 );
 
                 // the taker is not really used, same issue with
                 // https://github.com/XRPLF/xrpl-dev-portal/issues/1818
                 auto const takerID = internalBook.taker
                     ? accountFromStringStrict(*(internalBook.taker))
-                    : beast::zero;
+                    : beast::kZero;
 
                 auto const orderBook = postProcessOrderBook(
                     offers,
@@ -233,7 +231,7 @@ SubscribeHandler::subscribeToBooks(
                 if (!output.asks)
                     output.asks = boost::json::array();
                 getOrderBook(internalBook.book, *(output.bids));
-                getOrderBook(ripple::reversed(internalBook.book), *(output.asks));
+                getOrderBook(xrpl::reversed(internalBook.book), *(output.asks));
             } else {
                 if (!output.offers)
                     output.offers = boost::json::array();
@@ -244,7 +242,7 @@ SubscribeHandler::subscribeToBooks(
         subscriptions_->subBook(internalBook.book, session);
 
         if (internalBook.both)
-            subscriptions_->subBook(ripple::reversed(internalBook.book), session);
+            subscriptions_->subBook(xrpl::reversed(internalBook.book), session);
     }
 }
 

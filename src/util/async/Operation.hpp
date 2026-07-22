@@ -28,7 +28,7 @@ protected:
     std::future<typename OutcomeType::DataType> future_;
 
 public:
-    using DataType = typename OutcomeType::DataType;
+    using DataType = OutcomeType::DataType;
 
     explicit BasicOperation(OutcomeType* outcome) : future_{outcome->getStdFuture()}
     {
@@ -77,7 +77,7 @@ struct BasicScheduledOperation : util::MoveTracker {
     };
 
     std::shared_ptr<State> state = std::make_shared<State>();
-    typename CtxType::Timer timer;
+    CtxType::Timer timer;
 
     BasicScheduledOperation(auto& executor, auto delay, auto&& fn)
         : timer(
@@ -177,7 +177,9 @@ public:
     StoppableOperation&
     operator=(StoppableOperation&&) = default;
 
-    /** @brief Requests the operation to stop */
+    /**
+     * @brief Requests the operation to stop
+     */
     void
     requestStop() noexcept
     {

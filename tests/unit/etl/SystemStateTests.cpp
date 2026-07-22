@@ -10,8 +10,6 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
-#include <memory>
-
 using namespace etl;
 using namespace util::config;
 

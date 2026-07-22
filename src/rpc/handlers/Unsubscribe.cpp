@@ -35,23 +35,21 @@ UnsubscribeHandler::UnsubscribeHandler(
 RpcSpecConstRef
 UnsubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 {
-    static auto const kBOOKS_VALIDATOR = validation::CustomValidator{
+    static auto const kBooksValidator = validation::CustomValidator{
         [](boost::json::value const& value, std::string_view key) -> MaybeError {
             if (!value.is_array()) {
-                return Error{
-                    Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}
-                };
+                return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotArray"}};
             }
 
             for (auto const& book : value.as_array()) {
                 if (!book.is_object()) {
                     return Error{
-                        Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}
+                        Status{RippledError::RpcInvalidParams, std::string(key) + "ItemNotObject"}
                     };
                 }
 
                 if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
-                    return Error{Status{RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
+                    return Error{Status{RippledError::RpcInvalidParams, "bothNotBool"}};
 
                 auto const parsedBook = parseBook(book.as_object());
                 if (!parsedBook.has_value())
@@ -62,17 +60,17 @@ UnsubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
         }
     };
 
-    static auto const kRPC_SPEC = RpcSpec{
+    static auto const kRpcSpec = RpcSpec{
         {JS(streams), validation::CustomValidators::subscribeStreamValidator},
         {JS(accounts), validation::CustomValidators::subscribeAccountsValidator},
         {JS(accounts_proposed), validation::CustomValidators::subscribeAccountsValidator},
-        {JS(books), kBOOKS_VALIDATOR},
+        {JS(books), kBooksValidator},
         {JS(url), check::Deprecated{}},
         {JS(rt_accounts), check::Deprecated{}},
         {"rt_transactions", check::Deprecated{}},
     };
 
-    return kRPC_SPEC;
+    return kRpcSpec;
 }
 
 UnsubscribeHandler::Result
@@ -153,7 +151,7 @@ UnsubscribeHandler::unsubscribeFromBooks(
         subscriptions_->unsubBook(orderBook.book, session);
 
         if (orderBook.both)
-            subscriptions_->unsubBook(ripple::reversed(orderBook.book), session);
+            subscriptions_->unsubBook(xrpl::reversed(orderBook.book), session);
     }
 }
 

@@ -17,15 +17,15 @@ TEST(ConceptTests, hasNoDuplicates)
 }
 
 struct TestA {
-    static constexpr auto kNAME = "TestA";
+    static constexpr auto kName = "TestA";
 };
 
 struct AnotherA {
-    static constexpr auto kNAME = "TestA";
+    static constexpr auto kName = "TestA";
 };
 
 struct TestB {
-    static constexpr auto kNAME = "TestB";
+    static constexpr auto kName = "TestB";
 };
 
 TEST(ConceptTests, hasNoDuplicateNames)

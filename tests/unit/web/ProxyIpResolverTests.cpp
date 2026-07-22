@@ -69,7 +69,7 @@ TEST_F(ProxyIpResolverTest, FromConfig)
     EXPECT_EQ(proxyIpResolver.resolveClientIp(clientIp, headers), std::nullopt);
     EXPECT_EQ(proxyIpResolver.resolveClientIp(proxyIp, headers), clientIp);
 
-    headers.set(ProxyIpResolver::kPROXY_TOKEN_HEADER, proxyToken);
+    headers.set(ProxyIpResolver::kProxyTokenHeader, proxyToken);
     EXPECT_EQ(proxyIpResolver.resolveClientIp(clientIp, headers), clientIp);
     EXPECT_EQ(proxyIpResolver.resolveClientIp(proxyIp, headers), clientIp);
     EXPECT_EQ(proxyIpResolver.resolveClientIp("127.0.0.1", headers), clientIp);
@@ -127,7 +127,7 @@ INSTANTIATE_TEST_SUITE_P(
             .proxyIps = {},
             .proxyTokens = {"test_token"},
             .headers =
-                {{std::string(ProxyIpResolver::kPROXY_TOKEN_HEADER), "test_token"},
+                {{std::string(ProxyIpResolver::kProxyTokenHeader), "test_token"},
                  {std::string(http::to_string(http::field::forwarded)), "for=1.2.3.4"}},
             .connectionIp = "5.6.7.8",
             .expectedIp = "1.2.3.4"
@@ -136,7 +136,7 @@ INSTANTIATE_TEST_SUITE_P(
             .testName = "TrustedProxyTokenWithoutForwardedHeader",
             .proxyIps = {},
             .proxyTokens = {"test_token"},
-            .headers = {{std::string(ProxyIpResolver::kPROXY_TOKEN_HEADER), "test_token"}},
+            .headers = {{std::string(ProxyIpResolver::kProxyTokenHeader), "test_token"}},
             .connectionIp = "5.6.7.8",
             .expectedIp = std::nullopt
         },
@@ -145,7 +145,7 @@ INSTANTIATE_TEST_SUITE_P(
             .proxyIps = {},
             .proxyTokens = {},
             .headers =
-                {{std::string(ProxyIpResolver::kPROXY_TOKEN_HEADER), "test_token"},
+                {{std::string(ProxyIpResolver::kProxyTokenHeader), "test_token"},
                  {std::string(http::to_string(http::field::forwarded)), "for=1.2.3.4"}},
             .connectionIp = "5.6.7.8",
             .expectedIp = std::nullopt
@@ -214,5 +214,5 @@ INSTANTIATE_TEST_SUITE_P(
             .expectedIp = "9.10.11.12"
         }
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );

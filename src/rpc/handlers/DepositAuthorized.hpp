@@ -81,7 +81,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(source_account),
              validation::Required{},
              validation::CustomValidators::accountValidator},
@@ -93,7 +93,7 @@ public:
             {JS(credentials), validation::Type<boost::json::array>{}, validation::Hex256ItemType()}
         };
 
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
     /**

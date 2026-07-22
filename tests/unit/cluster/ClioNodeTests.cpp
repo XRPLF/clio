@@ -15,7 +15,6 @@
 
 #include <chrono>
 #include <cstdint>
-#include <ctime>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -26,7 +25,7 @@ struct ClioNodeTest : testing::Test {
     std::string const updateTimeStr = "2015-05-15T12:00:00Z";
     std::chrono::system_clock::time_point const updateTime =
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        *util::systemTpFromUtcStr(updateTimeStr, ClioNode::kTIME_FORMAT);
+        *util::systemTpFromUtcStr(updateTimeStr, ClioNode::kTimeFormat);
 };
 
 TEST_F(ClioNodeTest, Serialization)
@@ -205,7 +204,7 @@ INSTANTIATE_TEST_SUITE_P(
             .role = ClioNode::DbRole::FallbackRecovery
         }
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(ClioNodeDbRoleTest, Serialization)
@@ -317,7 +316,7 @@ INSTANTIATE_TEST_SUITE_P(
             .expectedRole = ClioNode::DbRole::FallbackRecovery
         }
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(ClioNodeFromTest, FromWriterState)

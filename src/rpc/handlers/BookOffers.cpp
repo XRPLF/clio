@@ -56,12 +56,12 @@ BookOffersHandler::process(Input const& input, Context const& ctx) const
         sharedPtrBackend_->fetchBookOffers(bookKey, lgrInfo.seq, input.limit, ctx.yield);
 
     auto output = BookOffersHandler::Output{};
-    output.ledgerHash = ripple::strHex(lgrInfo.hash);
+    output.ledgerHash = xrpl::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
     output.offers = postProcessOrderBook(
         offers,
         book,
-        input.taker ? *(input.taker) : beast::zero,
+        input.taker ? *(input.taker) : beast::kZero,
         *sharedPtrBackend_,
         *amendmentCenter_,
         lgrInfo.seq,
@@ -91,24 +91,24 @@ tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::val
     auto input = BookOffersHandler::Input{};
     auto const& jsonObject = jv.as_object();
 
-    ripple::to_currency(
+    xrpl::toCurrency(
         input.getsCurrency,
         boost::json::value_to<std::string>(jv.at(JS(taker_gets)).as_object().at(JS(currency)))
     );
-    ripple::to_currency(
+    xrpl::toCurrency(
         input.paysCurrency,
         boost::json::value_to<std::string>(jv.at(JS(taker_pays)).as_object().at(JS(currency)))
     );
 
     if (jv.at(JS(taker_gets)).as_object().contains(JS(issuer))) {
-        ripple::to_issuer(
+        xrpl::toIssuer(
             input.getsID,
             boost::json::value_to<std::string>(jv.at(JS(taker_gets)).as_object().at(JS(issuer)))
         );
     }
 
     if (jv.at(JS(taker_pays)).as_object().contains(JS(issuer))) {
-        ripple::to_issuer(
+        xrpl::toIssuer(
             input.paysID,
             boost::json::value_to<std::string>(jv.at(JS(taker_pays)).as_object().at(JS(issuer)))
         );

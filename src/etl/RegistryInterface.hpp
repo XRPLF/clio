@@ -40,11 +40,11 @@ namespace etl {
  * @code{.cpp}
  * struct Ext {
  *   using spec = etl::model::Spec<
- *     ripple::TxType::ttNFTOKEN_BURN,
- *     ripple::TxType::ttNFTOKEN_ACCEPT_OFFER,
- *     ripple::TxType::ttNFTOKEN_CREATE_OFFER,
- *     ripple::TxType::ttNFTOKEN_CANCEL_OFFER,
- *     ripple::TxType::ttNFTOKEN_MINT>;
+ *     xrpl::TxType::ttNFTOKEN_BURN,
+ *     xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER,
+ *     xrpl::TxType::ttNFTOKEN_CREATE_OFFER,
+ *     xrpl::TxType::ttNFTOKEN_CANCEL_OFFER,
+ *     xrpl::TxType::ttNFTOKEN_MINT>;
  *
  *   static void
  *   onInitialTransaction(uint32_t, etl::model::Transaction const&);

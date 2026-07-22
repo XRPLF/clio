@@ -25,7 +25,9 @@ namespace util::config {
  */
 struct ClioConfigDescription {
 public:
-    /** @brief Struct to represent a key-value pair*/
+    /**
+     * @brief Struct to represent a key-value pair
+     */
     struct KV {
         std::string_view key;
         std::string_view value;
@@ -49,8 +51,8 @@ public:
     get(std::string_view key)
     {
         auto const itr =
-            std::ranges::find_if(kCONFIG_DESCRIPTION, [&](auto const& v) { return v.key == key; });
-        ASSERT(itr != kCONFIG_DESCRIPTION.end(), "Key {} doesn't exist in config", key);
+            std::ranges::find_if(kConfigDescription, [&](auto const& v) { return v.key == key; });
+        ASSERT(itr != kConfigDescription.end(), "Key {} doesn't exist in config", key);
         return itr->value;
     }
 
@@ -95,9 +97,9 @@ public:
     static void
     writeConfigDescriptionToFile(std::ostream& file)
     {
-        file << kCONFIG_DESCRIPTION_HEADER;
+        file << kConfigDescriptionHeader;
 
-        for (auto const& [key, val] : kCONFIG_DESCRIPTION) {
+        for (auto const& [key, val] : kConfigDescription) {
             file << "\n### " << key << "\n\n";
 
             // Every type of value is directed to operator<< in ConfigValue.hpp
@@ -112,7 +114,7 @@ public:
     }
 
 private:
-    static constexpr auto kCONFIG_DESCRIPTION_HEADER =
+    static constexpr auto kConfigDescriptionHeader =
         R"(# Clio Config Description
 
 This document provides a list of all available Clio configuration properties in detail.
@@ -125,7 +127,7 @@ This document provides a list of all available Clio configuration properties in 
 ## Configuration Details
 )";
 
-    static constexpr auto kCONFIG_DESCRIPTION = std::array{
+    static constexpr auto kConfigDescription = std::array{
         KV{.key = "database.type",
            .value = "Specifies the type of database used for storing and retrieving data required "
                     "by the Clio server. Both "

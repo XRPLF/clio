@@ -90,13 +90,13 @@ SettingsProvider::parseSettings() const
     if (config_.getValueView("connect_timeout").hasValue()) {
         auto const connectTimeoutSecond = config_.get<uint32_t>("connect_timeout");
         settings.connectionTimeout =
-            std::chrono::milliseconds{connectTimeoutSecond * util::kMILLISECONDS_PER_SECOND};
+            std::chrono::milliseconds{connectTimeoutSecond * util::kMillisecondsPerSecond};
     }
 
     if (config_.getValueView("request_timeout").hasValue()) {
         auto const requestTimeoutSecond = config_.get<uint32_t>("request_timeout");
         settings.requestTimeout =
-            std::chrono::milliseconds{requestTimeoutSecond * util::kMILLISECONDS_PER_SECOND};
+            std::chrono::milliseconds{requestTimeoutSecond * util::kMillisecondsPerSecond};
     }
 
     settings.certificate = parseOptionalCertificate();

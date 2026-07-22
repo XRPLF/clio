@@ -531,8 +531,8 @@ TEST_F(ObservableValueTest, ManyObservers)
         mockObservers;
     std::vector<boost::signals2::connection> connections;
 
-    constexpr int kNUM_OBSERVERS = 100;
-    for (int i = 0; i < kNUM_OBSERVERS; ++i) {
+    constexpr int kNumObservers = 100;
+    for (int i = 0; i < kNumObservers; ++i) {
         mockObservers.push_back(
             std::make_unique<testing::StrictMock<testing::MockFunction<void(int const&)>>>()
         );

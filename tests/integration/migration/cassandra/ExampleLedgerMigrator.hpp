@@ -12,8 +12,8 @@
  * key of ledgers table, we can just fetch the data via ledger sequence without full table scan.
  */
 struct ExampleLedgerMigrator {
-    static constexpr char const* kNAME = "ExampleLedgerMigrator";
-    static constexpr char const* kDESCRIPTION = "The migrator for ledgers table";
+    static constexpr char const* kName = "ExampleLedgerMigrator";
+    static constexpr char const* kDescription = "The migrator for ledgers table";
 
     using Backend = CassandraMigrationTestBackend;
 

@@ -28,13 +28,13 @@ using namespace testing;
 
 namespace {
 
-constexpr auto kDEFAULT_THREAD_POOL_SIZE = 4;
-constexpr auto kTEST_TIMEOUT = std::chrono::seconds{10};
+constexpr auto kDefaultThreadPoolSize = 4;
+constexpr auto kTestTimeout = std::chrono::seconds{10};
 
-constexpr auto kNUM_SENDERS = 3uz;
-constexpr auto kNUM_RECEIVERS = 3uz;
-constexpr auto kVALUES_PER_SENDER = 500uz;
-constexpr auto kTOTAL_EXPECTED = kNUM_SENDERS * kVALUES_PER_SENDER;
+constexpr auto kNumSenders = 3uz;
+constexpr auto kNumReceivers = 3uz;
+constexpr auto kValuesPerSender = 500uz;
+constexpr auto kTotalExpected = kNumSenders * kValuesPerSender;
 
 enum class ContextType { IOContext, ThreadPool };
 
@@ -48,9 +48,9 @@ std::vector<int>
 generateExpectedValues()
 {
     std::vector<int> expectedValues;
-    expectedValues.reserve(kTOTAL_EXPECTED);
-    for (auto senderId = 0uz; senderId < kNUM_SENDERS; ++senderId) {
-        for (auto i = 0uz; i < kVALUES_PER_SENDER; ++i) {
+    expectedValues.reserve(kTotalExpected);
+    for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
+        for (auto i = 0uz; i < kValuesPerSender; ++i) {
             expectedValues.push_back(generateValue(senderId, i));
         }
     }
@@ -58,7 +58,7 @@ generateExpectedValues()
     return expectedValues;
 }
 
-std::vector<int> const kEXPECTED_VALUES = generateExpectedValues();
+std::vector<int> const kExpectedValues = generateExpectedValues();
 
 std::string
 contextTypeToString(ContextType type)
@@ -77,7 +77,7 @@ public:
 
             if (type == ContextType::ThreadPool) {
                 return ContextVariant(
-                    std::in_place_type_t<boost::asio::thread_pool>(), kDEFAULT_THREAD_POOL_SIZE
+                    std::in_place_type_t<boost::asio::thread_pool>(), kDefaultThreadPoolSize
                 );
             }
 
@@ -99,7 +99,7 @@ public:
     {
         std::visit(
             util::OverloadSet{
-                [](boost::asio::io_context& context) { context.run_for(kTEST_TIMEOUT); },
+                [](boost::asio::io_context& context) { context.run_for(kTestTimeout); },
                 [](boost::asio::thread_pool& context) { context.join(); },
             },
             context_
@@ -149,11 +149,11 @@ TEST_P(ChannelSpawnTest, MultipleSendersOneReceiver)
 
         {
             auto localSender = std::move(sender);
-            for (auto senderId = 0uz; senderId < kNUM_SENDERS; ++senderId) {
+            for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
                 util::spawn(
                     executor,
                     [senderCopy = localSender, senderId](boost::asio::yield_context yield) mutable {
-                        for (auto i = 0uz; i < kVALUES_PER_SENDER; ++i) {
+                        for (auto i = 0uz; i < kValuesPerSender; ++i) {
                             if (not senderCopy.asyncSend(generateValue(senderId, i), yield))
                                 break;
                         }
@@ -164,10 +164,10 @@ TEST_P(ChannelSpawnTest, MultipleSendersOneReceiver)
 
         context_.run();
 
-        EXPECT_EQ(receivedValues.lock()->size(), kTOTAL_EXPECTED);
+        EXPECT_EQ(receivedValues.lock()->size(), kTotalExpected);
         std::ranges::sort(receivedValues.lock().get());
 
-        EXPECT_EQ(receivedValues.lock().get(), kEXPECTED_VALUES);
+        EXPECT_EQ(receivedValues.lock().get(), kExpectedValues);
     });
 }
 
@@ -176,9 +176,9 @@ TEST_P(ChannelSpawnTest, MultipleSendersMultipleReceivers)
     context_.withExecutor([this](auto& executor) {
         auto [sender, receiver] = util::Channel<int>::create(executor, 10);
         util::Mutex<std::vector<int>> receivedValues;
-        std::vector receivers(kNUM_RECEIVERS, receiver);
+        std::vector receivers(kNumReceivers, receiver);
 
-        for (auto receiverId = 0uz; receiverId < kNUM_RECEIVERS; ++receiverId) {
+        for (auto receiverId = 0uz; receiverId < kNumReceivers; ++receiverId) {
             util::spawn(
                 executor,
                 [&receiverRef = receivers[receiverId],
@@ -195,11 +195,11 @@ TEST_P(ChannelSpawnTest, MultipleSendersMultipleReceivers)
 
         {
             auto localSender = std::move(sender);
-            for (auto senderId = 0uz; senderId < kNUM_SENDERS; ++senderId) {
+            for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
                 util::spawn(
                     executor,
                     [senderCopy = localSender, senderId](boost::asio::yield_context yield) mutable {
-                        for (auto i = 0uz; i < kVALUES_PER_SENDER; ++i) {
+                        for (auto i = 0uz; i < kValuesPerSender; ++i) {
                             auto const value = generateValue(senderId, i);
                             if (not senderCopy.asyncSend(value, yield))
                                 break;
@@ -211,10 +211,10 @@ TEST_P(ChannelSpawnTest, MultipleSendersMultipleReceivers)
 
         context_.run();
 
-        EXPECT_EQ(receivedValues.lock()->size(), kTOTAL_EXPECTED);
+        EXPECT_EQ(receivedValues.lock()->size(), kTotalExpected);
         std::ranges::sort(receivedValues.lock().get());
 
-        EXPECT_EQ(receivedValues.lock().get(), kEXPECTED_VALUES);
+        EXPECT_EQ(receivedValues.lock().get(), kExpectedValues);
     });
 }
 
@@ -346,7 +346,7 @@ TEST_P(ChannelCallbackTest, MultipleSendersOneReceiver)
         util::Mutex<std::vector<int>> receivedValues;
 
         auto receiveNext = [&receiver, &receivedValues](this auto&& self) -> void {
-            if (receivedValues.lock()->size() >= kTOTAL_EXPECTED)
+            if (receivedValues.lock()->size() >= kTotalExpected)
                 return;
 
             receiver.asyncReceive([&receivedValues,
@@ -362,14 +362,14 @@ TEST_P(ChannelCallbackTest, MultipleSendersOneReceiver)
 
         {
             auto localSender = std::move(sender);
-            for (auto senderId = 0uz; senderId < kNUM_SENDERS; ++senderId) {
+            for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
                 auto senderCopy = localSender;
                 boost::asio::post(
                     executor, [senderCopy = std::move(senderCopy), senderId, &executor]() mutable {
                         auto sendNext = [senderCopy = std::move(senderCopy),
                                          senderId,
                                          &executor](this auto&& self, std::size_t i) -> void {
-                            if (i >= kVALUES_PER_SENDER)
+                            if (i >= kValuesPerSender)
                                 return;
 
                             senderCopy.asyncSend(
@@ -394,10 +394,10 @@ TEST_P(ChannelCallbackTest, MultipleSendersOneReceiver)
 
         context_.run();
 
-        EXPECT_EQ(receivedValues.lock()->size(), kTOTAL_EXPECTED);
+        EXPECT_EQ(receivedValues.lock()->size(), kTotalExpected);
         std::ranges::sort(receivedValues.lock().get());
 
-        EXPECT_EQ(receivedValues.lock().get(), kEXPECTED_VALUES);
+        EXPECT_EQ(receivedValues.lock().get(), kExpectedValues);
     });
 }
 
@@ -406,9 +406,9 @@ TEST_P(ChannelCallbackTest, MultipleSendersMultipleReceivers)
     context_.withExecutor([this](auto& executor) {
         auto [sender, receiver] = util::Channel<int>::create(executor, 10);
         util::Mutex<std::vector<int>> receivedValues;
-        std::vector receivers(kNUM_RECEIVERS, receiver);
+        std::vector receivers(kNumReceivers, receiver);
 
-        for (auto receiverId = 0uz; receiverId < kNUM_RECEIVERS; ++receiverId) {
+        for (auto receiverId = 0uz; receiverId < kNumReceivers; ++receiverId) {
             auto& receiverRef = receivers[receiverId];
             auto receiveNext = [&receiverRef, &receivedValues](this auto&& self) -> void {
                 receiverRef.asyncReceive([&receivedValues,
@@ -424,14 +424,14 @@ TEST_P(ChannelCallbackTest, MultipleSendersMultipleReceivers)
 
         {
             auto localSender = std::move(sender);
-            for (auto senderId = 0uz; senderId < kNUM_SENDERS; ++senderId) {
+            for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
                 auto senderCopy = localSender;
                 boost::asio::post(
                     executor, [senderCopy = std::move(senderCopy), senderId, &executor]() mutable {
                         auto sendNext = [senderCopy = std::move(senderCopy),
                                          senderId,
                                          &executor](this auto&& self, std::size_t i) -> void {
-                            if (i >= kVALUES_PER_SENDER)
+                            if (i >= kValuesPerSender)
                                 return;
 
                             senderCopy.asyncSend(
@@ -456,10 +456,10 @@ TEST_P(ChannelCallbackTest, MultipleSendersMultipleReceivers)
 
         context_.run();
 
-        EXPECT_EQ(receivedValues.lock()->size(), kTOTAL_EXPECTED);
+        EXPECT_EQ(receivedValues.lock()->size(), kTotalExpected);
         std::ranges::sort(receivedValues.lock().get());
 
-        EXPECT_EQ(receivedValues.lock().get(), kEXPECTED_VALUES);
+        EXPECT_EQ(receivedValues.lock().get(), kExpectedValues);
     });
 }
 
@@ -620,7 +620,7 @@ TEST(ChannelTest, MultipleSenderCopiesErrorHandling)
         testCompleted = true;
     });
 
-    executor.run_for(kTEST_TIMEOUT);
+    executor.run_for(kTestTimeout);
     EXPECT_TRUE(testCompleted);
 }
 
@@ -706,7 +706,7 @@ TEST(ChannelTest, ChannelPreservesOrderFIFO)
         }
     );
 
-    executor.run_for(kTEST_TIMEOUT);
+    executor.run_for(kTestTimeout);
     EXPECT_TRUE(testCompleted);
 }
 
@@ -735,7 +735,7 @@ TEST(ChannelTest, AsyncReceiveWakesUpWhenSenderDestroyed)
         }
     );
 
-    executor.run_for(kTEST_TIMEOUT);
+    executor.run_for(kTestTimeout);
     EXPECT_TRUE(testCompleted);
 }
 
@@ -746,16 +746,16 @@ TEST(ChannelTest, AsyncReceiveWakesUpWhenSenderDestroyed)
 TEST(ChannelTest, PendingAsyncSendsAreCancelledOnClose)
 {
     boost::asio::thread_pool pool{4};
-    static constexpr auto kPENDING_NUM_SENDERS = 10uz;
+    static constexpr auto kPendingNumSenders = 10uz;
 
     // Channel with capacity 0 - all sends will block waiting for a receiver
     auto [sender, receiver] = util::Channel<int>::create(pool, 0);
 
     std::atomic<std::size_t> completedSends{0};
-    std::counting_semaphore<kPENDING_NUM_SENDERS> semaphore{kPENDING_NUM_SENDERS};
+    std::counting_semaphore<kPendingNumSenders> semaphore{kPendingNumSenders};
 
     // Spawn multiple senders that will all block (no receiver is consuming)
-    for (auto i = 0uz; i < kPENDING_NUM_SENDERS; ++i) {
+    for (auto i = 0uz; i < kPendingNumSenders; ++i) {
         util::spawn(
             pool,
             [senderCopy = sender, i, &completedSends, &semaphore](
@@ -780,7 +780,7 @@ TEST(ChannelTest, PendingAsyncSendsAreCancelledOnClose)
     pool.join();
 
     // All sends should have completed (returned false due to closed channel)
-    EXPECT_EQ(completedSends, kPENDING_NUM_SENDERS);
+    EXPECT_EQ(completedSends, kPendingNumSenders);
 }
 
 INSTANTIATE_CHANNEL_FOR_CLANG(int);

@@ -33,21 +33,21 @@ namespace rpc {
 void
 AccountLinesHandler::addLine(
     std::vector<LineResponse>& lines,
-    ripple::SLE const& lineSle,
-    ripple::AccountID const& account,
-    std::optional<ripple::AccountID> const& peerAccount
+    xrpl::SLE const& lineSle,
+    xrpl::AccountID const& account,
+    std::optional<xrpl::AccountID> const& peerAccount
 )
 {
-    auto const flags = lineSle.getFieldU32(ripple::sfFlags);
-    auto const lowLimit = lineSle.getFieldAmount(ripple::sfLowLimit);
-    auto const highLimit = lineSle.getFieldAmount(ripple::sfHighLimit);
+    auto const flags = lineSle.getFieldU32(xrpl::sfFlags);
+    auto const lowLimit = lineSle.getFieldAmount(xrpl::sfLowLimit);
+    auto const highLimit = lineSle.getFieldAmount(xrpl::sfHighLimit);
     auto const lowID = lowLimit.getIssuer();
     auto const highID = highLimit.getIssuer();
-    auto const lowQualityIn = lineSle.getFieldU32(ripple::sfLowQualityIn);
-    auto const lowQualityOut = lineSle.getFieldU32(ripple::sfLowQualityOut);
-    auto const highQualityIn = lineSle.getFieldU32(ripple::sfHighQualityIn);
-    auto const highQualityOut = lineSle.getFieldU32(ripple::sfHighQualityOut);
-    auto balance = lineSle.getFieldAmount(ripple::sfBalance);
+    auto const lowQualityIn = lineSle.getFieldU32(xrpl::sfLowQualityIn);
+    auto const lowQualityOut = lineSle.getFieldU32(xrpl::sfLowQualityOut);
+    auto const highQualityIn = lineSle.getFieldU32(xrpl::sfHighQualityIn);
+    auto const highQualityOut = lineSle.getFieldU32(xrpl::sfHighQualityOut);
+    auto balance = lineSle.getFieldAmount(xrpl::sfBalance);
 
     auto const viewLowest = (lowID == account);
     auto const lineLimit = viewLowest ? lowLimit : highLimit;
@@ -62,30 +62,29 @@ AccountLinesHandler::addLine(
     if (not viewLowest)
         balance.negate();
 
-    bool const lineAuth = (flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth)) != 0u;
+    bool const lineAuth = (flags & (viewLowest ? xrpl::lsfLowAuth : xrpl::lsfHighAuth)) != 0u;
     bool const lineAuthPeer =
-        (flags & (not viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth)) != 0u;
+        (flags & (not viewLowest ? xrpl::lsfLowAuth : xrpl::lsfHighAuth)) != 0u;
     bool const lineNoRipple =
-        (flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
+        (flags & (viewLowest ? xrpl::lsfLowNoRipple : xrpl::lsfHighNoRipple)) != 0u;
     bool const lineNoRipplePeer =
-        (flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
-    bool const lineFreeze =
-        (flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
+        (flags & (not viewLowest ? xrpl::lsfLowNoRipple : xrpl::lsfHighNoRipple)) != 0u;
+    bool const lineFreeze = (flags & (viewLowest ? xrpl::lsfLowFreeze : xrpl::lsfHighFreeze)) != 0u;
     bool const lineFreezePeer =
-        (flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
+        (flags & (not viewLowest ? xrpl::lsfLowFreeze : xrpl::lsfHighFreeze)) != 0u;
     bool const lineDeepFreeze =
-        (flags & (viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighDeepFreeze)) != 0u;
+        (flags & (viewLowest ? xrpl::lsfLowDeepFreeze : xrpl::lsfHighDeepFreeze)) != 0u;
     bool const lineDeepFreezePeer =
-        (flags & (not viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighDeepFreeze)) != 0u;
+        (flags & (not viewLowest ? xrpl::lsfLowDeepFreeze : xrpl::lsfHighDeepFreeze)) != 0u;
 
-    ripple::STAmount const& saBalance = balance;
-    ripple::STAmount const& saLimit = lineLimit;
-    ripple::STAmount const& saLimitPeer = lineLimitPeer;
+    xrpl::STAmount const& saBalance = balance;
+    xrpl::STAmount const& saLimit = lineLimit;
+    xrpl::STAmount const& saLimitPeer = lineLimitPeer;
 
     LineResponse line;
-    line.account = ripple::to_string(lineAccountIDPeer);
+    line.account = xrpl::to_string(lineAccountIDPeer);
     line.balance = saBalance.getText();
-    line.currency = ripple::to_string(saBalance.issue().currency);
+    line.currency = xrpl::to_string(saBalance.get<xrpl::Issue>().currency);
     line.limit = saLimit.getText();
     line.limitPeer = saLimitPeer.getText();
     line.qualityIn = lineQualityIn;
@@ -138,28 +137,28 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        ripple::keylet::account(*accountID).key,
+        xrpl::keylet::account(*accountID).key,
         lgrInfo.seq,
         ctx.yield
     );
 
     if (not accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
     auto const peerAccountID =
-        input.peer ? accountFromStringStrict(*(input.peer)) : std::optional<ripple::AccountID>{};
+        input.peer ? accountFromStringStrict(*(input.peer)) : std::optional<xrpl::AccountID>{};
 
     Output response;
     response.lines.reserve(input.limit);
 
-    auto const addToResponse = [&](ripple::SLE const sle) {
-        if (sle.getType() == ripple::ltRIPPLE_STATE) {
+    auto const addToResponse = [&](xrpl::SLE const sle) {
+        if (sle.getType() == xrpl::ltRIPPLE_STATE) {
             auto ignore = false;
             if (input.ignoreDefault) {
-                if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID) {
-                    ignore = ((sle.getFieldU32(ripple::sfFlags) & ripple::lsfLowReserve) == 0u);
+                if (sle.getFieldAmount(xrpl::sfLowLimit).getIssuer() == accountID) {
+                    ignore = ((sle.getFieldU32(xrpl::sfFlags) & xrpl::lsfLowReserve) == 0u);
                 } else {
-                    ignore = ((sle.getFieldU32(ripple::sfFlags) & ripple::lsfHighReserve) == 0u);
+                    ignore = ((sle.getFieldU32(xrpl::sfFlags) & xrpl::lsfHighReserve) == 0u);
                 }
             }
 
@@ -186,7 +185,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
     response.account = input.account;
     response.limit = input.limit;  // not documented,
                                    // https://github.com/XRPLF/xrpl-dev-portal/issues/1838
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
     if (nextMarker.isNonZero())

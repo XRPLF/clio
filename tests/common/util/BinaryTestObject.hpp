@@ -13,7 +13,7 @@
 
 namespace util {
 
-static constexpr auto kDEFAULT_TXN_HEX =
+static constexpr auto kDefaultTxnHex =
     "1200192200000008240011CC9B201B001F71D6202A0000000168400000"
     "000000000C7321ED475D1452031E8F9641AF1631519A58F7B8681E172E"
     "4838AA0E59408ADA1727DD74406960041F34F10E0CBB39444B4D4E577F"
@@ -22,7 +22,7 @@ static constexpr auto kDEFAULT_TXN_HEX =
     "677265677765697362726F642E636F6D81146203F49C21D5D6E022CB16"
     "DE3538F248662FC73C";
 
-static constexpr auto kDEFAULT_TXN_META =
+static constexpr auto kDefaultTxnMeta =
     "201C00000001F8E511005025001F71B3556ED9C9459001E4F4A9121F4E"
     "07AB6D14898A5BBEF13D85C25D743540DB59F3CF566203F49C21D5D6E0"
     "22CB16DE3538F248662FC73CFFFFFFFFFFFFFFFFFFFFFFFFE6FAEC5A00"
@@ -121,42 +121,39 @@ static constexpr auto kDEFAULT_TXN_META =
     "066240000002540BE3E081146203F49C21D5D6E022CB16DE3538F24866"
     "2FC73CE1E1F1031000";
 
-static constexpr auto kDEFAULT_HASH =
+static constexpr auto kDefaultHash =
     "6C7F69A6D25A13AC4A2E9145999F45D4674F939900017A96885FDC2757E9284E";
-static constexpr auto kDEFAULT_OBJ_KEY =
+static constexpr auto kDefaultObjKey =
     "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960D";
 
 [[maybe_unused, nodiscard]] std::pair<std::string, std::string>
-createTxAndMetaBlobs(
-    std::string metaStr = kDEFAULT_TXN_META,
-    std::string txnStr = kDEFAULT_TXN_HEX
-);
+createTxAndMetaBlobs(std::string metaStr = kDefaultTxnMeta, std::string txnStr = kDefaultTxnHex);
 
-[[maybe_unused, nodiscard]] std::pair<ripple::STTx, ripple::TxMeta>
+[[maybe_unused, nodiscard]] std::pair<xrpl::STTx, xrpl::TxMeta>
 createTxAndMeta(
-    std::string hashStr = kDEFAULT_HASH,
-    std::string metaStr = kDEFAULT_TXN_META,
-    std::string txnStr = kDEFAULT_TXN_HEX
+    std::string hashStr = kDefaultHash,
+    std::string metaStr = kDefaultTxnMeta,
+    std::string txnStr = kDefaultTxnHex
 );
 
 [[maybe_unused, nodiscard]] etl::model::Transaction
 createTransaction(
-    ripple::TxType type,
-    std::string hashStr = kDEFAULT_HASH,
-    std::string metaStr = kDEFAULT_TXN_META,
-    std::string txnStr = kDEFAULT_TXN_HEX
+    xrpl::TxType type,
+    std::string hashStr = kDefaultHash,
+    std::string metaStr = kDefaultTxnMeta,
+    std::string txnStr = kDefaultTxnHex
 );
 
 [[maybe_unused, nodiscard]] etl::model::Object
 createObject(
     etl::model::Object::ModType modType = etl::model::Object::ModType::Created,
-    std::string key = kDEFAULT_OBJ_KEY
+    std::string key = kDefaultObjKey
 );
 
 [[maybe_unused, nodiscard]] etl::model::Object
 createObjectWithBookBase(
     etl::model::Object::ModType modType = etl::model::Object::ModType::Created,
-    std::string key = kDEFAULT_OBJ_KEY
+    std::string key = kDefaultObjKey
 );
 
 [[maybe_unused, nodiscard]] etl::model::Object

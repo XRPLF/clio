@@ -28,12 +28,12 @@ env:
   BUILD_DIR: build
   BUILD_TYPE: Debug # Debug so that ASSERTS and such participate in clang-tidy check
 
-  OUTPUT_FILE: clang-tidy-output.txt
-  DIFF_FILE: clang-tidy-git-diff.txt
-  ISSUE_FILE: clang-tidy-issue.md
+  OUTPUT_FILE: /tmp/clang-tidy-output.txt
+  FILTERED_OUTPUT_FILE: /tmp/clang-tidy-filtered-output.txt
+  DIFF_FILE: /tmp/clang-tidy-git-diff.txt
+  ISSUE_FILE: /tmp/clang-tidy-issue.md
 
-  CONAN_PROFILE: clang
-  LLVM_TOOLS_VERSION: 21
+  COMPILER: clang
 
 defaults:
   run:
@@ -44,15 +44,15 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     permissions:
       contents: read
-    uses: XRPLF/actions/.github/workflows/determine-tidy-files.yml@12f5dbc98a2260259a66970e57fa4d26fb7f285c
+    uses: XRPLF/actions/.github/workflows/determine-tidy-files.yml@d041ac9f1fa9f07a4ba335eb4c1c82233fb3fef6
 
   run-clang-tidy:
     name: Run clang tidy
     needs: [determine-files]
-    if: ${{ always() && !cancelled() && (github.event_name != 'pull_request' || needs.determine-files.outputs.cpp_changed_files != '' || needs.determine-files.outputs.clang_tidy_config_changed == 'true') }}
+    if: ${{ needs.determine-files.outputs.cpp_changed_files != '' || needs.determine-files.outputs.need_full_run == 'true' }}
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:f174b47f4909ae41b80406d836ab52adc39eacc6
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
 
     permissions:
       contents: write
@@ -60,28 +60,34 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@90f11ee655d1687824fb8793db770477d52afbab
+        uses: XRPLF/actions/prepare-runner@e4b6449d55a61c002d7c3fdfa6c20f721ede0606
         with:
           enable_ccache: false
 
       - name: Print build environment
         uses: XRPLF/actions/print-build-env@59dec886e4afb05a1724443af08baccbc045b574
 
+      - name: Set compiler environment
+        uses: ./.github/actions/set-compiler-env
+        with:
+          compiler: ${{ env.COMPILER }}
+
+      - name: Setup conan
+        run: conan/init.sh
+
       - name: Run conan
         uses: ./.github/actions/conan
         with:
           build_dir: ${{ env.BUILD_DIR }}
-          conan_profile: ${{ env.CONAN_PROFILE }}
           build_type: ${{ env.BUILD_TYPE }}
 
       - name: Run CMake
         uses: ./.github/actions/cmake
         with:
           build_dir: ${{ env.BUILD_DIR }}
-          conan_profile: ${{ env.CONAN_PROFILE }}
           build_type: ${{ env.BUILD_TYPE }}
 
       - name: Get number of processors
@@ -92,10 +98,10 @@ jobs:
         continue-on-error: true
         id: run_clang_tidy
         env:
-          TARGETS: ${{ (needs.determine-files.outputs.clang_tidy_config_changed != 'true' && github.event_name == 'pull_request') && needs.determine-files.outputs.cpp_changed_files || 'benchmarks src tests' }}
+          TARGETS: ${{ needs.determine-files.outputs.need_full_run != 'true' && needs.determine-files.outputs.cpp_changed_files || 'benchmarks src tests' }}
         run: |
           set -o pipefail
-          run-clang-tidy-${{ env.LLVM_TOOLS_VERSION }} -j ${{ steps.nproc.outputs.nproc }} -p "${BUILD_DIR}" -quiet -fix -allow-no-checks ${TARGETS} 2>&1 | tee "${OUTPUT_FILE}"
+          run-clang-tidy -j ${{ steps.nproc.outputs.nproc }} -p "${BUILD_DIR}" -quiet -fix -allow-no-checks ${TARGETS} 2>&1 | tee "${OUTPUT_FILE}"
 
       - name: Print errors
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
@@ -137,7 +143,7 @@ jobs:
       - name: Write issue header
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
         run: |
-          cat > "${ISSUE_FILE}" <<EOF
+          cat >"${ISSUE_FILE}" <<EOF
           ## Clang-tidy Check Failed
 
           ### Clang-tidy Output:
@@ -148,30 +154,30 @@ jobs:
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
         run: |
           if [ -f "${OUTPUT_FILE}" ]; then
-            # Extract lines containing 'error:', 'warning:', or 'note:'
-            grep -E '(error:|warning:|note:)' "${OUTPUT_FILE}" > filtered-output.txt || true
+              # Extract lines containing 'error:', 'warning:', or 'note:'
+              grep -E '(error:|warning:|note:)' "${OUTPUT_FILE}" >"${FILTERED_OUTPUT_FILE}" || true
 
-            # If filtered output is empty, use original (might be a different error format)
-            if [ ! -s filtered-output.txt ]; then
-              cp "${OUTPUT_FILE}" filtered-output.txt
-            fi
+              # If filtered output is empty, use original (might be a different error format)
+              if [ ! -s "${FILTERED_OUTPUT_FILE}" ]; then
+                  cp "${OUTPUT_FILE}" "${FILTERED_OUTPUT_FILE}"
+              fi
 
-            # Truncate if too large
-            head -c 60000 filtered-output.txt >> "${ISSUE_FILE}"
-            if [ "$(wc -c < filtered-output.txt)" -gt 60000 ]; then
-              echo "" >> "${ISSUE_FILE}"
-              echo "... (output truncated, see artifacts for full output)" >> "${ISSUE_FILE}"
-            fi
+              # Truncate if too large
+              head -c 60000 "${FILTERED_OUTPUT_FILE}" >>"${ISSUE_FILE}"
+              if [ "$(wc -c <"${FILTERED_OUTPUT_FILE}")" -gt 60000 ]; then
+                  echo "" >>"${ISSUE_FILE}"
+                  echo "... (output truncated, see artifacts for full output)" >>"${ISSUE_FILE}"
+              fi
 
-            rm filtered-output.txt
+              rm "${FILTERED_OUTPUT_FILE}"
           else
-            echo "No output file found" >> "${ISSUE_FILE}"
+              echo "No output file found" >>"${ISSUE_FILE}"
           fi
 
       - name: Append issue footer
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
         run: |
-          cat >> "${ISSUE_FILE}" <<EOF
+          cat >>"${ISSUE_FILE}" <<EOF
           \`\`\`
 
           ---
@@ -179,8 +185,9 @@ jobs:
           EOF
 
       - name: Create issue
+        id: create_issue
         if: ${{ steps.run_clang_tidy.outcome != 'success' && github.event_name != 'pull_request' }}
-        uses: XRPLF/actions/create-issue@fbcc16eb7f20dc3199eaf1aed0d3523a5ba9008c
+        uses: XRPLF/actions/create-issue@2b8bc36af85b88bca0dd7bfac2e2dc05f94ad712
         with:
           title: "Clang-tidy check failed"
           body_file: ${{ env.ISSUE_FILE }}
@@ -207,7 +214,7 @@ jobs:
           branch: "clang_tidy/autofix"
           branch-suffix: timestamp
           delete-branch: true
-          title: "style: clang-tidy auto fixes"
+          title: "style: Apply clang-tidy auto fixes"
           body: >
             Fixes #${{ steps.create_issue.outputs.issue_number }}.
 

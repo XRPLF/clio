@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CONAN_PROFILE: gcc
+  COMPILER: gcc
 
 defaults:
   run:
@@ -21,20 +21,28 @@ jobs:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@90f11ee655d1687824fb8793db770477d52afbab
+        uses: XRPLF/actions/prepare-runner@e4b6449d55a61c002d7c3fdfa6c20f721ede0606
         with:
           enable_ccache: false
 
       - name: Print build environment
         uses: XRPLF/actions/print-build-env@59dec886e4afb05a1724443af08baccbc045b574
+
+      - name: Set compiler environment
+        uses: ./.github/actions/set-compiler-env
+        with:
+          compiler: ${{ env.COMPILER }}
+
+      - name: Setup conan
+        run: conan/init.sh
 
       - name: Update libXRPL version requirement
         run: |
@@ -43,17 +51,13 @@ jobs:
 
       - name: Update conan lockfile
         run: |
-          conan lock create . --profile:all ${{ env.CONAN_PROFILE }}
+          conan lock create . --profile:all ci
 
       - name: Run conan
         uses: ./.github/actions/conan
-        with:
-          conan_profile: ${{ env.CONAN_PROFILE }}
 
       - name: Run CMake
         uses: ./.github/actions/cmake
-        with:
-          conan_profile: ${{ env.CONAN_PROFILE }}
 
       - name: Build Clio
         uses: ./.github/actions/build-clio
@@ -72,7 +76,7 @@ jobs:
     needs: build
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
 
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -95,10 +99,10 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Create an issue
-        uses: XRPLF/actions/create-issue@fbcc16eb7f20dc3199eaf1aed0d3523a5ba9008c
+        uses: XRPLF/actions/create-issue@2b8bc36af85b88bca0dd7bfac2e2dc05f94ad712
         with:
           title: "Proposed libXRPL check failed"
           body: >

@@ -16,7 +16,7 @@ namespace etl {
  */
 class MonitorInterface {
 public:
-    static constexpr auto kDEFAULT_REPEAT_INTERVAL = std::chrono::seconds{1};
+    static constexpr auto kDefaultRepeatInterval = std::chrono::seconds{1};
     using NewSequenceSignalType = boost::signals2::signal<void(uint32_t)>;
     using DbStalledSignalType = boost::signals2::signal<void()>;
 
@@ -61,7 +61,7 @@ public:
      * @param repeatInterval The interval between attempts to check the database for new ledgers
      */
     virtual void
-    run(std::chrono::steady_clock::duration repeatInterval = kDEFAULT_REPEAT_INTERVAL) = 0;
+    run(std::chrono::steady_clock::duration repeatInterval = kDefaultRepeatInterval) = 0;
 
     /**
      * @brief Stops the monitor service

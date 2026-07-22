@@ -29,7 +29,7 @@ SubscriptionManager::unsubBookChanges(SubscriberSharedPtr const& subscriber)
 
 void
 SubscriptionManager::pubBookChanges(
-    ripple::LedgerHeader const& lgrInfo,
+    xrpl::LedgerHeader const& lgrInfo,
     std::vector<data::TransactionAndMetadata> const& transactions
 )
 {
@@ -55,7 +55,7 @@ SubscriptionManager::unsubProposedTransactions(SubscriberSharedPtr const& subscr
 
 void
 SubscriptionManager::subProposedAccount(
-    ripple::AccountID const& account,
+    xrpl::AccountID const& account,
     SubscriberSharedPtr const& subscriber
 )
 {
@@ -68,7 +68,7 @@ SubscriptionManager::subProposedAccount(
 
 void
 SubscriptionManager::unsubProposedAccount(
-    ripple::AccountID const& account,
+    xrpl::AccountID const& account,
     SubscriberSharedPtr const& subscriber
 )
 {
@@ -99,8 +99,8 @@ SubscriptionManager::unsubLedger(SubscriberSharedPtr const& subscriber)
 
 void
 SubscriptionManager::pubLedger(
-    ripple::LedgerHeader const& lgrInfo,
-    ripple::Fees const& fees,
+    xrpl::LedgerHeader const& lgrInfo,
+    xrpl::Fees const& fees,
     std::string const& ledgerRange,
     std::uint32_t const txnCount
 )
@@ -158,7 +158,7 @@ SubscriptionManager::unsubTransactions(SubscriberSharedPtr const& subscriber)
 
 void
 SubscriptionManager::subAccount(
-    ripple::AccountID const& account,
+    xrpl::AccountID const& account,
     SubscriberSharedPtr const& subscriber
 )
 {
@@ -167,7 +167,7 @@ SubscriptionManager::subAccount(
 
 void
 SubscriptionManager::unsubAccount(
-    ripple::AccountID const& account,
+    xrpl::AccountID const& account,
     SubscriberSharedPtr const& subscriber
 )
 {
@@ -175,13 +175,13 @@ SubscriptionManager::unsubAccount(
 }
 
 void
-SubscriptionManager::subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::subBook(xrpl::Book const& book, SubscriberSharedPtr const& subscriber)
 {
     transactionFeed_.sub(book, subscriber);
 }
 
 void
-SubscriptionManager::unsubBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::unsubBook(xrpl::Book const& book, SubscriberSharedPtr const& subscriber)
 {
     transactionFeed_.unsub(book, subscriber);
 }
@@ -189,7 +189,7 @@ SubscriptionManager::unsubBook(ripple::Book const& book, SubscriberSharedPtr con
 void
 SubscriptionManager::pubTransaction(
     data::TransactionAndMetadata const& txMeta,
-    ripple::LedgerHeader const& lgrInfo
+    xrpl::LedgerHeader const& lgrInfo
 )
 {
     transactionFeed_.pub(txMeta, lgrInfo, backend_, amendmentCenter_, networkID_);

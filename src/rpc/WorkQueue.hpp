@@ -90,7 +90,7 @@ private:
         [[nodiscard]] std::optional<TaskWithTimestamp>
         popNext()
         {
-            if (not high.empty() and (highPriorityCounter < kTAKE_HIGH_PRIO or normal.empty())) {
+            if (not high.empty() and (highPriorityCounter < kTakeHighPrio or normal.empty())) {
                 auto taskWithTimestamp = std::move(high.front());
                 high.pop();
                 ++highPriorityCounter;
@@ -109,7 +109,7 @@ private:
     };
 
 private:
-    static constexpr auto kTAKE_HIGH_PRIO = 4uz;
+    static constexpr auto kTakeHighPrio = 4uz;
 
     // these are cumulative for the lifetime of the process
     std::reference_wrapper<util::prometheus::CounterInt> queued_;
@@ -143,7 +143,7 @@ private:
 
 public:
     struct DontStartProcessingTag {};
-    static constexpr DontStartProcessingTag kDONT_START_PROCESSING_TAG = {};
+    static constexpr DontStartProcessingTag kDontStartProcessingTag = {};
 
     /**
      * @brief Create an instance of the work queue.

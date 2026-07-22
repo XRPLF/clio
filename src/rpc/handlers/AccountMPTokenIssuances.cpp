@@ -17,6 +17,7 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STInteger.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/jss.h>
 
@@ -31,68 +32,68 @@ namespace rpc {
 void
 AccountMPTokenIssuancesHandler::addMPTokenIssuance(
     std::vector<MPTokenIssuanceResponse>& issuances,
-    ripple::SLE const& sle,
-    ripple::AccountID const& account
+    xrpl::SLE const& sle,
+    xrpl::AccountID const& account
 )
 {
     MPTokenIssuanceResponse issuance;
 
-    issuance.MPTokenIssuanceID = ripple::strHex(sle.key());
-    issuance.issuer = ripple::to_string(account);
-    issuance.sequence = sle.getFieldU32(ripple::sfSequence);
-    auto const flags = sle.getFieldU32(ripple::sfFlags);
+    issuance.mpTokenIssuanceId = xrpl::strHex(sle.key());
+    issuance.issuer = xrpl::to_string(account);
+    issuance.sequence = sle.getFieldU32(xrpl::sfSequence);
+    auto const flags = sle.getFieldU32(xrpl::sfFlags);
 
     auto const setFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
         if ((flags & mask) != 0u)
             field = true;
     };
 
-    setFlag(issuance.mptLocked, ripple::lsfMPTLocked);
-    setFlag(issuance.mptCanLock, ripple::lsfMPTCanLock);
-    setFlag(issuance.mptRequireAuth, ripple::lsfMPTRequireAuth);
-    setFlag(issuance.mptCanEscrow, ripple::lsfMPTCanEscrow);
-    setFlag(issuance.mptCanTrade, ripple::lsfMPTCanTrade);
-    setFlag(issuance.mptCanTransfer, ripple::lsfMPTCanTransfer);
-    setFlag(issuance.mptCanClawback, ripple::lsfMPTCanClawback);
+    setFlag(issuance.mptLocked, xrpl::lsfMPTLocked);
+    setFlag(issuance.mptCanLock, xrpl::lsfMPTCanLock);
+    setFlag(issuance.mptRequireAuth, xrpl::lsfMPTRequireAuth);
+    setFlag(issuance.mptCanEscrow, xrpl::lsfMPTCanEscrow);
+    setFlag(issuance.mptCanTrade, xrpl::lsfMPTCanTrade);
+    setFlag(issuance.mptCanTransfer, xrpl::lsfMPTCanTransfer);
+    setFlag(issuance.mptCanClawback, xrpl::lsfMPTCanClawback);
 
-    if (sle.isFieldPresent(ripple::sfMutableFlags)) {
-        auto const mutableFlags = sle.getFieldU32(ripple::sfMutableFlags);
+    if (sle.isFieldPresent(xrpl::sfMutableFlags)) {
+        auto const mutableFlags = sle.getFieldU32(xrpl::sfMutableFlags);
 
         auto const setMutableFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
             if ((mutableFlags & mask) != 0u)
                 field = true;
         };
 
-        setMutableFlag(issuance.mptCanMutateCanLock, ripple::lsmfMPTCanMutateCanLock);
-        setMutableFlag(issuance.mptCanMutateRequireAuth, ripple::lsmfMPTCanMutateRequireAuth);
-        setMutableFlag(issuance.mptCanMutateCanEscrow, ripple::lsmfMPTCanMutateCanEscrow);
-        setMutableFlag(issuance.mptCanMutateCanTrade, ripple::lsmfMPTCanMutateCanTrade);
-        setMutableFlag(issuance.mptCanMutateCanTransfer, ripple::lsmfMPTCanMutateCanTransfer);
-        setMutableFlag(issuance.mptCanMutateCanClawback, ripple::lsmfMPTCanMutateCanClawback);
-        setMutableFlag(issuance.mptCanMutateMetadata, ripple::lsmfMPTCanMutateMetadata);
-        setMutableFlag(issuance.mptCanMutateTransferFee, ripple::lsmfMPTCanMutateTransferFee);
+        setMutableFlag(issuance.mptCanMutateCanLock, xrpl::lsmfMPTCanEnableCanLock);
+        setMutableFlag(issuance.mptCanMutateRequireAuth, xrpl::lsmfMPTCanEnableRequireAuth);
+        setMutableFlag(issuance.mptCanMutateCanEscrow, xrpl::lsmfMPTCanEnableCanEscrow);
+        setMutableFlag(issuance.mptCanMutateCanTrade, xrpl::lsmfMPTCanEnableCanTrade);
+        setMutableFlag(issuance.mptCanMutateCanTransfer, xrpl::lsmfMPTCanEnableCanTransfer);
+        setMutableFlag(issuance.mptCanMutateCanClawback, xrpl::lsmfMPTCanEnableCanClawback);
+        setMutableFlag(issuance.mptCanMutateMetadata, xrpl::lsmfMPTCanMutateMetadata);
+        setMutableFlag(issuance.mptCanMutateTransferFee, xrpl::lsmfMPTCanMutateTransferFee);
     }
 
-    if (sle.isFieldPresent(ripple::sfTransferFee))
-        issuance.transferFee = sle.getFieldU16(ripple::sfTransferFee);
+    if (sle.isFieldPresent(xrpl::sfTransferFee))
+        issuance.transferFee = sle.getFieldU16(xrpl::sfTransferFee);
 
-    if (sle.isFieldPresent(ripple::sfAssetScale))
-        issuance.assetScale = sle.getFieldU8(ripple::sfAssetScale);
+    if (sle.isFieldPresent(xrpl::sfAssetScale))
+        issuance.assetScale = sle.getFieldU8(xrpl::sfAssetScale);
 
-    if (sle.isFieldPresent(ripple::sfMaximumAmount))
-        issuance.maximumAmount = sle.getFieldU64(ripple::sfMaximumAmount);
+    if (sle.isFieldPresent(xrpl::sfMaximumAmount))
+        issuance.maximumAmount = sle.getFieldU64(xrpl::sfMaximumAmount);
 
-    if (sle.isFieldPresent(ripple::sfOutstandingAmount))
-        issuance.outstandingAmount = sle.getFieldU64(ripple::sfOutstandingAmount);
+    if (sle.isFieldPresent(xrpl::sfOutstandingAmount))
+        issuance.outstandingAmount = sle.getFieldU64(xrpl::sfOutstandingAmount);
 
-    if (sle.isFieldPresent(ripple::sfLockedAmount))
-        issuance.lockedAmount = sle.getFieldU64(ripple::sfLockedAmount);
+    if (sle.isFieldPresent(xrpl::sfLockedAmount))
+        issuance.lockedAmount = sle.getFieldU64(xrpl::sfLockedAmount);
 
-    if (sle.isFieldPresent(ripple::sfMPTokenMetadata))
-        issuance.mptokenMetadata = ripple::strHex(sle.getFieldVL(ripple::sfMPTokenMetadata));
+    if (sle.isFieldPresent(xrpl::sfMPTokenMetadata))
+        issuance.mptokenMetadata = xrpl::strHex(sle.getFieldVL(xrpl::sfMPTokenMetadata));
 
-    if (sle.isFieldPresent(ripple::sfDomainID))
-        issuance.domainID = ripple::strHex(sle.getFieldH256(ripple::sfDomainID));
+    if (sle.isFieldPresent(xrpl::sfDomainID))
+        issuance.domainID = xrpl::strHex(sle.getFieldH256(xrpl::sfDomainID));
 
     issuances.push_back(issuance);
 }
@@ -120,19 +121,19 @@ AccountMPTokenIssuancesHandler::process(
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        ripple::keylet::account(*accountID).key,
+        xrpl::keylet::account(*accountID).key,
         lgrInfo.seq,
         ctx.yield
     );
 
     if (not accountLedgerObject.has_value())
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
     Output response;
     response.issuances.reserve(input.limit);
 
-    auto const addToResponse = [&](ripple::SLE const& sle) {
-        if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE) {
+    auto const addToResponse = [&](xrpl::SLE const& sle) {
+        if (sle.getType() == xrpl::ltMPTOKEN_ISSUANCE) {
             addMPTokenIssuance(response.issuances, sle, *accountID);
         }
     };
@@ -155,7 +156,7 @@ AccountMPTokenIssuancesHandler::process(
     response.account = input.account;
     response.limit = input.limit;
 
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
     if (nextMarker.isNonZero())
@@ -225,7 +226,7 @@ tag_invoke(
 )
 {
     auto obj = boost::json::object{
-        {JS(mpt_issuance_id), issuance.MPTokenIssuanceID},
+        {JS(mpt_issuance_id), issuance.mpTokenIssuanceId},
         {JS(issuer), issuance.issuer},
         {JS(sequence), issuance.sequence},
     };
@@ -236,11 +237,23 @@ tag_invoke(
         }
     };
 
+    // UInt64 amount fields must be serialized as base-10 strings (matching rippled's
+    // STUInt64::getJson) so that JSON parsers using IEEE-754 doubles do not silently lose
+    // precision for values greater than 2^53.
+    auto const setUint64IfPresent =
+        [&](boost::json::string_view field, xrpl::SField const& sField, auto const& value) {
+            if (value.has_value()) {
+                obj[field] = toBoostJson(
+                    xrpl::STUInt64{sField, *value}.getJson(xrpl::JsonOptions::Values::None)
+                );
+            }
+        };
+
     setIfPresent("transfer_fee", issuance.transferFee);
     setIfPresent("asset_scale", issuance.assetScale);
-    setIfPresent("maximum_amount", issuance.maximumAmount);
-    setIfPresent("outstanding_amount", issuance.outstandingAmount);
-    setIfPresent("locked_amount", issuance.lockedAmount);
+    setUint64IfPresent("maximum_amount", xrpl::sfMaximumAmount, issuance.maximumAmount);
+    setUint64IfPresent("outstanding_amount", xrpl::sfOutstandingAmount, issuance.outstandingAmount);
+    setUint64IfPresent("locked_amount", xrpl::sfLockedAmount, issuance.lockedAmount);
     setIfPresent("mptoken_metadata", issuance.mptokenMetadata);
     setIfPresent("domain_id", issuance.domainID);
 

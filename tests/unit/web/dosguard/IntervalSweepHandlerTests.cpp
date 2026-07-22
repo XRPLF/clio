@@ -15,7 +15,7 @@ using namespace util::config;
 
 struct IntervalSweepHandlerTest : SyncAsioContextTest {
 protected:
-    static constexpr auto kJSON_DATA = R"JSON(
+    static constexpr auto kJsonData = R"JSON(
         {
             "dos_guard": {
                 "sweep_interval": 0

@@ -238,10 +238,10 @@ TYPED_TEST(ExecutionContextTests, submit)
     std::atomic_uint32_t count = 0;
     std::binary_semaphore sem{0};
 
-    static constexpr auto kNUM_SUBMISSIONS = 1024;
+    static constexpr auto kNumSubmissions = 1024;
 
-    for (auto i = 1; i <= kNUM_SUBMISSIONS; ++i) {
-        if (i == kNUM_SUBMISSIONS) {
+    for (auto i = 1; i <= kNumSubmissions; ++i) {
+        if (i == kNumSubmissions) {
             this->ctx.submit([&count, &sem] {
                 ++count;
                 sem.release();
@@ -254,7 +254,7 @@ TYPED_TEST(ExecutionContextTests, submit)
     sem.acquire();
 
     // order is not guaranteed (see `strandSubmit` below)
-    ASSERT_EQ(count, static_cast<size_t>(kNUM_SUBMISSIONS));
+    ASSERT_EQ(count, static_cast<size_t>(kNumSubmissions));
 }
 
 TYPED_TEST(ExecutionContextTests, strandMove)
@@ -359,10 +359,10 @@ TYPED_TEST(ExecutionContextTests, strandSubmit)
     std::vector<int> results;
     std::binary_semaphore sem{0};
 
-    static constexpr auto kNUM_SUBMISSIONS = 1024;
+    static constexpr auto kNumSubmissions = 1024;
 
-    for (auto i = 1; i <= kNUM_SUBMISSIONS; ++i) {
-        if (i == kNUM_SUBMISSIONS) {
+    for (auto i = 1; i <= kNumSubmissions; ++i) {
+        if (i == kNumSubmissions) {
             strand.submit([&results, &sem, i] {
                 results.push_back(i);
                 sem.release();
@@ -374,8 +374,8 @@ TYPED_TEST(ExecutionContextTests, strandSubmit)
 
     sem.acquire();
 
-    ASSERT_EQ(results.size(), static_cast<size_t>(kNUM_SUBMISSIONS));
-    for (int i = 0; i < kNUM_SUBMISSIONS; ++i) {
+    ASSERT_EQ(results.size(), static_cast<size_t>(kNumSubmissions));
+    for (int i = 0; i < kNumSubmissions; ++i) {
         EXPECT_EQ(results[i], i + 1);
     }
 }

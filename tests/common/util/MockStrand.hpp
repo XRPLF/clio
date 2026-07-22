@@ -3,10 +3,10 @@
 #include "util/MockOperation.hpp"
 #include "util/async/AnyStopToken.hpp"
 #include "util/async/Error.hpp"
+#include "util/async/impl/Any.hpp"
 
 #include <gmock/gmock.h>
 
-#include <any>
 #include <chrono>
 #include <expected>
 #include <functional>
@@ -15,6 +15,8 @@
 struct MockStrand {
     template <typename T>
     using ValueType = std::expected<T, util::async::ExecutionError>;
+
+    using Any = util::async::impl::Any;
 
     template <typename T>
     using Operation = MockOperation<T>;
@@ -25,30 +27,29 @@ struct MockStrand {
     template <typename T>
     using RepeatingOperation = MockRepeatingOperation<T>;
 
-    MOCK_METHOD(Operation<std::any> const&, execute, (std::function<std::any()>), (const));
+    MOCK_METHOD(Operation<Any> const&, execute, (std::function<Any()>), (const));
     MOCK_METHOD(
-        Operation<std::any> const&,
+        Operation<Any> const&,
         execute,
-        (std::function<std::any()>, std::optional<std::chrono::milliseconds>),
+        (std::function<Any()>, std::optional<std::chrono::milliseconds>),
         (const)
     );
     MOCK_METHOD(
-        StoppableOperation<std::any> const&,
+        StoppableOperation<Any> const&,
         execute,
-        (std::function<std::any(util::async::AnyStopToken)>),
+        (std::function<Any(util::async::AnyStopToken)>),
         (const)
     );
     MOCK_METHOD(
-        StoppableOperation<std::any> const&,
+        StoppableOperation<Any> const&,
         execute,
-        (std::function<std::any(util::async::AnyStopToken)>,
-         std::optional<std::chrono::milliseconds>),
+        (std::function<Any(util::async::AnyStopToken)>, std::optional<std::chrono::milliseconds>),
         (const)
     );
     MOCK_METHOD(
-        RepeatingOperation<std::any> const&,
+        RepeatingOperation<Any> const&,
         executeRepeatedly,
-        (std::chrono::milliseconds, std::function<std::any()>),
+        (std::chrono::milliseconds, std::function<Any()>),
         (const)
     );
     MOCK_METHOD(void, submit, (std::function<void()>), (const));

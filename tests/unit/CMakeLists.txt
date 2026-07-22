@@ -48,6 +48,7 @@ target_sources(
         etl/LoadBalancerTests.cpp
         etl/LoadingTests.cpp
         etl/MonitorTests.cpp
+        etl/MPTHelpersTests.cpp
         etl/NetworkValidatedLedgersTests.cpp
         etl/NFTHelpersTests.cpp
         etl/RegistryTests.cpp
@@ -238,6 +239,8 @@ set_target_properties(
     clio_tests
     PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+patch_nix_binary(clio_tests)
 
 # Generate `coverage_report` target if coverage is enabled
 if(coverage)

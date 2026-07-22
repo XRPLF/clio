@@ -12,34 +12,32 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
-#include <cstdlib>
 #include <string>
 #include <vector>
 
 namespace {
 
-constexpr auto kRANGE_MIN = 10;
-constexpr auto kRANGE_MAX = 30;
-constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kRangeMin = 10;
+constexpr auto kRangeMax = 30;
+constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 
 }  // namespace
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 struct RPCLedgerIndexTest : HandlerBaseTestStrict {
     RPCLedgerIndexTest()
     {
-        backend_->setRange(kRANGE_MIN, kRANGE_MAX);
+        backend_->setRange(kRangeMin, kRangeMax);
     }
 };
 
 TEST_F(RPCLedgerIndexTest, DateStrNotValid)
 {
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"JSON({"date": "not_a_number"})JSON");
+    auto const req = boost::json::parse(R"JSON({"date": "not_a_number"})JSON");
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -51,16 +49,16 @@ TEST_F(RPCLedgerIndexTest, DateStrNotValid)
 
 TEST_F(RPCLedgerIndexTest, NoDateGiven)
 {
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX, 5);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillOnce(Return(ledgerHeader));
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kRangeMax, 5);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _)).WillOnce(Return(ledgerHeader));
 
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"JSON({})JSON");
+    auto const req = boost::json::parse(R"JSON({})JSON");
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->at("ledger_index").as_uint64(), kRANGE_MAX);
-        EXPECT_EQ(output.result->at("ledger_hash").as_string(), kLEDGER_HASH);
+        EXPECT_EQ(output.result->at("ledger_index").as_uint64(), kRangeMax);
+        EXPECT_EQ(output.result->at("ledger_hash").as_string(), kLedgerHash);
         EXPECT_TRUE(output.result->as_object().contains("closed"));
     });
 }
@@ -68,11 +66,11 @@ TEST_F(RPCLedgerIndexTest, NoDateGiven)
 TEST_F(RPCLedgerIndexTest, EarlierThanMinLedger)
 {
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
+    auto const req = boost::json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
     auto const ledgerHeader = createLedgerHeaderWithUnixTime(
-        kLEDGER_HASH, kRANGE_MIN, 1719318190
+        kLedgerHash, kRangeMin, 1719318190
     );  //"2024-06-25T12:23:10Z"
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MIN, _)).WillOnce(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMin, _)).WillOnce(Return(ledgerHeader));
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -86,11 +84,11 @@ TEST_F(RPCLedgerIndexTest, ChangeTimeZone)
     // Note: setenv/unsetenv are included with <cstdlib> but misc-include-cleaner still angry
     setenv("TZ", "EST+5", 1);  // NOLINT(misc-include-cleaner)
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
+    auto const req = boost::json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
     auto const ledgerHeader = createLedgerHeaderWithUnixTime(
-        kLEDGER_HASH, kRANGE_MIN, 1719318190
+        kLedgerHash, kRangeMin, 1719318190
     );  //"2024-06-25T12:23:10Z"
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MIN, _)).WillOnce(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMin, _)).WillOnce(Return(ledgerHeader));
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -117,19 +115,19 @@ public:
         return std::vector<LedgerIndexTestsCaseBundle>{
             {.testName = "LaterThanMaxLedger",
              .json = R"JSON({"date": "2024-06-25T12:23:55Z"})JSON",
-             .expectedLedgerIndex = kRANGE_MAX,
+             .expectedLedgerIndex = kRangeMax,
              .closeTimeIso = "2024-06-25T12:23:50Z"},
             {.testName = "GreaterThanMinLedger",
              .json = R"JSON({"date": "2024-06-25T12:23:11Z"})JSON",
-             .expectedLedgerIndex = kRANGE_MIN,
+             .expectedLedgerIndex = kRangeMin,
              .closeTimeIso = "2024-06-25T12:23:10Z"},
             {.testName = "IsMinLedger",
              .json = R"JSON({"date": "2024-06-25T12:23:10Z"})JSON",
-             .expectedLedgerIndex = kRANGE_MIN,
+             .expectedLedgerIndex = kRangeMin,
              .closeTimeIso = "2024-06-25T12:23:10Z"},
             {.testName = "IsMaxLedger",
              .json = R"JSON({"date": "2024-06-25T12:23:50Z"})JSON",
-             .expectedLedgerIndex = kRANGE_MAX,
+             .expectedLedgerIndex = kRangeMax,
              .closeTimeIso = "2024-06-25T12:23:50Z"},
             {.testName = "IsMidLedger",
              .json = R"JSON({"date": "2024-06-25T12:23:30Z"})JSON",
@@ -147,32 +145,32 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerIndexTestsGroup,
     LedgerIndexTests,
     ValuesIn(LedgerIndexTests::generateTestValuesForParametersTest()),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(LedgerIndexTests, SearchFromLedgerRange)
 {
     auto const testBundle = GetParam();
-    auto const jv = json::parse(testBundle.json).as_object();
+    auto const jv = boost::json::parse(testBundle.json).as_object();
 
     // start from 1719318190 , which is the unix time for 2024-06-25T12:23:10Z to
     // 2024-06-25T12:23:50Z with step 2
-    for (uint32_t i = kRANGE_MIN; i <= kRANGE_MAX; i++) {
+    for (uint32_t i = kRangeMin; i <= kRangeMax; i++) {
         auto const ledgerHeader =
-            createLedgerHeaderWithUnixTime(kLEDGER_HASH, i, 1719318190 + (2 * (i - kRANGE_MIN)));
-        auto const exactNumberOfCalls = i == kRANGE_MIN ? Exactly(3) : Exactly(2);
+            createLedgerHeaderWithUnixTime(kLedgerHash, i, 1719318190 + (2 * (i - kRangeMin)));
+        auto const exactNumberOfCalls = i == kRangeMin ? Exactly(3) : Exactly(2);
         EXPECT_CALL(*backend_, fetchLedgerBySequence(i, _))
             .Times(i == testBundle.expectedLedgerIndex ? exactNumberOfCalls : AtMost(1))
             .WillRepeatedly(Return(ledgerHeader));
     }
 
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(testBundle.json);
+    auto const req = boost::json::parse(testBundle.json);
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("ledger_index").as_uint64(), testBundle.expectedLedgerIndex);
-        EXPECT_EQ(output.result->at("ledger_hash").as_string(), kLEDGER_HASH);
+        EXPECT_EQ(output.result->at("ledger_hash").as_string(), kLedgerHash);
         EXPECT_EQ(output.result->at("closed").as_string(), testBundle.closeTimeIso);
     });
 }

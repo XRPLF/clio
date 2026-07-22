@@ -17,7 +17,7 @@ ObjectsAdapter::onRowRead(TableObjectsDesc::Row const& row)
         onStateRead_(ledgerSeq, std::nullopt);
         return;
     }
-    ripple::SLE sle{ripple::SerialIter{blob.data(), blob.size()}, key};
+    xrpl::SLE sle{xrpl::SerialIter{blob.data(), blob.size()}, key};
     onStateRead_(ledgerSeq, std::make_optional(std::move(sle)));
 }
 

@@ -14,7 +14,7 @@
 namespace data::cassandra::impl {
 
 class Collection : public ManagedObject<CassCollection> {
-    static constexpr auto kDELETER = [](CassCollection* ptr) { cass_collection_free(ptr); };
+    static constexpr auto kDeleter = [](CassCollection* ptr) { cass_collection_free(ptr); };
 
     static void
     throwErrorIfNeeded(CassError const rc, std::string_view const label)
@@ -30,7 +30,7 @@ public:
 
     template <typename Type>
     explicit Collection(std::vector<Type> const& value)
-        : ManagedObject{cass_collection_new(CASS_COLLECTION_TYPE_LIST, value.size()), kDELETER}
+        : ManagedObject{cass_collection_new(CASS_COLLECTION_TYPE_LIST, value.size()), kDeleter}
     {
         bind(value);
     }
@@ -58,14 +58,14 @@ public:
     }
 
     void
-    append(ripple::uint256 const& value) const
+    append(xrpl::uint256 const& value) const
     {
         auto const rc = cass_collection_append_bytes(
             *this,
             static_cast<cass_byte_t const*>(static_cast<unsigned char const*>(value.data())),
-            ripple::uint256::size()
+            xrpl::uint256::size()
         );
-        throwErrorIfNeeded(rc, "Bind ripple::uint256");
+        throwErrorIfNeeded(rc, "Bind xrpl::uint256");
     }
 };
 }  // namespace data::cassandra::impl

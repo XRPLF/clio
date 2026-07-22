@@ -6,8 +6,6 @@
 #include "web/AdminVerificationStrategy.hpp"
 
 #include <boost/beast/http/field.hpp>
-#include <boost/beast/http/message.hpp>
-#include <boost/beast/http/string_body.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
 #include <gtest/gtest.h>
@@ -65,7 +63,7 @@ TEST_F(PasswordAdminVerificationStrategyTest, IsAdminReturnsTrueOnlyForValidPass
     EXPECT_FALSE(strat_.isAdmin(makeRequest("a"), "127.0.0.1"));
 
     // Wrong header
-    EXPECT_FALSE(strat_.isAdmin(makeRequest(passwordHash_, http::field::authentication_info), ""));
+    EXPECT_FALSE(strat_.isAdmin(makeRequest(passwordHash_, http::field::accept), ""));
 }
 
 struct MakeAdminVerificationStrategyTestParams {
@@ -175,5 +173,5 @@ INSTANTIATE_TEST_SUITE_P(
             .expectedError = false
         }
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );

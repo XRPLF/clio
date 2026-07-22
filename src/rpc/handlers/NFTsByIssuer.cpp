@@ -23,7 +23,7 @@
 #include <optional>
 #include <string>
 
-using namespace ripple;
+using namespace xrpl;
 
 namespace rpc {
 
@@ -45,18 +45,18 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
 
     auto const& lgrInfo = *expectedLgrInfo;
 
-    auto const limit = input.limit.value_or(NFTsByIssuerHandler::kLIMIT_DEFAULT);
+    auto const limit = input.limit.value_or(NFTsByIssuerHandler::kLimitDefault);
 
     auto const issuer = accountFromStringStrict(input.issuer);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        ripple::keylet::account(*issuer).key,
+        xrpl::keylet::account(*issuer).key,
         lgrInfo.seq,
         ctx.yield
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
     std::optional<uint256> cursor;
     if (input.marker)
@@ -92,7 +92,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
         nftJson["transfer_fee"] = nft::getTransferFee(nft.tokenID);
         nftJson[JS(issuer)] = toBase58(nft::getIssuer(nft.tokenID));
         nftJson[JS(nft_taxon)] = nft::toUInt32(nft::getTaxon(nft.tokenID));
-        nftJson[JS(nft_serial)] = nft::getSerial(nft.tokenID);
+        nftJson[JS(nft_serial)] = nft::getSequence(nft.tokenID);
 
         output.nfts.push_back(nftJson);
     }

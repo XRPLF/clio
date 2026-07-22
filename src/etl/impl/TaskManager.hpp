@@ -23,7 +23,7 @@
 namespace etl::impl {
 
 class TaskManager : public TaskManagerInterface {
-    static constexpr auto kQUEUE_SIZE_LIMIT = 2048uz;
+    static constexpr auto kQueueSizeLimit = 2048uz;
 
     util::async::AnyExecutionContext ctx_;
     std::shared_ptr<SchedulerInterface> schedulers_;

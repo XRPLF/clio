@@ -7,6 +7,7 @@ target_sources(
         util/BinaryTestObject.cpp
         util/CallWithTimeout.cpp
         util/LoggerFixtures.cpp
+        util/MPTokenTestObjects.cpp
         util/MockAssert.cpp
         util/StringUtils.cpp
         util/TestHttpClient.cpp

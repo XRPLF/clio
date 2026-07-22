@@ -17,16 +17,16 @@ using namespace etl::impl;
 using namespace data;
 
 namespace {
-constinit auto const kSEQ = 123u;
-constinit auto const kLEDGER_HASH =
+constinit auto const kSeq = 123u;
+constinit auto const kLedgerHash =
     "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constinit auto const kUNUSED_LAST_KEY = "unused";
+constinit auto const kUnusedLastKey = "unused";
 
 auto
 createTestData()
 {
     auto objects = std::vector{util::createObject(), util::createObject(), util::createObject()};
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     return etl::model::LedgerData{
         .transactions = {},
         .objects = std::move(objects),
@@ -34,7 +34,7 @@ createTestData()
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSEQ
+        .seq = kSeq
     };
 }
 
@@ -71,9 +71,9 @@ TEST_F(CacheExtTests, OnInitialObjectsUpdateCache)
 {
     auto const objects = std::vector{util::createObject(), util::createObject()};
 
-    EXPECT_CALL(cache_, update(objects, kSEQ));
+    EXPECT_CALL(cache_, update(objects, kSeq));
 
-    ext_.onInitialObjects(kSEQ, objects, kUNUSED_LAST_KEY);
+    ext_.onInitialObjects(kSeq, objects, kUnusedLastKey);
 }
 
 TEST_F(CacheExtTests, AllowInReadonlyReturnsTrue)

@@ -86,7 +86,7 @@ SuccessorExt::writeIncludedSuccessor(uint32_t seq, model::BookSuccessor const& s
 {
     auto firstBook = succ.firstBook;
     if (firstBook.empty())
-        firstBook = uint256ToString(data::kLAST_KEY);
+        firstBook = uint256ToString(data::kLastKey);
 
     backend_->writeSuccessor(auto{succ.bookBase}, seq, std::move(firstBook));
 }
@@ -116,10 +116,10 @@ SuccessorExt::updateSuccessorFromCache(uint32_t seq, model::Object const& obj) c
 {
     auto const lb = cache_.get()
                         .getPredecessor(obj.key, seq)
-                        .value_or(data::LedgerObject{.key = data::kFIRST_KEY, .blob = {}});
+                        .value_or(data::LedgerObject{.key = data::kFirstKey, .blob = {}});
     auto const ub = cache_.get()
                         .getSuccessor(obj.key, seq)
-                        .value_or(data::LedgerObject{.key = data::kLAST_KEY, .blob = {}});
+                        .value_or(data::LedgerObject{.key = data::kLastKey, .blob = {}});
 
     auto checkBookBase = false;
     auto const isDeleted = obj.data.empty();
@@ -133,7 +133,7 @@ SuccessorExt::updateSuccessorFromCache(uint32_t seq, model::Object const& obj) c
 
     if (isDeleted) {
         auto const old = cache_.get().getDeleted(obj.key, seq - 1);
-        ASSERT(old.has_value(), "Deleted object {} must be in cache", ripple::strHex(obj.key));
+        ASSERT(old.has_value(), "Deleted object {} must be in cache", xrpl::strHex(obj.key));
 
         checkBookBase = isBookDir(obj.key, *old);  // NOLINT(bugprone-unchecked-optional-access)
     } else {
@@ -161,7 +161,7 @@ void
 SuccessorExt::updateBookSuccessor(
     std::optional<data::LedgerObject> const& maybeSuccessor,
     auto seq,
-    ripple::uint256 const& bookBase
+    xrpl::uint256 const& bookBase
 ) const
 {
     if (maybeSuccessor.has_value()) {
@@ -169,16 +169,16 @@ SuccessorExt::updateBookSuccessor(
             uint256ToString(bookBase), seq, uint256ToString(maybeSuccessor->key)
         );
     } else {
-        backend_->writeSuccessor(uint256ToString(bookBase), seq, uint256ToString(data::kLAST_KEY));
+        backend_->writeSuccessor(uint256ToString(bookBase), seq, uint256ToString(data::kLastKey));
     }
 }
 
 void
 SuccessorExt::writeSuccessors(uint32_t seq) const
 {
-    ripple::uint256 prev = data::kFIRST_KEY;
+    xrpl::uint256 prev = data::kFirstKey;
     while (auto cur = cache_.get().getSuccessor(prev, seq)) {
-        if (prev == data::kFIRST_KEY)
+        if (prev == data::kFirstKey)
             backend_->writeSuccessor(uint256ToString(prev), seq, uint256ToString(cur->key));
 
         if (isBookDir(cur->key, cur->blob)) {
@@ -187,9 +187,7 @@ SuccessorExt::writeSuccessors(uint32_t seq) const
             // make sure the base is not an actual object
             if (not cache_.get().get(base, seq)) {
                 auto succ = cache_.get().getSuccessor(base, seq);
-                ASSERT(
-                    succ.has_value(), "Book base {} must have a successor", ripple::strHex(base)
-                );
+                ASSERT(succ.has_value(), "Book base {} must have a successor", xrpl::strHex(base));
 
                 if (succ->key == cur->key)  // NOLINT(bugprone-unchecked-optional-access)
                     backend_->writeSuccessor(uint256ToString(base), seq, uint256ToString(cur->key));
@@ -199,7 +197,7 @@ SuccessorExt::writeSuccessors(uint32_t seq) const
         prev = cur->key;
     }
 
-    backend_->writeSuccessor(uint256ToString(prev), seq, uint256ToString(data::kLAST_KEY));
+    backend_->writeSuccessor(uint256ToString(prev), seq, uint256ToString(data::kLastKey));
 }
 
 void
@@ -207,7 +205,7 @@ SuccessorExt::writeEdgeKeys(std::uint32_t seq, auto const& edgeKeys) const
 {
     for (auto const& key : edgeKeys) {
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        auto succ = cache_.get().getSuccessor(*ripple::uint256::fromVoidChecked(key), seq);
+        auto succ = cache_.get().getSuccessor(*xrpl::uint256::fromVoidChecked(key), seq);
         if (succ)
             backend_->writeSuccessor(auto{key}, seq, uint256ToString(succ->key));
     }

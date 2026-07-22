@@ -2,7 +2,6 @@
 
 #include "util/Assert.hpp"
 #include "util/BytesConverter.hpp"
-#include "util/SourceLocation.hpp"
 #include "util/config/ArrayView.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ObjectView.hpp"
@@ -29,6 +28,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <source_location>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -69,7 +69,7 @@ toSpdlogLevel(Severity sev)
 std::string_view
 toString(Severity sev)
 {
-    static constexpr std::array<std::string_view, 6> kLABELS = {
+    static constexpr std::array<std::string_view, 6> kLabels = {
         "TRC",
         "DBG",
         "NFO",
@@ -78,7 +78,7 @@ toString(Severity sev)
         "FTL",
     };
 
-    return kLABELS.at(static_cast<int>(sev));
+    return kLabels.at(static_cast<int>(sev));
 }
 
 }  // namespace
@@ -119,7 +119,7 @@ getSeverityLevel(std::string_view logLevel)
 class NonCriticalFormatter : public spdlog::formatter {
 public:
     NonCriticalFormatter(std::unique_ptr<spdlog::formatter> wrappedFormatter)
-        : wrapped_formatter_(std::move(wrappedFormatter))
+        : wrappedFormatter_(std::move(wrappedFormatter))
     {
     }
 
@@ -128,18 +128,18 @@ public:
     {
         // Only format messages with severity less than critical
         if (msg.level != spdlog::level::critical) {
-            wrapped_formatter_->format(msg, dest);
+            wrappedFormatter_->format(msg, dest);
         }
     }
 
     [[nodiscard]] std::unique_ptr<formatter>
     clone() const override
     {
-        return std::make_unique<NonCriticalFormatter>(wrapped_formatter_->clone());
+        return std::make_unique<NonCriticalFormatter>(wrappedFormatter_->clone());
     }
 
 private:
-    std::unique_ptr<spdlog::formatter> wrapped_formatter_;
+    std::unique_ptr<spdlog::formatter> wrappedFormatter_;
 };
 
 /**
@@ -215,7 +215,7 @@ static std::expected<std::unordered_map<std::string_view, Severity>, std::string
 getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSeverity)
 {
     std::unordered_map<std::string_view, Severity> minSeverity;
-    for (auto const& channel : Logger::kCHANNELS)
+    for (auto const& channel : Logger::kChannels)
         minSeverity[channel] = defaultSeverity;
 
     auto const overrides = config.getArray("log.channels");
@@ -225,7 +225,7 @@ getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSever
          ++it) {
         auto const& channelConfig = *it;
         auto const name = channelConfig.get<std::string>("channel");
-        if (not std::ranges::contains(Logger::kCHANNELS, name)) {
+        if (not std::ranges::contains(Logger::kChannels, name)) {
             return std::unexpected{
                 fmt::format("Can't override settings for log channel {}: invalid channel", name)
             };
@@ -258,9 +258,9 @@ LogServiceState::init(
     });
 
     if (isAsync) {
-        static constexpr size_t kQUEUE_SIZE = 8192;
-        static constexpr size_t kTHREAD_COUNT = 1;
-        spdlog::init_thread_pool(kQUEUE_SIZE, kTHREAD_COUNT);
+        static constexpr size_t kQueueSize = 8192;
+        static constexpr size_t kThreadCount = 1;
+        spdlog::init_thread_pool(kQueueSize, kThreadCount);
     }
 }
 
@@ -382,7 +382,7 @@ LogService::init(config::ClioConfigDefinition const& config)
     auto const minSeverity = std::move(maybeMinSeverity).value();
 
     // Create loggers for each channel
-    for (auto const& channel : Logger::kCHANNELS) {
+    for (auto const& channel : Logger::kChannels) {
         auto const it = minSeverity.find(channel);
         auto const severity = (it != minSeverity.end()) ? it->second : defaultSeverity_;
         registerLogger(channel, severity);
@@ -405,37 +405,37 @@ LogService::shutdown()
 }
 
 Logger::Pump
-LogService::trace(SourceLocationType const& loc)
+LogService::trace(std::source_location const& loc)
 {
     return Logger(spdlog::default_logger()).trace(loc);
 }
 
 Logger::Pump
-LogService::debug(SourceLocationType const& loc)
+LogService::debug(std::source_location const& loc)
 {
     return Logger(spdlog::default_logger()).debug(loc);
 }
 
 Logger::Pump
-LogService::info(SourceLocationType const& loc)
+LogService::info(std::source_location const& loc)
 {
     return Logger(spdlog::default_logger()).info(loc);
 }
 
 Logger::Pump
-LogService::warn(SourceLocationType const& loc)
+LogService::warn(std::source_location const& loc)
 {
     return Logger(spdlog::default_logger()).warn(loc);
 }
 
 Logger::Pump
-LogService::error(SourceLocationType const& loc)
+LogService::error(std::source_location const& loc)
 {
     return Logger(spdlog::default_logger()).error(loc);
 }
 
 Logger::Pump
-LogService::fatal(SourceLocationType const& loc)
+LogService::fatal(std::source_location const& loc)
 {
     return Logger(spdlog::default_logger()).fatal(loc);
 }
@@ -454,14 +454,14 @@ Logger::Logger(std::string_view const channel) : logger_(LogServiceState::regist
 Logger::~Logger()
 {
     // One reference is held by logger_ and the other by spdlog registry
-    static constexpr size_t kLAST_LOGGER_REF_COUNT = 2;
+    static constexpr size_t kLastLoggerRefCount = 2;
 
     if (logger_ == nullptr) {
         return;
     }
 
-    bool const isDynamic = !std::ranges::contains(kCHANNELS, logger_->name());
-    if (isDynamic && logger_.use_count() == kLAST_LOGGER_REF_COUNT) {
+    bool const isDynamic = !std::ranges::contains(kChannels, logger_->name());
+    if (isDynamic && logger_.use_count() == kLastLoggerRefCount) {
         spdlog::drop(logger_->name());
     }
 }
@@ -469,7 +469,7 @@ Logger::~Logger()
 Logger::Pump::Pump(
     std::shared_ptr<spdlog::logger> logger,
     Severity sev,
-    SourceLocationType const& loc
+    std::source_location const& loc
 )
     : logger_(std::move(logger))
     , severity_(sev)
@@ -489,32 +489,32 @@ Logger::Pump::~Pump()
 }
 
 Logger::Pump
-Logger::trace(SourceLocationType const& loc) const
+Logger::trace(std::source_location const& loc) const
 {
     return {logger_, Severity::TRC, loc};
 }
 Logger::Pump
-Logger::debug(SourceLocationType const& loc) const
+Logger::debug(std::source_location const& loc) const
 {
     return {logger_, Severity::DBG, loc};
 }
 Logger::Pump
-Logger::info(SourceLocationType const& loc) const
+Logger::info(std::source_location const& loc) const
 {
     return {logger_, Severity::NFO, loc};
 }
 Logger::Pump
-Logger::warn(SourceLocationType const& loc) const
+Logger::warn(std::source_location const& loc) const
 {
     return {logger_, Severity::WRN, loc};
 }
 Logger::Pump
-Logger::error(SourceLocationType const& loc) const
+Logger::error(std::source_location const& loc) const
 {
     return {logger_, Severity::ERR, loc};
 }
 Logger::Pump
-Logger::fatal(SourceLocationType const& loc) const
+Logger::fatal(std::source_location const& loc) const
 {
     return {logger_, Severity::FTL, loc};
 }

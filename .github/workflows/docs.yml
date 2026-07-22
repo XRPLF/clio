@@ -4,6 +4,18 @@ on:
   push:
     branches: [develop]
   workflow_dispatch:
+  pull_request:
+    branches: [release/*, develop]
+    paths:
+      - .github/workflows/docs.yml
+
+      - CMakeLists.txt
+      - conanfile.py
+      - conan.lock
+      - "cmake/**"
+      - "docs/**"
+      - "src/**"
+      - "tests/**"
 
 concurrency:
   # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
@@ -18,16 +30,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@90f11ee655d1687824fb8793db770477d52afbab
+        uses: XRPLF/actions/prepare-runner@e4b6449d55a61c002d7c3fdfa6c20f721ede0606
         with:
           enable_ccache: false
 
@@ -46,6 +58,7 @@ jobs:
         run: cmake --build . --target docs
 
       - name: Setup Pages
+        if: ${{ github.repository == 'XRPLF/clio' && github.event_name == 'push' }}
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - name: Upload artifact
@@ -55,6 +68,7 @@ jobs:
           name: docs-develop
 
   deploy:
+    if: ${{ github.repository == 'XRPLF/clio' && github.event_name == 'push' }}
     needs: build
     permissions:
       pages: write

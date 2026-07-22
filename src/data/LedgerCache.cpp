@@ -112,7 +112,7 @@ LedgerCache::update(std::vector<etl::model::Object> const& objs, uint32_t seq)
 }
 
 std::optional<LedgerObject>
-LedgerCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
+LedgerCache::getSuccessor(xrpl::uint256 const& key, uint32_t seq) const
 {
     if (disabled_ or not full_)
         return {};
@@ -129,7 +129,7 @@ LedgerCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 }
 
 std::optional<LedgerObject>
-LedgerCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
+LedgerCache::getPredecessor(xrpl::uint256 const& key, uint32_t seq) const
 {
     if (disabled_ or not full_)
         return {};
@@ -145,7 +145,7 @@ LedgerCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 }
 
 std::optional<Blob>
-LedgerCache::get(ripple::uint256 const& key, uint32_t seq) const
+LedgerCache::get(xrpl::uint256 const& key, uint32_t seq) const
 {
     if (disabled_)
         return {};
@@ -164,7 +164,7 @@ LedgerCache::get(ripple::uint256 const& key, uint32_t seq) const
 }
 
 std::optional<Blob>
-LedgerCache::getDeleted(ripple::uint256 const& key, uint32_t seq) const
+LedgerCache::getDeleted(xrpl::uint256 const& key, uint32_t seq) const
 {
     if (disabled_)
         return std::nullopt;

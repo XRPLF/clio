@@ -84,8 +84,8 @@ TEST_F(LedgerCachePrometheusMetricTest, startLoading)
 }
 
 struct LedgerCacheSaveLoadTest : LedgerCacheTest {
-    ripple::uint256 const key1{1};
-    ripple::uint256 const key2{2};
+    xrpl::uint256 const key1{1};
+    xrpl::uint256 const key2{2};
     std::vector<etl::model::Object> const objs{
         etl::model::Object{
             .key = key1,
@@ -106,7 +106,7 @@ struct LedgerCacheSaveLoadTest : LedgerCacheTest {
             .type = {}
         }
     };
-    uint32_t const kLEDGER_SEQ = 100;
+    uint32_t const kLedgerSeq = 100;
 };
 
 TEST_F(LedgerCacheSaveLoadTest, saveToFileFailsWhenCacheNotFull)
@@ -120,18 +120,18 @@ TEST_F(LedgerCacheSaveLoadTest, saveToFileFailsWhenCacheNotFull)
 
 TEST_F(LedgerCacheSaveLoadTest, saveAndLoadFromFile)
 {
-    cache.update(objs, kLEDGER_SEQ);
+    cache.update(objs, kLedgerSeq);
     cache.setFull();
 
     ASSERT_TRUE(cache.isFull());
     EXPECT_EQ(cache.size(), 2u);
-    EXPECT_EQ(cache.latestLedgerSequence(), kLEDGER_SEQ);
+    EXPECT_EQ(cache.latestLedgerSequence(), kLedgerSeq);
 
-    auto const blob1 = cache.get(key1, kLEDGER_SEQ);
+    auto const blob1 = cache.get(key1, kLedgerSeq);
     ASSERT_TRUE(blob1.has_value());
     EXPECT_EQ(blob1.value(), objs.front().data);  // NOLINT(bugprone-unchecked-optional-access)
 
-    auto const blob2 = cache.get(key2, kLEDGER_SEQ);
+    auto const blob2 = cache.get(key2, kLedgerSeq);
     ASSERT_TRUE(blob2.has_value());
     EXPECT_EQ(blob2.value(), objs.back().data);  // NOLINT(bugprone-unchecked-optional-access)
 
@@ -145,13 +145,13 @@ TEST_F(LedgerCacheSaveLoadTest, saveAndLoadFromFile)
 
     EXPECT_TRUE(newCache.isFull());
     EXPECT_EQ(newCache.size(), 2u);
-    EXPECT_EQ(newCache.latestLedgerSequence(), kLEDGER_SEQ);
+    EXPECT_EQ(newCache.latestLedgerSequence(), kLedgerSeq);
 
-    auto const loadedBlob1 = newCache.get(key1, kLEDGER_SEQ);
+    auto const loadedBlob1 = newCache.get(key1, kLedgerSeq);
     ASSERT_TRUE(loadedBlob1.has_value());
     EXPECT_EQ(loadedBlob1.value(), blob1);  // NOLINT(bugprone-unchecked-optional-access)
 
-    auto const loadedBlob2 = newCache.get(key2, kLEDGER_SEQ);
+    auto const loadedBlob2 = newCache.get(key2, kLedgerSeq);
     ASSERT_TRUE(loadedBlob2.has_value());
     EXPECT_EQ(loadedBlob2.value(), blob2);  // NOLINT(bugprone-unchecked-optional-access)
 
@@ -160,23 +160,23 @@ TEST_F(LedgerCacheSaveLoadTest, saveAndLoadFromFile)
 
 TEST_F(LedgerCacheSaveLoadTest, saveAndLoadFromFileWithDeletedObjects)
 {
-    cache.update(objs, kLEDGER_SEQ - 1);
+    cache.update(objs, kLedgerSeq - 1);
 
     auto objsCopy = objs;
     objsCopy.front().data = {};
 
-    cache.update(objsCopy, kLEDGER_SEQ);
+    cache.update(objsCopy, kLedgerSeq);
     cache.setFull();
 
     // Verify deleted object is accessible via getDeleted
-    auto const blob1 = cache.get(key1, kLEDGER_SEQ);
+    auto const blob1 = cache.get(key1, kLedgerSeq);
     ASSERT_FALSE(blob1.has_value());
 
-    auto const blob2 = cache.get(key2, kLEDGER_SEQ);
+    auto const blob2 = cache.get(key2, kLedgerSeq);
     ASSERT_TRUE(blob2.has_value());
     EXPECT_EQ(blob2.value(), objs.back().data);  // NOLINT(bugprone-unchecked-optional-access)
 
-    auto const deletedBlob = cache.getDeleted(key1, kLEDGER_SEQ - 1);
+    auto const deletedBlob = cache.getDeleted(key1, kLedgerSeq - 1);
     ASSERT_TRUE(deletedBlob.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(deletedBlob.value(), objs.front().data);
@@ -191,16 +191,16 @@ TEST_F(LedgerCacheSaveLoadTest, saveAndLoadFromFileWithDeletedObjects)
     ASSERT_TRUE(loadResult.has_value()) << "Load failed: " << loadResult.error();
 
     // Verify deleted object is preserved
-    auto const loadedDeletedBlob = newCache.getDeleted(key1, kLEDGER_SEQ - 1);
+    auto const loadedDeletedBlob = newCache.getDeleted(key1, kLedgerSeq - 1);
     ASSERT_TRUE(loadedDeletedBlob.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(loadedDeletedBlob.value(), deletedBlob);
 
     // Verify active object
-    auto const loadedBlob1 = newCache.get(key1, kLEDGER_SEQ);
+    auto const loadedBlob1 = newCache.get(key1, kLedgerSeq);
     ASSERT_FALSE(loadedBlob1.has_value());
 
-    auto const loadedBlob2 = newCache.get(key2, kLEDGER_SEQ);
+    auto const loadedBlob2 = newCache.get(key2, kLedgerSeq);
     ASSERT_TRUE(loadedBlob2.has_value());
     EXPECT_EQ(loadedBlob2.value(), blob2);  // NOLINT(bugprone-unchecked-optional-access)
 

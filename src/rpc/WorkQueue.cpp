@@ -62,7 +62,7 @@ WorkQueue::WorkQueue(DontStartProcessingTag, std::uint32_t numWorkers, uint32_t 
 }
 
 WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
-    : WorkQueue(kDONT_START_PROCESSING_TAG, numWorkers, maxSize)
+    : WorkQueue(kDontStartProcessingTag, numWorkers, maxSize)
 {
     startProcessing();
 }

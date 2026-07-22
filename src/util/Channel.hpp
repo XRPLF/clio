@@ -29,20 +29,20 @@ struct ChannelInstantiated;
  * @brief Specifies the producer concurrency model for a Channel.
  */
 enum class ProducerType {
-    Single, /**< Only one Sender can exist (non-copyable). Uses direct Guard ownership for zero
-               overhead. */
-    Multi   /**< Multiple Senders can exist (copyable). Uses shared_ptr<Guard> for shared ownership.
-             */
+    Single,  ///< Only one Sender can exist (non-copyable).
+             ///< Uses direct Guard ownership for zero overhead.
+    Multi    ///< Multiple Senders can exist (copyable).
+             ///< Uses shared_ptr<Guard> for shared ownership.
 };
 
 /**
  * @brief Specifies the consumer concurrency model for a Channel.
  */
 enum class ConsumerType {
-    Single, /**< Only one Receiver can exist (non-copyable). Uses direct Guard ownership for zero
-               overhead. */
-    Multi /**< Multiple Receivers can exist (copyable). Uses shared_ptr<Guard> for shared ownership.
-           */
+    Single,  ///< Only one Receiver can exist (non-copyable).
+             ///< Uses direct Guard ownership for zero overhead.
+    Multi    ///< Multiple Receivers can exist (copyable).
+             ///< Uses shared_ptr<Guard> for shared ownership.
 };
 
 /**
@@ -59,8 +59,8 @@ enum class ConsumerType {
  */
 template <typename T, ProducerType P = ProducerType::Multi, ConsumerType C = ConsumerType::Multi>
 class Channel {
-    static constexpr bool kIS_MULTI_PRODUCER = (P == ProducerType::Multi);
-    static constexpr bool kIS_MULTI_CONSUMER = (C == ConsumerType::Multi);
+    static constexpr bool kIsMultiProducer = (P == ProducerType::Multi);
+    static constexpr bool kIsMultiConsumer = (C == ConsumerType::Multi);
 
 private:
     class ControlBlock {
@@ -134,7 +134,7 @@ public:
      */
     class Sender {
         std::shared_ptr<ControlBlock> shared_;
-        std::conditional_t<kIS_MULTI_PRODUCER, std::shared_ptr<Guard>, Guard> guard_;
+        std::conditional_t<kIsMultiProducer, std::shared_ptr<Guard>, Guard> guard_;
 
         friend class Channel<T, P, C>;
 
@@ -144,7 +144,7 @@ public:
          */
         Sender(std::shared_ptr<ControlBlock> shared)
             : shared_(shared), guard_([shared = std::move(shared)]() {
-                if constexpr (kIS_MULTI_PRODUCER) {
+                if constexpr (kIsMultiProducer) {
                     return std::make_shared<Guard>(std::move(shared));
                 } else {
                     return Guard{std::move(shared)};
@@ -156,21 +156,21 @@ public:
     public:
         Sender(Sender&&) = default;
         Sender(Sender const&)
-            requires kIS_MULTI_PRODUCER
+            requires kIsMultiProducer
         = default;
         Sender(Sender const&)
-            requires(!kIS_MULTI_PRODUCER)
+            requires(!kIsMultiProducer)
         = delete;
 
         Sender&
         operator=(Sender&&) = default;
         Sender&
         operator=(Sender const&)
-            requires kIS_MULTI_PRODUCER
+            requires kIsMultiProducer
         = default;
         Sender&
         operator=(Sender const&)
-            requires(!kIS_MULTI_PRODUCER)
+            requires(!kIsMultiProducer)
         = delete;
 
         /**
@@ -259,7 +259,7 @@ public:
      */
     class Receiver {
         std::shared_ptr<ControlBlock> shared_;
-        std::conditional_t<kIS_MULTI_CONSUMER, std::shared_ptr<Guard>, Guard> guard_;
+        std::conditional_t<kIsMultiConsumer, std::shared_ptr<Guard>, Guard> guard_;
 
         friend class Channel<T, P, C>;
 
@@ -269,7 +269,7 @@ public:
          */
         Receiver(std::shared_ptr<ControlBlock> shared)
             : shared_(shared), guard_([shared = std::move(shared)]() {
-                if constexpr (kIS_MULTI_CONSUMER) {
+                if constexpr (kIsMultiConsumer) {
                     return std::make_shared<Guard>(std::move(shared));
                 } else {
                     return Guard{std::move(shared)};
@@ -281,21 +281,21 @@ public:
     public:
         Receiver(Receiver&&) = default;
         Receiver(Receiver const&)
-            requires kIS_MULTI_CONSUMER
+            requires kIsMultiConsumer
         = default;
         Receiver(Receiver const&)
-            requires(!kIS_MULTI_CONSUMER)
+            requires(!kIsMultiConsumer)
         = delete;
 
         Receiver&
         operator=(Receiver&&) = default;
         Receiver&
         operator=(Receiver const&)
-            requires kIS_MULTI_CONSUMER
+            requires kIsMultiConsumer
         = default;
         Receiver&
         operator=(Receiver const&)
-            requires(!kIS_MULTI_CONSUMER)
+            requires(!kIsMultiConsumer)
         = delete;
 
         /**

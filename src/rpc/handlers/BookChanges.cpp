@@ -45,7 +45,7 @@ BookChangesHandler::process(BookChangesHandler::Input const& input, Context cons
 
     Output response;
     response.bookChanges = BookChanges::compute(transactions);
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
     response.ledgerTime = lgrInfo.closeTime.time_since_epoch().count();
 
@@ -91,7 +91,7 @@ tag_invoke(boost::json::value_to_tag<BookChangesHandler::Input>, boost::json::va
 
 [[nodiscard]] boost::json::object
 computeBookChanges(
-    ripple::LedgerHeader const& lgrInfo,
+    xrpl::LedgerHeader const& lgrInfo,
     std::vector<data::TransactionAndMetadata> const& transactions
 )
 {

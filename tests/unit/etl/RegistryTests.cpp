@@ -42,7 +42,7 @@ struct Ext4SpecMissing {
 };
 
 struct Ext4Fixed {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
 
     static void
     onTransaction(uint32_t, etl::model::Transaction const&);
@@ -59,7 +59,7 @@ struct Ext6SpecMissing {
 };
 
 struct Ext6Fixed {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
 
     static void
     onInitialTransaction(uint32_t, etl::model::Transaction const&);
@@ -67,11 +67,11 @@ struct Ext6Fixed {
 
 struct ExtRealistic {
     using spec = etl::model::Spec<
-        ripple::TxType::ttNFTOKEN_BURN,
-        ripple::TxType::ttNFTOKEN_ACCEPT_OFFER,
-        ripple::TxType::ttNFTOKEN_CREATE_OFFER,
-        ripple::TxType::ttNFTOKEN_CANCEL_OFFER,
-        ripple::TxType::ttNFTOKEN_MINT>;
+        xrpl::TxType::ttNFTOKEN_BURN,
+        xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER,
+        xrpl::TxType::ttNFTOKEN_CREATE_OFFER,
+        xrpl::TxType::ttNFTOKEN_CANCEL_OFFER,
+        xrpl::TxType::ttNFTOKEN_MINT>;
 
     static void
     onLedgerData(etl::model::LedgerData const&);
@@ -98,13 +98,13 @@ static_assert(SomeExtension<ExtRealistic>);
 static_assert(not SomeExtension<ExtCombinesTwoOfKind>);
 
 struct ValidSpec {
-    using spec = etl::model::Spec<ripple::ttNFTOKEN_BURN, ripple::ttNFTOKEN_MINT>;
+    using spec = etl::model::Spec<xrpl::ttNFTOKEN_BURN, xrpl::ttNFTOKEN_MINT>;
 };
 
 // invalid spec does not compile:
 // struct DuplicatesSpec {
-//     using spec = etl::model::Spec<ripple::ttNFTOKEN_BURN, ripple::ttNFTOKEN_BURN,
-//     ripple::ttNFTOKEN_MINT>;
+//     using spec = etl::model::Spec<xrpl::ttNFTOKEN_BURN, xrpl::ttNFTOKEN_BURN,
+//     xrpl::ttNFTOKEN_MINT>;
 // };
 
 static_assert(ContainsSpec<ValidSpec>);
@@ -113,9 +113,9 @@ static_assert(ContainsSpec<ValidSpec>);
 
 namespace {
 
-constinit auto const kLEDGER_HASH =
+constinit auto const kLedgerHash =
     "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constinit auto const kSEQ = 30;
+constinit auto const kSeq = 30;
 
 struct MockExtLedgerData {
     MOCK_METHOD(void, onLedgerData, (etl::model::LedgerData const&), (const));
@@ -130,15 +130,15 @@ struct MockExtOnObject {
 };
 
 struct MockExtTransactionNftBurn {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onTransaction, (uint32_t, etl::model::Transaction const&), (const));
 };
 
 struct MockExtTransactionNftOffer {
     using spec = etl::model::Spec<
-        ripple::TxType::ttNFTOKEN_CREATE_OFFER,
-        ripple::TxType::ttNFTOKEN_CANCEL_OFFER,
-        ripple::TxType::ttNFTOKEN_ACCEPT_OFFER>;
+        xrpl::TxType::ttNFTOKEN_CREATE_OFFER,
+        xrpl::TxType::ttNFTOKEN_CANCEL_OFFER,
+        xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER>;
     MOCK_METHOD(void, onTransaction, (uint32_t, etl::model::Transaction const&), (const));
 };
 
@@ -156,15 +156,15 @@ struct MockExtInitialObjects {
 };
 
 struct MockExtNftBurn {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onInitialTransaction, (uint32_t, etl::model::Transaction const&), (const));
 };
 
 struct MockExtNftOffer {
     using spec = etl::model::Spec<
-        ripple::TxType::ttNFTOKEN_CREATE_OFFER,
-        ripple::TxType::ttNFTOKEN_CANCEL_OFFER,
-        ripple::TxType::ttNFTOKEN_ACCEPT_OFFER>;
+        xrpl::TxType::ttNFTOKEN_CREATE_OFFER,
+        xrpl::TxType::ttNFTOKEN_CANCEL_OFFER,
+        xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER>;
     MOCK_METHOD(void, onInitialTransaction, (uint32_t, etl::model::Transaction const&), (const));
 };
 
@@ -200,7 +200,7 @@ struct MockExtOnObjectReadonly {
 };
 
 struct MockExtTransactionNftBurnReadonly {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onTransaction, (uint32_t, etl::model::Transaction const&), (const));
 
     static bool
@@ -236,7 +236,7 @@ struct MockExtInitialObjectsReadonly {
 };
 
 struct MockExtNftBurnReadonly {
-    using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onInitialTransaction, (uint32_t, etl::model::Transaction const&), (const));
 
     static bool
@@ -261,9 +261,9 @@ protected:
 TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForInitialTransaction)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
     auto extBurn = MockExtNftBurn{};
@@ -272,7 +272,7 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForInitialTransaction)
     EXPECT_CALL(extBurn, onInitialTransaction(testing::_, testing::_)).Times(2);  // 2 burn txs
     EXPECT_CALL(extOffer, onInitialTransaction(testing::_, testing::_));          // 1 create offer
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtNftBurn&, MockExtNftOffer&>(state_, extBurn, extOffer);
     reg.dispatchInitialData(
         etl::model::LedgerData{
@@ -282,7 +282,7 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForInitialTransaction)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ,
+            .seq = kSeq,
         }
     );
 }
@@ -290,9 +290,9 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForInitialTransaction)
 TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForTransaction)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
     auto extBurn = MockExtTransactionNftBurn{};
@@ -301,7 +301,7 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForTransaction)
     EXPECT_CALL(extBurn, onTransaction(testing::_, testing::_)).Times(2);  // 2 burn txs
     EXPECT_CALL(extOffer, onTransaction(testing::_, testing::_));          // 1 create offer
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtTransactionNftBurn&, MockExtTransactionNftOffer&>(
         state_, extBurn, extOffer
     );
@@ -313,7 +313,7 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForTransaction)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -329,7 +329,7 @@ TEST_F(RegistryTest, InitialObjectsEmpty)
     );  // 1 vector passed as is
 
     auto reg = Registry<MockExtInitialObject&, MockExtInitialObjects&>(state_, extObj, extObjs);
-    reg.dispatchInitialObjects(kSEQ, {}, {});
+    reg.dispatchInitialObjects(kSeq, {}, {});
 }
 
 TEST_F(RegistryTest, InitialObjectsDispatched)
@@ -344,7 +344,7 @@ TEST_F(RegistryTest, InitialObjectsDispatched)
 
     auto reg = Registry<MockExtInitialObject&, MockExtInitialObjects&>(state_, extObj, extObjs);
     reg.dispatchInitialObjects(
-        kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {}
+        kSeq, {util::createObject(), util::createObject(), util::createObject()}, {}
     );
 }
 
@@ -354,7 +354,7 @@ TEST_F(RegistryTest, ObjectsDispatched)
 
     EXPECT_CALL(extObj, onObject(testing::_, testing::_)).Times(3);  // 3 objects sent
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtOnObject&>(state_, extObj);
     reg.dispatch(
         etl::model::LedgerData{
@@ -364,7 +364,7 @@ TEST_F(RegistryTest, ObjectsDispatched)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -372,16 +372,16 @@ TEST_F(RegistryTest, ObjectsDispatched)
 TEST_F(RegistryTest, OnLedgerDataForBatch)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
     auto ext = MockExtLedgerData{};
 
     EXPECT_CALL(ext, onLedgerData(testing::_));  // 1 batch (dispatch call)
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtLedgerData&>(state_, ext);
     reg.dispatch(
         etl::model::LedgerData{
@@ -391,7 +391,7 @@ TEST_F(RegistryTest, OnLedgerDataForBatch)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -407,7 +407,7 @@ TEST_F(RegistryTest, InitialObjectsCorrectOrderOfHookCalls)
 
     auto reg = Registry<MockExtInitialObject&, MockExtInitialObjects&>(state_, extObj, extObjs);
     reg.dispatchInitialObjects(
-        kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {}
+        kSeq, {util::createObject(), util::createObject(), util::createObject()}, {}
     );
 }
 
@@ -417,16 +417,16 @@ TEST_F(RegistryTest, InitialDataCorrectOrderOfHookCalls)
     auto extInitialTransaction = MockExtNftBurn{};
 
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
     testing::InSequence const seqGuard;
     EXPECT_CALL(extInitialData, onInitialData);
     EXPECT_CALL(extInitialTransaction, onInitialTransaction).Times(2);
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtNftBurn&, MockExtInitialData&>(
         state_, extInitialTransaction, extInitialData
     );
@@ -438,7 +438,7 @@ TEST_F(RegistryTest, InitialDataCorrectOrderOfHookCalls)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -450,9 +450,9 @@ TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
     auto extOnObject = MockExtOnObject{};
 
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
     auto objects = std::vector{
         util::createObject(),
@@ -466,7 +466,7 @@ TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
     EXPECT_CALL(extOnTransaction, onTransaction).Times(2);
     EXPECT_CALL(extOnObject, onObject).Times(3);
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtOnObject&, MockExtTransactionNftBurn&, MockExtLedgerData&>(
         state_, extOnObject, extOnTransaction, extLedgerData
     );
@@ -478,7 +478,7 @@ TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -486,8 +486,8 @@ TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
 TEST_F(RegistryTest, ReadonlyModeLedgerDataAllowed)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
 
     auto ext = MockExtLedgerDataReadonly{};
@@ -495,7 +495,7 @@ TEST_F(RegistryTest, ReadonlyModeLedgerDataAllowed)
 
     EXPECT_CALL(ext, onLedgerData(testing::_));
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtLedgerDataReadonly&>(state_, ext);
     reg.dispatch(
         etl::model::LedgerData{
@@ -505,7 +505,7 @@ TEST_F(RegistryTest, ReadonlyModeLedgerDataAllowed)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -513,8 +513,8 @@ TEST_F(RegistryTest, ReadonlyModeLedgerDataAllowed)
 TEST_F(RegistryTest, ReadonlyModeTransactionAllowed)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
 
     auto extTx = MockExtTransactionNftBurnReadonly{};
@@ -522,7 +522,7 @@ TEST_F(RegistryTest, ReadonlyModeTransactionAllowed)
 
     EXPECT_CALL(extTx, onTransaction(testing::_, testing::_)).Times(2);
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtTransactionNftBurnReadonly&>(state_, extTx);
     reg.dispatch(
         etl::model::LedgerData{
@@ -532,7 +532,7 @@ TEST_F(RegistryTest, ReadonlyModeTransactionAllowed)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -550,7 +550,7 @@ TEST_F(RegistryTest, ReadonlyModeObjectAllowed)
 
     EXPECT_CALL(extObj, onObject(testing::_, testing::_)).Times(3);
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtOnObjectReadonly&>(state_, extObj);
     reg.dispatch(
         etl::model::LedgerData{
@@ -560,7 +560,7 @@ TEST_F(RegistryTest, ReadonlyModeObjectAllowed)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -568,8 +568,8 @@ TEST_F(RegistryTest, ReadonlyModeObjectAllowed)
 TEST_F(RegistryTest, ReadonlyModeInitialDataAllowed)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
 
     auto extInitialData = MockExtInitialDataReadonly{};
@@ -577,7 +577,7 @@ TEST_F(RegistryTest, ReadonlyModeInitialDataAllowed)
 
     EXPECT_CALL(extInitialData, onInitialData(testing::_));
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtInitialDataReadonly&>(state_, extInitialData);
     reg.dispatchInitialData(
         etl::model::LedgerData{
@@ -587,7 +587,7 @@ TEST_F(RegistryTest, ReadonlyModeInitialDataAllowed)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -595,8 +595,8 @@ TEST_F(RegistryTest, ReadonlyModeInitialDataAllowed)
 TEST_F(RegistryTest, ReadonlyModeInitialTransactionAllowed)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
 
     auto extTx = MockExtNftBurnReadonly{};
@@ -604,7 +604,7 @@ TEST_F(RegistryTest, ReadonlyModeInitialTransactionAllowed)
 
     EXPECT_CALL(extTx, onInitialTransaction(testing::_, testing::_)).Times(2);
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtNftBurnReadonly&>(state_, extTx);
     reg.dispatchInitialData(
         etl::model::LedgerData{
@@ -614,7 +614,7 @@ TEST_F(RegistryTest, ReadonlyModeInitialTransactionAllowed)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -628,7 +628,7 @@ TEST_F(RegistryTest, ReadonlyModeInitialObjectAllowed)
 
     auto reg = Registry<MockExtInitialObjectReadonly&>(state_, extObj);
     reg.dispatchInitialObjects(
-        kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {}
+        kSeq, {util::createObject(), util::createObject(), util::createObject()}, {}
     );
 }
 
@@ -641,7 +641,7 @@ TEST_F(RegistryTest, ReadonlyModeInitialObjectsAllowed)
 
     auto reg = Registry<MockExtInitialObjectsReadonly&>(state_, extObjs);
     reg.dispatchInitialObjects(
-        kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {}
+        kSeq, {util::createObject(), util::createObject(), util::createObject()}, {}
     );
 }
 
@@ -659,7 +659,7 @@ TEST_F(RegistryTest, ReadonlyModeRegularExtensionsNotCalled)
     EXPECT_CALL(extLedgerData, onLedgerData(testing::_))
         .Times(0);  // Should NOT be called in readonly mode
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<MockExtLedgerData&>(state_, extLedgerData);
     reg.dispatch(
         etl::model::LedgerData{
@@ -669,7 +669,7 @@ TEST_F(RegistryTest, ReadonlyModeRegularExtensionsNotCalled)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -690,7 +690,7 @@ TEST_F(RegistryTest, MixedReadonlyAndRegularExtensions)
     EXPECT_CALL(extRegular, onLedgerData(testing::_))
         .Times(0);  // Should NOT be called in readonly mode
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg =
         Registry<MockExtLedgerDataReadonly&, MockExtLedgerData&>(state_, extReadonly, extRegular);
     reg.dispatch(
@@ -701,7 +701,7 @@ TEST_F(RegistryTest, MixedReadonlyAndRegularExtensions)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -728,9 +728,9 @@ TEST_F(RegistryTest, MonitorInterfaceExecution)
     };
 
     auto monitor = MockMonitor{};
-    EXPECT_CALL(monitor, notifySequenceLoaded(kSEQ)).Times(1);
+    EXPECT_CALL(monitor, notifySequenceLoaded(kSeq)).Times(1);
 
-    monitor.notifySequenceLoaded(kSEQ);
+    monitor.notifySequenceLoaded(kSeq);
 }
 
 TEST_F(RegistryTest, ReadonlyModeWithAllowInReadonlyTest)
@@ -750,7 +750,7 @@ TEST_F(RegistryTest, ReadonlyModeWithAllowInReadonlyTest)
 
     EXPECT_CALL(ext, onLedgerData(testing::_)).Times(1);
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<ExtWithAllowInReadonly&>(state_, ext);
     reg.dispatch(
         etl::model::LedgerData{
@@ -760,7 +760,7 @@ TEST_F(RegistryTest, ReadonlyModeWithAllowInReadonlyTest)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 }
@@ -788,7 +788,7 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
     state_.isWriting = false;
 
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
     auto objects = std::vector{
         util::createObject(),
@@ -798,7 +798,7 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
     EXPECT_CALL(ext, onInitialData(testing::_)).Times(1);
     EXPECT_CALL(ext, onInitialObjects(testing::_, testing::_, testing::_)).Times(1);
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<ExtWithBothHooksAndAllowReadonly&>(state_, ext);
 
     reg.dispatch(
@@ -809,7 +809,7 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 
@@ -821,17 +821,17 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 
-    reg.dispatchInitialObjects(kSEQ, objects, {});
+    reg.dispatchInitialObjects(kSeq, objects, {});
 }
 
 TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
 {
     struct ExtWithBothHooksAndAllowReadonly {
-        using spec = etl::model::Spec<ripple::TxType::ttNFTOKEN_BURN>;
+        using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
 
         MOCK_METHOD(void, onObject, (uint32_t, etl::model::Object const&), (const));
         MOCK_METHOD(void, onInitialObject, (uint32_t, etl::model::Object const&), (const));
@@ -854,7 +854,7 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
     state_.isWriting = false;
 
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
     auto objects = std::vector{
         util::createObject(),
@@ -865,7 +865,7 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
     EXPECT_CALL(ext, onInitialTransaction(testing::_, testing::_)).Times(1);
     EXPECT_CALL(ext, onInitialObject(testing::_, testing::_)).Times(1);
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     auto reg = Registry<ExtWithBothHooksAndAllowReadonly&>(state_, ext);
 
     reg.dispatch(
@@ -876,7 +876,7 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 
@@ -888,9 +888,9 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSEQ
+            .seq = kSeq
         }
     );
 
-    reg.dispatchInitialObjects(kSEQ, objects, {});
+    reg.dispatchInitialObjects(kSeq, objects, {});
 }

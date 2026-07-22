@@ -20,7 +20,6 @@
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
-#include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -93,7 +92,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedHttpRequest)
         EXPECT_EQ(responseHttp.result(), http::status::service_unavailable);
 
         auto const responseJson = boost::json::parse(responseHttp.body()).as_object();
-        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
+        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::RpcSlowDown);
     });
 }
 
@@ -109,7 +108,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedWsRequest)
         auto const responseWs = boost::beast::buffers_to_string(response.asWsResponse());
 
         auto const responseJson = boost::json::parse(responseWs).as_object();
-        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
+        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::RpcSlowDown);
         EXPECT_EQ(responseJson.at("request").as_string(), requestStr);
     });
 }
@@ -126,7 +125,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedWsJsonRequest)
         auto const responseWs = boost::beast::buffers_to_string(response.asWsResponse());
 
         auto const responseJson = boost::json::parse(responseWs).as_object();
-        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
+        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::RpcSlowDown);
         EXPECT_EQ(responseJson.at("request").as_string(), requestStr);
         EXPECT_EQ(responseJson.at("id").as_string(), "some id");
     });
@@ -218,7 +217,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedParsedRequest)
         EXPECT_EQ(responseHttp.result(), http::status::service_unavailable);
 
         auto const responseJson = boost::json::parse(responseHttp.body()).as_object();
-        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
+        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::RpcSlowDown);
     });
 }
 
@@ -242,7 +241,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardAddsLoadWarning)
         EXPECT_EQ(responseHttp.result(), http::status::service_unavailable);
 
         auto const responseJson = boost::json::parse(responseHttp.body()).as_object();
-        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
+        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::RpcSlowDown);
 
         EXPECT_EQ(responseJson.at("warning").as_string(), "load");
         EXPECT_EQ(

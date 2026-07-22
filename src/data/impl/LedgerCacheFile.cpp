@@ -17,17 +17,17 @@
 
 namespace data::impl {
 
-using Hash = ripple::uint256;
+using Hash = xrpl::uint256;
 using Separator = std::array<char, 16>;
-static constexpr Separator kSEPARATOR = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static constexpr Separator kSeparator = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 namespace {
 
-std::expected<std::pair<ripple::uint256, LedgerCache::CacheEntry>, std::string>
+std::expected<std::pair<xrpl::uint256, LedgerCache::CacheEntry>, std::string>
 readCacheEntry(InputFile& file, size_t i)
 {
-    ripple::uint256 key;
-    if (not file.readRaw(reinterpret_cast<char*>(key.data()), ripple::base_uint<256>::bytes)) {
+    xrpl::uint256 key;
+    if (not file.readRaw(reinterpret_cast<char*>(key.data()), xrpl::BaseUInt<256>::kBytes)) {
         return std::unexpected(fmt::format("Failed to read key at index {}", i));
     }
 
@@ -78,25 +78,25 @@ LedgerCacheFile::write(DataView dataView)
         .deletedSize = dataView.deleted.size()
     };
     file.write(header);
-    file.write(kSEPARATOR);
+    file.write(kSeparator);
 
     for (auto const& [k, v] : dataView.map) {
-        file.write(k.data(), decltype(k)::bytes);
+        file.write(k.data(), decltype(k)::kBytes);
         file.write(v.seq);
         file.write(v.blob.size());
         file.writeRaw(reinterpret_cast<char const*>(v.blob.data()), v.blob.size());
     }
-    file.write(kSEPARATOR);
+    file.write(kSeparator);
 
     for (auto const& [k, v] : dataView.deleted) {
-        file.write(k.data(), decltype(k)::bytes);
+        file.write(k.data(), decltype(k)::kBytes);
         file.write(v.seq);
         file.write(v.blob.size());
         file.writeRaw(reinterpret_cast<char const*>(v.blob.data()), v.blob.size());
     }
-    file.write(kSEPARATOR);
+    file.write(kSeparator);
     auto const hash = file.hash();
-    file.write(hash.data(), decltype(hash)::bytes);
+    file.write(hash.data(), decltype(hash)::kBytes);
 
     // flush internal buffer explicitly before renaming
     if (auto const expectedSuccess = file.close(); not expectedSuccess.has_value()) {
@@ -129,9 +129,9 @@ LedgerCacheFile::read(uint32_t minLatestSequence)
         if (not file.read(header)) {
             return std::unexpected{"Error reading cache header"};
         }
-        if (header.version != kVERSION) {
+        if (header.version != kVersion) {
             return std::unexpected{fmt::format(
-                "Cache has wrong version: expected {} found {}", kVERSION, header.version
+                "Cache has wrong version: expected {} found {}", kVersion, header.version
             )};
         }
         if (header.latestSeq < minLatestSequence) {
@@ -185,9 +185,9 @@ LedgerCacheFile::read(uint32_t minLatestSequence)
         }
 
         auto const dataHash = file.hash();
-        ripple::uint256 hashFromFile{};
+        xrpl::uint256 hashFromFile{};
         if (not file.readRaw(
-                reinterpret_cast<char*>(hashFromFile.data()), decltype(hashFromFile)::bytes
+                reinterpret_cast<char*>(hashFromFile.data()), decltype(hashFromFile)::kBytes
             )) {
             return std::unexpected{"Error reading hash"};
         }

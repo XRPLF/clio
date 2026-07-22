@@ -35,7 +35,7 @@ template <
     SomeRetryPolicy RetryPolicyType = ExponentialBackoffRetryPolicy>
 class AsyncExecutor : public std::enable_shared_from_this<
                           AsyncExecutor<StatementType, HandleType, RetryPolicyType>> {
-    using FutureWithCallbackType = typename HandleType::FutureWithCallbackType;
+    using FutureWithCallbackType = HandleType::FutureWithCallbackType;
     using CallbackType = std::function<void(typename HandleType::ResultOrErrorType)>;
     using RetryCallbackType = std::function<void()>;
 

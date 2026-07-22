@@ -40,7 +40,7 @@ TaskManager::TaskManager(
     , extractor_(extractor)
     , loader_(loader)
     , monitor_(monitor)
-    , queue_({.startSeq = startSeq, .increment = 1u, .limit = kQUEUE_SIZE_LIMIT})
+    , queue_({.startSeq = startSeq, .increment = 1u, .limit = kQueueSizeLimit})
 {
 }
 
@@ -70,8 +70,8 @@ TaskManager::spawnExtractor(TaskQueue& queue)
 {
     // TODO https://github.com/XRPLF/clio/issues/2838: the approach should be changed to a reactive
     // one instead
-    static constexpr auto kDELAY_BETWEEN_ATTEMPTS = std::chrono::milliseconds{10u};
-    static constexpr auto kDELAY_BETWEEN_ENQUEUE_ATTEMPTS = std::chrono::milliseconds{1u};
+    static constexpr auto kDelayBetweenAttempts = std::chrono::milliseconds{10u};
+    static constexpr auto kDelayBetweenEnqueueAttempts = std::chrono::milliseconds{1u};
 
     return ctx_.execute([this, &queue](auto stopRequested) {
         while (not stopRequested) {
@@ -81,7 +81,7 @@ TaskManager::spawnExtractor(TaskQueue& queue)
                     LOG(log_.debug()) << "Adding data after extracting diff";
                     while (not queue.enqueue(*maybeBatch)) {
                         // TODO (https://github.com/XRPLF/clio/issues/1852)
-                        std::this_thread::sleep_for(kDELAY_BETWEEN_ENQUEUE_ATTEMPTS);
+                        std::this_thread::sleep_for(kDelayBetweenEnqueueAttempts);
 
                         if (stopRequested)
                             break;
@@ -89,7 +89,7 @@ TaskManager::spawnExtractor(TaskQueue& queue)
                 }
             } else {
                 // TODO (https://github.com/XRPLF/clio/issues/1852)
-                std::this_thread::sleep_for(kDELAY_BETWEEN_ATTEMPTS);
+                std::this_thread::sleep_for(kDelayBetweenAttempts);
             }
         }
 
@@ -130,7 +130,7 @@ TaskManager::spawnLoader(TaskQueue& queue)
                 if (shouldExitOnError)
                     break;
 
-                auto const seconds = nanos / util::kNANO_PER_SECOND;
+                auto const seconds = nanos / util::kNanoPerSecond;
                 auto const txnCount = data->transactions.size();
                 auto const objCount = data->objects.size();
 

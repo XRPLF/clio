@@ -164,7 +164,7 @@ private:
     {
         // Disable the timeout. The websocket::stream uses its own timeout settings.
         boost::beast::get_lowest_layer(stream_).expires_never();
-        setTimeout(kDEFAULT_TIMEOUT);
+        setTimeout(kDefaultTimeout);
         stream_.set_option(
             boost::beast::websocket::stream_base::decorator(
                 [](boost::beast::websocket::response_type& res) {

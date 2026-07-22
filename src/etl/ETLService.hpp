@@ -179,19 +179,19 @@ public:
     void
     stop() override;
 
-    boost::json::object
+    [[nodiscard]] boost::json::object
     getInfo() const override;
 
-    bool
+    [[nodiscard]] bool
     isAmendmentBlocked() const override;
 
-    bool
+    [[nodiscard]] bool
     isCorruptionDetected() const override;
 
-    std::optional<ETLState>
+    [[nodiscard]] std::optional<ETLState>
     getETLState() const override;
 
-    std::uint32_t
+    [[nodiscard]] std::uint32_t
     lastCloseAgeSeconds() const override;
 
 private:

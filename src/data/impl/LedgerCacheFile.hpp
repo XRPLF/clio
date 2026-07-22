@@ -17,14 +17,14 @@ namespace data::impl {
 class LedgerCacheFile {
 public:
     struct Header {
-        uint32_t version = kVERSION;
+        uint32_t version = kVersion;
         uint32_t latestSeq{};
         uint64_t mapSize{};
         uint64_t deletedSize{};
     };
 
 private:
-    static constexpr uint32_t kVERSION = 1;
+    static constexpr uint32_t kVersion = 1;
 
     std::string path_;
 

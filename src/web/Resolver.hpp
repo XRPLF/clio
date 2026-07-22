@@ -32,7 +32,7 @@ public:
     /**
      * @brief Resolve hostname to IP addresses.
      *
-     * @throw This method throws an exception when the hostname cannot be resolved.
+     * @throws This method throws an exception when the hostname cannot be resolved.
      *
      * @param hostname Hostname to resolve
      * @return IP addresses of the hostname
@@ -43,7 +43,7 @@ public:
     /**
      * @brief Resolve to IP addresses with port.
      *
-     * @throw This method throws an exception when the hostname cannot be resolved.
+     * @throws This method throws an exception when the hostname cannot be resolved.
      *
      * @param hostname Hostname to resolve
      * @param service Service to resolve

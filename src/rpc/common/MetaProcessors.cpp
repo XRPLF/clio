@@ -36,11 +36,11 @@ ValidateArrayAt::verify(boost::json::value& value, std::string_view key) const
         return {};  // ignore. field does not exist, let 'required' fail instead
 
     if (not value.as_object().at(key).is_array())
-        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+        return Error{Status{RippledError::RpcInvalidParams}};
 
     auto& arr = value.as_object().at(key).as_array();
     if (idx_ >= arr.size())
-        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+        return Error{Status{RippledError::RpcInvalidParams}};
 
     auto& res = arr.at(idx_);
     for (auto const& spec : specs_) {
