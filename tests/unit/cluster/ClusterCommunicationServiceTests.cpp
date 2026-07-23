@@ -38,7 +38,7 @@ struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockB
     std::unique_ptr<NiceMockLedgerCacheLoadingState> cacheLoadingState =
         std::make_unique<NiceMockLedgerCacheLoadingState>();
 
-    static constexpr std::chrono::milliseconds kSHORT_INTERVAL{1};
+    static constexpr std::chrono::milliseconds kShortInterval{1};
 
     static boost::uuids::uuid
     makeUuid(uint8_t value)
@@ -118,8 +118,8 @@ TEST_F(ClusterCommunicationServiceTest, BackendReadsAndWritesData)
         backend_,
         std::move(writerState),
         std::move(cacheLoadingState),
-        kSHORT_INTERVAL,
-        kSHORT_INTERVAL
+        kShortInterval,
+        kShortInterval
     };
 
     service.run();
@@ -163,8 +163,8 @@ TEST_F(ClusterCommunicationServiceTest, MetricsGetsNewStateFromBackend)
         backend_,
         std::move(writerState),
         std::move(cacheLoadingState),
-        kSHORT_INTERVAL,
-        kSHORT_INTERVAL
+        kShortInterval,
+        kShortInterval
     };
 
     service.run();
@@ -212,8 +212,8 @@ TEST_F(ClusterCommunicationServiceTest, WriterDeciderCallsWriterStateMethodsAcco
         backend_,
         std::move(writerState),
         std::move(cacheLoadingState),
-        kSHORT_INTERVAL,
-        kSHORT_INTERVAL
+        kShortInterval,
+        kShortInterval
     };
 
     service.run();
@@ -246,8 +246,8 @@ TEST_F(ClusterCommunicationServiceTest, StopHaltsBackendOperations)
         backend_,
         std::move(writerState),
         std::move(cacheLoadingState),
-        kSHORT_INTERVAL,
-        kSHORT_INTERVAL
+        kShortInterval,
+        kShortInterval
     };
 
     service.run();
@@ -284,7 +284,7 @@ INSTANTIATE_TEST_SUITE_P(
             .limitLoadInCluster = false
         }
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(ClusterCommunicationServiceMakeTest, LoadingAllowedMatchesConfig)

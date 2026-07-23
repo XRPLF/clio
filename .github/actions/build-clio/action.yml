@@ -26,6 +26,6 @@ runs:
       run: |
         cd build
         cmake \
-          --build . \
-          --parallel "${{ steps.nproc.outputs.nproc }}" \
-          --target ${CMAKE_TARGETS}
+            --build . \
+            --parallel "${{ steps.nproc.outputs.nproc }}" \
+            --target ${CMAKE_TARGETS}

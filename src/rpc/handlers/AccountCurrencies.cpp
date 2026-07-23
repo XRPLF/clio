@@ -12,6 +12,7 @@
 #include <boost/json/value_to.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
@@ -48,19 +49,19 @@ AccountCurrenciesHandler::process(
 
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        ripple::keylet::account(*accountID).key,
+        xrpl::keylet::account(*accountID).key,
         lgrInfo.seq,
         ctx.yield
     );
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::RpcActNotFound}};
 
     Output response;
-    auto const addToResponse = [&](ripple::SLE const sle) {
-        if (sle.getType() == ripple::ltRIPPLE_STATE) {
-            auto balance = sle.getFieldAmount(ripple::sfBalance);
-            auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
-            auto const highLimit = sle.getFieldAmount(ripple::sfHighLimit);
+    auto const addToResponse = [&](xrpl::SLE const sle) {
+        if (sle.getType() == xrpl::ltRIPPLE_STATE) {
+            auto balance = sle.getFieldAmount(xrpl::sfBalance);
+            auto const lowLimit = sle.getFieldAmount(xrpl::sfLowLimit);
+            auto const highLimit = sle.getFieldAmount(xrpl::sfHighLimit);
             bool const viewLowest = (lowLimit.getIssuer() == accountID);
             auto const lineLimit = viewLowest ? lowLimit : highLimit;
             auto const lineLimitPeer = !viewLowest ? lowLimit : highLimit;
@@ -68,11 +69,17 @@ AccountCurrenciesHandler::process(
             if (!viewLowest)
                 balance.negate();
 
-            if (balance < lineLimit)
-                response.receiveCurrencies.insert(ripple::to_string(balance.getCurrency()));
+            if (balance < lineLimit) {
+                response.receiveCurrencies.insert(
+                    xrpl::to_string(balance.get<xrpl::Issue>().currency)
+                );
+            }
 
-            if ((-balance) < lineLimitPeer)
-                response.sendCurrencies.insert(ripple::to_string(balance.getCurrency()));
+            if ((-balance) < lineLimitPeer) {
+                response.sendCurrencies.insert(
+                    xrpl::to_string(balance.get<xrpl::Issue>().currency)
+                );
+            }
         }
 
         return true;
@@ -89,7 +96,7 @@ AccountCurrenciesHandler::process(
         addToResponse
     );
 
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
     return response;

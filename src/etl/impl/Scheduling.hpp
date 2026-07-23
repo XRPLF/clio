@@ -49,11 +49,11 @@ public:
     [[nodiscard]] std::optional<model::Task>
     next() override
     {
-        static constexpr auto kMAX = std::numeric_limits<uint32_t>::max();
+        static constexpr auto kMax = std::numeric_limits<uint32_t>::max();
         uint32_t currentSeq = seq_;
 
         if (ledgers_.get().getMostRecent() >= currentSeq) {
-            while (currentSeq < maxSeq_.value_or(kMAX)) {
+            while (currentSeq < maxSeq_.value_or(kMax)) {
                 if (seq_.compare_exchange_weak(
                         currentSeq, currentSeq + 1u, std::memory_order_acq_rel
                     )) {

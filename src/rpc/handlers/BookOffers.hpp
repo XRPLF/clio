@@ -37,9 +37,9 @@ class BookOffersHandler {
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
 public:
-    static constexpr auto kLIMIT_MIN = 1;
-    static constexpr auto kLIMIT_MAX = 100;
-    static constexpr auto kLIMIT_DEFAULT = 60;
+    static constexpr auto kLimitMin = 1;
+    static constexpr auto kLimitMax = 100;
+    static constexpr auto kLimitDefault = 60;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -60,13 +60,13 @@ public:
     struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = kLIMIT_DEFAULT;
-        std::optional<ripple::AccountID> taker;
-        ripple::Currency paysCurrency;
-        ripple::Currency getsCurrency;
+        uint32_t limit = kLimitDefault;
+        std::optional<xrpl::AccountID> taker;
+        xrpl::Currency paysCurrency;
+        xrpl::Currency getsCurrency;
         // accountID will be filled by input converter, if no issuer is given, will use XRP issuer
-        ripple::AccountID paysID = ripple::xrpAccount();
-        ripple::AccountID getsID = ripple::xrpAccount();
+        xrpl::AccountID paysID = xrpl::xrpAccount();
+        xrpl::AccountID getsID = xrpl::xrpAccount();
         std::optional<std::string> domain;
     };
 
@@ -95,7 +95,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(taker_gets),
              validation::Required{},
              validation::Type<boost::json::object>{},
@@ -104,12 +104,12 @@ public:
                   validation::Required{},
                   meta::WithCustomError{
                       validation::CustomValidators::currencyValidator,
-                      Status(RippledError::rpcDST_AMT_MALFORMED)
+                      Status(RippledError::RpcDstAmtMalformed)
                   }},
                  {JS(issuer),
                   meta::WithCustomError{
                       validation::CustomValidators::issuerValidator,
-                      Status(RippledError::rpcDST_ISR_MALFORMED)
+                      Status(RippledError::RpcDstIsrMalformed)
                   }}
              }},
             {JS(taker_pays),
@@ -120,38 +120,38 @@ public:
                   validation::Required{},
                   meta::WithCustomError{
                       validation::CustomValidators::currencyValidator,
-                      Status(RippledError::rpcSRC_CUR_MALFORMED)
+                      Status(RippledError::RpcSrcCurMalformed)
                   }},
                  {JS(issuer),
                   meta::WithCustomError{
                       validation::CustomValidators::issuerValidator,
-                      Status(RippledError::rpcSRC_ISR_MALFORMED)
+                      Status(RippledError::RpcSrcIsrMalformed)
                   }}
              }},
             // return INVALID_PARAMS if account format is wrong for "taker"
             {JS(taker),
              meta::WithCustomError{
                  validation::CustomValidators::accountValidator,
-                 Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'.")
+                 Status(RippledError::RpcInvalidParams, "Invalid field 'taker'.")
              }},
             {JS(domain),
              meta::WithCustomError{
                  validation::Type<std::string>{},
-                 Status(RippledError::rpcDOMAIN_MALFORMED, "Unable to parse domain.")
+                 Status(RippledError::RpcDomainMalformed, "Unable to parse domain.")
              },
              meta::WithCustomError{
                  validation::CustomValidators::uint256HexStringValidator,
-                 Status(RippledError::rpcDOMAIN_MALFORMED, "Unable to parse domain.")
+                 Status(RippledError::RpcDomainMalformed, "Unable to parse domain.")
              }},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
+             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
         };
 
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
     /**

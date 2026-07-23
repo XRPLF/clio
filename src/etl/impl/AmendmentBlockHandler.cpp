@@ -11,15 +11,14 @@
 
 namespace etl::impl {
 
-AmendmentBlockHandler::ActionType const AmendmentBlockHandler::kDEFAULT_AMENDMENT_BLOCK_ACTION =
-    []() {
-        static util::Logger const log{"ETL"};  // NOLINT(readability-identifier-naming)
-        LOG(
-            log.fatal()
-        ) << "Can't process new ledgers: The current ETL source is not compatible with the version "
-             "of "
-          << "the libxrpl Clio is currently using. Please upgrade Clio to a newer version.";
-    };
+AmendmentBlockHandler::ActionType const AmendmentBlockHandler::kDefaultAmendmentBlockAction = []() {
+    static util::Logger const log{"ETL"};  // NOLINT(readability-identifier-naming)
+    LOG(
+        log.fatal()
+    ) << "Can't process new ledgers: The current ETL source is not compatible with the version "
+         "of "
+      << "the libxrpl Clio is currently using. Please upgrade Clio to a newer version.";
+};
 
 AmendmentBlockHandler::AmendmentBlockHandler(
     util::async::AnyExecutionContext ctx,
@@ -40,16 +39,18 @@ void
 AmendmentBlockHandler::notifyAmendmentBlocked()
 {
     state_.get().isAmendmentBlocked = true;
-    if (not operation_.has_value())
-        operation_.emplace(ctx_.executeRepeatedly(interval_, action_));
+
+    if (auto operation = operation_.lock(); not operation->has_value())
+        operation->emplace(ctx_.executeRepeatedly(interval_, action_));
 }
 
 void
 AmendmentBlockHandler::stop()
 {
-    if (operation_.has_value()) {
-        operation_->abort();
-        operation_.reset();
+    auto lock = operation_.lock();
+    if (auto& operation = *lock; operation.has_value()) {
+        operation->abort();
+        operation.reset();
     }
 }
 

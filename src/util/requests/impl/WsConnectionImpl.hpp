@@ -88,7 +88,7 @@ public:
     std::optional<RequestError>
     close(
         boost::asio::yield_context yield,
-        std::chrono::steady_clock::duration const timeout = kDEFAULT_TIMEOUT
+        std::chrono::steady_clock::duration const timeout = kDefaultTimeout
     ) override
     {
         // Set the timeout for closing the connection

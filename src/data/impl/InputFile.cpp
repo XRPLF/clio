@@ -29,7 +29,7 @@ InputFile::readRaw(char* data, size_t size)
     return not file_.fail();
 }
 
-ripple::uint256
+xrpl::uint256
 InputFile::hash() const
 {
     auto sum = shasum_;

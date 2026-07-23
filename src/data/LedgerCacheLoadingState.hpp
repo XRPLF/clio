@@ -73,23 +73,33 @@ public:
      */
     explicit LedgerCacheLoadingState(LedgerCacheInterface const& cache);
 
-    /** @copydoc LedgerCacheLoadingStateInterface::allowLoading() */
+    /**
+     * @copydoc LedgerCacheLoadingStateInterface::allowLoading()
+     */
     void
     allowLoading() override;
 
-    /** @copydoc LedgerCacheLoadingStateInterface::isLoadingAllowed() */
+    /**
+     * @copydoc LedgerCacheLoadingStateInterface::isLoadingAllowed()
+     */
     [[nodiscard]] bool
     isLoadingAllowed() const override;
 
-    /** @copydoc LedgerCacheLoadingStateInterface::waitForLoadingAllowed() */
+    /**
+     * @copydoc LedgerCacheLoadingStateInterface::waitForLoadingAllowed()
+     */
     void
     waitForLoadingAllowed() const override;
 
-    /** @copydoc LedgerCacheLoadingStateInterface::isCurrentlyLoading() */
+    /**
+     * @copydoc LedgerCacheLoadingStateInterface::isCurrentlyLoading()
+     */
     [[nodiscard]] bool
     isCurrentlyLoading() const override;
 
-    /** @copydoc LedgerCacheLoadingStateInterface::clone() */
+    /**
+     * @copydoc LedgerCacheLoadingStateInterface::clone()
+     */
     [[nodiscard]] std::unique_ptr<LedgerCacheLoadingStateInterface>
     clone() const override;
 };

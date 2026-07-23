@@ -11,17 +11,17 @@ namespace rpc {
 /**
  * @brief Default API version to use if no version is specified by clients
  */
-static constexpr uint32_t kAPI_VERSION_DEFAULT = 1u;
+static constexpr uint32_t kApiVersionDefault = 1u;
 
 /**
  * @brief Minimum API version supported by this build
  */
-static constexpr uint32_t kAPI_VERSION_MIN = 1u;
+static constexpr uint32_t kApiVersionMin = 1u;
 
 /**
  * @brief Maximum API version supported by this build
  */
-static constexpr uint32_t kAPI_VERSION_MAX = 3u;
+static constexpr uint32_t kApiVersionMax = 3u;
 
 /**
  * @brief A baseclass for API version helper

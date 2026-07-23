@@ -27,15 +27,15 @@ using namespace std::chrono;
 
 namespace {
 
-constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr auto kSEQ = 30;
-constexpr auto kAGE = 800;
-constexpr auto kAMOUNT = 100;
-constexpr auto kFEE = 3;
-constexpr auto kFINAL_BALANCE = 110;
-constexpr auto kFINAL_BALANCE2 = 30;
+constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto kAccount2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kSeq = 30;
+constexpr auto kAge = 800;
+constexpr auto kAmount = 100;
+constexpr auto kFee = 3;
+constexpr auto kFinalBalance = 110;
+constexpr auto kFinalBalancE2 = 30;
 
 MATCHER_P(ledgerHeaderMatcher, expectedHeader, "Headers match")
 {
@@ -53,19 +53,19 @@ struct ETLLedgerPublisherTest : util::prometheus::WithPrometheus, MockBackendTes
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderSkipDueToAge)
 {
-    // Use kAGE (800) which is > MAX_LEDGER_AGE_SECONDS (600) to test skipping
-    auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, kAGE);
+    // Use kAge (800) which is > MAX_LEDGER_AGE_SECONDS (600) to test skipping
+    auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, kAge);
     auto dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
-    backend_->setRange(kSEQ - 1, kSEQ);
+    backend_->setRange(kSeq - 1, kSeq);
     publisher.publish(dummyLedgerHeader);
 
     // Verify last published sequence is set immediately
     auto const seq = publisher.getLastPublishedSequence();
     ASSERT_TRUE(seq.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(seq.value(), kSEQ);
+    EXPECT_EQ(seq.value(), kSeq);
 
     // Since age > MAX_LEDGER_AGE_SECONDS, these should not be called
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(0);
@@ -80,28 +80,28 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderSkipDueToAge)
 TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderWithinAgeLimit)
 {
     // Use age 0 which is < MAX_LEDGER_AGE_SECONDS to ensure publishing happens
-    auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);
+    auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, 0);
     auto dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kSeq, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
-    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ, _))
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSeq, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{}));
 
     EXPECT_CALL(
-        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 0)
+        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSeq - 1, kSeq), 0)
     );
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
 
-    backend_->setRange(kSEQ - 1, kSEQ);
+    backend_->setRange(kSeq - 1, kSeq);
     publisher.publish(dummyLedgerHeader);
 
     // Verify last published sequence is set immediately
     auto const seq = publisher.getLastPublishedSequence();
     ASSERT_TRUE(seq.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(seq.value(), kSEQ);
+    EXPECT_EQ(seq.value(), kSeq);
 
     ctx.join();
     EXPECT_TRUE(publisher.lastPublishAgeSeconds() <= 1);
@@ -111,14 +111,14 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderIsWritingTrue)
 {
     auto dummyState = etl::SystemState{};
     dummyState.isWriting = true;
-    auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, kAGE);
+    auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, kAge);
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
     publisher.publish(dummyLedgerHeader);
     auto const seq = publisher.getLastPublishedSequence();
     ASSERT_TRUE(seq.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(seq.value(), kSEQ);
+    EXPECT_EQ(seq.value(), kSeq);
 
     ctx.join();
 
@@ -130,28 +130,28 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderInRange)
     auto dummyState = etl::SystemState{};
     dummyState.isWriting = true;
 
-    auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);  // age is 0
+    auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, 0);  // age is 0
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
-    backend_->setRange(kSEQ - 1, kSEQ);
+    backend_->setRange(kSeq - 1, kSeq);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kSeq, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     TransactionAndMetadata t1;
-    t1.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ)
+    t1.transaction = createPaymentTransactionObject(kAccount, kAccount2, kAmount, kFee, kSeq)
                          .getSerializer()
                          .peekData();
     t1.metadata =
-        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2)
+        createPaymentTransactionMetaObject(kAccount, kAccount2, kFinalBalance, kFinalBalancE2)
             .getSerializer()
             .peekData();
-    t1.ledgerSequence = kSEQ;
+    t1.ledgerSequence = kSeq;
 
     EXPECT_CALL(*backend_, fetchAllTransactionsInLedger)
         .WillOnce(Return(std::vector<TransactionAndMetadata>{t1}));
 
     EXPECT_CALL(
-        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 1)
+        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSeq - 1, kSeq), 1)
     );
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
     // mock 1 transaction
@@ -161,7 +161,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderInRange)
     auto const seq = publisher.getLastPublishedSequence();
     ASSERT_TRUE(seq.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(seq.value(), kSEQ);
+    EXPECT_EQ(seq.value(), kSeq);
 
     ctx.join();
 
@@ -173,34 +173,34 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderCloseTimeGreaterThanNow)
     auto dummyState = etl::SystemState{};
     dummyState.isWriting = true;
 
-    auto dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);
+    auto dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, 0);
     auto const nowPlus10 = system_clock::now() + seconds(10);
     auto const closeTime =
-        duration_cast<seconds>(nowPlus10.time_since_epoch()).count() - kRIPPLE_EPOCH_START;
-    dummyLedgerHeader.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
+        duration_cast<seconds>(nowPlus10.time_since_epoch()).count() - kRippleEpochStart;
+    dummyLedgerHeader.closeTime = xrpl::NetClock::time_point{seconds{closeTime}};
 
-    backend_->setRange(kSEQ - 1, kSEQ);
+    backend_->setRange(kSeq - 1, kSeq);
 
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kSeq, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     TransactionAndMetadata t1;
-    t1.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ)
+    t1.transaction = createPaymentTransactionObject(kAccount, kAccount2, kAmount, kFee, kSeq)
                          .getSerializer()
                          .peekData();
     t1.metadata =
-        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2)
+        createPaymentTransactionMetaObject(kAccount, kAccount2, kFinalBalance, kFinalBalancE2)
             .getSerializer()
             .peekData();
-    t1.ledgerSequence = kSEQ;
+    t1.ledgerSequence = kSeq;
 
-    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ, _))
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSeq, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{t1}));
 
     EXPECT_CALL(
-        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 1)
+        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSeq - 1, kSeq), 1)
     );
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubTransaction);
@@ -209,7 +209,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderCloseTimeGreaterThanNow)
     auto const seq = publisher.getLastPublishedSequence();
     ASSERT_TRUE(seq.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(seq.value(), kSEQ);
+    EXPECT_EQ(seq.value(), kSeq);
 
     ctx.join();
 
@@ -221,7 +221,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
     auto dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
     publisher.stop();
-    EXPECT_FALSE(publisher.publish(kSEQ, {}));
+    EXPECT_FALSE(publisher.publish(kSeq, {}));
 }
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttempt)
@@ -229,12 +229,12 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttempt)
     auto dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
-    static constexpr auto kMAX_ATTEMPT = 2;
+    static constexpr auto kMaxAttempt = 2;
 
-    LedgerRange const range{.minSequence = kSEQ - 1, .maxSequence = kSEQ - 1};
-    EXPECT_CALL(*backend_, hardFetchLedgerRange).Times(kMAX_ATTEMPT).WillRepeatedly(Return(range));
+    LedgerRange const range{.minSequence = kSeq - 1, .maxSequence = kSeq - 1};
+    EXPECT_CALL(*backend_, hardFetchLedgerRange).Times(kMaxAttempt).WillRepeatedly(Return(range));
 
-    EXPECT_FALSE(publisher.publish(kSEQ, kMAX_ATTEMPT, std::chrono::milliseconds{1}));
+    EXPECT_FALSE(publisher.publish(kSeq, kMaxAttempt, std::chrono::milliseconds{1}));
 }
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
@@ -242,13 +242,13 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
     auto dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
-    LedgerRange const range{.minSequence = kSEQ, .maxSequence = kSEQ};
+    LedgerRange const range{.minSequence = kSeq, .maxSequence = kSeq};
     EXPECT_CALL(*backend_, hardFetchLedgerRange).WillOnce(Return(range));
 
-    auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, kAGE);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillOnce(Return(dummyLedgerHeader));
+    auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, kAge);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kSeq, _)).WillOnce(Return(dummyLedgerHeader));
 
-    EXPECT_TRUE(publisher.publish(kSEQ, {}));
+    EXPECT_TRUE(publisher.publish(kSeq, {}));
     ctx.join();
 }
 
@@ -257,40 +257,40 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
     auto dummyState = etl::SystemState{};
     dummyState.isWriting = true;
 
-    auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);  // age is 0
+    auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, 0);  // age is 0
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
-    backend_->setRange(kSEQ - 1, kSEQ);
+    backend_->setRange(kSeq - 1, kSeq);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kSeq, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     // t1 index > t2 index
     TransactionAndMetadata t1;
-    t1.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ)
+    t1.transaction = createPaymentTransactionObject(kAccount, kAccount2, kAmount, kFee, kSeq)
                          .getSerializer()
                          .peekData();
     t1.metadata =
-        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2, 2)
+        createPaymentTransactionMetaObject(kAccount, kAccount2, kFinalBalance, kFinalBalancE2, 2)
             .getSerializer()
             .peekData();
-    t1.ledgerSequence = kSEQ;
+    t1.ledgerSequence = kSeq;
     t1.date = 1;
     TransactionAndMetadata t2;
-    t2.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ)
+    t2.transaction = createPaymentTransactionObject(kAccount, kAccount2, kAmount, kFee, kSeq)
                          .getSerializer()
                          .peekData();
     t2.metadata =
-        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2, 1)
+        createPaymentTransactionMetaObject(kAccount, kAccount2, kFinalBalance, kFinalBalancE2, 1)
             .getSerializer()
             .peekData();
-    t2.ledgerSequence = kSEQ;
+    t2.ledgerSequence = kSeq;
     t2.date = 2;
 
-    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ, _))
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSeq, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{t1, t2}));
 
     EXPECT_CALL(
-        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 2)
+        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSeq - 1, kSeq), 2)
     );
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
 
@@ -302,7 +302,7 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
     auto const seq = publisher.getLastPublishedSequence();
     ASSERT_TRUE(seq.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(seq.value(), kSEQ);
+    EXPECT_EQ(seq.value(), kSeq);
 
     ctx.join();
 
@@ -315,9 +315,9 @@ TEST_F(ETLLedgerPublisherTest, PublishVeryOldLedgerShouldSkip)
     dummyState.isWriting = true;
 
     // Create a ledger header with age (800) greater than MAX_LEDGER_AGE_SECONDS (600)
-    auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 800);
+    auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, 800);
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
-    backend_->setRange(kSEQ - 1, kSEQ);
+    backend_->setRange(kSeq - 1, kSeq);
 
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubLedger).Times(0);
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges).Times(0);
@@ -327,7 +327,7 @@ TEST_F(ETLLedgerPublisherTest, PublishVeryOldLedgerShouldSkip)
     auto const seq = publisher.getLastPublishedSequence();
     ASSERT_TRUE(seq.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(seq.value(), kSEQ);
+    EXPECT_EQ(seq.value(), kSeq);
 
     ctx.join();
 }
@@ -337,19 +337,19 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleLedgersInQuickSuccession)
     auto dummyState = etl::SystemState{};
     dummyState.isWriting = true;
 
-    auto const dummyLedgerHeader1 = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);
-    auto const dummyLedgerHeader2 = createLedgerHeader(kLEDGER_HASH, kSEQ + 1, 0);
+    auto const dummyLedgerHeader1 = createLedgerHeader(kLedgerHash, kSeq, 0);
+    auto const dummyLedgerHeader2 = createLedgerHeader(kLedgerHash, kSeq + 1, 0);
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
-    backend_->setRange(kSEQ - 1, kSEQ + 1);
+    backend_->setRange(kSeq - 1, kSeq + 1);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kSeq, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSEQ + 1, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kSeq + 1, _))
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
-    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ, _))
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSeq, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{}));
-    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ + 1, _))
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSeq + 1, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{}));
 
     Sequence const s;
@@ -377,7 +377,7 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleLedgersInQuickSuccession)
     auto const seq = publisher.getLastPublishedSequence();
     ASSERT_TRUE(seq.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(seq.value(), kSEQ + 1);
+    EXPECT_EQ(seq.value(), kSeq + 1);
 
     ctx.join();
 }

@@ -21,7 +21,7 @@ using namespace util::config;
 using namespace web::dosguard;
 
 struct DOSGuardTest : public virtual ::testing::Test {
-    static constexpr auto kJSON_DATA = R"JSON({
+    static constexpr auto kJsonData = R"JSON({
         "dos_guard": {
             "max_fetches": 100,
             "max_connections": 2,

@@ -11,10 +11,10 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <functional>
 #include <optional>
@@ -23,17 +23,16 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
 
-constexpr auto kHOLDE_R1_ACCOUNT = "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN";
-constexpr auto kHOLDE_R2_ACCOUNT = "rEiNkzogdHEzUxPfsri5XSMqtXUixf2Yx";
-constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr auto kMPT_ID = "000004C463C52827307480341125DA0577DEFC38405B0E3E";
+constexpr auto kHoldeR1Account = "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN";
+constexpr auto kHoldeR2Account = "rEiNkzogdHEzUxPfsri5XSMqtXUixf2Yx";
+constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kMptId = "000004C463C52827307480341125DA0577DEFC38405B0E3E";
 
-std::string const kMPT_OUT1 =
+std::string const kMptOuT1 =
     R"JSON({
         "account": "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN",
         "flags": 0,
@@ -41,7 +40,7 @@ std::string const kMPT_OUT1 =
         "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A"
     })JSON";
 
-std::string const kMPT_OUT2 =
+std::string const kMptOuT2 =
     R"JSON({
         "account": "rEiNkzogdHEzUxPfsri5XSMqtXUixf2Yx",
         "flags": 0,
@@ -62,13 +61,13 @@ TEST_F(RPCMPTHoldersHandlerTest, NonHexLedgerHash)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "mpt_issuance_id": "{}",
                     "ledger_hash": "xxx"
                 }})JSON",
-                kMPT_ID
+                kMptId
             )
         );
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -84,13 +83,13 @@ TEST_F(RPCMPTHoldersHandlerTest, NonStringLedgerHash)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "mpt_issuance_id": "{}",
                     "ledger_hash": 123
                 }})JSON",
-                kMPT_ID
+                kMptId
             )
         );
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -106,13 +105,13 @@ TEST_F(RPCMPTHoldersHandlerTest, InvalidLedgerIndexString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "mpt_issuance_id": "{}",
                     "ledger_index": "notvalidated"
                 }})JSON",
-                kMPT_ID
+                kMptId
             )
         );
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -129,7 +128,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(R"JSON({
+        auto const input = boost::json::parse(R"JSON({
             "mpt_issuance_id": "xxx"
         })JSON");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -145,7 +144,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDMissing)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(R"JSON({})JSON");
+        auto const input = boost::json::parse(R"JSON({})JSON");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -159,7 +158,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDNotString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(R"JSON({
+        auto const input = boost::json::parse(R"JSON({
             "mpt_issuance_id": 12
         })JSON");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -176,13 +175,13 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "mpt_issuance_id": "{}",
                     "marker": "xxx"
                 }})JSON",
-                kMPT_ID
+                kMptId
             )
         );
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -198,13 +197,13 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerNotString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(
+        auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "mpt_issuance_id": "{}",
                     "marker": 1
                 }})JSON",
-                kMPT_ID
+                kMptId
             )
         );
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -220,17 +219,17 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash return empty
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}",
                 "ledger_hash": "{}"
             }})JSON",
-            kMPT_ID,
-            kLEDGER_HASH
+            kMptId,
+            kLedgerHash
         )
     );
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -249,14 +248,14 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence)
-        .WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
-    auto const input = json::parse(
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}",
                 "ledger_index": "4"
             }})JSON",
-            kMPT_ID
+            kMptId
         )
     );
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -273,14 +272,14 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence)
-        .WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
-    auto const input = json::parse(
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}",
                 "ledger_index": 4
             }})JSON",
-            kMPT_ID
+            kMptId
         )
     );
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -298,18 +297,18 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIntIndex)
 TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
-    auto ledgerinfo = createLedgerHeader(kLEDGER_HASH, 31);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    auto ledgerinfo = createLedgerHeader(kLedgerHash, 31);
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}",
                 "ledger_hash": "{}"
             }})JSON",
-            kMPT_ID,
-            kLEDGER_HASH
+            kMptId,
+            kLedgerHash
         )
     );
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -328,13 +327,13 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIndex2)
     // no need to check from db,call fetchLedgerBySequence 0 time
     // differ from previous logic
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}",
                 "ledger_index": "31"
             }})JSON",
-            kMPT_ID
+            kMptId
         )
     );
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -350,21 +349,21 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIndex2)
 // normal case when MPT does not exist
 TEST_F(RPCMPTHoldersHandlerTest, MPTNotFound)
 {
-    auto ledgerinfo = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    auto ledgerinfo = createLedgerHeader(kLedgerHash, 30);
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}",
                 "ledger_hash": "{}"
             }})JSON",
-            kMPT_ID,
-            kLEDGER_HASH
+            kMptId,
+            kLedgerHash
         )
     );
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -388,41 +387,41 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
             "mptokens": [{}],
             "validated": true
         }})JSON",
-        kMPT_ID,
-        kMPT_OUT1
+        kMptId,
+        kMptOuT1
     );
 
-    auto ledgerInfo = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
-    auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(kMPT_ID)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const mptoken = createMpTokenObject(kHOLDE_R1_ACCOUNT, ripple::uint192(kMPT_ID));
+    auto const mptoken = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId));
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend_, fetchMPTHolders)
         .WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
         *backend_,
         fetchMPTHolders(
-            ripple::uint192(kMPT_ID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_
+            xrpl::uint192(kMptId), testing::_, testing::Eq(std::nullopt), Const(30), testing::_
         )
     )
         .Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}"
             }})JSON",
-            kMPT_ID
+            kMptId
         )
     );
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(currentOutput), *output.result);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
     });
 }
 
@@ -443,40 +442,40 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
             }}],
             "validated": true
         }})JSON",
-        kMPT_ID
+        kMptId
     );
 
-    auto ledgerInfo = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
-    auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(kMPT_ID)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const mptoken = createMpTokenObject(kHOLDE_R1_ACCOUNT, ripple::uint192(kMPT_ID), 0);
+    auto const mptoken = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId), 0);
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend_, fetchMPTHolders)
         .WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
         *backend_,
         fetchMPTHolders(
-            ripple::uint192(kMPT_ID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_
+            xrpl::uint192(kMptId), testing::_, testing::Eq(std::nullopt), Const(30), testing::_
         )
     )
         .Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}"
             }})JSON",
-            kMPT_ID
+            kMptId
         )
     );
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(currentOutput), *output.result);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
     });
 }
 
@@ -491,26 +490,26 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
             "mptokens": [{}],
             "validated": true
         }})JSON",
-        kMPT_ID,
+        kMptId,
         specificLedger,
-        kMPT_OUT1
+        kMptOuT1
     );
 
-    auto ledgerInfo = createLedgerHeader(kLEDGER_HASH, specificLedger);
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, specificLedger);
     ON_CALL(*backend_, fetchLedgerBySequence(specificLedger, _)).WillByDefault(Return(ledgerInfo));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(kMPT_ID)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, specificLedger, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const mptoken = createMpTokenObject(kHOLDE_R1_ACCOUNT, ripple::uint192(kMPT_ID));
+    auto const mptoken = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId));
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend_, fetchMPTHolders)
         .WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
         *backend_,
         fetchMPTHolders(
-            ripple::uint192(kMPT_ID),
+            xrpl::uint192(kMptId),
             testing::_,
             testing::Eq(std::nullopt),
             Const(specificLedger),
@@ -519,13 +518,13 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
     )
         .Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}",
                 "ledger_index": {}
             }})JSON",
-            kMPT_ID,
+            kMptId,
             specificLedger
         )
     );
@@ -533,7 +532,7 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
         auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(currentOutput), *output.result);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
     });
 }
 
@@ -548,38 +547,38 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
             "validated": true,
             "marker": "{}"
         }})JSON",
-        kMPT_ID,
-        kMPT_OUT2,
-        ripple::strHex(getAccountIdWithString(kHOLDE_R1_ACCOUNT))
+        kMptId,
+        kMptOuT2,
+        xrpl::strHex(getAccountIdWithString(kHoldeR1Account))
     );
 
-    auto ledgerInfo = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
-    auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(kMPT_ID)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const mptoken = createMpTokenObject(kHOLDE_R2_ACCOUNT, ripple::uint192(kMPT_ID));
+    auto const mptoken = createMpTokenObject(kHoldeR2Account, xrpl::uint192(kMptId));
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
-    auto const marker = getAccountIdWithString(kHOLDE_R1_ACCOUNT);
+    auto const marker = getAccountIdWithString(kHoldeR1Account);
     ON_CALL(*backend_, fetchMPTHolders)
         .WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = marker}));
     EXPECT_CALL(
         *backend_,
         fetchMPTHolders(
-            ripple::uint192(kMPT_ID), testing::_, testing::Eq(marker), Const(30), testing::_
+            xrpl::uint192(kMptId), testing::_, testing::Eq(marker), Const(30), testing::_
         )
     )
         .Times(1);
 
-    auto const holder1AccountId = ripple::strHex(getAccountIdWithString(kHOLDE_R1_ACCOUNT));
-    auto const input = json::parse(
+    auto const holder1AccountId = xrpl::strHex(getAccountIdWithString(kHoldeR1Account));
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}",
                 "marker": "{}"
             }})JSON",
-            kMPT_ID,
+            kMptId,
             holder1AccountId
         )
     );
@@ -587,7 +586,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
         auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(currentOutput), *output.result);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
     });
 }
 
@@ -601,19 +600,19 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
             "mptokens": [{}, {}],
             "validated": true
         }})JSON",
-        kMPT_ID,
-        kMPT_OUT1,
-        kMPT_OUT2
+        kMptId,
+        kMptOuT1,
+        kMptOuT2
     );
 
-    auto ledgerInfo = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
-    auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(kMPT_ID)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const mptoken1 = createMpTokenObject(kHOLDE_R1_ACCOUNT, ripple::uint192(kMPT_ID));
-    auto const mptoken2 = createMpTokenObject(kHOLDE_R2_ACCOUNT, ripple::uint192(kMPT_ID));
+    auto const mptoken1 = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId));
+    auto const mptoken2 = createMpTokenObject(kHoldeR2Account, xrpl::uint192(kMptId));
     std::vector<Blob> const mpts = {
         mptoken1.getSerializer().peekData(), mptoken2.getSerializer().peekData()
     };
@@ -622,24 +621,24 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
     EXPECT_CALL(
         *backend_,
         fetchMPTHolders(
-            ripple::uint192(kMPT_ID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_
+            xrpl::uint192(kMptId), testing::_, testing::Eq(std::nullopt), Const(30), testing::_
         )
     )
         .Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}"
             }})JSON",
-            kMPT_ID
+            kMptId
         )
     );
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(currentOutput), *output.result);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
     });
 }
 
@@ -653,25 +652,25 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
             "mptokens": [{}],
             "validated": true
         }})JSON",
-        kMPT_ID,
-        kMPT_OUT1
+        kMptId,
+        kMptOuT1
     );
 
-    auto ledgerInfo = createLedgerHeader(kLEDGER_HASH, 30);
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
-    auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(kMPT_ID)).key;
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const mptoken = createMpTokenObject(kHOLDE_R1_ACCOUNT, ripple::uint192(kMPT_ID));
+    auto const mptoken = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId));
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend_, fetchMPTHolders)
         .WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
         *backend_,
         fetchMPTHolders(
-            ripple::uint192(kMPT_ID),
-            Const(MPTHoldersHandler::kLIMIT_MAX),
+            xrpl::uint192(kMptId),
+            Const(MPTHoldersHandler::kLimitMax),
             testing::Eq(std::nullopt),
             Const(30),
             testing::_
@@ -679,20 +678,20 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
     )
         .Times(1);
 
-    auto const input = json::parse(
+    auto const input = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "mpt_issuance_id": "{}",
                 "limit": {}
             }})JSON",
-            kMPT_ID,
-            MPTHoldersHandler::kLIMIT_MAX + 1
+            kMptId,
+            MPTHoldersHandler::kLimitMax + 1
         )
     );
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(currentOutput), *output.result);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
     });
 }

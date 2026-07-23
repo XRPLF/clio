@@ -19,7 +19,7 @@ struct ClioNode {
     /**
      * @brief The format of the time to store in the database.
      */
-    static constexpr char const* kTIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ";
+    static constexpr char const* kTimeFormat = "%Y-%m-%dT%H:%M:%SZ";
 
     /**
      * @brief Database role of a node in the cluster.

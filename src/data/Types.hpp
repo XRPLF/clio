@@ -20,7 +20,7 @@ using Blob = std::vector<unsigned char>;
  * @brief Represents an object in the ledger.
  */
 struct LedgerObject {
-    ripple::uint256 key;
+    xrpl::uint256 key;
     Blob blob;
 
     bool
@@ -32,7 +32,7 @@ struct LedgerObject {
  */
 struct LedgerPage {
     std::vector<LedgerObject> objects;
-    std::optional<ripple::uint256> cursor;
+    std::optional<xrpl::uint256> cursor;
 };
 
 /**
@@ -40,7 +40,7 @@ struct LedgerPage {
  */
 struct BookOffersPage {
     std::vector<LedgerObject> offers;
-    std::optional<ripple::uint256> cursor;
+    std::optional<xrpl::uint256> cursor;
 };
 
 /**
@@ -160,9 +160,9 @@ struct TransactionsAndCursor {
  * @brief Represents a NFToken.
  */
 struct NFT {
-    ripple::uint256 tokenID;
+    xrpl::uint256 tokenID;
     std::uint32_t ledgerSequence{};
-    ripple::AccountID owner;
+    xrpl::AccountID owner;
     Blob uri;
     bool isBurned{};
 
@@ -177,9 +177,9 @@ struct NFT {
      * @param uri The URI
      * @param isBurned Whether the token is burned
      */
-    NFT(ripple::uint256 const& tokenID,
+    NFT(xrpl::uint256 const& tokenID,
         std::uint32_t ledgerSequence,
-        ripple::AccountID const& owner,
+        xrpl::AccountID const& owner,
         Blob uri,
         bool isBurned)
         : tokenID{tokenID}
@@ -198,9 +198,9 @@ struct NFT {
      * @param owner The owner
      * @param isBurned Whether the token is burned
      */
-    NFT(ripple::uint256 const& tokenID,
+    NFT(xrpl::uint256 const& tokenID,
         std::uint32_t ledgerSequence,
-        ripple::AccountID const& owner,
+        xrpl::AccountID const& owner,
         bool isBurned)
         : NFT(tokenID, ledgerSequence, owner, {}, isBurned)
     {
@@ -227,7 +227,7 @@ struct NFT {
  */
 struct NFTsAndCursor {
     std::vector<NFT> nfts;
-    std::optional<ripple::uint256> cursor;
+    std::optional<xrpl::uint256> cursor;
 };
 
 /**
@@ -235,7 +235,7 @@ struct NFTsAndCursor {
  */
 struct MPTHoldersAndCursor {
     std::vector<Blob> mptokens;
-    std::optional<ripple::AccountID> cursor;
+    std::optional<xrpl::AccountID> cursor;
 };
 
 /**
@@ -254,7 +254,7 @@ struct LedgerRange {
  */
 struct Amendment {
     std::string name;
-    ripple::uint256 feature;
+    xrpl::uint256 feature;
     bool isSupportedByXRPL = false;
     bool isSupportedByClio = false;
     bool isRetired = false;
@@ -265,7 +265,7 @@ struct Amendment {
      * @param name The name of the amendment
      * @return The amendment Id as uint256
      */
-    static ripple::uint256
+    static xrpl::uint256
     getAmendmentId(std::string_view const name);
 
     /**
@@ -295,14 +295,20 @@ struct AmendmentKey {
     {
     }
 
-    /** @brief Conversion to string */
+    /**
+     * @brief Conversion to string
+     */
     operator std::string const&() const;
 
-    /** @brief Conversion to string_view */
+    /**
+     * @brief Conversion to string_view
+     */
     operator std::string_view() const;
 
-    /** @brief Conversion to uint256 */
-    operator ripple::uint256() const;
+    /**
+     * @brief Conversion to uint256
+     */
+    operator xrpl::uint256() const;
 
     /**
      * @brief Comparison operators
@@ -313,14 +319,12 @@ struct AmendmentKey {
     operator<=>(AmendmentKey const& other) const = default;
 };
 
-constexpr ripple::uint256 kFIRST_KEY{
+constexpr xrpl::uint256 kFirstKey{
     "0000000000000000000000000000000000000000000000000000000000000000"
 };
-constexpr ripple::uint256 kLAST_KEY{
+constexpr xrpl::uint256 kLastKey{
     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 };
-constexpr ripple::uint256 kHI192{
-    "0000000000000000000000000000000000000000000000001111111111111111"
-};
+constexpr xrpl::uint256 kHi192{"0000000000000000000000000000000000000000000000001111111111111111"};
 
 }  // namespace data

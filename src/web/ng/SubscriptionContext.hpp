@@ -103,7 +103,7 @@ public:
      *
      * @return The API subversion.
      */
-    uint32_t
+    [[nodiscard]] uint32_t
     apiSubversion() const override;
 
     /**

@@ -36,7 +36,7 @@ PortConstraint::checkValueImpl(Value const& port) const
     } else {
         p = static_cast<uint32_t>(std::get<int64_t>(port));
     }
-    if (p >= kPORT_MIN && p <= kPORT_MAX)
+    if (p >= kPortMin && p <= kPortMax)
         return std::nullopt;
     return Error{"Port does not satisfy the constraint bounds"};
 }
@@ -57,11 +57,11 @@ ValidIPConstraint::checkValueImpl(Value const& ip) const
     if (not errorCode.failed())
         return std::nullopt;
 
-    static std::regex const kHOST{
+    static std::regex const kHost{
         R"regex(^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$)regex"
     };
 
-    if (std::regex_match(std::get<std::string>(ip), kHOST))
+    if (std::regex_match(std::get<std::string>(ip), kHost))
         return std::nullopt;
 
     return Error{"Ip is not a valid ip address or hostname"};

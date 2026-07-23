@@ -1,4 +1,4 @@
-if("${san}" STREQUAL "")
+if(NOT SANITIZERS_ENABLED)
     target_compile_definitions(clio_options INTERFACE BOOST_STACKTRACE_LINK)
     target_compile_definitions(
         clio_options

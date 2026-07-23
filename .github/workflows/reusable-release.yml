@@ -46,7 +46,7 @@ jobs:
   release:
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
     env:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ github.token }}
@@ -55,12 +55,12 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@90f11ee655d1687824fb8793db770477d52afbab
+        uses: XRPLF/actions/prepare-runner@e4b6449d55a61c002d7c3fdfa6c20f721ede0606
         with:
           enable_ccache: false
 
@@ -81,9 +81,9 @@ jobs:
         env:
           RELEASE_HEADER: ${{ inputs.header }}
         run: |
-          echo "# Release notes" > "${RUNNER_TEMP}/release_notes.md"
-          echo "" >> "${RUNNER_TEMP}/release_notes.md"
-          printf '%s\n' "${RELEASE_HEADER}" >> "${RUNNER_TEMP}/release_notes.md"
+          echo "# Release notes" >"${RUNNER_TEMP}/release_notes.md"
+          echo "" >>"${RUNNER_TEMP}/release_notes.md"
+          printf '%s\n' "${RELEASE_HEADER}" >>"${RUNNER_TEMP}/release_notes.md"
 
       - name: Generate changelog
         if: ${{ inputs.generate_changelog }}
@@ -91,7 +91,7 @@ jobs:
           LAST_TAG="$(gh release view --json tagName -q .tagName --repo XRPLF/clio)"
           LAST_TAG_COMMIT="$(git rev-parse $LAST_TAG)"
           BASE_COMMIT="$(git merge-base HEAD $LAST_TAG_COMMIT)"
-          git-cliff "${BASE_COMMIT}..HEAD" --ignore-tags "nightly|-b|-rc" >> "${RUNNER_TEMP}/release_notes.md"
+          git-cliff "${BASE_COMMIT}..HEAD" --ignore-tags "nightly|-b|-rc" >>"${RUNNER_TEMP}/release_notes.md"
 
       - name: Upload release notes
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -106,10 +106,10 @@ jobs:
         run: |
           RELEASES_TO_DELETE=$(gh release list --limit 50 --repo "${GH_REPO}" | grep -E "${DELETE_PATTERN}" | awk -F'\t' '{print $3}' || true)
           if [ -n "$RELEASES_TO_DELETE" ]; then
-            for RELEASE in $RELEASES_TO_DELETE; do
-              echo "Deleting release: $RELEASE"
-              gh release delete "$RELEASE" --repo "${GH_REPO}" --yes --cleanup-tag
-            done
+              for RELEASE in $RELEASES_TO_DELETE; do
+                  echo "Deleting release: $RELEASE"
+                  gh release delete "$RELEASE" --repo "${GH_REPO}" --yes --cleanup-tag
+              done
           fi
 
       - name: Publish release
@@ -121,9 +121,9 @@ jobs:
           DRAFT_OPTION: ${{ inputs.draft && '--draft' || '' }}
         run: |
           gh release create "${RELEASE_VERSION}" \
-            ${PRERELEASE_OPTION} \
-            --title "${RELEASE_TITLE}" \
-            --target "${GITHUB_SHA}" \
-            ${DRAFT_OPTION} \
-            --notes-file "${RUNNER_TEMP}/release_notes.md" \
-            ./release_artifacts/clio_*
+              ${PRERELEASE_OPTION} \
+              --title "${RELEASE_TITLE}" \
+              --target "${GITHUB_SHA}" \
+              ${DRAFT_OPTION} \
+              --notes-file "${RUNNER_TEMP}/release_notes.md" \
+              ./release_artifacts/clio_*

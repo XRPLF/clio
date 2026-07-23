@@ -21,7 +21,7 @@
 
 using namespace util;
 
-static constexpr auto kLOG_FORMAT = "%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v";
+static constexpr auto kLogFormat = "%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v";
 
 struct BenchmarkLoggingInitializer {
     [[nodiscard]] static std::shared_ptr<spdlog::sinks::sink>
@@ -32,7 +32,7 @@ struct BenchmarkLoggingInitializer {
                 .logDir = logDir,
                 .rotation = LogService::RotationParams{.sizeMB = sizeMB, .maxFiles = maxFiles},
             },
-            kLOG_FORMAT
+            kLogFormat
         );
     }
 
@@ -71,9 +71,9 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         state.PauseTiming();
 
         std::filesystem::create_directories(logDir);
-        static constexpr size_t kQUEUE_SIZE = 8192;
-        static constexpr size_t kTHREAD_COUNT = 1;
-        spdlog::init_thread_pool(kQUEUE_SIZE, kTHREAD_COUNT);
+        static constexpr size_t kQueueSize = 8192;
+        static constexpr size_t kThreadCount = 1;
+        spdlog::init_thread_pool(kQueueSize, kThreadCount);
 
         auto fileSink = BenchmarkLoggingInitializer::createFileSink(logDir, 5, 25);
 

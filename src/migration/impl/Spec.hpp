@@ -15,11 +15,11 @@ namespace migration::impl {
 template <typename T, typename Backend>
 concept MigratorSpec =
     requires(std::shared_ptr<Backend> const& backend, util::config::ObjectView const& cfg) {
-        // Check that 'kNAME' exists and is a string
-        { T::kNAME } -> std::convertible_to<std::string>;
+        // Check that 'kName' exists and is a string
+        { T::kName } -> std::convertible_to<std::string>;
 
-        // Check that 'kDESCRIPTION' exists and is a string
-        { T::kDESCRIPTION } -> std::convertible_to<std::string>;
+        // Check that 'kDescription' exists and is a string
+        { T::kDescription } -> std::convertible_to<std::string>;
 
         // Check that the migrator specifies the backend type it supports
         typename T::Backend;

@@ -110,7 +110,7 @@ ClioConfigDefinition::toMilliseconds(float value)
 {
     ASSERT(value >= 0.0f, "Floating point value of seconds must be non-negative, got: {}", value);
     return std::chrono::milliseconds{
-        std::lroundf(value * static_cast<float>(util::kMILLISECONDS_PER_SECOND))
+        std::lroundf(value * static_cast<float>(util::kMillisecondsPerSecond))
     };
 }
 
@@ -242,7 +242,7 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
 ClioConfigDefinition&
 getClioConfig()
 {
-    static ClioConfigDefinition kCLIO_CONFIG{
+    static ClioConfigDefinition kClioConfig{
         {{"database.type",
           ConfigValue{ConfigType::String}
               .defaultValue("cassandra")
@@ -444,15 +444,15 @@ getClioConfig()
 
          {"api_version.default",
           ConfigValue{ConfigType::Integer}
-              .defaultValue(rpc::kAPI_VERSION_DEFAULT)
+              .defaultValue(rpc::kApiVersionDefault)
               .withConstraint(gValidateApiVersion)},
          {"api_version.min",
           ConfigValue{ConfigType::Integer}
-              .defaultValue(rpc::kAPI_VERSION_MIN)
+              .defaultValue(rpc::kApiVersionMin)
               .withConstraint(gValidateApiVersion)},
          {"api_version.max",
           ConfigValue{ConfigType::Integer}
-              .defaultValue(rpc::kAPI_VERSION_MAX)
+              .defaultValue(rpc::kApiVersionMax)
               .withConstraint(gValidateApiVersion)},
 
          {"migration.full_scan_threads",
@@ -463,7 +463,7 @@ getClioConfig()
           ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}},
     };
 
-    return kCLIO_CONFIG;
+    return kClioConfig;
 }
 
 }  // namespace util::config

@@ -2,7 +2,6 @@
 
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
-#include "etl/LedgerFetcherInterface.hpp"
 #include "etl/Models.hpp"
 #include "etl/impl/LedgerFetcher.hpp"
 #include "util/Assert.hpp"
@@ -10,6 +9,7 @@
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
+#include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/STTx.h>
@@ -18,12 +18,11 @@
 
 #include <algorithm>
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <iterator>
-#include <memory>
 #include <optional>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -57,9 +56,10 @@ model::Transaction
 extractTx(PBTxType tx, uint32_t seq)
 {
     auto raw = std::move(*tx.mutable_transaction_blob());
-    ripple::SerialIter it{raw.data(), raw.size()};
-    ripple::STTx const sttx{it};
-    ripple::TxMeta meta{sttx.getTransactionID(), seq, tx.metadata_blob()};
+    xrpl::SerialIter it{raw.data(), raw.size()};
+    xrpl::STTx const sttx{it};
+    auto const& metaBlob = tx.metadata_blob();
+    xrpl::TxMeta meta{sttx.getTransactionID(), seq, xrpl::Blob{metaBlob.begin(), metaBlob.end()}};
 
     return {
         .raw = std::move(raw),
@@ -92,7 +92,7 @@ extractTxs(PBTxListType transactions, uint32_t seq)
 model::Object
 extractObj(PBObjType obj)
 {
-    auto const key = ripple::uint256::fromVoidChecked(obj.key());
+    auto const key = xrpl::uint256::fromVoidChecked(obj.key());
     ASSERT(key.has_value(), "Failed to deserialize key from void");
     if (!key)
         return {};
@@ -108,8 +108,8 @@ extractObj(PBObjType obj)
         .keyRaw = std::move(*obj.mutable_key()),
         .data = {obj.mutable_data()->begin(), obj.mutable_data()->end()},
         .dataRaw = std::move(*obj.mutable_data()),
-        .successor = valueOr(obj.successor(), uint256ToString(data::kFIRST_KEY)),
-        .predecessor = valueOr(obj.predecessor(), uint256ToString(data::kLAST_KEY)),
+        .successor = valueOr(obj.successor(), uint256ToString(data::kFirstKey)),
+        .predecessor = valueOr(obj.predecessor(), uint256ToString(data::kLastKey)),
         .type = extractModType(obj.mod_type()),
     };
 }
@@ -164,7 +164,7 @@ auto
 Extractor::unpack()
 {
     return [](auto&& data) {
-        auto header = ::util::deserializeHeader(ripple::makeSlice(data.ledger_header()));
+        auto header = ::util::deserializeHeader(xrpl::makeSlice(data.ledger_header()));
 
         return std::make_optional<model::LedgerData>({
             .transactions = extractTxs(
@@ -181,18 +181,35 @@ Extractor::unpack()
 }
 
 std::optional<model::LedgerData>
+Extractor::guardedUnpack(std::optional<PBLedgerResponseType>&& response, uint32_t seq)
+{
+    try {
+        return std::move(response).and_then(unpack());
+    } catch (std::runtime_error const& e) {
+        LOG(log_.fatal()) << "Failed to extract/deserialize ledger " << seq
+                          << " - the network likely has an amendment this Clio does not support: "
+                          << e.what();
+        amendmentBlockHandler_->notifyAmendmentBlocked();
+        return std::nullopt;
+    }
+}
+
+std::optional<model::LedgerData>
 Extractor::extractLedgerWithDiff(uint32_t seq)
 {
     LOG(log_.debug()) << "Extracting DIFF " << seq;
 
     auto const [batch, time] = ::util::timed<std::chrono::duration<double>>([this, seq] {
-        return fetcher_->fetchDataAndDiff(seq).and_then(unpack());
+        return guardedUnpack(fetcher_->fetchDataAndDiff(seq), seq);
     });
 
-    LOG(log_.debug()) << "Extracted and Transformed diff for " << seq << " in " << time << "ms";
+    if (batch.has_value()) {
+        LOG(log_.debug()) << "Extracted and transformed diff for " << seq << " in " << time << "ms";
+    } else {
+        LOG(log_.debug()) << "Did not produce diff for " << seq << " (no data) after " << time
+                          << "ms";
+    }
 
-    // can be nullopt. this means that either the server is stopping or another node took over ETL
-    // writing.
     return batch;
 }
 
@@ -202,14 +219,17 @@ Extractor::extractLedgerOnly(uint32_t seq)
     LOG(log_.debug()) << "Extracting FULL " << seq;
 
     auto const [batch, time] = ::util::timed<std::chrono::duration<double>>([this, seq] {
-        return fetcher_->fetchData(seq).and_then(unpack());
+        return guardedUnpack(fetcher_->fetchData(seq), seq);
     });
 
-    LOG(log_.debug()) << "Extracted and Transformed full ledger for " << seq << " in " << time
-                      << "ms";
+    if (batch.has_value()) {
+        LOG(log_.debug()) << "Extracted and transformed full ledger " << seq << " in " << time
+                          << "ms";
+    } else {
+        LOG(log_.debug()) << "Did not produce full ledger " << seq << " (no data) after " << time
+                          << "ms";
+    }
 
-    // can be nullopt. this means that either the server is stopping or another node took over ETL
-    // writing.
     return batch;
 }
 

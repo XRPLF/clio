@@ -22,10 +22,10 @@ on:
 
       - .github/actions/conan/action.yml
       - ".github/scripts/conan/**"
-      - "!.github/scripts/conan/regenerate_lockfile.sh"
 
       - conanfile.py
       - conan.lock
+      - conan/profiles/**
   push:
     branches: [develop]
     paths:
@@ -33,10 +33,10 @@ on:
 
       - .github/actions/conan/action.yml
       - ".github/scripts/conan/**"
-      - "!.github/scripts/conan/regenerate_lockfile.sh"
 
       - conanfile.py
       - conan.lock
+      - conan/profiles/**
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -52,14 +52,14 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Calculate conan matrix
         id: set-matrix
-        run: .github/scripts/conan/generate_matrix.py >> "${GITHUB_OUTPUT}"
+        run: .github/scripts/conan/generate_matrix.py >>"${GITHUB_OUTPUT}"
 
   upload-conan-deps:
-    name: Build ${{ matrix.compiler }}${{ matrix.sanitizer_ext }} ${{ matrix.build_type }}
+    name: Build ${{ matrix.compiler }} ${{ matrix.sanitizers }} ${{ matrix.build_type }}
 
     needs: generate-matrix
 
@@ -71,42 +71,48 @@ jobs:
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container != '' && fromJson(matrix.container) || null }}
 
-    env:
-      CONAN_PROFILE: ${{ matrix.compiler }}${{ matrix.sanitizer_ext }}
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@90f11ee655d1687824fb8793db770477d52afbab
+        uses: XRPLF/actions/prepare-runner@e4b6449d55a61c002d7c3fdfa6c20f721ede0606
         with:
           enable_ccache: false
 
       - name: Print build environment
         uses: XRPLF/actions/print-build-env@59dec886e4afb05a1724443af08baccbc045b574
 
-      - name: Setup conan on macOS
-        if: ${{ runner.os == 'macOS' }}
-        run: ./.github/scripts/conan/init.sh
+      - name: Set compiler environment
+        if: ${{ runner.os == 'Linux' }}
+        uses: ./.github/actions/set-compiler-env
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Setup conan
+        run: conan/init.sh
 
       - name: Show conan profile
-        run: conan profile show --profile:all ${{ env.CONAN_PROFILE }}
+        env:
+          SANITIZERS: ${{ matrix.sanitizers }}
+        run: conan profile show --profile:all ci
 
       - name: Run conan
         uses: ./.github/actions/conan
         with:
-          conan_profile: ${{ env.CONAN_PROFILE }}
+          sanitizers: ${{ matrix.sanitizers }}
           # We check that everything builds fine from source on scheduled runs
           # But we do build and upload packages with build=missing by default
           force_conan_source_build: ${{ github.event_name == 'schedule' || github.event.inputs.force_source_build == 'true' }}
           build_type: ${{ matrix.build_type }}
 
-      - name: Login to Conan
-        if: ${{ github.repository_owner == 'XRPLF' && github.event_name != 'pull_request' }}
-        run: conan remote login -p ${{ secrets.CONAN_PASSWORD }} xrplf ${{ secrets.CONAN_USERNAME }}
+      - name: Log into Conan remote
+        if: ${{ github.repository == 'XRPLF/clio' && github.event_name != 'pull_request' }}
+        run: conan remote login -p ${{ secrets.NEXUS_REMOTE_PASSWORD }} xrplf ${{ secrets.NEXUS_REMOTE_USERNAME }}
 
       - name: Upload Conan packages
-        if: ${{ github.repository_owner == 'XRPLF' && github.event_name != 'pull_request' && github.event_name != 'schedule' }}
+        if: ${{ github.repository == 'XRPLF/clio' && github.event_name != 'pull_request' && github.event_name != 'schedule' }}
         env:
           FORCE_OPTION: ${{ github.event.inputs.force_upload == 'true' && '--force' || '' }}
+          CONAN_LOGIN_USERNAME_XRPLF: ${{ secrets.NEXUS_REMOTE_USERNAME }}
+          CONAN_PASSWORD_XRPLF: ${{ secrets.NEXUS_REMOTE_PASSWORD }}
         run: conan upload "*" -r=xrplf --confirm ${FORCE_OPTION}

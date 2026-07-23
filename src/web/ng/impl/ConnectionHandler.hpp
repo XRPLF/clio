@@ -81,7 +81,7 @@ public:
 
     ConnectionHandler(ConnectionHandler&&) = delete;
 
-    static constexpr std::chrono::milliseconds kCLOSE_CONNECTION_TIMEOUT{500};
+    static constexpr std::chrono::milliseconds kCloseConnectionTimeout{500};
 
     void
     onGet(std::string const& target, MessageHandler handler);

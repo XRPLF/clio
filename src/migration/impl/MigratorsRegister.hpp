@@ -34,7 +34,7 @@ concept BackendMatchAllMigrators = (MigrationBackend<Backend, MigratorType> && .
 
 template <typename T>
 concept HasCanBlockClio = requires(T t) {
-    { t.kCAN_BLOCK_CLIO };
+    { t.kCanBlockClio };
 };
 
 /**
@@ -57,7 +57,7 @@ class MigratorsRegister {
     void
     callMigration(std::string const& name, util::config::ObjectView const& config)
     {
-        if (name == Migrator::kNAME) {
+        if (name == Migrator::kName) {
             LOG(log_.info()) << "Running migration: " << name;
             Migrator::runMigration(backend_, config);
             backend_->writeMigratorStatus(
@@ -71,16 +71,16 @@ class MigratorsRegister {
     static constexpr std::string_view
     getDescriptionIfMatch(std::string_view targetName)
     {
-        return (T::kNAME == targetName) ? T::kDESCRIPTION : "";
+        return (T::kName == targetName) ? T::kDescription : "";
     }
 
     template <typename First, typename... Rest>
     static constexpr bool
     canBlockClioHelper(std::string_view targetName)
     {
-        if (targetName == First::kNAME) {
+        if (targetName == First::kName) {
             if constexpr (HasCanBlockClio<First>) {
-                return First::kCAN_BLOCK_CLIO;
+                return First::kCanBlockClio;
             }
             return false;
         }
@@ -168,7 +168,7 @@ public:
     [[nodiscard]] constexpr auto
     getMigratorNames() const
     {
-        return std::array<std::string_view, sizeof...(MigratorType)>{MigratorType::kNAME...};
+        return std::array<std::string_view, sizeof...(MigratorType)>{MigratorType::kName...};
     }
 
     /**

@@ -101,8 +101,8 @@ struct SyncAsioContextTest : virtual public ::testing::Test {
     void
     runContext()
     {
-        static constexpr auto kTIMEOUT = std::chrono::seconds{30};
-        ctx_.run_for(kTIMEOUT);
+        static constexpr auto kTimeout = std::chrono::seconds{30};
+        ctx_.run_for(kTimeout);
         ctx_.restart();
     }
 

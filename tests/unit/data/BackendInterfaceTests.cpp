@@ -21,28 +21,28 @@ using namespace testing;
 
 namespace {
 
-constexpr auto kMAX_SEQ = 30;
-constexpr auto kMIN_SEQ = 10;
+constexpr auto kMaxSeq = 30;
+constexpr auto kMinSeq = 10;
 
 }  // namespace
 
 struct BackendInterfaceTest : WithPrometheus, MockBackendTestNaggy, SyncAsioContextTest {
     BackendInterfaceTest()
     {
-        backend_->setRange(kMIN_SEQ, kMAX_SEQ);
+        backend_->setRange(kMinSeq, kMaxSeq);
     }
 };
 
 TEST_F(BackendInterfaceTest, FetchFeesSuccessPath)
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     // New fee setting (after XRPFees amendment)
-    EXPECT_CALL(*backend_, doFetchLedgerObject(keylet::fees().key, kMAX_SEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(keylet::feeSettings().key, kMaxSeq, _))
         .WillRepeatedly(Return(createFeeSettingBlob(XRPAmount(1), XRPAmount(2), XRPAmount(3), 0)));
 
     runSpawn([this](auto yield) {
-        auto fees = backend_->fetchFees(kMAX_SEQ, yield);
+        auto fees = backend_->fetchFees(kMaxSeq, yield);
 
         EXPECT_TRUE(fees.has_value());
         EXPECT_EQ(fees->base, XRPAmount(1));
@@ -53,14 +53,14 @@ TEST_F(BackendInterfaceTest, FetchFeesSuccessPath)
 
 TEST_F(BackendInterfaceTest, FetchFeesLegacySuccessPath)
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     // Legacy fee setting (before XRPFees amendment)
-    EXPECT_CALL(*backend_, doFetchLedgerObject(keylet::fees().key, kMAX_SEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(keylet::feeSettings().key, kMaxSeq, _))
         .WillRepeatedly(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     runSpawn([this](auto yield) {
-        auto fees = backend_->fetchFees(kMAX_SEQ, yield);
+        auto fees = backend_->fetchFees(kMaxSeq, yield);
 
         EXPECT_TRUE(fees.has_value());
         EXPECT_EQ(fees->base, XRPAmount(1));
@@ -71,7 +71,7 @@ TEST_F(BackendInterfaceTest, FetchFeesLegacySuccessPath)
 
 TEST_F(BackendInterfaceTest, FetchLedgerPageSuccessPath)
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     auto state = etl::SystemState{};
     backend_->setCorruptionDetector(etl::CorruptionDetector{state, backend_->cache()});
@@ -86,14 +86,14 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageSuccessPath)
         .WillOnce(Return(std::vector<Blob>(10, Blob{'s'})));
 
     runSpawn([this](auto yield) {
-        backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield);
+        backend_->fetchLedgerPage(std::nullopt, kMaxSeq, 10, false, yield);
     });
     EXPECT_FALSE(backend_->cache().isDisabled());
 }
 
 TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     auto state = etl::SystemState{};
     backend_->setCorruptionDetector(etl::CorruptionDetector{state, backend_->cache()});
@@ -121,7 +121,7 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
         ));
 
     runSpawn([this](auto yield) {
-        backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield);
+        backend_->fetchLedgerPage(std::nullopt, kMaxSeq, 10, false, yield);
     });
     EXPECT_TRUE(backend_->cache().isDisabled());
 }
@@ -131,7 +131,7 @@ TEST_F(
     FetchLedgerPageWithoutCorruptionDetectorDoesNotDisableCacheOnMissingData
 )
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     EXPECT_FALSE(backend_->cache().isDisabled());
     EXPECT_CALL(*backend_, doFetchSuccessorKey(_, _, _))
@@ -156,7 +156,7 @@ TEST_F(
         ));
 
     runSpawn([this](auto yield) {
-        backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield);
+        backend_->fetchLedgerPage(std::nullopt, kMaxSeq, 10, false, yield);
     });
     EXPECT_FALSE(backend_->cache().isDisabled());
 }

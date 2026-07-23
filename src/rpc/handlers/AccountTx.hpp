@@ -41,9 +41,9 @@ class AccountTxHandler {
     std::shared_ptr<etl::ETLServiceInterface const> etl_;
 
 public:
-    static constexpr auto kLIMIT_MIN = 1;
-    static constexpr auto kLIMIT_MAX = 1000;
-    static constexpr auto kLIMIT_DEFAULT = 200;
+    static constexpr auto kLimitMin = 1;
+    static constexpr auto kLimitMax = 1000;
+    static constexpr auto kLimitDefault = 200;
 
     /**
      * @brief A struct to hold the marker data
@@ -114,7 +114,7 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         auto const& typesKeysInLowercase = util::getTxTypesInLowercase();
-        static auto const kRPC_SPEC_FOR_V1 = RpcSpec{
+        static auto const kRpcSpecForV1 = RpcSpec{
             {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
@@ -124,11 +124,11 @@ public:
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
+             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
             {JS(marker),
              meta::WithCustomError{
                  validation::Type<boost::json::object>{},
-                 Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"},
+                 Status{RippledError::RpcInvalidParams, "invalidMarker"},
              },
              meta::Section{
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
@@ -145,15 +145,15 @@ public:
             {"delegate", validation::CustomValidators::delegateValidator}
         };
 
-        static auto const kRPC_SPEC = RpcSpec{
-            kRPC_SPEC_FOR_V1,
+        static auto const kRpcSpec = RpcSpec{
+            kRpcSpecForV1,
             {
                 {JS(binary), validation::Type<bool>{}},
                 {JS(forward), validation::Type<bool>{}},
             }
         };
 
-        return apiVersion == 1 ? kRPC_SPEC_FOR_V1 : kRPC_SPEC;
+        return apiVersion == 1 ? kRpcSpecForV1 : kRpcSpec;
     }
 
     /**

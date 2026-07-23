@@ -16,7 +16,7 @@ using namespace cluster::impl;
 using namespace testing;
 
 struct RepeatedTaskTest : AsyncAsioContextTest {
-    static constexpr auto kTIMEOUT = std::chrono::seconds{5};
+    static constexpr auto kTimeout = std::chrono::seconds{5};
 };
 
 template <typename MockFunctionType>
@@ -57,7 +57,7 @@ TYPED_TEST(RepeatedTaskTypedTest, CallsFunctionRepeatedly)
 
     task.run(this->mockFn.AsStdFunction());
 
-    EXPECT_TRUE(this->semaphore.try_acquire_for(TestFixture::kTIMEOUT));
+    EXPECT_TRUE(this->semaphore.try_acquire_for(TestFixture::kTimeout));
 
     task.stop();
 }
@@ -84,7 +84,7 @@ TYPED_TEST(RepeatedTaskTypedTest, MultipleStops)
 
     task.run(this->mockFn.AsStdFunction());
 
-    EXPECT_TRUE(this->semaphore.try_acquire_for(TestFixture::kTIMEOUT));
+    EXPECT_TRUE(this->semaphore.try_acquire_for(TestFixture::kTimeout));
 
     task.stop();
     task.stop();
@@ -100,7 +100,7 @@ TYPED_TEST(RepeatedTaskTypedTest, DestructorStopsTask)
 
         task.run(this->mockFn.AsStdFunction());
 
-        EXPECT_TRUE(this->semaphore.try_acquire_for(TestFixture::kTIMEOUT));
+        EXPECT_TRUE(this->semaphore.try_acquire_for(TestFixture::kTimeout));
 
         // Destructor will call stop()
     }
@@ -149,8 +149,8 @@ TEST_F(RepeatedTaskTest, MultipleTasksRunConcurrently)
     task1.run(mockFn1.AsStdFunction());
     task2.run(mockFn2.AsStdFunction());
 
-    EXPECT_TRUE(semaphore1.try_acquire_for(kTIMEOUT));
-    EXPECT_TRUE(semaphore2.try_acquire_for(kTIMEOUT));
+    EXPECT_TRUE(semaphore1.try_acquire_for(kTimeout));
+    EXPECT_TRUE(semaphore2.try_acquire_for(kTimeout));
 
     task1.stop();
     task2.stop();
@@ -166,7 +166,7 @@ TYPED_TEST(RepeatedTaskTypedTest, TaskStateTransitionsCorrectly)
 
     task.run(this->mockFn.AsStdFunction());
 
-    EXPECT_TRUE(this->semaphore.try_acquire_for(TestFixture::kTIMEOUT));
+    EXPECT_TRUE(this->semaphore.try_acquire_for(TestFixture::kTimeout));
 
     task.stop();
 
@@ -200,7 +200,7 @@ TEST_F(RepeatedTaskTest, FunctionCanAccessYieldContext)
 
     task.run(mockFn.AsStdFunction());
 
-    EXPECT_TRUE(semaphore.try_acquire_for(kTIMEOUT));
+    EXPECT_TRUE(semaphore.try_acquire_for(kTimeout));
 
     task.stop();
 

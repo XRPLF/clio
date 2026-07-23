@@ -25,8 +25,8 @@
 
 namespace {
 
-constinit auto const kSEQ = 30;
-constinit auto const kRAW_HEADER =
+constinit auto const kSeq = 30;
+constinit auto const kRawHeader =
     "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
     "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
     "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
@@ -43,20 +43,20 @@ createTxAndMetaBlobs(std::string metaStr, std::string txnStr)
     return {hexStringToBinaryString(metaStr), hexStringToBinaryString(txnStr)};
 }
 
-std::pair<ripple::STTx, ripple::TxMeta>
+std::pair<xrpl::STTx, xrpl::TxMeta>
 createTxAndMeta(std::string hashStr, std::string metaStr, std::string txnStr)
 {
-    ripple::uint256 hash;
+    xrpl::uint256 hash;
     EXPECT_TRUE(hash.parseHex(hashStr));
 
     auto const [metaBlob, txnBlob] = createTxAndMetaBlobs(metaStr, txnStr);
 
-    ripple::SerialIter it{txnBlob.data(), txnBlob.size()};
-    return {ripple::STTx{it}, ripple::TxMeta{hash, kSEQ, metaBlob}};
+    xrpl::SerialIter it{txnBlob.data(), txnBlob.size()};
+    return {xrpl::STTx{it}, xrpl::TxMeta{hash, kSeq, xrpl::Blob{metaBlob.begin(), metaBlob.end()}}};
 }
 
 etl::model::Transaction
-createTransaction(ripple::TxType type, std::string hashStr, std::string metaStr, std::string txnStr)
+createTransaction(xrpl::TxType type, std::string hashStr, std::string metaStr, std::string txnStr)
 {
     auto const [sttx, meta] = createTxAndMeta(hashStr, metaStr, txnStr);
     return {
@@ -64,7 +64,7 @@ createTransaction(ripple::TxType type, std::string hashStr, std::string metaStr,
         .metaRaw = "",
         .sttx = sttx,
         .meta = meta,
-        .id = ripple::uint256{"0000000000000000000000000000000000000000000000000000000000000001"},
+        .id = xrpl::uint256{"0000000000000000000000000000000000000000000000000000000000000001"},
         .key = "0000000000000000000000000000000000000000000000000000000000000001",
         .type = type
     };
@@ -74,11 +74,11 @@ etl::model::Object
 createObject(etl::model::Object::ModType modType, std::string key)
 {
     // random object taken from initial ledger load
-    static constinit auto const kOBJ_PRED =
+    static constinit auto const kObjPred =
         "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960A";
-    static constinit auto const kOBJ_SUCC =
+    static constinit auto const kObjSucc =
         "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960F";
-    static constinit auto const kOBJ_BLOB =
+    static constinit auto const kObjBlob =
         "11007222002200002504270918370000000000000C4538000000000000000A554D94799200CC37EFAF45DA7670"
         "4ED3CBEDBB4B4FCD"
         "56E9CBA5399EB40A7B3BEC629546DD24CDB4C0004C4A5059000000000000000000000000000000000000000000"
@@ -92,13 +92,13 @@ createObject(etl::model::Object::ModType modType, std::string key)
         .key = binaryStringToUint256(hexStringToBinaryString(key)),
         .keyRaw = hexStringToBinaryString(key),
         .data = modType == etl::model::Object::ModType::Deleted
-            ? ripple::Blob{}
-            : *ripple::strUnHex(kOBJ_BLOB),  // NOLINT(bugprone-unchecked-optional-access)
+            ? xrpl::Blob{}
+            : *xrpl::strUnHex(kObjBlob),  // NOLINT(bugprone-unchecked-optional-access)
         .dataRaw = modType == etl::model::Object::ModType::Deleted
             ? ""
-            : hexStringToBinaryString(kOBJ_BLOB),
-        .successor = hexStringToBinaryString(kOBJ_SUCC),
-        .predecessor = hexStringToBinaryString(kOBJ_PRED),
+            : hexStringToBinaryString(kObjBlob),
+        .successor = hexStringToBinaryString(kObjSucc),
+        .predecessor = hexStringToBinaryString(kObjPred),
         .type = modType,
     };
 }
@@ -107,11 +107,11 @@ etl::model::Object
 createObjectWithBookBase(etl::model::Object::ModType modType, std::string key)
 {
     // random object taken from initial ledger load
-    static constinit auto const kOBJ_PRED =
+    static constinit auto const kObjPred =
         "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960A";
-    static constinit auto const kOBJ_SUCC =
+    static constinit auto const kObjSucc =
         "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960F";
-    static constinit auto const kOBJ_BLOB =
+    static constinit auto const kObjBlob =
         "11006422000000022505A681E855B4E076DD06D6D583804F9DC94F641337ECB97F71860300EEC17E530A2001D6"
         "C9583FFBFAD704E299BE"
         "3E544090ECCB12AF45FD03CAEEA852E5048E57F48FD45B505A0008138882D0F98C64A1A0E6D15053589771AD08"
@@ -122,13 +122,13 @@ createObjectWithBookBase(etl::model::Object::ModType modType, std::string key)
         .key = binaryStringToUint256(hexStringToBinaryString(key)),
         .keyRaw = hexStringToBinaryString(key),
         .data = modType == etl::model::Object::ModType::Deleted
-            ? ripple::Blob{}
-            : *ripple::strUnHex(kOBJ_BLOB),  // NOLINT(bugprone-unchecked-optional-access)
+            ? xrpl::Blob{}
+            : *xrpl::strUnHex(kObjBlob),  // NOLINT(bugprone-unchecked-optional-access)
         .dataRaw = modType == etl::model::Object::ModType::Deleted
             ? ""
-            : hexStringToBinaryString(kOBJ_BLOB),
-        .successor = hexStringToBinaryString(kOBJ_SUCC),
-        .predecessor = hexStringToBinaryString(kOBJ_PRED),
+            : hexStringToBinaryString(kObjBlob),
+        .successor = hexStringToBinaryString(kObjSucc),
+        .predecessor = hexStringToBinaryString(kObjPred),
         .type = modType,
     };
 }
@@ -138,22 +138,22 @@ createObjectWithTwoNFTs()
 {
     std::string const url1 = "abcd1";
     std::string const url2 = "abcd2";
-    ripple::Blob const uri1Blob(url1.begin(), url1.end());
-    ripple::Blob const uri2Blob(url2.begin(), url2.end());
+    xrpl::Blob const uri1Blob(url1.begin(), url1.end());
+    xrpl::Blob const uri2Blob(url2.begin(), url2.end());
 
-    constexpr auto kACCOUNT = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
-    constexpr auto kNFT_ID = "0008013AE1CD8B79A8BCB52335CD40DE97401B2D60A828720000099B00000000";
-    constexpr auto kNFT_ID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
+    constexpr auto kAccount = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
+    constexpr auto kNftId = "0008013AE1CD8B79A8BCB52335CD40DE97401B2D60A828720000099B00000000";
+    constexpr auto kNftID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
 
-    auto const nftPage = createNftTokenPage({{kNFT_ID, url1}, {kNFT_ID2, url2}}, std::nullopt);
+    auto const nftPage = createNftTokenPage({{kNftId, url1}, {kNftID2, url2}}, std::nullopt);
     auto const serializerNftPage = nftPage.getSerializer();
-    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const account = getAccountIdWithString(kAccount);
 
     // key is a token made up from owner's account ID followed by unused (in Clio) value described
     // here:
     // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0020-non-fungible-tokens#tokenpage-id-format
-    constexpr auto kEXTRA_BYTES = "000000000000";
-    auto const key = std::string(std::begin(account), std::end(account)) + kEXTRA_BYTES;
+    constexpr auto kExtraBytes = "000000000000";
+    auto const key = std::string(std::begin(account), std::end(account)) + kExtraBytes;
 
     return {
         .key = {},
@@ -172,16 +172,16 @@ createObjectWithTwoNFTs()
 etl::model::Object
 createObjectWithMPT()
 {
-    constexpr auto kACCOUNT = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
+    constexpr auto kAccount = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
 
-    auto const account = getAccountIdWithString(kACCOUNT);
-    auto const mptID = ripple::makeMptID(2, getAccountIdWithString(kACCOUNT));
-    auto const mptokenObject = createMpTokenObject(kACCOUNT, mptID);
+    auto const account = getAccountIdWithString(kAccount);
+    auto const mptID = xrpl::makeMptID(2, getAccountIdWithString(kAccount));
+    auto const mptokenObject = createMpTokenObject(kAccount, mptID);
 
     // key is a token made up from several fields described here:
     // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#2121-mptoken-ledger-identifier
-    constexpr auto kSPACE_KEY = 0x007F;
-    auto const keySha512Half = ripple::sha512Half(kSPACE_KEY, mptID, account);
+    constexpr auto kSpaceKey = 0x007F;
+    auto const keySha512Half = xrpl::sha512Half(kSpaceKey, mptID, account);
 
     return {
         .key = {},
@@ -202,10 +202,10 @@ createSuccessor()
 {
     return {
         .firstBook = uint256ToString(
-            ripple::uint256{"A000000000000000000000000000000000000000000000000000000000000000"}
+            xrpl::uint256{"A000000000000000000000000000000000000000000000000000000000000000"}
         ),
         .bookBase = uint256ToString(
-            ripple::uint256{"A000000000000000000000000000000000000000000000000000000000000001"}
+            xrpl::uint256{"A000000000000000000000000000000000000000000000000000000000000001"}
         ),
     };
 }
@@ -213,7 +213,7 @@ createSuccessor()
 etl::impl::PBLedgerResponseType
 createDataAndDiff()
 {
-    auto const rawHeaderBlob = hexStringToBinaryString(kRAW_HEADER);
+    auto const rawHeaderBlob = hexStringToBinaryString(kRawHeader);
 
     auto res = etl::impl::PBLedgerResponseType();
     res.set_ledger_header(rawHeaderBlob);
@@ -259,7 +259,7 @@ createDataAndDiff()
 etl::impl::PBLedgerResponseType
 createData()
 {
-    auto const rawHeaderBlob = hexStringToBinaryString(kRAW_HEADER);
+    auto const rawHeaderBlob = hexStringToBinaryString(kRawHeader);
 
     auto res = etl::impl::PBLedgerResponseType();
     res.set_ledger_header(rawHeaderBlob);

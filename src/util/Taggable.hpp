@@ -100,7 +100,7 @@ public:
 template <typename Generator>
 class TagDecorator final : public BaseTagDecorator {
     using ParentType = std::optional<std::reference_wrapper<BaseTagDecorator const>>;
-    using TagType = typename Generator::TagType;
+    using TagType = Generator::TagType;
 
     ParentType parent_ = std::nullopt;
     TagType tag_ = Generator::next();
@@ -169,9 +169,9 @@ class TagDecoratorFactory final {
      * @brief Represents the type of tag decorator.
      */
     enum class Type {
-        NONE, /**< No decoration and no tag */
-        UUID, /**< Tag based on `boost::uuids::uuid`, thread-safe via mutex */
-        UINT  /**< atomic_uint64_t tag, thread-safe, lock-free */
+        NONE,  ///< No decoration and no tag
+        UUID,  ///< Tag based on `boost::uuids::uuid`, thread-safe via mutex
+        UINT   ///< atomic_uint64_t tag, thread-safe, lock-free
     };
 
     Type type_;                        /*< The type of TagDecorator this factory produces */

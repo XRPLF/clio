@@ -17,17 +17,17 @@ namespace util {
 [[nodiscard]] std::unordered_set<std::string> const&
 getTxTypesInLowercase()
 {
-    static std::unordered_set<std::string> const kTYPES_KEYS_IN_LOWERCASE = []() {
+    static std::unordered_set<std::string> const kTypesKeysInLowercase = []() {
         std::unordered_set<std::string> keys;
         std::transform(
-            ripple::TxFormats::getInstance().begin(),
-            ripple::TxFormats::getInstance().end(),
+            xrpl::TxFormats::getInstance().begin(),
+            xrpl::TxFormats::getInstance().end(),
             std::inserter(keys, keys.begin()),
             [](auto const& pair) { return util::toLower(pair.getName()); }
         );
         return keys;
     }();
 
-    return kTYPES_KEYS_IN_LOWERCASE;
+    return kTypesKeysInLowercase;
 }
 }  // namespace util

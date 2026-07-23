@@ -17,3 +17,6 @@ endfunction()
 
 function(append_coverage_compiler_flags_to_target name mode)
 endfunction()
+
+function(patch_nix_binary target)
+endfunction()

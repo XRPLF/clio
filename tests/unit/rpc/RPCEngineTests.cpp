@@ -39,12 +39,11 @@
 using namespace data;
 using namespace rpc;
 using namespace util;
-namespace json = boost::json;
 using namespace testing;
 using namespace util::config;
 
 namespace {
-constexpr auto kFORWARD_REPLY = R"JSON({
+constexpr auto kForwardReply = R"JSON({
     "result": {
         "status": "success",
         "forwarded": true
@@ -120,7 +119,7 @@ generateTestValuesForParametersTest()
          .isUnknownCmd = neverCalled,
          .handlerReturnError = false,
          .status = rpc::Status{},
-         .response = boost::json::parse(kFORWARD_REPLY).as_object()},
+         .response = boost::json::parse(kForwardReply).as_object()},
         {.testName = "ForwardAdminCmd",
          .isAdmin = false,
          .method = "ledger",
@@ -129,7 +128,7 @@ generateTestValuesForParametersTest()
          .isTooBusy = neverCalled,
          .isUnknownCmd = neverCalled,
          .handlerReturnError = false,
-         .status = rpc::Status{RippledError::rpcNO_PERMISSION},
+         .status = rpc::Status{RippledError::RpcNoPermission},
          .response = std::nullopt},
         {.testName = "BackendTooBusy",
          .isAdmin = false,
@@ -139,7 +138,7 @@ generateTestValuesForParametersTest()
          .isTooBusy = true,
          .isUnknownCmd = neverCalled,
          .handlerReturnError = false,
-         .status = rpc::Status{RippledError::rpcTOO_BUSY},
+         .status = rpc::Status{RippledError::RpcTooBusy},
          .response = std::nullopt},
         {.testName = "HandlerUnknown",
          .isAdmin = false,
@@ -149,7 +148,7 @@ generateTestValuesForParametersTest()
          .isTooBusy = false,
          .isUnknownCmd = true,
          .handlerReturnError = false,
-         .status = rpc::Status{RippledError::rpcUNKNOWN_COMMAND},
+         .status = rpc::Status{RippledError::RpcUnknownCommand},
          .response = std::nullopt},
         {.testName = "HandlerReturnError",
          .isAdmin = false,
@@ -178,7 +177,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCEngineFlow,
     RPCEngineFlowParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(RPCEngineFlowParameterTest, Test)
@@ -199,7 +198,7 @@ TEST_P(RPCEngineFlowParameterTest, Test)
         EXPECT_CALL(*mockLoadBalancerPtr_, forwardToRippled)
             .WillOnce(Return(
                 std::expected<boost::json::object, rpc::ClioError>(
-                    json::parse(kFORWARD_REPLY).as_object()
+                    boost::json::parse(kForwardReply).as_object()
                 )
             ));
         EXPECT_CALL(*handlerProvider, contains).WillOnce(Return(true));
@@ -282,7 +281,7 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
 
         auto const res = engine->buildResponse(ctx);
         ASSERT_FALSE(res.response.has_value());
-        EXPECT_EQ(res.response.error(), Status{RippledError::rpcTOO_BUSY});
+        EXPECT_EQ(res.response.error(), Status{RippledError::RpcTooBusy});
     });
 }
 
@@ -314,7 +313,7 @@ TEST_F(RPCEngineTest, ThrowException)
 
         auto const res = engine->buildResponse(ctx);
         ASSERT_FALSE(res.response.has_value());
-        EXPECT_EQ(res.response.error(), Status{RippledError::rpcINTERNAL});
+        EXPECT_EQ(res.response.error(), Status{RippledError::RpcInternal});
     });
 }
 
@@ -394,13 +393,13 @@ INSTANTIATE_TEST_CASE_P(
     RPCEngineCache,
     RPCEngineCacheParameterTest,
     ValuesIn(generateCacheTestValuesForParametersTest()),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(RPCEngineCacheParameterTest, Test)
 {
     auto const& testParam = GetParam();
-    auto const json = ConfigFileJson{json::parse(testParam.config).as_object()};
+    auto const json = ConfigFileJson{boost::json::parse(testParam.config).as_object()};
 
     auto cfgCache{generateDefaultRPCEngineConfig()};
     auto const errors = cfgCache.parse(json);
@@ -418,17 +417,19 @@ TEST_P(RPCEngineCacheParameterTest, Test)
         handlerProvider
     );
     int callTime = 2;
+    auto const bareParams = boost::json::object{};
     EXPECT_CALL(*handlerProvider, isClioOnly).Times(callTime).WillRepeatedly(Return(false));
     if (testParam.expectedCacheEnabled) {
+        // Cache hit on second call: handler only invoked once.
         EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
         EXPECT_CALL(*handlerProvider, getHandler)
-            .WillOnce(Return(AnyHandler{tests::common::HandlerFake{}}));
+            .WillOnce(Return(AnyHandler{tests::common::NoInputHandlerFake{}}));
 
     } else {
         EXPECT_CALL(*backend_, isTooBusy).Times(callTime).WillRepeatedly(Return(false));
         EXPECT_CALL(*handlerProvider, getHandler)
             .Times(callTime)
-            .WillRepeatedly(Return(AnyHandler{tests::common::HandlerFake{}}));
+            .WillRepeatedly(Return(AnyHandler{tests::common::NoInputHandlerFake{}}));
     }
 
     while (callTime-- != 0) {
@@ -437,7 +438,7 @@ TEST_P(RPCEngineCacheParameterTest, Test)
                 yield,
                 method,
                 1,
-                boost::json::parse(R"JSON({"hello": "world", "limit": 50})JSON").as_object(),
+                bareParams,
                 nullptr,
                 tagFactory,
                 LedgerRange{.minSequence = 0, .maxSequence = 30},
@@ -449,7 +450,63 @@ TEST_P(RPCEngineCacheParameterTest, Test)
             ASSERT_TRUE(res.response.has_value());
             EXPECT_EQ(
                 res.response.value(),
-                boost::json::parse(R"JSON({ "computed": "world_50"})JSON").as_object()
+                boost::json::parse(R"JSON({"computed": "test"})JSON").as_object()
+            );
+        });
+    }
+}
+
+TEST_F(RPCEngineTest, NonBareRequestBypassesCache)
+{
+    auto const cfgCache = ClioConfigDefinition{
+        {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"workers",
+         ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
+        {"rpc.cache_timeout",
+         ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(gValidatePositiveDouble)}
+    };
+
+    auto const notAdmin = false;
+    auto const method = "server_info";
+    std::shared_ptr<RPCEngine<MockCounters>> engine = RPCEngine<MockCounters>::makeRPCEngine(
+        cfgCache,
+        backend_,
+        mockLoadBalancerPtr_,
+        dosGuard,
+        queue,
+        *mockCountersPtr_,
+        handlerProvider
+    );
+
+    auto const nonBareParams =
+        boost::json::parse(R"JSON({"hello": "world", "limit": 50})JSON").as_object();
+
+    int callTime = 2;
+    EXPECT_CALL(*handlerProvider, isClioOnly).Times(callTime).WillRepeatedly(Return(false));
+    EXPECT_CALL(*backend_, isTooBusy).Times(callTime).WillRepeatedly(Return(false));
+    EXPECT_CALL(*handlerProvider, getHandler)
+        .Times(callTime)
+        .WillRepeatedly(Return(AnyHandler{tests::common::HandlerFake{}}));
+
+    while (callTime-- != 0) {
+        runSpawn([&](auto yield) {
+            auto const ctx = web::Context(
+                yield,
+                method,
+                1,
+                nonBareParams,
+                nullptr,
+                tagFactory,
+                LedgerRange{.minSequence = 0, .maxSequence = 30},
+                "127.0.0.2",
+                notAdmin
+            );
+
+            auto const res = engine->buildResponse(ctx);
+            ASSERT_TRUE(res.response.has_value());
+            EXPECT_EQ(
+                res.response.value(),
+                boost::json::parse(R"JSON({"computed": "world_50"})JSON").as_object()
             );
         });
     }

@@ -10,7 +10,7 @@ namespace {
 std::unordered_set<std::string_view> const&
 handledRpcs()
 {
-    static std::unordered_set<std::string_view> const kHANDLED_RPCS = {
+    static std::unordered_set<std::string_view> const kHandledRpcs = {
         // clang-format off
         "account_channels",
         "account_currencies",
@@ -52,13 +52,13 @@ handledRpcs()
         "version",
         // clang-format on
     };
-    return kHANDLED_RPCS;
+    return kHandledRpcs;
 }
 
 std::unordered_set<std::string_view> const&
 forwardedRpcs()
 {
-    static std::unordered_set<std::string_view> const kFORWARDED_RPCS = {
+    static std::unordered_set<std::string_view> const kForwardedRpcs = {
         "server_definitions",
         "server_state",
         "submit",
@@ -73,7 +73,7 @@ forwardedRpcs()
         "simulate",
         "batch"
     };
-    return kFORWARDED_RPCS;
+    return kForwardedRpcs;
 }
 
 }  // namespace

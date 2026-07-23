@@ -16,7 +16,7 @@ using namespace util::config;
 struct ObjectViewTest : virtual testing::Test {
     ObjectViewTest()
     {
-        ConfigFileJson const jsonFileObj{boost::json::parse(kJSON_DATA).as_object()};
+        ConfigFileJson const jsonFileObj{boost::json::parse(kJsonData).as_object()};
         auto const errors = configData.parse(jsonFileObj);
         EXPECT_TRUE(!errors.has_value());
     }

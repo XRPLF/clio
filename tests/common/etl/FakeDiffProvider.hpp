@@ -17,7 +17,7 @@ struct DiffProvider {
     std::vector<data::LedgerObject>
     getLatestDiff()  // NOLINT(readability-convert-member-functions-to-static)
     {
-        using namespace ripple;
+        using namespace xrpl;
 
         return {
             {.key = uint256{"05E1EAC2574BE082B00B16F907CE32E6058DEB8F9E81CF34A00E80A5D71FA4FE"},
@@ -45,7 +45,7 @@ struct DiffProvider {
         };
     }
 
-    std::optional<ripple::uint256>
+    std::optional<xrpl::uint256>
     nextKey(std::size_t keysSize)
     {
         // mock the result from doFetchSuccessorKey, be aware this function will be called from
@@ -54,14 +54,14 @@ struct DiffProvider {
         keysMap->operator[](std::this_thread::get_id())++;
 
         if (keysMap->operator[](std::this_thread::get_id()) == keysSize - 1) {
-            return data::kLAST_KEY;
+            return data::kLastKey;
         }
         if (keysMap->operator[](std::this_thread::get_id()) == keysSize) {
             keysMap->operator[](std::this_thread::get_id()) = 0;
             return std::nullopt;
         }
 
-        return ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"};
+        return xrpl::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"};
     }
 
 private:

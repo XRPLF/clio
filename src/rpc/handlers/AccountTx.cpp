@@ -47,7 +47,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                  range->maxSequence ||  // NOLINT(bugprone-unchecked-optional-access)
              input.ledgerIndexMin <
                  range->minSequence)) {  // NOLINT(bugprone-unchecked-optional-access)
-            return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
+            return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
         }
 
         if (static_cast<std::uint32_t>(*input.ledgerIndexMin) > minIndex)
@@ -60,7 +60,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                  range->maxSequence ||  // NOLINT(bugprone-unchecked-optional-access)
              input.ledgerIndexMax <
                  range->minSequence)) {  // NOLINT(bugprone-unchecked-optional-access)
-            return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
+            return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
         }
 
         if (static_cast<std::uint32_t>(*input.ledgerIndexMax) < maxIndex)
@@ -69,16 +69,14 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
     if (minIndex > maxIndex) {
         if (ctx.apiVersion == 1u)
-            return Error{Status{RippledError::rpcLGR_IDXS_INVALID}};
+            return Error{Status{RippledError::RpcLgrIdxsInvalid}};
 
-        return Error{Status{RippledError::rpcINVALID_LGR_RANGE}};
+        return Error{Status{RippledError::RpcInvalidLgrRange}};
     }
 
     if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger) {
         if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin)) {
-            return Error{
-                Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}
-            };
+            return Error{Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
         }
 
         if (!input.ledgerIndexMax && !input.ledgerIndexMin) {
@@ -120,7 +118,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         txFilter.emplace(*input.delegateFilter, *accountID);
     }
 
-    auto const limit = input.limit.value_or(kLIMIT_DEFAULT);
+    auto const limit = input.limit.value_or(kLimitDefault);
     auto const accountID = accountFromStringStrict(input.account);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
         return sharedPtrBackend_->fetchAccountTransactions(
@@ -149,7 +147,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
             continue;
         }
 
-        std::optional<ripple::AccountID> relevantAccount;
+        std::optional<xrpl::AccountID> relevantAccount;
         if (txFilter) {
             auto const result = txFilter->check(txnPlusMeta);
             if (not result.shouldInclude)
@@ -204,17 +202,17 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                             txnPlusMeta.ledgerSequence, ctx.yield
                         );
                         ledgerHeader) {
-                        obj[JS(ledger_hash)] = ripple::strHex(ledgerHeader->hash);
-                        obj[JS(close_time_iso)] = ripple::to_string_iso(ledgerHeader->closeTime);
+                        obj[JS(ledger_hash)] = xrpl::strHex(ledgerHeader->hash);
+                        obj[JS(close_time_iso)] = xrpl::toStringIso(ledgerHeader->closeTime);
                     }
                 }
 
                 if (relevantAccount) {
                     if (input.delegateFilter->delegateType ==
                         rpc::DelegateFilter::Role::Authorizer) {
-                        obj["delegator"] = ripple::to_string(*relevantAccount);
+                        obj["delegator"] = xrpl::to_string(*relevantAccount);
                     } else {
-                        obj["delegatee"] = ripple::to_string(*relevantAccount);
+                        obj["delegatee"] = xrpl::to_string(*relevantAccount);
                     }
                 }
 
@@ -231,7 +229,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     }
 
     response.limit = input.limit;
-    response.account = ripple::to_string(*accountID);  // NOLINT(bugprone-unchecked-optional-access)
+    response.account = xrpl::to_string(*accountID);  // NOLINT(bugprone-unchecked-optional-access)
     response.ledgerIndexMin = minIndex;
     response.ledgerIndexMax = maxIndex;
 

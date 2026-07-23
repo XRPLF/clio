@@ -101,15 +101,15 @@ Whitelist::isInV6Subnet(
 bool
 Whitelist::isV4(std::string_view net)
 {
-    static std::regex const kIPV4_CIDR_REGEX(R"(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$)");
-    return std::regex_match(std::string(net), kIPV4_CIDR_REGEX);
+    static std::regex const kIpV4CidrRegex(R"(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$)");
+    return std::regex_match(std::string(net), kIpV4CidrRegex);
 }
 
 bool
 Whitelist::isV6(std::string_view net)
 {
-    static std::regex const kIPV6_CIDR_REGEX(R"(^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}/\d{1,3}$)");
-    return std::regex_match(std::string(net), kIPV6_CIDR_REGEX);
+    static std::regex const kIpV6CidrRegex(R"(^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}/\d{1,3}$)");
+    return std::regex_match(std::string(net), kIpV6CidrRegex);
 }
 
 bool

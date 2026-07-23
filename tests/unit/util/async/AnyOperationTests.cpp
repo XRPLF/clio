@@ -2,6 +2,7 @@
 #include "util/MockOperation.hpp"
 #include "util/async/AnyOperation.hpp"
 #include "util/async/Error.hpp"
+#include "util/async/impl/Any.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -15,10 +16,10 @@ using namespace util::async;
 using namespace ::testing;
 
 struct AnyOperationTests : virtual Test {
-    using OperationType = MockOperation<std::expected<std::any, ExecutionError>>;
-    using StoppableOperationType = MockStoppableOperation<std::expected<std::any, ExecutionError>>;
-    using ScheduledOperationType = MockScheduledOperation<std::expected<std::any, ExecutionError>>;
-    using RepeatingOperationType = MockRepeatingOperation<std::expected<std::any, ExecutionError>>;
+    using OperationType = MockOperation<std::expected<impl::Any, ExecutionError>>;
+    using StoppableOperationType = MockStoppableOperation<std::expected<impl::Any, ExecutionError>>;
+    using ScheduledOperationType = MockScheduledOperation<std::expected<impl::Any, ExecutionError>>;
+    using RepeatingOperationType = MockRepeatingOperation<std::expected<impl::Any, ExecutionError>>;
 
     NaggyMock<OperationType> mockOp;
     NaggyMock<StoppableOperationType> mockStoppableOp;
@@ -40,7 +41,7 @@ struct AnyOperationTests : virtual Test {
 
 TEST_F(AnyOperationTests, Move)
 {
-    EXPECT_CALL(mockOp, get()).WillOnce(Return(std::any{}));
+    EXPECT_CALL(mockOp, get()).WillOnce(Return(impl::Any{}));
     auto yoink = std::move(voidOp);
     auto res = yoink.get();
     ASSERT_TRUE(res);
@@ -48,7 +49,7 @@ TEST_F(AnyOperationTests, Move)
 
 TEST_F(AnyOperationTests, VoidDataYieldsNoError)
 {
-    EXPECT_CALL(mockOp, get()).WillOnce(Return(std::any{}));
+    EXPECT_CALL(mockOp, get()).WillOnce(Return(impl::Any{}));
     auto res = voidOp.get();
     ASSERT_TRUE(res);
 }

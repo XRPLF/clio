@@ -47,10 +47,10 @@ struct WorkQueueTest : WithPrometheus, RPCWorkQueueTestBase {
 
 TEST_F(WorkQueueTest, WhitelistedExecutionCountAddsUp)
 {
-    static constexpr auto kTOTAL = 512u;
+    static constexpr auto kTotal = 512u;
     std::atomic_uint32_t executeCount = 0u;
 
-    for (auto i = 0u; i < kTOTAL; ++i) {
+    for (auto i = 0u; i < kTotal; ++i) {
         queue.postCoro(
             [&executeCount](auto /* yield */) { ++executeCount; }, /* isWhiteListed = */ true
         );
@@ -60,21 +60,21 @@ TEST_F(WorkQueueTest, WhitelistedExecutionCountAddsUp)
 
     auto const report = queue.report();
 
-    EXPECT_EQ(executeCount, kTOTAL);
-    EXPECT_EQ(report.at("queued"), kTOTAL);
+    EXPECT_EQ(executeCount, kTotal);
+    EXPECT_EQ(report.at("queued"), kTotal);
     EXPECT_EQ(report.at("current_queue_size"), 0);
     EXPECT_EQ(report.at("max_queue_size"), 2);
 }
 
 TEST_F(WorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
 {
-    static constexpr auto kTOTAL = 3u;
+    static constexpr auto kTotal = 3u;
     auto unblocked = false;
 
     std::mutex mtx;
     std::condition_variable cv;
 
-    for (auto i = 0u; i < kTOTAL; ++i) {
+    for (auto i = 0u; i < kTotal; ++i) {
         auto res = queue.postCoro(
             [&](auto /* yield */) {
                 std::unique_lock lk{mtx};
@@ -83,7 +83,7 @@ TEST_F(WorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
             /* isWhiteListed = */ false
         );
 
-        if (i == kTOTAL - 1) {
+        if (i == kTotal - 1) {
             EXPECT_FALSE(res);
 
             std::unique_lock const lk{mtx};
@@ -100,7 +100,7 @@ TEST_F(WorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
 
 struct WorkQueueDelayedStartTest : WithPrometheus {
     WorkQueue queue{
-        WorkQueue::kDONT_START_PROCESSING_TAG,
+        WorkQueue::kDontStartProcessingTag,
         /* numWorkers = */ 1,
         /* maxSize = */ 100
     };
@@ -129,7 +129,7 @@ TEST_F(WorkQueueDelayedStartTest, WaitTimeIncludesDelayBeforeStartProcessing)
 
 struct WorkQueuePriorityTest : WithPrometheus {
     WorkQueue queue{
-        WorkQueue::kDONT_START_PROCESSING_TAG,
+        WorkQueue::kDontStartProcessingTag,
         /* numWorkers = */ 1,
         /* maxSize = */ 100
     };
@@ -137,11 +137,11 @@ struct WorkQueuePriorityTest : WithPrometheus {
 
 TEST_F(WorkQueuePriorityTest, HighPriorityTasks)
 {
-    static constexpr auto kTOTAL = 10;
+    static constexpr auto kTotal = 10;
     std::vector<WorkQueue::Priority> executionOrder;
     std::mutex mtx;
 
-    for (int i = 0; i < kTOTAL; ++i) {
+    for (int i = 0; i < kTotal; ++i) {
         queue.postCoro(
             [&](auto) {
                 std::scoped_lock const lock(mtx);
@@ -278,7 +278,7 @@ TEST_F(WorkQueueDeathTest, DISABLED_ExecuteTaskAssertsWhenQueueIsEmpty)
     EXPECT_DEATH(
         {
             WorkQueue queue(
-                WorkQueue::kDONT_START_PROCESSING_TAG, /* numWorkers = */ 1, /* maxSize = */ 2
+                WorkQueue::kDontStartProcessingTag, /* numWorkers = */ 1, /* maxSize = */ 2
             );
             queue.startProcessing();  // the actual queue is empty which will lead to assertion
                                       // failure

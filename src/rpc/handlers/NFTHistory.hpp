@@ -35,9 +35,9 @@ class NFTHistoryHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static constexpr auto kLIMIT_MIN = 1;
-    static constexpr auto kLIMIT_MAX = 100;
-    static constexpr auto kLIMIT_DEFAULT = 50;
+    static constexpr auto kLimitMin = 1;
+    static constexpr auto kLimitMax = 100;
+    static constexpr auto kLimitDefault = 50;
 
     /**
      * @brief A struct to hold the marker data
@@ -101,7 +101,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(nft_id),
              validation::Required{},
              validation::CustomValidators::uint256HexStringValidator},
@@ -114,11 +114,11 @@ public:
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
+             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
             {JS(marker),
              meta::WithCustomError{
                  validation::Type<boost::json::object>{},
-                 Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}
+                 Status{RippledError::RpcInvalidParams, "invalidMarker"}
              },
              meta::Section{
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
@@ -126,7 +126,7 @@ public:
              }},
         };
 
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
     /**

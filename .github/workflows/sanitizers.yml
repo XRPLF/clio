@@ -19,7 +19,7 @@ on:
       - conanfile.py
       - conan.lock
       - "cmake/**"
-      # We don't run sanitizer on code change, because it takes too long
+      # We don't run sanitizers on code change, because it takes too long
       # - "src/**"
       # - "tests/**"
 
@@ -36,18 +36,18 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [gcc, clang]
-        sanitizer_ext: [.asan, .tsan, .ubsan]
+        sanitizers: [address, thread, undefinedbehavior]
         build_type: [Release, Debug]
 
     uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
+      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
       download_ccache: false
       upload_ccache: false
-      conan_profile: ${{ matrix.compiler }}${{ matrix.sanitizer_ext }}
+      compiler: ${{ matrix.compiler }}
+      sanitizers: ${{ matrix.sanitizers }}
       build_type: ${{ matrix.build_type }}
-      static: false
       run_unit_tests: true
       run_integration_tests: false
       upload_clio_server: false

@@ -26,7 +26,7 @@ using namespace util::config;
 
 namespace {
 
-auto const kCONFIG = ClioConfigDefinition{
+auto const kConfig = ClioConfigDefinition{
     {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
     {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
     {"log.channels.[].channel", Array{ConfigValue{ConfigType::String}}},
@@ -48,10 +48,10 @@ auto const kCONFIG = ClioConfigDefinition{
 void
 init()
 {
-    static std::once_flag kONCE;
-    std::call_once(kONCE, [] {
-        PrometheusService::init(kCONFIG);
-        (void)util::LogService::init(kCONFIG);
+    static std::once_flag kOnce;
+    std::call_once(kOnce, [] {
+        PrometheusService::init(kConfig);
+        (void)util::LogService::init(kConfig);
     });
 }
 

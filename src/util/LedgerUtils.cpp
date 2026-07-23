@@ -12,16 +12,16 @@
 
 namespace util {
 
-ripple::LedgerEntryType
+xrpl::LedgerEntryType
 LedgerTypes::getLedgerEntryTypeFromStr(std::string const& entryName)
 {
     if (auto const result = getLedgerTypeAttributeFromStr(entryName); result.has_value()) {
         return result->get().type_;
     }
-    return ripple::ltANY;
+    return xrpl::ltANY;
 }
 
-ripple::LedgerEntryType
+xrpl::LedgerEntryType
 LedgerTypes::getAccountOwnedLedgerTypeFromStr(std::string const& entryName)
 {
     if (auto const result = getLedgerTypeAttributeFromStr(entryName); result.has_value() &&
@@ -29,7 +29,7 @@ LedgerTypes::getAccountOwnedLedgerTypeFromStr(std::string const& entryName)
         return result->get().type_;
     }
 
-    return ripple::ltANY;
+    return xrpl::ltANY;
 }
 
 std::optional<std::reference_wrapper<impl::LedgerTypeAttribute const>>
@@ -37,10 +37,10 @@ LedgerTypes::getLedgerTypeAttributeFromStr(std::string const& entryName)
 {
     static std::unordered_map<
         std::string,
-        std::reference_wrapper<impl::LedgerTypeAttribute const>> const kNAME_MAP = []() {
+        std::reference_wrapper<impl::LedgerTypeAttribute const>> const kNameMap = []() {
         std::unordered_map<std::string, std::reference_wrapper<impl::LedgerTypeAttribute const>>
             map;
-        std::ranges::for_each(kLEDGER_TYPES, [&map](auto const& item) {
+        std::ranges::for_each(kLedgerTypes, [&map](auto const& item) {
             map.insert({util::toLower(item.name_), item});
         });
         return map;
@@ -48,21 +48,21 @@ LedgerTypes::getLedgerTypeAttributeFromStr(std::string const& entryName)
 
     static std::unordered_map<
         std::string,
-        std::reference_wrapper<impl::LedgerTypeAttribute const>> const kRPC_NAME_MAP = []() {
+        std::reference_wrapper<impl::LedgerTypeAttribute const>> const kRpcNameMap = []() {
         std::unordered_map<std::string, std::reference_wrapper<impl::LedgerTypeAttribute const>>
             map;
-        std::ranges::for_each(kLEDGER_TYPES, [&map](auto const& item) {
+        std::ranges::for_each(kLedgerTypes, [&map](auto const& item) {
             map.insert({item.rpcName_, item});
         });
         return map;
     }();
 
-    if (auto const it = kRPC_NAME_MAP.find(entryName); it != kRPC_NAME_MAP.end()) {
+    if (auto const it = kRpcNameMap.find(entryName); it != kRpcNameMap.end()) {
         return it->second;
     }
 
     auto const entryNameLowercase = util::toLower(entryName);
-    if (auto const it = kNAME_MAP.find(entryNameLowercase); it != kNAME_MAP.end()) {
+    if (auto const it = kNameMap.find(entryNameLowercase); it != kNameMap.end()) {
         return it->second;
     }
 

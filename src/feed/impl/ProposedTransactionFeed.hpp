@@ -62,7 +62,7 @@ class ProposedTransactionFeed {
     std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
 
-    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionsMsgsPtrType> accountSignal_;
+    TrackableSignalMap<xrpl::AccountID, Subscriber, AllVersionsMsgsPtrType> accountSignal_;
     TrackableSignal<Subscriber, AllVersionsMsgsPtrType> signal_;
 
 public:
@@ -98,7 +98,7 @@ public:
      * @param account The account to watch.
      */
     void
-    sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+    sub(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the proposed transaction feed.
@@ -113,7 +113,7 @@ public:
      * @param account The account to unsubscribe.
      */
     void
-    unsub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+    unsub(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Publishes the proposed transaction feed.
@@ -139,6 +139,6 @@ private:
     unsubInternal(SubscriberPtr subscriber);
 
     void
-    unsubInternal(ripple::AccountID const& account, SubscriberPtr subscriber);
+    unsubInternal(xrpl::AccountID const& account, SubscriberPtr subscriber);
 };
 }  // namespace feed::impl

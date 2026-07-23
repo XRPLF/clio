@@ -35,9 +35,9 @@ ExampleTransactionsMigrator::runMigration(
          .jobsNum = jobsFullScan,
          .cursorsPerJob = cursorPerJobsFullScan},
         migration::cassandra::impl::TransactionsAdapter(
-            backend, [&](ripple::STTx const& tx, ripple::TxMeta const&) {
-                hashSet.lock()->insert(ripple::to_string(tx.getTransactionID()));
-                auto const json = tx.getJson(ripple::JsonOptions::none);
+            backend, [&](xrpl::STTx const& tx, xrpl::TxMeta const&) {
+                hashSet.lock()->insert(xrpl::to_string(tx.getTransactionID()));
+                auto const json = tx.getJson(xrpl::JsonOptions::Values::None);
                 auto const txType = json["TransactionType"].asString();
                 backend->writeTxIndexExample(uint256ToString(tx.getTransactionID()), txType);
             }

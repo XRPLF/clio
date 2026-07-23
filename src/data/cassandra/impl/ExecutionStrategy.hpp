@@ -65,15 +65,15 @@ class DefaultExecutionStrategy {
     std::reference_wrapper<HandleType const> handle_;
     std::thread thread_;
 
-    typename BackendCountersType::PtrType counters_;
+    BackendCountersType::PtrType counters_;
 
 public:
-    using ResultOrErrorType = typename HandleType::ResultOrErrorType;
-    using StatementType = typename HandleType::StatementType;
-    using PreparedStatementType = typename HandleType::PreparedStatementType;
-    using FutureType = typename HandleType::FutureType;
-    using FutureWithCallbackType = typename HandleType::FutureWithCallbackType;
-    using ResultType = typename HandleType::ResultType;
+    using ResultOrErrorType = HandleType::ResultOrErrorType;
+    using StatementType = HandleType::StatementType;
+    using PreparedStatementType = HandleType::PreparedStatementType;
+    using FutureType = HandleType::FutureType;
+    using FutureWithCallbackType = HandleType::FutureWithCallbackType;
+    using ResultType = HandleType::ResultType;
     using CompletionTokenType = boost::asio::yield_context;
 
     /**
@@ -83,7 +83,7 @@ public:
     DefaultExecutionStrategy(
         Settings const& settings,
         HandleType const& handle,
-        typename BackendCountersType::PtrType counters = BackendCountersType::make()
+        BackendCountersType::PtrType counters = BackendCountersType::make()
     )
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}
@@ -119,7 +119,7 @@ public:
     /**
      * @return true if outstanding read requests allowance is exhausted; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isTooBusy() const
     {
         bool const result = numReadRequestsOutstanding_ >= maxReadRequestsOutstanding_;
@@ -169,7 +169,7 @@ public:
      *
      * @param preparedStatement Statement to prepare and execute
      * @param args Args to bind to the prepared statement
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      */
     template <typename... Args>
     void
@@ -185,7 +185,7 @@ public:
      * Retries forever with retry policy specified by @ref AsyncExecutor
      *
      * @param statement Statement to execute
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      */
     void
     write(StatementType&& statement)
@@ -215,7 +215,7 @@ public:
      * Retries forever with retry policy specified by @ref AsyncExecutor.
      *
      * @param statements Vector of statements to execute as a batch
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      */
     void
     write(std::vector<StatementType>&& statements)
@@ -254,7 +254,7 @@ public:
      * Retries forever with retry policy specified by @ref AsyncExecutor.
      *
      * @param statements Vector of statements to execute
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      */
     void
     writeEach(std::vector<StatementType>&& statements)
@@ -272,7 +272,7 @@ public:
      * @param token Completion token (yield_context)
      * @param preparedStatement Statement to prepare and execute
      * @param args Args to bind to the prepared statement
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      * @return ResultType or error wrapped in Expected
      */
     template <typename... Args>
@@ -289,7 +289,7 @@ public:
      *
      * @param token Completion token (yield_context)
      * @param statements Statements to execute in a batch
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      * @return ResultType or error wrapped in Expected
      */
     [[maybe_unused]] ResultOrErrorType
@@ -346,7 +346,7 @@ public:
      *
      * @param token Completion token (yield_context)
      * @param statement Statement to execute
-     * @throw DatabaseTimeout on timeout
+     * @throws DatabaseTimeout on timeout
      * @return ResultType or error wrapped in Expected
      */
     [[maybe_unused]] ResultOrErrorType
@@ -402,7 +402,7 @@ public:
      *
      * @param token Completion token (yield_context)
      * @param statements Statements to execute
-     * @throw DatabaseTimeout on db error
+     * @throws DatabaseTimeout on db error
      * @return Vector of results
      */
     std::vector<ResultType>
@@ -495,7 +495,7 @@ public:
     /**
      * @brief Get statistics about the backend.
      */
-    boost::json::object
+    [[nodiscard]] boost::json::object
     stats() const
     {
         return counters_->report();
@@ -536,13 +536,13 @@ private:
         }
     }
 
-    bool
+    [[nodiscard]] bool
     canAddWriteRequest() const
     {
         return numWriteRequestsOutstanding_ < maxWriteRequestsOutstanding_;
     }
 
-    bool
+    [[nodiscard]] bool
     finishedAllWriteRequests() const
     {
         return numWriteRequestsOutstanding_ == 0;

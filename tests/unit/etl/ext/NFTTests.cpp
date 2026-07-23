@@ -16,11 +16,11 @@ using namespace etl::impl;
 using namespace data;
 
 namespace {
-constinit auto const kSEQ = 123u;
-constinit auto const kLEDGER_HASH =
+constinit auto const kSeq = 123u;
+constinit auto const kLedgerHash =
     "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 
-constinit auto const kTXN_HEX2 =
+constinit auto const kTxnHeX2 =
     "12001D230606B58324048A8B6F501C50E8EBCD412E6CF9D0C2EB6D38BDE1E1C83406AFCB45437DF39A8B0677A9487E"
     "501DA2A1BC9A62AAEB2A"
     "2A70F895587A3FB752514AA03F8C6E7C84864653B8673E0368400000000000001E60134000000000001F09732103B8"
@@ -31,7 +31,7 @@ constinit auto const kTXN_HEX2 =
     "9425204A8491C73B1301"
     "E34FF9EA7D0F7872702E63616665202D2073616C65E1F1";
 
-constinit auto const kTXN_META2 =
+constinit auto const kTxnMetA2 =
     "201C00000040F8E51100502505A59E11552ABC2FD74D879BE58489A588838AA2BA59E1E05A48A574226CD8B6CE7799"
     "8971560B639A808E3B97"
     "42A25334E5CF68EEDEDE52F54E50F4E63921C9F3C40588E426E6FAEC5A000827104B18F97F9209869C9E9CC33EC2AA"
@@ -383,19 +383,19 @@ constinit auto const kTXN_META2 =
     "C2926F1ADA669262B5D362BFC2DB1417D837CBF382AA37F2D88214246B3E06AB367AB9614566B6F90C718B52A44408"
     "E1E1F1031000";
 
-constinit auto const kHASH2 = "D7604B124D5D9C89EC1854A6CBD5A1FFD92502E945411B9C8DE397E7F19A74F8";
+constinit auto const kHash2 = "D7604B124D5D9C89EC1854A6CBD5A1FFD92502E945411B9C8DE397E7F19A74F8";
 
 auto
 createTestData()
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN, kHASH2, kTXN_META2, kTXN_HEX2),
-        util::createTransaction(ripple::TxType::ttAMM_CREATE),    // not NFT - will be filtered
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),  // not unique - will be filtered
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN, kHash2, kTxnMetA2, kTxnHeX2),
+        util::createTransaction(xrpl::TxType::ttAMM_CREATE),    // not NFT - will be filtered
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),  // not unique - will be filtered
     };
 
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     return etl::model::LedgerData{
         .transactions = std::move(transactions),
         .objects = {},
@@ -403,7 +403,7 @@ createTestData()
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSEQ
+        .seq = kSeq
     };
 }
 
@@ -444,5 +444,5 @@ TEST_F(NFTExtTests, OnInitialObjectExtractsAndWritesNFTData)
 
     EXPECT_CALL(*backend_, writeNFTs).WillOnce([](auto const& nfts) { EXPECT_EQ(nfts.size(), 2); });
 
-    ext_.onInitialObject(kSEQ, data);
+    ext_.onInitialObject(kSeq, data);
 }

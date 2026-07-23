@@ -23,6 +23,7 @@
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STXChainBridge.h>
 #include <xrpl/protocol/jss.h>
 #include <xrpl/protocol/tokens.h>
 
@@ -69,7 +70,7 @@ public:
         std::optional<std::string> index;
         // index can be extracted from payment_channel, check, escrow, offer
         // etc, expectedType is used to save the type of index
-        ripple::LedgerEntryType expectedType = ripple::ltANY;
+        xrpl::LedgerEntryType expectedType = xrpl::ltANY;
         // account id to address account root object
         std::optional<std::string> accountRoot;
         // account id to address did object
@@ -89,12 +90,12 @@ public:
         std::optional<boost::json::object> vault;
         std::optional<boost::json::object> loanBroker;
         std::optional<boost::json::object> loan;
-        std::optional<ripple::STXChainBridge> bridge;
+        std::optional<xrpl::STXChainBridge> bridge;
         std::optional<std::string> bridgeAccount;
         std::optional<uint32_t> chainClaimId;
         std::optional<uint32_t> createAccountClaimId;
-        std::optional<ripple::uint256> oracleNode;
-        std::optional<ripple::uint256> credential;
+        std::optional<xrpl::uint256> oracleNode;
+        std::optional<xrpl::uint256> credential;
         std::optional<boost::json::object> delegate;
         bool includeDeleted = false;
     };
@@ -123,18 +124,18 @@ public:
         // Validator only works in this handler
         // The accounts array must have two different elements
         // Each element must be a valid address
-        static auto const kRIPPLE_STATE_ACCOUNTS_CHECK = validation::CustomValidator{
+        static auto const kRippleStateAccountsCheck = validation::CustomValidator{
             [](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
                 if (!value.is_array() || value.as_array().size() != 2 ||
                     !value.as_array()[0].is_string() || !value.as_array()[1].is_string() ||
                     value.as_array()[0].as_string() == value.as_array()[1].as_string()) {
-                    return Error{Status{RippledError::rpcINVALID_PARAMS, "malformedAccounts"}};
+                    return Error{Status{RippledError::RpcInvalidParams, "malformedAccounts"}};
                 }
 
-                auto const id1 = util::parseBase58Wrapper<ripple::AccountID>(
+                auto const id1 = util::parseBase58Wrapper<xrpl::AccountID>(
                     boost::json::value_to<std::string>(value.as_array()[0])
                 );
-                auto const id2 = util::parseBase58Wrapper<ripple::AccountID>(
+                auto const id2 = util::parseBase58Wrapper<xrpl::AccountID>(
                     boost::json::value_to<std::string>(value.as_array()[1])
                 );
 
@@ -145,44 +146,44 @@ public:
             }
         };
 
-        static auto const kMALFORMED_REQUEST_HEX_STRING_VALIDATOR = meta::WithCustomError{
+        static auto const kMalformedRequestHexStringValidator = meta::WithCustomError{
             validation::CustomValidators::uint256HexStringValidator,
             Status(ClioError::RpcMalformedRequest)
         };
 
-        static auto const kMALFORMED_REQUEST_INT_VALIDATOR = meta::WithCustomError{
+        static auto const kMalformedRequestIntValidator = meta::WithCustomError{
             validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedRequest)
         };
 
-        static auto const kBRIDGE_JSON_VALIDATOR = meta::WithCustomError{
+        static auto const kBridgeJsonValidator = meta::WithCustomError{
             meta::IfType<boost::json::object>{meta::Section{
-                {ripple::sfLockingChainDoor.getJsonName().c_str(),
+                {xrpl::sfLockingChainDoor.getJsonName().cStr(),
                  validation::Required{},
                  validation::CustomValidators::accountBase58Validator},
-                {ripple::sfIssuingChainDoor.getJsonName().c_str(),
+                {xrpl::sfIssuingChainDoor.getJsonName().cStr(),
                  validation::Required{},
                  validation::CustomValidators::accountBase58Validator},
-                {ripple::sfLockingChainIssue.getJsonName().c_str(),
+                {xrpl::sfLockingChainIssue.getJsonName().cStr(),
                  validation::Required{},
                  validation::CustomValidators::currencyIssueValidator},
-                {ripple::sfIssuingChainIssue.getJsonName().c_str(),
+                {xrpl::sfIssuingChainIssue.getJsonName().cStr(),
                  validation::Required{},
                  validation::CustomValidators::currencyIssueValidator},
             }},
             Status(ClioError::RpcMalformedRequest)
         };
 
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(index), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+            {JS(index), kMalformedRequestHexStringValidator},
             {JS(account_root), validation::CustomValidators::accountBase58Validator},
             {JS(did), validation::CustomValidators::accountBase58Validator},
-            {JS(check), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+            {JS(check), kMalformedRequestHexStringValidator},
             {JS(deposit_preauth),
              validation::Type<std::string, boost::json::object>{},
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{
                  meta::Section{
                      {JS(owner),
@@ -198,15 +199,15 @@ public:
              }},
             {JS(directory),
              validation::Type<std::string, boost::json::object>{},
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(owner), validation::CustomValidators::accountBase58Validator},
                  {JS(dir_root), validation::CustomValidators::uint256HexStringValidator},
-                 {JS(sub_index), kMALFORMED_REQUEST_INT_VALIDATOR}
+                 {JS(sub_index), kMalformedRequestIntValidator}
              }}},
             {JS(escrow),
              validation::Type<std::string, boost::json::object>{},
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{
                  meta::Section{
                      {JS(owner),
@@ -215,44 +216,44 @@ public:
                           validation::CustomValidators::accountBase58Validator,
                           Status(ClioError::RpcMalformedOwner)
                       }},
-                     {JS(seq), validation::Required{}, kMALFORMED_REQUEST_INT_VALIDATOR},
+                     {JS(seq), validation::Required{}, kMalformedRequestIntValidator},
                  },
              }},
             {JS(offer),
              validation::Type<std::string, boost::json::object>{},
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{
                  meta::Section{
                      {JS(account),
                       validation::Required{},
                       validation::CustomValidators::accountBase58Validator},
-                     {JS(seq), validation::Required{}, kMALFORMED_REQUEST_INT_VALIDATOR},
+                     {JS(seq), validation::Required{}, kMalformedRequestIntValidator},
                  },
              }},
-            {JS(payment_channel), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+            {JS(payment_channel), kMalformedRequestHexStringValidator},
             {JS(ripple_state),
              validation::Type<boost::json::object>{},
              meta::Section{
-                 {JS(accounts), validation::Required{}, kRIPPLE_STATE_ACCOUNTS_CHECK},
+                 {JS(accounts), validation::Required{}, kRippleStateAccountsCheck},
                  {JS(currency),
                   validation::Required{},
                   validation::CustomValidators::currencyValidator},
              }},
             {JS(ticket),
              validation::Type<std::string, boost::json::object>{},
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{
                  meta::Section{
                      {JS(account),
                       validation::Required{},
                       validation::CustomValidators::accountBase58Validator},
-                     {JS(ticket_seq), validation::Required{}, kMALFORMED_REQUEST_INT_VALIDATOR},
+                     {JS(ticket_seq), validation::Required{}, kMalformedRequestIntValidator},
                  },
              }},
-            {JS(nft_page), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+            {JS(nft_page), kMalformedRequestHexStringValidator},
             {JS(amm),
              validation::Type<std::string, boost::json::object>{},
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{
                  meta::Section{
                      {JS(asset),
@@ -279,7 +280,7 @@ public:
              meta::WithCustomError{
                  validation::Type<boost::json::object>{}, Status(ClioError::RpcMalformedRequest)
              },
-             kBRIDGE_JSON_VALIDATOR},
+             kBridgeJsonValidator},
             {JS(bridge_account),
              meta::WithCustomError{
                  validation::CustomValidators::accountBase58Validator,
@@ -290,8 +291,8 @@ public:
                  validation::Type<std::string, boost::json::object>{},
                  Status(ClioError::RpcMalformedRequest)
              },
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
-             kBRIDGE_JSON_VALIDATOR,
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
+             kBridgeJsonValidator,
              meta::WithCustomError{
                  meta::IfType<boost::json::object>{meta::Section{
                      {JS(xchain_owned_claim_id),
@@ -305,8 +306,8 @@ public:
                  validation::Type<std::string, boost::json::object>{},
                  Status(ClioError::RpcMalformedRequest)
              },
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
-             kBRIDGE_JSON_VALIDATOR,
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
+             kBridgeJsonValidator,
              meta::WithCustomError{
                  meta::IfType<boost::json::object>{meta::Section{
                      {JS(xchain_owned_create_account_claim_id),
@@ -321,7 +322,7 @@ public:
                  Status(ClioError::RpcMalformedRequest)
              },
              meta::IfType<std::string>{meta::WithCustomError{
-                 kMALFORMED_REQUEST_HEX_STRING_VALIDATOR, Status(ClioError::RpcMalformedAddress)
+                 kMalformedRequestHexStringValidator, Status(ClioError::RpcMalformedAddress)
              }},
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(account),
@@ -352,7 +353,7 @@ public:
                  Status(ClioError::RpcMalformedRequest)
              },
              meta::IfType<std::string>{meta::WithCustomError{
-                 kMALFORMED_REQUEST_HEX_STRING_VALIDATOR, Status(ClioError::RpcMalformedAddress)
+                 kMalformedRequestHexStringValidator, Status(ClioError::RpcMalformedAddress)
              }},
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(subject),
@@ -391,7 +392,7 @@ public:
                  validation::Type<std::string, boost::json::object>{},
                  Status(ClioError::RpcMalformedRequest)
              },
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{
                  meta::Section{
                      {
@@ -421,7 +422,7 @@ public:
                  validation::Type<std::string, boost::json::object>{},
                  Status(ClioError::RpcMalformedRequest)
              },
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(seq),
                   meta::WithCustomError{
@@ -446,7 +447,7 @@ public:
                  validation::Type<std::string, boost::json::object>{},
                  Status(ClioError::RpcMalformedRequest)
              },
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(seq),
                   meta::WithCustomError{
@@ -471,7 +472,7 @@ public:
                  validation::Type<std::string, boost::json::object>{},
                  Status(ClioError::RpcMalformedRequest)
              },
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(seq),
                   meta::WithCustomError{
@@ -496,7 +497,7 @@ public:
                  validation::Type<std::string, boost::json::object>{},
                  Status(ClioError::RpcMalformedRequest)
              },
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(loan_seq),
                   meta::WithCustomError{
@@ -521,7 +522,7 @@ public:
                  validation::Type<std::string, boost::json::object>{},
                  Status(ClioError::RpcMalformedRequest)
              },
-             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<std::string>{kMalformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(account),
                   meta::WithCustomError{
@@ -540,17 +541,17 @@ public:
                       Status(ClioError::RpcMalformedAddress)
                   }}
              }}},
-            {JS(amendments), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
-            {JS(fee), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
-            {JS(hashes), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
-            {JS(nft_offer), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
-            {JS(nunl), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
-            {JS(signer_list), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+            {JS(amendments), kMalformedRequestHexStringValidator},
+            {JS(fee), kMalformedRequestHexStringValidator},
+            {JS(hashes), kMalformedRequestHexStringValidator},
+            {JS(nft_offer), kMalformedRequestHexStringValidator},
+            {JS(nunl), kMalformedRequestHexStringValidator},
+            {JS(signer_list), kMalformedRequestHexStringValidator},
             {JS(ledger), check::Deprecated{}},
             {"include_deleted", validation::Type<bool>{}},
         };
 
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
     /**
@@ -566,7 +567,7 @@ public:
 private:
     // dir_root and owner can not be both empty or filled at the same time
     // This function will return an error if this is the case
-    static std::expected<ripple::uint256, Status>
+    static std::expected<xrpl::uint256, Status>
     composeKeyFromDirectory(boost::json::object const& directory) noexcept;
 
     /**

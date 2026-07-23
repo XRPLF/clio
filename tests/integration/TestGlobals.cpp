@@ -9,8 +9,8 @@
 TestGlobals&
 TestGlobals::instance()
 {
-    static TestGlobals kINST;
-    return kINST;
+    static TestGlobals kInst;
+    return kInst;
 }
 
 void

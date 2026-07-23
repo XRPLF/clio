@@ -52,10 +52,7 @@ ProposedTransactionFeed::sub(SubscriberSharedPtr const& subscriber)
 }
 
 void
-ProposedTransactionFeed::sub(
-    ripple::AccountID const& account,
-    SubscriberSharedPtr const& subscriber
-)
+ProposedTransactionFeed::sub(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     auto const added = accountSignal_.connectTrackableSlot(
         subscriber, account, ProposedTransactionSlot(*this, subscriber)
@@ -78,7 +75,7 @@ ProposedTransactionFeed::unsub(SubscriberSharedPtr const& subscriber)
 
 void
 ProposedTransactionFeed::unsub(
-    ripple::AccountID const& account,
+    xrpl::AccountID const& account,
     SubscriberSharedPtr const& subscriber
 )
 {
@@ -114,8 +111,7 @@ ProposedTransactionFeed::pub(boost::json::object const& receivedTxJson)
 
     auto const transaction = receivedTxJson.at(JS(transaction)).as_object();
     auto const accounts = rpc::getAccountsFromTransaction(transaction);
-    auto affectedAccounts =
-        std::unordered_set<ripple::AccountID>(accounts.cbegin(), accounts.cend());
+    auto affectedAccounts = std::unordered_set<xrpl::AccountID>(accounts.cbegin(), accounts.cend());
 
     [[maybe_unused]] auto task =
         strand_.execute([this, allVersionMsgs, affectedAccounts = std::move(affectedAccounts)]() {
@@ -154,7 +150,7 @@ ProposedTransactionFeed::unsubInternal(SubscriberPtr subscriber)
 }
 
 void
-ProposedTransactionFeed::unsubInternal(ripple::AccountID const& account, SubscriberPtr subscriber)
+ProposedTransactionFeed::unsubInternal(xrpl::AccountID const& account, SubscriberPtr subscriber)
 {
     if (accountSignal_.disconnect(subscriber, account)) {
         LOG(logger_.info()) << subscriber->tag() << "Unsubscribed accounts_proposed " << account;

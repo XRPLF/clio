@@ -1,0 +1,53 @@
+name: Build identifier
+description: Generate a unique build identifier and the ccache key derived from it
+
+inputs:
+  build_type:
+    description: Current build type (e.g. Release, Debug)
+    required: true
+  compiler:
+    description: Compiler used for the build (e.g. gcc, clang)
+    required: true
+  code_coverage:
+    description: Whether code coverage is on
+    required: true
+  sanitizers:
+    description: Sanitizer to enable, read by the 'sanitizers' conan profile (e.g. 'address', 'thread', 'undefinedbehavior')
+    required: true
+
+outputs:
+  build_identifier:
+    description: Unique identifier for the build configuration (without commit)
+    value: ${{ steps.build_identifier.outputs.build_identifier }}
+  cache_key:
+    description: ccache key, the build identifier suffixed with the common ancestor commit
+    value: ${{ steps.build_identifier.outputs.build_identifier }}-${{ steps.git_common_ancestor.outputs.commit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Find common commit
+      id: git_common_ancestor
+      uses: ./.github/actions/git-common-ancestor
+
+    - name: Build identifier
+      id: build_identifier
+      shell: bash
+      env:
+        RUNNER_OS: ${{ runner.os }}
+        BUILD_TYPE: ${{ inputs.build_type }}
+        COMPILER: ${{ inputs.compiler }}
+        CODE_COVERAGE: ${{ inputs.code_coverage }}
+        SANITIZERS: ${{ inputs.sanitizers }}
+      run: |
+        # Keep the legacy "<os>_<build_type>_<compiler>" layout so standard artifact
+        # names (e.g. clio_server_Linux_Release_gcc) stay backwards compatible.
+        # Sanitizer/coverage builds get extra suffixes and may differ from old names.
+        BUILD_IDENTIFIER="${RUNNER_OS}_${BUILD_TYPE}_${COMPILER}"
+        if [ "${CODE_COVERAGE}" == "true" ]; then
+            BUILD_IDENTIFIER+="_code_coverage"
+        fi
+        if [ -n "${SANITIZERS}" ]; then
+            BUILD_IDENTIFIER+="_${SANITIZERS}"
+        fi
+        echo "build_identifier=${BUILD_IDENTIFIER}" >>"${GITHUB_OUTPUT}"

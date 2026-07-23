@@ -4,6 +4,7 @@
 #include "util/async/AnyStopToken.hpp"
 #include "util/async/AnyStrand.hpp"
 #include "util/async/Concepts.hpp"
+#include "util/async/impl/Any.hpp"
 #include "util/async/impl/ErasedOperation.hpp"
 
 #include <any>
@@ -62,16 +63,16 @@ public:
      * @brief Execute a function on the execution context
      *
      * @param fn The function to execute
-     * @returns A unstoppable operation that can be used to wait for the result
+     * @return A unstoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
     execute(SomeHandlerWithoutStopToken auto&& fn)
     {
         using RetType = std::decay_t<std::invoke_result_t<decltype(fn)>>;
-        static_assert(not std::is_same_v<RetType, std::any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)] mutable -> std::any {
+            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)] mutable -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     std::invoke(std::forward<decltype(fn)>(fn));
                     return {};
@@ -86,7 +87,7 @@ public:
      * @brief Execute a function on the execution context
      *
      * @param fn The function to execute
-     * @returns A stoppable operation that can be used to wait for the result
+     * @return A stoppable operation that can be used to wait for the result
      *
      * @note The function is expected to take a stop token
      */
@@ -94,10 +95,10 @@ public:
     execute(SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<std::invoke_result_t<decltype(fn), AnyStopToken>>;
-        static_assert(not std::is_same_v<RetType, std::any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(pimpl_->execute(
-            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
+            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                     return {};
@@ -115,7 +116,7 @@ public:
      *
      * @param fn The function to execute
      * @param timeout The timeout after which the function should be cancelled
-     * @returns A stoppable operation that can be used to wait for the result
+     * @return A stoppable operation that can be used to wait for the result
      *
      * @note The function is expected to take a stop token
      */
@@ -123,10 +124,10 @@ public:
     execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
     {
         using RetType = std::decay_t<std::invoke_result_t<decltype(fn), AnyStopToken>>;
-        static_assert(not std::is_same_v<RetType, std::any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(pimpl_->execute(
-            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
+            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                     return {};
@@ -145,7 +146,7 @@ public:
      *
      * @param delay The delay after which the function should be executed
      * @param fn The function to execute
-     * @returns A stoppable operation that can be used to wait for the result
+     * @return A stoppable operation that can be used to wait for the result
      *
      * @note The function is expected to take a stop token
      */
@@ -153,11 +154,11 @@ public:
     scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<std::invoke_result_t<decltype(fn), AnyStopToken>>;
-        static_assert(not std::is_same_v<RetType, std::any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(delay);
         return AnyOperation<RetType>(pimpl_->scheduleAfter(
-            millis, [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
+            millis, [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                     return {};
@@ -175,7 +176,7 @@ public:
      *
      * @param delay The delay after which the function should be executed
      * @param fn The function to execute
-     * @returns A stoppable operation that can be used to wait for the result
+     * @return A stoppable operation that can be used to wait for the result
      *
      * @note The function is expected to take a stop token and a boolean representing whether the
      * scheduled operation got cancelled
@@ -184,13 +185,13 @@ public:
     scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken, bool> auto&& fn)
     {
         using RetType = std::decay_t<std::invoke_result_t<decltype(fn), AnyStopToken, bool>>;
-        static_assert(not std::is_same_v<RetType, std::any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(delay);
         return AnyOperation<RetType>(pimpl_->scheduleAfter(
             millis,
             [fn = std::forward<decltype(fn)>(fn)](auto stopToken, auto cancelled) mutable
-                -> std::any {
+                -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken), cancelled);
                     return {};
@@ -214,12 +215,12 @@ public:
     executeRepeatedly(SomeStdDuration auto interval, SomeHandlerWithoutStopToken auto&& fn)
     {
         using RetType = std::decay_t<std::invoke_result_t<decltype(fn)>>;
-        static_assert(not std::is_same_v<RetType, std::any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(interval);
         return AnyOperation<RetType>(  //
             pimpl_->executeRepeatedly(
-                millis, [fn = std::forward<decltype(fn)>(fn)] mutable -> std::any {
+                millis, [fn = std::forward<decltype(fn)>(fn)] mutable -> impl::Any {
                     std::invoke(std::forward<decltype(fn)>(fn));
                     return {};
                 }
@@ -277,18 +278,18 @@ private:
 
         virtual impl::ErasedOperation
         execute(
-            std::function<std::any(AnyStopToken)>,
+            std::function<impl::Any(AnyStopToken)>,
             std::optional<std::chrono::milliseconds> timeout = std::nullopt
         ) = 0;
-        virtual impl::ErasedOperation execute(std::function<std::any()>) = 0;
+        virtual impl::ErasedOperation execute(std::function<impl::Any()>) = 0;
         virtual impl::ErasedOperation
-            scheduleAfter(std::chrono::milliseconds, std::function<std::any(AnyStopToken)>) = 0;
+            scheduleAfter(std::chrono::milliseconds, std::function<impl::Any(AnyStopToken)>) = 0;
         virtual impl::ErasedOperation scheduleAfter(
             std::chrono::milliseconds,
-            std::function<std::any(AnyStopToken, bool)>
+            std::function<impl::Any(AnyStopToken, bool)>
         ) = 0;
         virtual impl::ErasedOperation
-            executeRepeatedly(std::chrono::milliseconds, std::function<std::any()>) = 0;
+            executeRepeatedly(std::chrono::milliseconds, std::function<impl::Any()>) = 0;
         virtual void submit(std::function<void()>) = 0;
         virtual AnyStrand
         makeStrand() = 0;
@@ -309,7 +310,7 @@ private:
 
         impl::ErasedOperation
         execute(
-            std::function<std::any(AnyStopToken)> fn,
+            std::function<impl::Any(AnyStopToken)> fn,
             std::optional<std::chrono::milliseconds> timeout
         ) override
         {
@@ -317,7 +318,7 @@ private:
         }
 
         impl::ErasedOperation
-        execute(std::function<std::any()> fn) override
+        execute(std::function<impl::Any()> fn) override
         {
             return ctx.execute(std::move(fn));
         }
@@ -325,7 +326,7 @@ private:
         impl::ErasedOperation
         scheduleAfter(
             std::chrono::milliseconds delay,
-            std::function<std::any(AnyStopToken)> fn
+            std::function<impl::Any(AnyStopToken)> fn
         ) override
         {
             return ctx.scheduleAfter(delay, std::move(fn));
@@ -334,14 +335,17 @@ private:
         impl::ErasedOperation
         scheduleAfter(
             std::chrono::milliseconds delay,
-            std::function<std::any(AnyStopToken, bool)> fn
+            std::function<impl::Any(AnyStopToken, bool)> fn
         ) override
         {
             return ctx.scheduleAfter(delay, std::move(fn));
         }
 
         impl::ErasedOperation
-        executeRepeatedly(std::chrono::milliseconds interval, std::function<std::any()> fn) override
+        executeRepeatedly(
+            std::chrono::milliseconds interval,
+            std::function<impl::Any()> fn
+        ) override
         {
             return ctx.executeRepeatedly(interval, std::move(fn));
         }

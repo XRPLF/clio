@@ -58,13 +58,12 @@ GrpcSource::GrpcSource(
     try {
         grpc::ChannelArguments chArgs;
         chArgs.SetMaxReceiveMessageSize(-1);
-        chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, kKEEPALIVE_PING_INTERVAL_MS);
-        chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, kKEEPALIVE_TIMEOUT_MS);
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, kKeepalivePingIntervalMs);
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, kKeepaliveTimeoutMs);
         chArgs.SetInt(
-            GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS,
-            static_cast<int>(kKEEPALIVE_PERMIT_WITHOUT_CALLS)
+            GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, static_cast<int>(kKeepalivePermitWithoutCalls)
         );
-        chArgs.SetInt(GRPC_ARG_HTTP2_MAX_PINGS_WITHOUT_DATA, kMAX_PINGS_WITHOUT_DATA);
+        chArgs.SetInt(GRPC_ARG_HTTP2_MAX_PINGS_WITHOUT_DATA, kMaxPingsWithoutData);
 
         stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
             grpc::CreateCustomChannel(

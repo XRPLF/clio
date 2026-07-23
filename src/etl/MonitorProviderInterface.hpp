@@ -18,7 +18,7 @@ struct MonitorProviderInterface {
     /**
      * @brief The time Monitor should wait before reporting absence of updates to the database
      */
-    static constexpr auto kDEFAULT_DB_STALLED_REPORT_DELAY = std::chrono::seconds{10};
+    static constexpr auto kDefaultDbStalledReportDelay = std::chrono::seconds{10};
 
     virtual ~MonitorProviderInterface() = default;
 
@@ -38,7 +38,7 @@ struct MonitorProviderInterface {
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
         uint32_t startSequence,
-        std::chrono::steady_clock::duration dbStalledReportDelay = kDEFAULT_DB_STALLED_REPORT_DELAY
+        std::chrono::steady_clock::duration dbStalledReportDelay = kDefaultDbStalledReportDelay
     ) = 0;
 };
 

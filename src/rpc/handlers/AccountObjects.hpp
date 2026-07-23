@@ -34,9 +34,9 @@ class AccountObjectsHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static constexpr auto kLIMIT_MIN = 10;
-    static constexpr auto kLIMIT_MAX = 400;
-    static constexpr auto kLIMIT_DEFAULT = 200;
+    static constexpr auto kLimitMin = 10;
+    static constexpr auto kLimitMax = 400;
+    static constexpr auto kLimitDefault = 200;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -47,7 +47,7 @@ public:
         uint32_t ledgerIndex{};
         std::optional<std::string> marker;
         uint32_t limit{};
-        std::vector<ripple::SLE> accountObjects;
+        std::vector<xrpl::SLE> accountObjects;
         bool validated = true;
     };
 
@@ -58,9 +58,9 @@ public:
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = kLIMIT_DEFAULT;  // [10,400]
+        uint32_t limit = kLimitDefault;  // [10,400]
         std::optional<std::string> marker;
-        std::optional<ripple::LedgerEntryType> type;
+        std::optional<xrpl::LedgerEntryType> type;
         bool deletionBlockersOnly = false;
     };
 
@@ -85,20 +85,20 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>(kLIMIT_MIN, kLIMIT_MAX)},
+             modifiers::Clamp<int32_t>(kLimitMin, kLimitMax)},
             {JS(type), validation::CustomValidators::accountTypeValidator},
             {JS(marker), validation::CustomValidators::accountMarkerValidator},
             {JS(deletion_blockers_only), validation::Type<bool>{}},
         };
 
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
     /**

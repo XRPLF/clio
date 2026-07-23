@@ -11,8 +11,8 @@
 - [**Optional**] [GCovr](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html): needed for code coverage generation
 - [**Optional**] [CCache](https://ccache.dev/): speeds up compilation if you are going to compile Clio often
 
-We use our Docker image `ghcr.io/XRPLF/clio-ci` to build `Clio`, see [Building Clio with Docker](#building-clio-with-docker).
-You can find information about exact compiler versions and tools in the [image's README](https://github.com/XRPLF/clio/blob/develop/docker/ci/README.md).
+We use the Nix-based Docker image `ghcr.io/xrplf/xrpld/nix-ubuntu` to build `Clio`, see [Building Clio with Docker](#building-clio-with-docker).
+This image is produced by [rippled](https://github.com/XRPLF/rippled) and ships the compilers and tools listed below.
 
 The following compiler version are guaranteed to work.
 Any compiler with lower version may not be able to build Clio:
@@ -30,7 +30,7 @@ You can change it by using `$CONAN_HOME` env variable.
 [More info about Conan home](https://docs.conan.io/2/reference/environment.html#conan-home).
 
 > [!TIP]
-> To setup Conan automatically, you can run `.github/scripts/conan/init.sh`.
+> To setup Conan automatically, you can run `conan/init.sh`.
 > This will delete Conan home directory (if it exists), set up profiles and add Artifactory remote.
 
 The instruction below assumes that `$CONAN_HOME` is not set.
@@ -90,7 +90,7 @@ core.upload:parallel={{os.cpu_count()}}
 Make sure artifactory is setup with Conan.
 
 ```sh
-conan remote add --index 0 xrplf https://conan.ripplex.io
+conan remote add --index 0 xrplf https://conan.xrplf.org/repository/conan/
 ```
 
 Now you should be able to download the prebuilt dependencies (including `xrpl` package) on supported platforms.
@@ -104,7 +104,7 @@ It is implicitly used when running `conan` commands, you don't need to specify i
 
 You have to update this file every time you add a new dependency or change a revision or version of an existing dependency.
 
-To update a lockfile, run from the repository root: `./.github/scripts/conan/regenerate_lockfile.sh`
+To update a lockfile, run from the repository root: `./conan/lockfile/regenerate.sh`
 
 ## Building Clio
 
@@ -175,7 +175,7 @@ Open the `index.html` file in your browser to see the documentation pages.
 It is also possible to build Clio using [Docker](https://www.docker.com/) if you don't want to install all the dependencies on your machine.
 
 ```sh
-docker run -it ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696
+docker run -it ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
 git clone https://github.com/XRPLF/clio
 cd clio
 ```

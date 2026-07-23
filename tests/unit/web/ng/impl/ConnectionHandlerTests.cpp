@@ -25,7 +25,6 @@
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
-#include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/websocket/error.hpp>
 #include <fmt/format.h>
@@ -149,9 +148,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ReceiveError_CloseConnection)
         .WillOnce(Return(makeError(boost::asio::error::timed_out)));
     EXPECT_CALL(
         *mockHttpConnection,
-        setTimeout(
-            std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT}
-        )
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCloseConnectionTimeout})
     );
     EXPECT_CALL(*mockHttpConnection, close);
     EXPECT_CALL(onDisconnectMock, Call)
@@ -424,9 +421,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsNullForHt
 
     EXPECT_CALL(
         *mockHttpConnection,
-        setTimeout(
-            std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT}
-        )
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCloseConnectionTimeout})
     );
     EXPECT_CALL(*mockHttpConnection, close);
 
@@ -484,9 +479,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send_Loop)
 
     EXPECT_CALL(
         *mockHttpConnection,
-        setTimeout(
-            std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT}
-        )
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCloseConnectionTimeout})
     );
     EXPECT_CALL(*mockHttpConnection, close);
 
@@ -759,9 +752,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
 
     EXPECT_CALL(
         *mockWsConnection,
-        setTimeout(
-            std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT}
-        )
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCloseConnectionTimeout})
     );
     EXPECT_CALL(*mockWsConnection, close).WillOnce([&connectionClosed]() {
         connectionClosed = true;
@@ -804,9 +795,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ProcessCalledAfterStop)
 
     EXPECT_CALL(
         *mockWsConnection,
-        setTimeout(
-            std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT}
-        )
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCloseConnectionTimeout})
     );
     EXPECT_CALL(*mockWsConnection, close);
 
@@ -816,12 +805,12 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ProcessCalledAfterStop)
 }
 
 struct ConnectionHandlerParallelProcessingTest : ConnectionHandlerTest {
-    static constexpr size_t kMAX_PARALLEL_REQUESTS = 3;
+    static constexpr size_t kMaxParallelRequests = 3;
 
     ConnectionHandlerParallelProcessingTest()
         : ConnectionHandlerTest(
               ProcessingPolicy::Parallel,
-              ConnectionHandlerParallelProcessingTest::kMAX_PARALLEL_REQUESTS
+              ConnectionHandlerParallelProcessingTest::kMaxParallelRequests
           )
     {
     }

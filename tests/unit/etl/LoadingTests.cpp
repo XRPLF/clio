@@ -29,9 +29,9 @@ using namespace data;
 
 namespace {
 
-constinit auto const kLEDGER_HASH =
+constinit auto const kLedgerHash =
     "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constinit auto const kSEQ = 30;
+constinit auto const kSeq = 30;
 
 struct MockRegistry : etl::RegistryInterface {
     MOCK_METHOD(
@@ -67,7 +67,7 @@ struct LoadingAssertTest : common::util::WithMockAssert, LoadingTests {};
 auto
 createTestData()
 {
-    auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
     return LedgerData{
         .transactions = {},
         .objects = {util::createObject(), util::createObject(), util::createObject()},
@@ -75,7 +75,7 @@ createTestData()
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSEQ
+        .seq = kSeq
     };
 }
 
@@ -129,9 +129,9 @@ TEST_F(LoadingTests, OnInitialLoadGotMoreObjectsWithKey)
     auto const data = createTestData();
     auto const lastKey = std::make_optional<std::string>("something");
 
-    EXPECT_CALL(*mockRegistryPtr_, dispatchInitialObjects(kSEQ, data.objects, lastKey->data()));
+    EXPECT_CALL(*mockRegistryPtr_, dispatchInitialObjects(kSeq, data.objects, lastKey->data()));
 
-    loader_.onInitialLoadGotMoreObjects(kSEQ, data.objects, lastKey);
+    loader_.onInitialLoadGotMoreObjects(kSeq, data.objects, lastKey);
 }
 
 TEST_F(LoadingTests, OnInitialLoadGotMoreObjectsWithoutKey)
@@ -139,9 +139,9 @@ TEST_F(LoadingTests, OnInitialLoadGotMoreObjectsWithoutKey)
     auto const data = createTestData();
     auto const lastKey = std::optional<std::string>{};
 
-    EXPECT_CALL(*mockRegistryPtr_, dispatchInitialObjects(kSEQ, data.objects, std::string{}));
+    EXPECT_CALL(*mockRegistryPtr_, dispatchInitialObjects(kSeq, data.objects, std::string{}));
 
-    loader_.onInitialLoadGotMoreObjects(kSEQ, data.objects, lastKey);
+    loader_.onInitialLoadGotMoreObjects(kSeq, data.objects, lastKey);
 }
 
 TEST_F(LoadingTests, OnInitialLoadGotMoreObjectsFailure)
@@ -149,11 +149,11 @@ TEST_F(LoadingTests, OnInitialLoadGotMoreObjectsFailure)
     auto const data = createTestData();
     auto const lastKey = std::optional<std::string>{};
 
-    EXPECT_CALL(*mockRegistryPtr_, dispatchInitialObjects(kSEQ, data.objects, std::string{}))
+    EXPECT_CALL(*mockRegistryPtr_, dispatchInitialObjects(kSeq, data.objects, std::string{}))
         .WillOnce([](auto, auto, auto) { throw std::runtime_error("some error"); });
     EXPECT_CALL(*mockAmendmentBlockHandlerPtr_, notifyAmendmentBlocked());
 
-    loader_.onInitialLoadGotMoreObjects(kSEQ, data.objects, lastKey);
+    loader_.onInitialLoadGotMoreObjects(kSeq, data.objects, lastKey);
 }
 
 TEST_F(LoadingTests, LoadInitialLedgerFailure)
@@ -175,7 +175,7 @@ TEST_F(LoadingTests, LoadInitialLedgerFailure)
 TEST_F(LoadingAssertTest, LoadInitialLedgerHasDataInDB)
 {
     auto const data = createTestData();
-    auto const range = LedgerRange{.minSequence = kSEQ - 1, .maxSequence = kSEQ};
+    auto const range = LedgerRange{.minSequence = kSeq - 1, .maxSequence = kSeq};
 
     // backend_ leaks due to death test. would be nice to figure out a better solution but for now
     // we simply don't set expectations and allow the mock to leak

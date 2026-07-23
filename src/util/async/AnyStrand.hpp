@@ -3,6 +3,7 @@
 #include "util/async/AnyOperation.hpp"
 #include "util/async/AnyStopToken.hpp"
 #include "util/async/Concepts.hpp"
+#include "util/async/impl/Any.hpp"
 #include "util/async/impl/ErasedOperation.hpp"
 
 #include <any>
@@ -46,10 +47,10 @@ public:
     execute(SomeHandlerWithoutStopToken auto&& fn)
     {
         using RetType = std::decay_t<std::invoke_result_t<decltype(fn)>>;
-        static_assert(not std::is_same_v<RetType, std::any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(  //
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)] mutable -> std::any {
+            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)] mutable -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     std::invoke(std::forward<decltype(fn)>(fn));
                     return {};
@@ -70,11 +71,11 @@ public:
     execute(SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<std::invoke_result_t<decltype(fn), AnyStopToken>>;
-        static_assert(not std::is_same_v<RetType, std::any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(  //
             pimpl_->execute(
-                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
+                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> impl::Any {
                     if constexpr (std::is_void_v<RetType>) {
                         std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                         return {};
@@ -99,11 +100,11 @@ public:
     execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
     {
         using RetType = std::decay_t<std::invoke_result_t<decltype(fn), AnyStopToken>>;
-        static_assert(not std::is_same_v<RetType, std::any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(  //
             pimpl_->execute(
-                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
+                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> impl::Any {
                     if constexpr (std::is_void_v<RetType>) {
                         std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                         return {};
@@ -129,12 +130,12 @@ public:
     executeRepeatedly(SomeStdDuration auto interval, SomeHandlerWithoutStopToken auto&& fn)
     {
         using RetType = std::decay_t<std::invoke_result_t<decltype(fn)>>;
-        static_assert(not std::is_same_v<RetType, std::any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(interval);
         return AnyOperation<RetType>(  //
             pimpl_->executeRepeatedly(
-                millis, [fn = std::forward<decltype(fn)>(fn)] mutable -> std::any {
+                millis, [fn = std::forward<decltype(fn)>(fn)] mutable -> impl::Any {
                     std::invoke(std::forward<decltype(fn)>(fn));
                     return {};
                 }
@@ -160,12 +161,12 @@ private:
 
         [[nodiscard]] virtual impl::ErasedOperation
         execute(
-            std::function<std::any(AnyStopToken)>,
+            std::function<impl::Any(AnyStopToken)>,
             std::optional<std::chrono::milliseconds> timeout = std::nullopt
         ) = 0;
-        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) = 0;
+        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<impl::Any()>) = 0;
         [[nodiscard]] virtual impl::ErasedOperation
-            executeRepeatedly(std::chrono::milliseconds, std::function<std::any()>) = 0;
+            executeRepeatedly(std::chrono::milliseconds, std::function<impl::Any()>) = 0;
         virtual void submit(std::function<void()>) = 0;
     };
 
@@ -181,7 +182,7 @@ private:
 
         [[nodiscard]] impl::ErasedOperation
         execute(
-            std::function<std::any(AnyStopToken)> fn,
+            std::function<impl::Any(AnyStopToken)> fn,
             std::optional<std::chrono::milliseconds> timeout
         ) override
         {
@@ -189,13 +190,16 @@ private:
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<std::any()> fn) override
+        execute(std::function<impl::Any()> fn) override
         {
             return strand.execute(std::move(fn));
         }
 
         impl::ErasedOperation
-        executeRepeatedly(std::chrono::milliseconds interval, std::function<std::any()> fn) override
+        executeRepeatedly(
+            std::chrono::milliseconds interval,
+            std::function<impl::Any()> fn
+        ) override
         {
             return strand.executeRepeatedly(interval, std::move(fn));
         }

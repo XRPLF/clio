@@ -5,10 +5,10 @@
 #include "util/MockStrand.hpp"
 #include "util/async/AnyStopToken.hpp"
 #include "util/async/Error.hpp"
+#include "util/async/impl/Any.hpp"
 
 #include <gmock/gmock.h>
 
-#include <any>
 #include <chrono>
 #include <expected>
 #include <functional>
@@ -17,6 +17,8 @@
 struct MockExecutionContext {
     template <typename T>
     using ValueType = std::expected<T, util::async::ExecutionError>;
+
+    using Any = util::async::impl::Any;
 
     using StopSource = MockStopSource;
     using StopToken = MockStopToken;
@@ -34,36 +36,35 @@ struct MockExecutionContext {
     template <typename T>
     using RepeatingOperation = MockRepeatingOperation<T>;
 
-    MOCK_METHOD(Operation<std::any> const&, execute, (std::function<std::any()>), ());
+    MOCK_METHOD(Operation<Any> const&, execute, (std::function<Any()>), ());
     MOCK_METHOD(
-        Operation<std::any> const&,
+        Operation<Any> const&,
         execute,
-        (std::function<std::any()>, std::optional<std::chrono::milliseconds>),
+        (std::function<Any()>, std::optional<std::chrono::milliseconds>),
         ()
     );
     MOCK_METHOD(
-        StoppableOperation<std::any> const&,
+        StoppableOperation<Any> const&,
         execute,
-        (std::function<std::any(util::async::AnyStopToken)>,
-         std::optional<std::chrono::milliseconds>),
+        (std::function<Any(util::async::AnyStopToken)>, std::optional<std::chrono::milliseconds>),
         ()
     );
     MOCK_METHOD(
-        ScheduledOperation<std::any> const&,
+        ScheduledOperation<Any> const&,
         scheduleAfter,
-        (std::chrono::milliseconds, std::function<std::any(util::async::AnyStopToken)>),
+        (std::chrono::milliseconds, std::function<Any(util::async::AnyStopToken)>),
         ()
     );
     MOCK_METHOD(
-        ScheduledOperation<std::any> const&,
+        ScheduledOperation<Any> const&,
         scheduleAfter,
-        (std::chrono::milliseconds, std::function<std::any(util::async::AnyStopToken, bool)>),
+        (std::chrono::milliseconds, std::function<Any(util::async::AnyStopToken, bool)>),
         ()
     );
     MOCK_METHOD(
-        RepeatingOperation<std::any> const&,
+        RepeatingOperation<Any> const&,
         executeRepeatedly,
-        (std::chrono::milliseconds, std::function<std::any()>),
+        (std::chrono::milliseconds, std::function<Any()>),
         ()
     );
     MOCK_METHOD(void, submit, (std::function<void()>), ());

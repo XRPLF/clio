@@ -24,8 +24,8 @@
 using namespace util::config;
 
 struct BackendCassandraFactoryTest : SyncAsioContextTest, util::prometheus::WithPrometheus {
-    static constexpr auto kKEYSPACE = "factory_test";
-    static constexpr auto kPROVIDER = "cassandra";
+    static constexpr auto kKeyspace = "factory_test";
+    static constexpr auto kProvider = "cassandra";
 
 protected:
     ClioConfigDefinition cfg_{
@@ -34,8 +34,8 @@ protected:
          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
         {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.port", ConfigValue{ConfigType::Integer}.optional()},
-        {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue(kKEYSPACE)},
-        {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kPROVIDER)},
+        {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue(kKeyspace)},
+        {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kProvider)},
         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
         {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.max_write_requests_outstanding",
@@ -81,7 +81,7 @@ public:
         // drop the keyspace for next test
         data::cassandra::Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
-        EXPECT_TRUE(handle.execute("DROP KEYSPACE IF EXISTS " + std::string{kKEYSPACE}));
+        EXPECT_TRUE(handle.execute("DROP KEYSPACE IF EXISTS " + std::string{kKeyspace}));
     }
 };
 
@@ -122,12 +122,12 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
         EXPECT_TRUE(handle.connect());
         EXPECT_TRUE(handle.execute(
             fmt::format(
-                "INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (False, 100)", kKEYSPACE
+                "INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (False, 100)", kKeyspace
             )
         ));
         EXPECT_TRUE(handle.execute(
             fmt::format(
-                "INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (True, 500)", kKEYSPACE
+                "INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (True, 500)", kKeyspace
             )
         ));
     }

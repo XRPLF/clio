@@ -81,15 +81,15 @@ class MigrationCassandraSimpleTest : public WithPrometheus {
     }
 
 protected:
-    static constexpr auto kCASSANDRA = "cassandra";
+    static constexpr auto kCassandra = "cassandra";
 
     ClioConfigDefinition cfg_{
-        {{"database.type", ConfigValue{ConfigType::String}.defaultValue(kCASSANDRA)},
+        {{"database.type", ConfigValue{ConfigType::String}.defaultValue(kCassandra)},
          {"database.cassandra.contact_points",
           ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
          {"database.cassandra.keyspace",
           ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
-         {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kCASSANDRA)},
+         {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kCassandra)},
          {"database.cassandra.replication_factor",
           ConfigValue{ConfigType::Integer}.defaultValue(1)},
          {"database.cassandra.replication_factor",
@@ -214,14 +214,14 @@ class MigrationCassandraManagerTxTableTest : public MigrationCassandraSimpleTest
 
 TEST_F(MigrationCassandraManagerTxTableTest, MigrateExampleTransactionsMigrator)
 {
-    constexpr auto kTRANSACTIONS_MIGRATOR_NAME = "ExampleTransactionsMigrator";
+    constexpr auto kTransactionsMigratorName = "ExampleTransactionsMigrator";
     EXPECT_EQ(
-        testMigrationManager_->getMigratorStatusByName(kTRANSACTIONS_MIGRATOR_NAME),
+        testMigrationManager_->getMigratorStatusByName(kTransactionsMigratorName),
         MigratorStatus::Status::NotMigrated
     );
 
     ExampleTransactionsMigrator::count = 0;
-    testMigrationManager_->runMigration(kTRANSACTIONS_MIGRATOR_NAME);
+    testMigrationManager_->runMigration(kTransactionsMigratorName);
     EXPECT_EQ(ExampleTransactionsMigrator::count, gTransactionsRawData.size());
 
     auto const newTableSize = data::synchronous([&](auto ctx) {
@@ -232,35 +232,35 @@ TEST_F(MigrationCassandraManagerTxTableTest, MigrateExampleTransactionsMigrator)
     EXPECT_EQ(newTableSize, gTransactionsRawData.size());
 
     // check a few tx types
-    auto const getTxType = [&](ripple::uint256 const& txHash) -> std::optional<std::string> {
+    auto const getTxType = [&](xrpl::uint256 const& txHash) -> std::optional<std::string> {
         return data::synchronous([&](auto ctx) {
             return testMigrationBackend_->fetchTxTypeViaID(uint256ToString(txHash), ctx);
         });
     };
 
     auto txType = getTxType(
-        ripple::uint256("CEECF7E516F8A53C5D32A357B737ED54D3186FDD510B1973D908AD8D93AD8E00")
+        xrpl::uint256("CEECF7E516F8A53C5D32A357B737ED54D3186FDD510B1973D908AD8D93AD8E00")
     );
     ASSERT_TRUE(txType.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(txType.value(), "OracleSet");
 
     txType = getTxType(
-        ripple::uint256("35DBFB1A88DE17EBD2BCE37F6E1FD6D3B9887C92B7933ED2FCF2A84E9138B7CA")
+        xrpl::uint256("35DBFB1A88DE17EBD2BCE37F6E1FD6D3B9887C92B7933ED2FCF2A84E9138B7CA")
     );
     ASSERT_TRUE(txType.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(txType.value(), "Payment");
 
     txType = getTxType(
-        ripple::uint256("FCACE9D00625FA3BCC5316078324EA153EC8551243AC1701D496CC1CA2B8A474")
+        xrpl::uint256("FCACE9D00625FA3BCC5316078324EA153EC8551243AC1701D496CC1CA2B8A474")
     );
     ASSERT_TRUE(txType.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(txType.value(), "AMMCreate");
 
     EXPECT_EQ(
-        testMigrationManager_->getMigratorStatusByName(kTRANSACTIONS_MIGRATOR_NAME),
+        testMigrationManager_->getMigratorStatusByName(kTransactionsMigratorName),
         MigratorStatus::Status::Migrated
     );
 }
@@ -281,19 +281,19 @@ class MigrationCassandraManagerObjectsTableTest : public MigrationCassandraSimpl
 
 TEST_F(MigrationCassandraManagerObjectsTableTest, MigrateExampleObjectsMigrator)
 {
-    constexpr auto kOBJECTS_MIGRATOR_NAME = "ExampleObjectsMigrator";
+    constexpr auto kObjectsMigratorName = "ExampleObjectsMigrator";
     EXPECT_EQ(
-        testMigrationManager_->getMigratorStatusByName(kOBJECTS_MIGRATOR_NAME),
+        testMigrationManager_->getMigratorStatusByName(kObjectsMigratorName),
         MigratorStatus::Status::NotMigrated
     );
 
-    testMigrationManager_->runMigration(kOBJECTS_MIGRATOR_NAME);
+    testMigrationManager_->runMigration(kObjectsMigratorName);
 
     EXPECT_EQ(ExampleObjectsMigrator::count, gObjectsRawData.size());
     EXPECT_EQ(ExampleObjectsMigrator::accountCount, 37);
 
     EXPECT_EQ(
-        testMigrationManager_->getMigratorStatusByName(kOBJECTS_MIGRATOR_NAME),
+        testMigrationManager_->getMigratorStatusByName(kObjectsMigratorName),
         MigratorStatus::Status::Migrated
     );
 }
@@ -315,15 +315,15 @@ class MigrationCassandraManagerLedgerTableTest : public MigrationCassandraSimple
 
 TEST_F(MigrationCassandraManagerLedgerTableTest, MigrateExampleLedgerMigrator)
 {
-    constexpr auto kHEADER_MIGRATOR_NAME = "ExampleLedgerMigrator";
+    constexpr auto kHeaderMigratorName = "ExampleLedgerMigrator";
     EXPECT_EQ(
-        testMigrationManager_->getMigratorStatusByName(kHEADER_MIGRATOR_NAME),
+        testMigrationManager_->getMigratorStatusByName(kHeaderMigratorName),
         MigratorStatus::Status::NotMigrated
     );
 
-    testMigrationManager_->runMigration(kHEADER_MIGRATOR_NAME);
+    testMigrationManager_->runMigration(kHeaderMigratorName);
     EXPECT_EQ(
-        testMigrationManager_->getMigratorStatusByName(kHEADER_MIGRATOR_NAME),
+        testMigrationManager_->getMigratorStatusByName(kHeaderMigratorName),
         MigratorStatus::Status::Migrated
     );
 
@@ -340,15 +340,15 @@ TEST_F(MigrationCassandraManagerLedgerTableTest, MigrateExampleLedgerMigrator)
 
     EXPECT_EQ(
         getAccountHash(5619393),
-        ripple::uint256("D1DE0F83A6858DF52811E31FE97B8449A4DD55A7D9E0023FE5DC2B335E4C49E8")
+        xrpl::uint256("D1DE0F83A6858DF52811E31FE97B8449A4DD55A7D9E0023FE5DC2B335E4C49E8")
     );
     EXPECT_EQ(
         getAccountHash(5619394),
-        ripple::uint256("3FEF485204772F03842AA8757B4631E8F146E17AD9762E0552540A517DD38A24")
+        xrpl::uint256("3FEF485204772F03842AA8757B4631E8F146E17AD9762E0552540A517DD38A24")
     );
     EXPECT_EQ(
         getAccountHash(5619395),
-        ripple::uint256("D0A61C158AD8941868666AD51C4662EEAAA2A141BF0F4435BC22B9BC6783AF65")
+        xrpl::uint256("D0A61C158AD8941868666AD51C4662EEAAA2A141BF0F4435BC22B9BC6783AF65")
     );
 }
 
@@ -357,9 +357,9 @@ class MigrationCassandraManagerDropTableTest : public MigrationCassandraSimpleTe
 
 TEST_F(MigrationCassandraManagerDropTableTest, MigrateDropTableMigrator)
 {
-    constexpr auto kDROP_TABLE_MIGRATOR_NAME = "ExampleDropTableMigrator";
+    constexpr auto kDropTableMigratorName = "ExampleDropTableMigrator";
     EXPECT_EQ(
-        testMigrationManager_->getMigratorStatusByName(kDROP_TABLE_MIGRATOR_NAME),
+        testMigrationManager_->getMigratorStatusByName(kDropTableMigratorName),
         MigratorStatus::Status::NotMigrated
     );
 
@@ -367,9 +367,9 @@ TEST_F(MigrationCassandraManagerDropTableTest, MigrateDropTableMigrator)
         data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchDiffTableSize(ctx); });
     EXPECT_EQ(beforeDropSize, 0);
 
-    testMigrationManager_->runMigration(kDROP_TABLE_MIGRATOR_NAME);
+    testMigrationManager_->runMigration(kDropTableMigratorName);
     EXPECT_EQ(
-        testMigrationManager_->getMigratorStatusByName(kDROP_TABLE_MIGRATOR_NAME),
+        testMigrationManager_->getMigratorStatusByName(kDropTableMigratorName),
         MigratorStatus::Status::Migrated
     );
 

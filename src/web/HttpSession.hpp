@@ -85,14 +85,18 @@ public:
 
     ~HttpSession() override = default;
 
-    /** @return The TCP stream */
+    /**
+     * @return The TCP stream
+     */
     boost::beast::tcp_stream&
     stream()
     {
         return stream_;
     }
 
-    /** @brief Starts reading from the stream. */
+    /**
+     * @brief Starts reading from the stream.
+     */
     void
     run()
     {
@@ -104,7 +108,9 @@ public:
         );
     }
 
-    /** @brief Closes the underlying socket. */
+    /**
+     * @brief Closes the underlying socket.
+     */
     void
     doClose()
     {
@@ -112,7 +118,9 @@ public:
         stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
     }
 
-    /** @brief Upgrade to WebSocket connection. */
+    /**
+     * @brief Upgrade to WebSocket connection.
+     */
     void
     upgrade()
     {

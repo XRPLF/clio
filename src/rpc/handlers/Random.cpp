@@ -16,10 +16,10 @@ namespace rpc {
 RandomHandler::Result
 RandomHandler::process([[maybe_unused]] Context const& ctx)
 {
-    ripple::uint256 rand;
-    beast::rngfill(rand.begin(), ripple::uint256::size(), ripple::crypto_prng());
+    xrpl::uint256 rand;
+    beast::rngfill(rand.begin(), xrpl::uint256::size(), xrpl::cryptoPrng());
 
-    return Output{ripple::strHex(rand)};
+    return Output{xrpl::strHex(rand)};
 }
 
 void

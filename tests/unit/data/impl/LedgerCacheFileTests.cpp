@@ -129,21 +129,21 @@ struct LedgerCacheFileTestBase : ::testing::Test {
             std::filesystem::remove(pathWithNewPrefix);
     }
 
-    static std::vector<DataSizeParams> const kDATA_SIZE_PARAMS;
-    static std::vector<CorruptionParams> const kCORRUPTION_PARAMS;
+    static std::vector<DataSizeParams> const kDataSizeParams;
+    static std::vector<CorruptionParams> const kCorruptionParams;
 
     TmpFile tmpFile = TmpFile::empty();
-    static uint32_t constexpr kLATEST_SEQUENCE = 12345;
+    static uint32_t constexpr kLatestSequence = 12345;
 
     static LedgerCacheFile::Data
     createTestData(size_t mapSize, size_t deletedSize, size_t blobSize)
     {
         LedgerCacheFile::Data data;
-        data.latestSeq = kLATEST_SEQUENCE;
+        data.latestSeq = kLatestSequence;
 
         for (size_t i = 0; i < mapSize; ++i) {
-            ripple::uint256 key;
-            std::memset(key.data(), static_cast<int>(i), ripple::uint256::size());
+            xrpl::uint256 key;
+            std::memset(key.data(), static_cast<int>(i), xrpl::uint256::size());
 
             data::LedgerCache::CacheEntry entry;
             entry.seq = static_cast<uint32_t>(1000 + i);
@@ -154,8 +154,8 @@ struct LedgerCacheFileTestBase : ::testing::Test {
         }
 
         for (size_t i = 0; i < deletedSize; ++i) {
-            ripple::uint256 key;
-            std::memset(key.data(), static_cast<int>(i + 200), ripple::uint256::size());
+            xrpl::uint256 key;
+            std::memset(key.data(), static_cast<int>(i + 200), xrpl::uint256::size());
 
             data::LedgerCache::CacheEntry entry;
             entry.seq = static_cast<uint32_t>(2000 + i);
@@ -307,7 +307,7 @@ struct LedgerCacheFileTestBase : ::testing::Test {
 };
 
 std::vector<
-    LedgerCacheFileTestBase::DataSizeParams> const LedgerCacheFileTestBase::kDATA_SIZE_PARAMS = {
+    LedgerCacheFileTestBase::DataSizeParams> const LedgerCacheFileTestBase::kDataSizeParams = {
     {.mapEntries = 0, .deletedEntries = 0, .blobSize = 0, .description = "empty"},
     {.mapEntries = 1, .deletedEntries = 0, .blobSize = 10, .description = "single_map_small_blob"},
     {.mapEntries = 0,
@@ -325,7 +325,7 @@ std::vector<
 };
 
 std::vector<LedgerCacheFileTestBase::CorruptionParams> const
-    LedgerCacheFileTestBase::kCORRUPTION_PARAMS = {
+    LedgerCacheFileTestBase::kCorruptionParams = {
         {.type = CorruptionType::InvalidVersion, .description = "invalid_version"},
         {.type = CorruptionType::CorruptedSeparator1, .description = "corrupted_separator1"},
         {.type = CorruptionType::CorruptedSeparator2, .description = "corrupted_separator2"},
@@ -357,7 +357,7 @@ struct LedgerCacheFileTest
 INSTANTIATE_TEST_SUITE_P(
     AllDataSizes,
     LedgerCacheFileTest,
-    ::testing::ValuesIn(LedgerCacheFileTestBase::kDATA_SIZE_PARAMS),
+    ::testing::ValuesIn(LedgerCacheFileTestBase::kDataSizeParams),
     LedgerCacheFileTest::roundTripParamName
 );
 
@@ -395,7 +395,7 @@ struct LedgerCacheFileCorruptionTest
 INSTANTIATE_TEST_SUITE_P(
     AllCorruptions,
     LedgerCacheFileCorruptionTest,
-    ::testing::ValuesIn(LedgerCacheFileTestBase::kCORRUPTION_PARAMS),
+    ::testing::ValuesIn(LedgerCacheFileTestBase::kCorruptionParams),
     LedgerCacheFileCorruptionTest::corruptionParamName
 );
 
@@ -535,16 +535,16 @@ TEST_F(LedgerCacheFileEdgeCaseTest, SpecialKeyPatterns)
     LedgerCacheFile::Data testData;
     testData.latestSeq = 100;
 
-    ripple::uint256 zeroKey;
-    std::memset(zeroKey.data(), 0, ripple::uint256::size());
+    xrpl::uint256 zeroKey;
+    std::memset(zeroKey.data(), 0, xrpl::uint256::size());
     testData.map.emplace(zeroKey, data::LedgerCache::CacheEntry{.seq = 1, .blob = {1, 2, 3}});
 
-    ripple::uint256 onesKey;
-    std::memset(onesKey.data(), 0xFF, ripple::uint256::size());
+    xrpl::uint256 onesKey;
+    std::memset(onesKey.data(), 0xFF, xrpl::uint256::size());
     testData.map.emplace(onesKey, data::LedgerCache::CacheEntry{.seq = 2, .blob = {4, 5, 6}});
 
-    ripple::uint256 altKey;
-    for (size_t i = 0; i < ripple::uint256::size(); ++i) {
+    xrpl::uint256 altKey;
+    for (size_t i = 0; i < xrpl::uint256::size(); ++i) {
         altKey.data()[i] = static_cast<unsigned char>(((i % 2) != 0u) ? 0xAA : 0x55);
     }
     testData.deleted.emplace(altKey, data::LedgerCache::CacheEntry{.seq = 3, .blob = {7, 8, 9}});
@@ -583,10 +583,10 @@ TEST_F(LedgerCacheFileEdgeCaseTest, SequenceNumber)
     LedgerCacheFile::Data testData;
     testData.latestSeq = 0;
 
-    ripple::uint256 key1, key2, key3;
-    std::memset(key1.data(), 1, ripple::uint256::size());
-    std::memset(key2.data(), 2, ripple::uint256::size());
-    std::memset(key3.data(), 3, ripple::uint256::size());
+    xrpl::uint256 key1, key2, key3;
+    std::memset(key1.data(), 1, xrpl::uint256::size());
+    std::memset(key2.data(), 2, xrpl::uint256::size());
+    std::memset(key3.data(), 3, xrpl::uint256::size());
 
     testData.map.emplace(key1, data::LedgerCache::CacheEntry{.seq = 0, .blob = {1}});
     testData.map.emplace(
@@ -701,7 +701,7 @@ INSTANTIATE_TEST_SUITE_P(
             .testName = "accept_zero_sequence"
         }
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(LedgerCacheFileMinSequenceValidationTest, ValidateMinSequence)

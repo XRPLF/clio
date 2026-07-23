@@ -21,9 +21,9 @@ class ProductionAPIVersionParser : public APIVersionParser {
 
 public:
     ProductionAPIVersionParser(
-        uint32_t defaultVersion = kAPI_VERSION_DEFAULT,
-        uint32_t minVersion = kAPI_VERSION_MIN,
-        uint32_t maxVersion = kAPI_VERSION_MAX
+        uint32_t defaultVersion = kApiVersionDefault,
+        uint32_t minVersion = kApiVersionMin,
+        uint32_t maxVersion = kApiVersionMax
     );
 
     ProductionAPIVersionParser(util::config::ObjectView const& config);

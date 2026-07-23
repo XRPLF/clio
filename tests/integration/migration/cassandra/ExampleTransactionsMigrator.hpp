@@ -12,8 +12,8 @@
  * hash to transaction type string.
  */
 struct ExampleTransactionsMigrator {
-    static constexpr char const* kNAME = "ExampleTransactionsMigrator";
-    static constexpr char const* kDESCRIPTION = "The migrator for transactions table";
+    static constexpr char const* kName = "ExampleTransactionsMigrator";
+    static constexpr char const* kDescription = "The migrator for transactions table";
 
     using Backend = CassandraMigrationTestBackend;
     static std::uint64_t count;

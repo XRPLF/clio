@@ -1,105 +1,21 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
-    directory: /
+    directories:
+      - /
+      - .github/actions/build-clio/
+      - .github/actions/build-docker-image/
+      - .github/actions/build-identifier/
+      - .github/actions/cmake/
+      - .github/actions/code-coverage/
+      - .github/actions/conan/
+      - .github/actions/git-common-ancestor/
+      - .github/actions/set-compiler-env/
     schedule:
       interval: weekly
       day: monday
       time: "04:00"
       timezone: Etc/GMT
-    reviewers:
-      - XRPLF/clio-dev-team
-    commit-message:
-      prefix: "ci: [DEPENDABOT] "
-    target-branch: develop
-
-  - package-ecosystem: github-actions
-    directory: .github/actions/build-clio/
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:00"
-      timezone: Etc/GMT
-    reviewers:
-      - XRPLF/clio-dev-team
-    commit-message:
-      prefix: "ci: [DEPENDABOT] "
-    target-branch: develop
-
-  - package-ecosystem: github-actions
-    directory: .github/actions/build-docker-image/
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:00"
-      timezone: Etc/GMT
-    reviewers:
-      - XRPLF/clio-dev-team
-    commit-message:
-      prefix: "ci: [DEPENDABOT] "
-    target-branch: develop
-
-  - package-ecosystem: github-actions
-    directory: .github/actions/cmake/
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:00"
-      timezone: Etc/GMT
-    reviewers:
-      - XRPLF/clio-dev-team
-    commit-message:
-      prefix: "ci: [DEPENDABOT] "
-    target-branch: develop
-
-  - package-ecosystem: github-actions
-    directory: .github/actions/code-coverage/
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:00"
-      timezone: Etc/GMT
-    reviewers:
-      - XRPLF/clio-dev-team
-    commit-message:
-      prefix: "ci: [DEPENDABOT] "
-    target-branch: develop
-
-  - package-ecosystem: github-actions
-    directory: .github/actions/conan/
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:00"
-      timezone: Etc/GMT
-    reviewers:
-      - XRPLF/clio-dev-team
-    commit-message:
-      prefix: "ci: [DEPENDABOT] "
-    target-branch: develop
-
-  - package-ecosystem: github-actions
-    directory: .github/actions/git-common-ancestor/
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:00"
-      timezone: Etc/GMT
-    reviewers:
-      - XRPLF/clio-dev-team
-    commit-message:
-      prefix: "ci: [DEPENDABOT] "
-    target-branch: develop
-
-  - package-ecosystem: github-actions
-    directory: .github/actions/cache-key/
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:00"
-      timezone: Etc/GMT
-    reviewers:
-      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop

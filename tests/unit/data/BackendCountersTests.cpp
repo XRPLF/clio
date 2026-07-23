@@ -136,15 +136,15 @@ TEST_F(BackendCountersTest, RegisterReadFinished)
 
 TEST_F(BackendCountersTest, RegisterReadStartedFinishedWithCounters)
 {
-    static constexpr auto kOPERATIONS_STARTED = 7u;
-    static constexpr auto kOPERATIONS_COMPLETED = 4u;
+    static constexpr auto kOperationsStarted = 7u;
+    static constexpr auto kOperationsCompleted = 4u;
 
-    counters->registerReadStarted(kOPERATIONS_STARTED);
-    counters->registerReadFinished(startTime, kOPERATIONS_COMPLETED);
+    counters->registerReadStarted(kOperationsStarted);
+    counters->registerReadFinished(startTime, kOperationsCompleted);
 
     auto expectedReport = emptyReport();
-    expectedReport["read_async_pending"] = kOPERATIONS_STARTED - kOPERATIONS_COMPLETED;
-    expectedReport["read_async_completed"] = kOPERATIONS_COMPLETED;
+    expectedReport["read_async_pending"] = kOperationsStarted - kOperationsCompleted;
+    expectedReport["read_async_completed"] = kOperationsCompleted;
     EXPECT_EQ(counters->report(), expectedReport);
 }
 
@@ -160,19 +160,19 @@ TEST_F(BackendCountersTest, RegisterReadRetry)
 
 TEST_F(BackendCountersTest, RegisterReadError)
 {
-    static constexpr auto kOPERATIONS_STARTED = 7u;
-    static constexpr auto kOPERATIONS_ERROR = 2u;
-    static constexpr auto kOPERATIONS_COMPLETED = 1u;
+    static constexpr auto kOperationsStarted = 7u;
+    static constexpr auto kOperationsError = 2u;
+    static constexpr auto kOperationsCompleted = 1u;
 
-    counters->registerReadStarted(kOPERATIONS_STARTED);
-    counters->registerReadError(kOPERATIONS_ERROR);
-    counters->registerReadFinished(startTime, kOPERATIONS_COMPLETED);
+    counters->registerReadStarted(kOperationsStarted);
+    counters->registerReadError(kOperationsError);
+    counters->registerReadFinished(startTime, kOperationsCompleted);
 
     auto expectedReport = emptyReport();
     expectedReport["read_async_pending"] =
-        kOPERATIONS_STARTED - kOPERATIONS_COMPLETED - kOPERATIONS_ERROR;
-    expectedReport["read_async_completed"] = kOPERATIONS_COMPLETED;
-    expectedReport["read_async_error"] = kOPERATIONS_ERROR;
+        kOperationsStarted - kOperationsCompleted - kOperationsError;
+    expectedReport["read_async_completed"] = kOperationsCompleted;
+    expectedReport["read_async_error"] = kOperationsError;
     EXPECT_EQ(counters->report(), expectedReport);
 }
 

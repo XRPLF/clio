@@ -13,12 +13,12 @@
 #include <utility>
 
 namespace {
-constexpr auto kFUTURE_DELETER = [](CassFuture* ptr) { cass_future_free(ptr); };
+constexpr auto kFutureDeleter = [](CassFuture* ptr) { cass_future_free(ptr); };
 }  // namespace
 
 namespace data::cassandra::impl {
 
-/* implicit */ Future::Future(CassFuture* ptr) : ManagedObject{ptr, kFUTURE_DELETER}
+/* implicit */ Future::Future(CassFuture* ptr) : ManagedObject{ptr, kFutureDeleter}
 {
 }
 

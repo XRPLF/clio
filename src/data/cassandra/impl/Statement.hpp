@@ -26,7 +26,7 @@
 namespace data::cassandra::impl {
 
 class Statement : public ManagedObject<CassStatement> {
-    static constexpr auto kDELETER = [](CassStatement* ptr) { cass_statement_free(ptr); };
+    static constexpr auto kDeleter = [](CassStatement* ptr) { cass_statement_free(ptr); };
 
 public:
     /**
@@ -37,7 +37,7 @@ public:
      */
     template <typename... Args>
     explicit Statement(std::string_view query, Args&&... args)
-        : ManagedObject{cass_statement_new_n(query.data(), query.size(), sizeof...(args)), kDELETER}
+        : ManagedObject{cass_statement_new_n(query.data(), query.size(), sizeof...(args)), kDeleter}
     {
         // TODO: figure out how to set consistency level in config
         // NOTE: Keyspace doesn't support QUORUM at write level
@@ -46,7 +46,7 @@ public:
         bind<Args...>(std::forward<Args>(args)...);
     }
 
-    /* implicit */ Statement(CassStatement* ptr) : ManagedObject{ptr, kDELETER}
+    /* implicit */ Statement(CassStatement* ptr) : ManagedObject{ptr, kDeleter}
     {
         // cass_statement_set_consistency(*this, CASS_CONSISTENCY_LOCAL_QUORUM);
         cass_statement_set_is_idempotent(*this, cass_true);
@@ -93,18 +93,17 @@ public:
         using DecayedType = std::decay_t<Type>;
         using UCharVectorType = std::vector<unsigned char>;
         using UintTupleType = std::tuple<uint32_t, uint32_t>;
-        using UintByteTupleType = std::tuple<uint32_t, ripple::uint256>;
-        using ByteVectorType = std::vector<ripple::uint256>;
+        using UintByteTupleType = std::tuple<uint32_t, xrpl::uint256>;
+        using ByteVectorType = std::vector<xrpl::uint256>;
 
         if constexpr (
-            std::is_same_v<DecayedType, ripple::uint256> ||
-            std::is_same_v<DecayedType, ripple::uint192>
+            std::is_same_v<DecayedType, xrpl::uint256> || std::is_same_v<DecayedType, xrpl::uint192>
         ) {
             auto const rc = bindBytes(value.data(), value.size());
-            throwErrorIfNeeded(rc, "Bind ripple::base_uint");
-        } else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>) {
+            throwErrorIfNeeded(rc, "Bind xrpl::base_uint");
+        } else if constexpr (std::is_same_v<DecayedType, xrpl::AccountID>) {
             auto const rc = bindBytes(value.data(), value.size());
-            throwErrorIfNeeded(rc, "Bind ripple::AccountID");
+            throwErrorIfNeeded(rc, "Bind xrpl::AccountID");
         } else if constexpr (std::is_same_v<DecayedType, UCharVectorType>) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind vector<unsigned char>");
@@ -122,7 +121,7 @@ public:
             std::is_same_v<DecayedType, UintByteTupleType>
         ) {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
-            throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, ripple::uint256>");
+            throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, xrpl::uint256>");
         } else if constexpr (std::is_same_v<DecayedType, ByteVectorType>) {
             auto const rc =
                 cass_statement_bind_collection(*this, idx, Collection{std::forward<Type>(value)});
@@ -157,10 +156,10 @@ public:
  * This is used to produce Statement objects that can be executed.
  */
 class PreparedStatement : public ManagedObject<CassPrepared const> {
-    static constexpr auto kDELETER = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
+    static constexpr auto kDeleter = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
 
 public:
-    /* implicit */ PreparedStatement(CassPrepared const* ptr) : ManagedObject{ptr, kDELETER}
+    /* implicit */ PreparedStatement(CassPrepared const* ptr) : ManagedObject{ptr, kDeleter}
     {
     }
 

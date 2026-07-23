@@ -7,13 +7,13 @@
 #include <cstddef>
 
 namespace {
-constexpr auto kRESULT_DELETER = [](CassResult const* ptr) { cass_result_free(ptr); };
-constexpr auto kRESULT_ITERATOR_DELETER = [](CassIterator* ptr) { cass_iterator_free(ptr); };
+constexpr auto kResultDeleter = [](CassResult const* ptr) { cass_result_free(ptr); };
+constexpr auto kResultIteratorDeleter = [](CassIterator* ptr) { cass_iterator_free(ptr); };
 }  // namespace
 
 namespace data::cassandra::impl {
 
-/* implicit */ Result::Result(CassResult const* ptr) : ManagedObject{ptr, kRESULT_DELETER}
+/* implicit */ Result::Result(CassResult const* ptr) : ManagedObject{ptr, kResultDeleter}
 {
 }
 
@@ -30,7 +30,7 @@ Result::hasRows() const
 }
 
 /* implicit */ ResultIterator::ResultIterator(CassIterator* ptr)
-    : ManagedObject{ptr, kRESULT_ITERATOR_DELETER}, hasMore_{cass_iterator_next(ptr) != 0u}
+    : ManagedObject{ptr, kResultIteratorDeleter}, hasMore_{cass_iterator_next(ptr) != 0u}
 {
 }
 

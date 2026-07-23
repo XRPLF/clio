@@ -105,7 +105,7 @@ MetricsHandler::operator()(
     if (!postSuccessful) {
         return web::ng::Response{
             boost::beast::http::status::too_many_requests,
-            rpc::makeError(rpc::RippledError::rpcTOO_BUSY),
+            rpc::makeError(rpc::RippledError::RpcTooBusy),
             request
         };
     }
@@ -125,7 +125,7 @@ HealthCheckHandler::operator()(
     boost::asio::yield_context
 )
 {
-    static constexpr auto kHEALTH_CHECK_HTML = R"html(
+    static constexpr auto kHealthCheckHtml = R"html(
     <!DOCTYPE html>
     <html>
         <head><title>Test page for Clio</title></head>
@@ -133,7 +133,7 @@ HealthCheckHandler::operator()(
     </html>
 )html";
 
-    return web::ng::Response{boost::beast::http::status::ok, kHEALTH_CHECK_HTML, request};
+    return web::ng::Response{boost::beast::http::status::ok, kHealthCheckHtml, request};
 }
 
 web::ng::Response
@@ -144,7 +144,7 @@ CacheStateHandler::operator()(
     boost::asio::yield_context
 )
 {
-    static constexpr auto kCACHE_CHECK_LOADED_HTML = R"html(
+    static constexpr auto kCacheCheckLoadedHtml = R"html(
     <!DOCTYPE html>
     <html>
         <head><title>Cache state</title></head>
@@ -152,7 +152,7 @@ CacheStateHandler::operator()(
     </html>
 )html";
 
-    static constexpr auto kCACHE_CHECK_NOT_LOADED_HTML = R"html(
+    static constexpr auto kCacheCheckNotLoadedHtml = R"html(
     <!DOCTYPE html>
     <html>
         <head><title>Cache state</title></head>
@@ -161,10 +161,10 @@ CacheStateHandler::operator()(
 )html";
 
     if (cache_.get().isFull())
-        return web::ng::Response{boost::beast::http::status::ok, kCACHE_CHECK_LOADED_HTML, request};
+        return web::ng::Response{boost::beast::http::status::ok, kCacheCheckLoadedHtml, request};
 
     return web::ng::Response{
-        boost::beast::http::status::service_unavailable, kCACHE_CHECK_NOT_LOADED_HTML, request
+        boost::beast::http::status::service_unavailable, kCacheCheckNotLoadedHtml, request
     };
 }
 

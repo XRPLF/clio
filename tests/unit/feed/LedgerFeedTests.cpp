@@ -12,11 +12,10 @@
 #include <xrpl/protocol/Fees.h>
 
 namespace {
-constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 }  // namespace
 
 using namespace feed::impl;
-namespace json = boost::json;
 using namespace testing;
 
 using FeedLedgerTest = FeedBaseTest<LedgerFeed>;
@@ -24,7 +23,7 @@ using FeedLedgerTest = FeedBaseTest<LedgerFeed>;
 TEST_F(FeedLedgerTest, SubPub)
 {
     backend_->setRange(10, 30);
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     auto const feeBlob = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
@@ -33,7 +32,7 @@ TEST_F(FeedLedgerTest, SubPub)
     // Information about the ledgers on hand and current fee schedule. This
     // includes the same fields as a ledger stream message, except that it omits
     // the type and txn_count fields
-    static constexpr auto kLEDGER_RESPONSE =
+    static constexpr auto kLedgerResponse =
         R"JSON({
             "validated_ledgers": "10-30",
             "ledger_index": 30,
@@ -49,12 +48,12 @@ TEST_F(FeedLedgerTest, SubPub)
         EXPECT_CALL(*mockSessionPtr, onDisconnect);
         auto res = testFeedPtr->sub(yield, backend_, sessionPtr, networkID);
         // check the response
-        EXPECT_EQ(res, json::parse(kLEDGER_RESPONSE));
+        EXPECT_EQ(res, boost::json::parse(kLedgerResponse));
     });
     ioContext.run();
     EXPECT_EQ(testFeedPtr->count(), 1);
 
-    static constexpr auto kLEDGER_PUB =
+    static constexpr auto kLedgerPub =
         R"JSON({
             "type": "ledgerClosed",
             "ledger_index": 31,
@@ -69,9 +68,9 @@ TEST_F(FeedLedgerTest, SubPub)
         })JSON";
 
     // test publish
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kLEDGER_PUB))).Times(1);
-    auto const ledgerHeader2 = createLedgerHeader(kLEDGER_HASH, 31);
-    auto fee2 = ripple::Fees();
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kLedgerPub))).Times(1);
+    auto const ledgerHeader2 = createLedgerHeader(kLedgerHash, 31);
+    auto fee2 = xrpl::Fees();
     fee2.reserve = 10;
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8, networkID);
 
@@ -85,12 +84,12 @@ TEST_F(FeedLedgerTest, SubPub)
 TEST_F(FeedLedgerTest, AutoDisconnect)
 {
     backend_->setRange(10, 30);
-    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     auto const feeBlob = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend_, doFetchLedgerObject).WillOnce(testing::Return(feeBlob));
-    static constexpr auto kLEDGER_RESPONSE =
+    static constexpr auto kLedgerResponse =
         R"JSON({
             "validated_ledgers": "10-30",
             "ledger_index": 30,
@@ -109,7 +108,7 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     util::spawn(ioContext, [this](boost::asio::yield_context yield) {
         auto res = testFeedPtr->sub(yield, backend_, sessionPtr, networkID);
         // check the response
-        EXPECT_EQ(res, json::parse(kLEDGER_RESPONSE));
+        EXPECT_EQ(res, boost::json::parse(kLedgerResponse));
     });
 
     ioContext.run();
@@ -122,8 +121,8 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
 
     EXPECT_EQ(testFeedPtr->count(), 0);
 
-    auto const ledgerHeader2 = createLedgerHeader(kLEDGER_HASH, 31);
-    auto fee2 = ripple::Fees();
+    auto const ledgerHeader2 = createLedgerHeader(kLedgerHash, 31);
+    auto fee2 = xrpl::Fees();
     fee2.reserve = 10;
     // no error
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8, networkID);

@@ -18,14 +18,18 @@ namespace cluster {
  * - Health status of cluster communication
  */
 class Metrics {
-    /** @brief Gauge tracking the total number of nodes visible in the cluster */
+    /**
+     * @brief Gauge tracking the total number of nodes visible in the cluster
+     */
     util::prometheus::GaugeInt& nodesInClusterMetric_ = PrometheusService::gaugeInt(
         "cluster_nodes_total_number",
         {},
         "Total number of nodes this node can detect in the cluster."
     );
 
-    /** @brief Boolean metric indicating whether cluster communication is healthy */
+    /**
+     * @brief Boolean metric indicating whether cluster communication is healthy
+     */
     util::prometheus::Bool isHealthy_ = PrometheusService::boolMetric(
         "cluster_communication_is_healthy",
         {},

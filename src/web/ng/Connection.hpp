@@ -121,8 +121,7 @@ public:
      * @note This value should be higher than forwarding timeout to not disconnect clients if
      * rippled is slow.
      */
-    static constexpr std::chrono::steady_clock::duration kDEFAULT_TIMEOUT =
-        std::chrono::seconds{11};
+    static constexpr std::chrono::steady_clock::duration kDefaultTimeout = std::chrono::seconds{11};
 
     /**
      * @brief Construct a new Connection object

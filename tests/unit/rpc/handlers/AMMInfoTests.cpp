@@ -27,21 +27,20 @@
 
 using namespace rpc;
 using namespace data;
-namespace json = boost::json;
 using namespace testing;
 
 namespace {
 
-constexpr auto kSEQ = 30;
-constexpr auto kWRONG_AMM_ACCOUNT = "000S7XL6nxRAi7JcbJcn1Na179oF300000";
-constexpr auto kAMM_ACCOUNT = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";
-constexpr auto kAMM_ACCOUNT2 = "rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs";
-constexpr auto kLP_ISSUE_CURRENCY = "03930D02208264E2E40EC1B0C09E4DB96EE197B1";
-constexpr auto kNOTFOUND_ACCOUNT = "rBdLS7RVLqkPwnWQCT2bC6HJd6xGoBizq8";
-constexpr auto kAMM_ID = 54321;
-constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr auto kINDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
-constexpr auto kINDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr auto kSeq = 30;
+constexpr auto kWrongAmmAccount = "000S7XL6nxRAi7JcbJcn1Na179oF300000";
+constexpr auto kAmmAccount = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";
+constexpr auto kAmmAccounT2 = "rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs";
+constexpr auto kLpIssueCurrency = "03930D02208264E2E40EC1B0C09E4DB96EE197B1";
+constexpr auto kNotfoundAccount = "rBdLS7RVLqkPwnWQCT2bC6HJd6xGoBizq8";
+constexpr auto kAmmId = 54321;
+constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kIndex1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
+constexpr auto kIndex2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
 }  // namespace
 
@@ -130,7 +129,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAMMInfoGroup1,
     AMMInfoParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 TEST_P(AMMInfoParameterTest, InvalidParams)
@@ -138,7 +137,7 @@ TEST_P(AMMInfoParameterTest, InvalidParams)
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(testBundle.testJson);
+        auto const req = boost::json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -150,10 +149,10 @@ TEST_P(AMMInfoParameterTest, InvalidParams)
 
 TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
 {
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, 30);
-    auto const missingAccountKey = getAccountKey(kNOTFOUND_ACCOUNT);
-    auto const accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
-    auto const accountKey = getAccountKey(kAMM_ACCOUNT);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const missingAccountKey = getAccountKey(kNotfoundAccount);
+    auto const accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
+    auto const accountKey = getAccountKey(kAmmAccount);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject(missingAccountKey, testing::_, testing::_))
@@ -161,20 +160,20 @@ TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
     ON_CALL(*backend_, doFetchLedgerObject(accountKey, testing::_, testing::_))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}",
                 "account": "{}"
             }})JSON",
-            kAMM_ACCOUNT,
-            kNOTFOUND_ACCOUNT
+            kAmmAccount,
+            kNotfoundAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -185,22 +184,22 @@ TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
 
 TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
 {
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kWRONG_AMM_ACCOUNT
+            kWrongAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
@@ -210,22 +209,22 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
 
 TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
 {
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -236,25 +235,25 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
 
 TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFoundMissingAmmField)
 {
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, 30);
-    auto const accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -265,16 +264,16 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFoundMissingAmmField)
 
 TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
 {
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, 30);
-    auto const accountKey = getAccountKey(kAMM_ACCOUNT);
-    auto const ammId = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammId);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const accountKey = getAccountKey(kAmmAccount);
+    auto const ammId = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammId);
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
-        kAMM_ACCOUNT2, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kAMM_ACCOUNT2
+        kAmmAccounT2, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kAmmAccounT2
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ripple::uint256{kAMM_ID});
+    accountRoot.setFieldH256(xrpl::sfAMMID, xrpl::uint256{kAmmId});
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject(accountKey, testing::_, testing::_))
@@ -282,18 +281,18 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(std::optional<Blob>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -304,17 +303,17 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
 
 TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
 {
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, 30);
-    auto const accountKey = getAccountKey(kAMM_ACCOUNT);
-    auto const account2Key = getAccountKey(kAMM_ACCOUNT2);
-    auto const ammId = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammId);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const accountKey = getAccountKey(kAmmAccount);
+    auto const account2Key = getAccountKey(kAmmAccounT2);
+    auto const ammId = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammId);
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto const ammObj = createAmmObject(
-        kAMM_ACCOUNT2, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kAMM_ACCOUNT2
+        kAmmAccounT2, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kAmmAccounT2
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammId);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammId);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject(accountKey, testing::_, testing::_))
@@ -324,18 +323,18 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
     ON_CALL(*backend_, doFetchLedgerObject(account2Key, testing::_, testing::_))
         .WillByDefault(Return(std::optional<Blob>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -346,25 +345,25 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
 {
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const ammKey = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::feeSettings().key;
     auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
-        kAMM_ACCOUNT,
+        kAmmAccount,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         "JPY",
-        kAMM_ACCOUNT2,
-        kLP_ISSUE_CURRENCY
+        kAmmAccounT2,
+        kLpIssueCurrency
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -374,23 +373,23 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
-    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSeq, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSeq, _))
         .WillByDefault(Return(std::optional<Blob>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -413,12 +412,12 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
+                kLpIssueCurrency,
+                kAmmAccount,
                 "JPY",
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kLEDGER_HASH
+                kAmmAccounT2,
+                kAmmAccount,
+                kLedgerHash
             )
         );
 
@@ -429,31 +428,31 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
 {
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const ammKey = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::feeSettings().key;
     auto const issue2LineKey =
-        ripple::keylet::line(account2, account1, ripple::to_currency("JPY")).key;
+        xrpl::keylet::trustLine(account2, account1, xrpl::toCurrency("JPY")).key;
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
-    auto const account2Root = createAccountRootObject(kAMM_ACCOUNT2, 0, 2, 300, 2, kINDEX1, 2);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
+    auto const account2Root = createAccountRootObject(kAmmAccounT2, 0, 2, 300, 2, kIndex1, 2);
     auto const ammObj = createAmmObject(
-        kAMM_ACCOUNT2,
+        kAmmAccounT2,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         "JPY",
-        kAMM_ACCOUNT,
-        kLP_ISSUE_CURRENCY
+        kAmmAccount,
+        kLpIssueCurrency
     );
     auto const lptCurrency = createLptCurrency("XRP", "JPY");
-    auto const accountHoldsKeylet = ripple::keylet::line(account2, account2, lptCurrency);
+    auto const accountHoldsKeylet = xrpl::keylet::trustLine(account2, account2, lptCurrency);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustline = createRippleStateLedgerObject(
-        kLP_ISSUE_CURRENCY, kAMM_ACCOUNT, 12, kAMM_ACCOUNT2, 1000, kAMM_ACCOUNT, 2000, kINDEX1, 2
+        kLpIssueCurrency, kAmmAccount, 12, kAmmAccounT2, 1000, kAmmAccount, 2000, kIndex1, 2
     );
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -463,27 +462,27 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
-    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSeq, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSeq, _))
         .WillByDefault(Return(std::optional<Blob>{}));
-    ON_CALL(*backend_, doFetchLedgerObject(accountHoldsKeylet.key, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(accountHoldsKeylet.key, kSeq, _))
         .WillByDefault(Return(trustline.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}",
                 "account": "{}"
             }})JSON",
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2
+            kAmmAccount,
+            kAmmAccounT2
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto const expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -506,12 +505,12 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT2,
+                kLpIssueCurrency,
+                kAmmAccounT2,
                 "JPY",
-                kAMM_ACCOUNT,
-                kAMM_ACCOUNT2,
-                kLEDGER_HASH
+                kAmmAccount,
+                kAmmAccounT2,
+                kLedgerHash
             )
         );
 
@@ -522,25 +521,25 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
 {
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const ammKey = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::feeSettings().key;
     auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
-        kAMM_ACCOUNT,
+        kAmmAccount,
         "JPY",
-        kAMM_ACCOUNT2,
+        kAmmAccounT2,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
-        kLP_ISSUE_CURRENCY
+        xrpl::toBase58(xrpl::xrpAccount()),
+        kLpIssueCurrency
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -550,23 +549,23 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
-    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSeq, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSeq, _))
         .WillByDefault(Return(std::optional<Blob>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto const expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -589,12 +588,12 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
+                kLpIssueCurrency,
+                kAmmAccount,
                 "JPY",
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kLEDGER_HASH
+                kAmmAccounT2,
+                kAmmAccount,
+                kLedgerHash
             )
         );
 
@@ -605,20 +604,19 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
 {
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const ammKey = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::feeSettings().key;
     auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
-    auto ammObj = createAmmObject(
-        kAMM_ACCOUNT, "USD", kAMM_ACCOUNT, "JPY", kAMM_ACCOUNT2, kLP_ISSUE_CURRENCY
-    );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
+    auto ammObj =
+        createAmmObject(kAmmAccount, "USD", kAmmAccount, "JPY", kAmmAccounT2, kLpIssueCurrency);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -628,23 +626,23 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
-    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSeq, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSeq, _))
         .WillByDefault(Return(std::optional<Blob>{}));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto const expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -672,14 +670,14 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
+                kLpIssueCurrency,
+                kAmmAccount,
                 "USD",
-                kAMM_ACCOUNT,
+                kAmmAccount,
                 "JPY",
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kLEDGER_HASH
+                kAmmAccounT2,
+                kAmmAccount,
+                kLedgerHash
             )
         );
 
@@ -690,48 +688,47 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
 {
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const ammKey = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::feeSettings().key;
     auto const issue1LineKey =
-        ripple::keylet::line(account1, account1, ripple::to_currency("USD")).key;
+        xrpl::keylet::trustLine(account1, account1, xrpl::toCurrency("USD")).key;
     auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
-    auto ammObj = createAmmObject(
-        kAMM_ACCOUNT, "USD", kAMM_ACCOUNT, "JPY", kAMM_ACCOUNT2, kLP_ISSUE_CURRENCY
-    );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
+    auto ammObj =
+        createAmmObject(kAmmAccount, "USD", kAmmAccount, "JPY", kAmmAccounT2, kLpIssueCurrency);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     // note: frozen flag will not be used for trustline1 because issuer == account
     auto const trustline1BalanceFrozen = createRippleStateLedgerObject(
         "USD",
-        kAMM_ACCOUNT,
+        kAmmAccount,
         8,
-        kAMM_ACCOUNT,
+        kAmmAccount,
         1000,
-        kAMM_ACCOUNT2,
+        kAmmAccounT2,
         2000,
-        kINDEX1,
+        kIndex1,
         2,
-        ripple::lsfGlobalFreeze
+        xrpl::lsfGlobalFreeze
     );
     auto const trustline2BalanceFrozen = createRippleStateLedgerObject(
         "JPY",
-        kAMM_ACCOUNT,
+        kAmmAccount,
         12,
-        kAMM_ACCOUNT2,
+        kAmmAccounT2,
         1000,
-        kAMM_ACCOUNT,
+        kAmmAccount,
         2000,
-        kINDEX1,
+        kIndex1,
         2,
-        ripple::lsfGlobalFreeze
+        xrpl::lsfGlobalFreeze
     );
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -741,25 +738,25 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
-    ON_CALL(*backend_, doFetchLedgerObject(issue1LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSeq, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend_, doFetchLedgerObject(issue1LineKey, kSeq, _))
         .WillByDefault(Return(trustline1BalanceFrozen.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSeq, _))
         .WillByDefault(Return(trustline2BalanceFrozen.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto const expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -787,14 +784,14 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
+                kLpIssueCurrency,
+                kAmmAccount,
                 "USD",
-                kAMM_ACCOUNT,
+                kAmmAccount,
                 "JPY",
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kLEDGER_HASH
+                kAmmAccounT2,
+                kAmmAccount,
+                kLedgerHash
             )
         );
 
@@ -805,50 +802,49 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
 {
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const ammKey = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::feeSettings().key;
     auto const issue1LineKey =
-        ripple::keylet::line(account1, account1, ripple::to_currency("USD")).key;
+        xrpl::keylet::trustLine(account1, account1, xrpl::toCurrency("USD")).key;
     auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     // asset1 will be frozen because flag set here
     auto accountRoot =
-        createAccountRootObject(kAMM_ACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2);
-    auto ammObj = createAmmObject(
-        kAMM_ACCOUNT, "USD", kAMM_ACCOUNT, "JPY", kAMM_ACCOUNT2, kLP_ISSUE_CURRENCY
-    );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+        createAccountRootObject(kAmmAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2);
+    auto ammObj =
+        createAmmObject(kAmmAccount, "USD", kAmmAccount, "JPY", kAmmAccounT2, kLpIssueCurrency);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     // note: frozen flag will not be used for trustline1 because issuer == account
     auto const trustline1BalanceFrozen = createRippleStateLedgerObject(
         "USD",
-        kAMM_ACCOUNT,
+        kAmmAccount,
         8,
-        kAMM_ACCOUNT,
+        kAmmAccount,
         1000,
-        kAMM_ACCOUNT2,
+        kAmmAccounT2,
         2000,
-        kINDEX1,
+        kIndex1,
         2,
-        ripple::lsfGlobalFreeze
+        xrpl::lsfGlobalFreeze
     );
     auto const trustline2BalanceFrozen = createRippleStateLedgerObject(
         "JPY",
-        kAMM_ACCOUNT,
+        kAmmAccount,
         12,
-        kAMM_ACCOUNT2,
+        kAmmAccounT2,
         1000,
-        kAMM_ACCOUNT,
+        kAmmAccount,
         2000,
-        kINDEX1,
+        kIndex1,
         2,
-        ripple::lsfGlobalFreeze
+        xrpl::lsfGlobalFreeze
     );
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -858,25 +854,25 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
-    ON_CALL(*backend_, doFetchLedgerObject(issue1LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSeq, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend_, doFetchLedgerObject(issue1LineKey, kSeq, _))
         .WillByDefault(Return(trustline1BalanceFrozen.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSeq, _))
         .WillByDefault(Return(trustline2BalanceFrozen.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto const expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -904,14 +900,14 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
+                kLpIssueCurrency,
+                kAmmAccount,
                 "USD",
-                kAMM_ACCOUNT,
+                kAmmAccount,
                 "JPY",
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kLEDGER_HASH
+                kAmmAccounT2,
+                kAmmAccount,
+                kLedgerHash
             )
         );
 
@@ -922,28 +918,28 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
 {
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const ammKey = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::feeSettings().key;
     auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
-        kAMM_ACCOUNT,
+        kAmmAccount,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         "JPY",
-        kAMM_ACCOUNT2,
-        kLP_ISSUE_CURRENCY
+        kAmmAccounT2,
+        kLpIssueCurrency
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustlineBalance = createRippleStateLedgerObject(
-        "JPY", kAMM_ACCOUNT2, -8, kAMM_ACCOUNT, 1000, kAMM_ACCOUNT2, 2000, kINDEX2, 2, 0
+        "JPY", kAmmAccounT2, -8, kAmmAccount, 1000, kAmmAccounT2, 2000, kIndex2, 2, 0
     );
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -953,23 +949,23 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
-    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSeq, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSeq, _))
         .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -992,12 +988,12 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
+                kLpIssueCurrency,
+                kAmmAccount,
                 "JPY",
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kLEDGER_HASH
+                kAmmAccounT2,
+                kAmmAccount,
+                kLedgerHash
             )
         );
 
@@ -1008,30 +1004,30 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
 {
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const ammKey = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::feeSettings().key;
     auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
-        kAMM_ACCOUNT,
+        kAmmAccount,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         "JPY",
-        kAMM_ACCOUNT2,
-        kLP_ISSUE_CURRENCY
+        kAmmAccounT2,
+        kLpIssueCurrency
     );
     ammAddVoteSlot(ammObj, account1, 2, 4);
     ammAddVoteSlot(ammObj, account2, 4, 2);
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustlineBalance = createRippleStateLedgerObject(
-        "JPY", kAMM_ACCOUNT2, -8, kAMM_ACCOUNT, 1000, kAMM_ACCOUNT2, 2000, kINDEX2, 2, 0
+        "JPY", kAmmAccounT2, -8, kAmmAccount, 1000, kAmmAccounT2, 2000, kIndex2, 2, 0
     );
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -1041,23 +1037,23 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
-    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSeq, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSeq, _))
         .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -1092,14 +1088,14 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
+                kLpIssueCurrency,
+                kAmmAccount,
                 "JPY",
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kAMM_ACCOUNT,
-                kAMM_ACCOUNT2,
-                kLEDGER_HASH
+                kAmmAccounT2,
+                kAmmAccount,
+                kAmmAccount,
+                kAmmAccounT2,
+                kLedgerHash
             )
         );
 
@@ -1110,37 +1106,37 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
 {
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const ammKey = xrpl::uint256{kAmmId};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::feeSettings().key;
     auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
-        kAMM_ACCOUNT,
+        kAmmAccount,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         "JPY",
-        kAMM_ACCOUNT2,
-        kLP_ISSUE_CURRENCY
+        kAmmAccounT2,
+        kLpIssueCurrency
     );
     ammSetAuctionSlot(
         ammObj,
         account2,
-        ripple::amountFromString(ripple::xrpIssue(), "100"),
+        xrpl::amountFromString(xrpl::xrpIssue(), "100"),
         2,
         25 * 3600,
         {account1, account2}
     );
 
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustlineBalance = createRippleStateLedgerObject(
-        "JPY", kAMM_ACCOUNT2, -8, kAMM_ACCOUNT, 1000, kAMM_ACCOUNT2, 2000, kINDEX2, 2, 0
+        "JPY", kAmmAccounT2, -8, kAmmAccount, 1000, kAmmAccounT2, 2000, kIndex2, 2, 0
     );
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -1150,23 +1146,23 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
-    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSeq, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSeq, _))
         .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "amm_account": "{}"
             }})JSON",
-            kAMM_ACCOUNT
+            kAmmAccount
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -1204,15 +1200,15 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
+                kLpIssueCurrency,
+                kAmmAccount,
                 "JPY",
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kAMM_ACCOUNT2,
-                kLEDGER_HASH
+                kAmmAccounT2,
+                kAmmAccount,
+                kAmmAccounT2,
+                kAmmAccount,
+                kAmmAccounT2,
+                kLedgerHash
             )
         );
 
@@ -1223,27 +1219,26 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
 {
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const issue1 = ripple::Issue(ripple::to_currency("JPY"), account1);
-    auto const issue2 = ripple::Issue(ripple::to_currency("USD"), account2);
-    auto const ammKeylet = ripple::keylet::amm(issue1, issue2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const issue1 = xrpl::Issue(xrpl::toCurrency("JPY"), account1);
+    auto const issue2 = xrpl::Issue(xrpl::toCurrency("USD"), account2);
+    auto const ammKeylet = xrpl::keylet::amm(issue1, issue2);
 
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
-    auto ammObj = createAmmObject(
-        kAMM_ACCOUNT, "JPY", kAMM_ACCOUNT, "USD", kAMM_ACCOUNT2, kLP_ISSUE_CURRENCY
-    );
-    auto const auctionIssue = ripple::Issue{ripple::Currency{kLP_ISSUE_CURRENCY}, account1};
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
+    auto ammObj =
+        createAmmObject(kAmmAccount, "JPY", kAmmAccount, "USD", kAmmAccounT2, kLpIssueCurrency);
+    auto const auctionIssue = xrpl::Issue{xrpl::Currency{kLpIssueCurrency}, account1};
     ammSetAuctionSlot(
         ammObj,
         account2,
-        ripple::amountFromString(auctionIssue, "100"),
+        xrpl::amountFromString(auctionIssue, "100"),
         2,
         25 * 3600,
         {account1, account2}
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKeylet.key);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKeylet.key);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject(getAccountKey(account1), testing::_, testing::_))
@@ -1253,7 +1248,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "asset": {{
@@ -1265,15 +1260,15 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
                     "issuer": "{}"
                 }}
             }})JSON",
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2
+            kAmmAccount,
+            kAmmAccounT2
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -1320,19 +1315,19 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
+                kLpIssueCurrency,
+                kAmmAccount,
                 "JPY",
-                kAMM_ACCOUNT,
+                kAmmAccount,
                 "USD",
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kAMM_ACCOUNT2,
-                kLEDGER_HASH
+                kAmmAccounT2,
+                kAmmAccount,
+                kLpIssueCurrency,
+                kAmmAccount,
+                kAmmAccounT2,
+                kAmmAccount,
+                kAmmAccounT2,
+                kLedgerHash
             )
         );
 
@@ -1343,28 +1338,27 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
 
 TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
 {
-    auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
-    auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const issue1 = ripple::Issue(ripple::to_currency("USD"), account1);
-    auto const issue2 = ripple::Issue(ripple::to_currency("JPY"), account2);
-    auto const ammKeylet = ripple::keylet::amm(issue1, issue2);
+    auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
+    auto const account1 = getAccountIdWithString(kAmmAccount);
+    auto const account2 = getAccountIdWithString(kAmmAccounT2);
+    auto const issue1 = xrpl::Issue(xrpl::toCurrency("USD"), account1);
+    auto const issue2 = xrpl::Issue(xrpl::toCurrency("JPY"), account2);
+    auto const ammKeylet = xrpl::keylet::amm(issue1, issue2);
 
     // Note: order in the AMM object is different from the input
-    auto ammObj = createAmmObject(
-        kAMM_ACCOUNT, "JPY", kAMM_ACCOUNT, "USD", kAMM_ACCOUNT2, kLP_ISSUE_CURRENCY
-    );
-    auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
-    auto const auctionIssue = ripple::Issue{ripple::Currency{kLP_ISSUE_CURRENCY}, account1};
+    auto ammObj =
+        createAmmObject(kAmmAccount, "JPY", kAmmAccount, "USD", kAmmAccounT2, kLpIssueCurrency);
+    auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
+    auto const auctionIssue = xrpl::Issue{xrpl::Currency{kLpIssueCurrency}, account1};
     ammSetAuctionSlot(
         ammObj,
         account2,
-        ripple::amountFromString(auctionIssue, "100"),
+        xrpl::amountFromString(auctionIssue, "100"),
         2,
         25 * 3600,
         {account1, account2}
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKeylet.key);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKeylet.key);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject(getAccountKey(account1), testing::_, testing::_))
@@ -1374,7 +1368,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
 
-    static auto const kINPUT = json::parse(
+    static auto const kInput = boost::json::parse(
         fmt::format(
             R"JSON({{
                 "asset": {{
@@ -1386,15 +1380,15 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
                     "issuer": "{}"
                 }}
             }})JSON",
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2
+            kAmmAccount,
+            kAmmAccounT2
         )
     );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(
+        auto const output = handler.process(kInput, Context{yield});
+        auto expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -1441,19 +1435,19 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
                     "ledger_hash": "{}",
                     "validated": true
                 }})JSON",
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
+                kLpIssueCurrency,
+                kAmmAccount,
                 "USD",
-                kAMM_ACCOUNT,
+                kAmmAccount,
                 "JPY",
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kLP_ISSUE_CURRENCY,
-                kAMM_ACCOUNT,
-                kAMM_ACCOUNT2,
-                kAMM_ACCOUNT,
-                kAMM_ACCOUNT2,
-                kLEDGER_HASH
+                kAmmAccounT2,
+                kAmmAccount,
+                kLpIssueCurrency,
+                kAmmAccount,
+                kAmmAccounT2,
+                kAmmAccount,
+                kAmmAccounT2,
+                kLedgerHash
             )
         );
 

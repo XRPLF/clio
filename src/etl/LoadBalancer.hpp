@@ -63,7 +63,7 @@ public:
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
 private:
-    static constexpr std::uint32_t kDEFAULT_DOWNLOAD_RANGES = 16;
+    static constexpr std::uint32_t kDefaultDownloadRanges = 16;
 
     util::Logger log_{"ETL"};
     // Forwarding cache must be destroyed after sources because sources have a callback to
@@ -75,7 +75,7 @@ private:
 
     std::vector<SourcePtr> sources_;
     std::optional<ETLState> etlState_;
-    std::uint32_t downloadRanges_ = kDEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when
+    std::uint32_t downloadRanges_ = kDefaultDownloadRanges; /*< The number of markers to use when
                                                                  downloading initial ledger */
 
     struct ForwardingCounters {
@@ -95,12 +95,12 @@ public:
     /**
      * @brief Value for the X-User header when forwarding admin requests
      */
-    static constexpr std::string_view kADMIN_FORWARDING_X_USER_VALUE = "clio_admin";
+    static constexpr std::string_view kAdminForwardingXUserValue = "clio_admin";
 
     /**
      * @brief Value for the X-User header when forwarding user requests
      */
-    static constexpr std::string_view kUSER_FORWARDING_X_USER_VALUE = "clio_user";
+    static constexpr std::string_view kUserForwardingXUserValue = "clio_user";
 
     /**
      * @brief Create an instance of the load balancer.

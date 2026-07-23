@@ -27,15 +27,15 @@ ExampleObjectsMigrator::runMigration(
     auto const jobsFullScan = config.get<std::uint32_t>("full_scan_jobs");
     auto const cursorPerJobsFullScan = config.get<std::uint32_t>("cursors_per_job");
 
-    std::unordered_set<ripple::uint256> idx;
+    std::unordered_set<xrpl::uint256> idx;
     migration::cassandra::impl::ObjectsScanner scanner(
         {.ctxThreadsNum = ctxFullScanThreads,
          .jobsNum = jobsFullScan,
          .cursorsPerJob = cursorPerJobsFullScan},
         migration::cassandra::impl::ObjectsAdapter(
-            backend, [&](std::uint32_t, std::optional<ripple::SLE> sle) {
+            backend, [&](std::uint32_t, std::optional<xrpl::SLE> sle) {
                 if (sle.has_value()) {
-                    if (sle->getType() == ripple::ltACCOUNT_ROOT) {
+                    if (sle->getType() == xrpl::ltACCOUNT_ROOT) {
                         if (!idx.contains(sle->key())) {
                             ExampleObjectsMigrator::accountCount++;
                         }

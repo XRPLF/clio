@@ -8,16 +8,16 @@
 #include <vector>
 
 namespace etl {
-std::vector<ripple::uint256>
+std::vector<xrpl::uint256>
 getMarkers(size_t numMarkers)
 {
     ASSERT(numMarkers <= 256, "Number of markers must be <= 256. Got: {}", numMarkers);
 
     unsigned char const incr = 256 / numMarkers;
 
-    std::vector<ripple::uint256> markers;
+    std::vector<xrpl::uint256> markers;
     markers.reserve(numMarkers);
-    ripple::uint256 base{0};
+    xrpl::uint256 base{0};
     for (size_t i = 0; i < numMarkers; ++i) {
         markers.push_back(base);
         base.data()[0] += incr;

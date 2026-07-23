@@ -40,7 +40,7 @@ if(is_appleclang)
     list(APPEND COMPILER_FLAGS -Wreorder-init-list)
 endif()
 
-if(san)
+if(SANITIZERS_ENABLED)
     # When building with sanitizers some compilers will actually produce extra warnings/errors. We don't want this yet,
     # at least not until we have fixed all runtime issues reported by the sanitizers. Once that is done we can start
     # removing some of these and trying to fix it in our codebase. We can never remove all of below because most of them
@@ -85,3 +85,22 @@ target_compile_options(clio_options INTERFACE ${COMPILER_FLAGS})
 
 # Add debug symbols for all builds, including Release. This is needed to get useful stack traces in production.
 target_compile_options(clio_options INTERFACE -g)
+
+# Keep -stdlib=libstdc++ off the compile commands, but preserve it for linking.
+#
+# Conan turns `compiler.libcxx=libstdc++` into `-stdlib=libstdc++` and puts it in CMAKE_CXX_FLAGS, which CMake passes to
+# BOTH compile and link steps. On a normal Clang the compile step consumes it while choosing the C++ stdlib include
+# paths. The Nixpkgs Clang wrapper (used by our CI image) supplies those paths itself (via -nostdinc++), so at compile
+# time the flag is unused -> Clang errors under our -Werror. At link time the flag IS consumed (it selects the C++
+# runtime), so we move it there instead of dropping it entirely.
+get_filename_component(_cxx_real "${CMAKE_CXX_COMPILER}" REALPATH)
+if(
+    _cxx_real MATCHES "^/nix/store/"
+    AND CMAKE_SYSTEM_NAME STREQUAL "Linux"
+    AND is_clang
+    AND CMAKE_CXX_FLAGS MATCHES "stdlib=libstdc"
+)
+    string(REPLACE "-stdlib=libstdc++" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(STRIP "${CMAKE_CXX_FLAGS}" CMAKE_CXX_FLAGS)
+    add_link_options($<$<LINK_LANGUAGE:CXX>:-stdlib=libstdc++>)
+endif()

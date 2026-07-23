@@ -72,13 +72,13 @@ ETLService::makeETLService(
     std::shared_ptr<ETLServiceInterface> ret;
 
     auto fetcher = std::make_shared<impl::LedgerFetcher>(backend, balancer);
-    auto extractor = std::make_shared<impl::Extractor>(fetcher);
+    auto amendmentBlockHandler = std::make_shared<impl::AmendmentBlockHandler>(ctx, *state);
+    auto extractor = std::make_shared<impl::Extractor>(fetcher, amendmentBlockHandler);
     auto publisher = std::make_shared<impl::LedgerPublisher>(ctx, backend, subscriptions, *state);
     auto cacheLoader = std::make_shared<CacheLoader<>>(
         config, backend, backend->cache(), std::move(cacheLoadingState)
     );
     auto cacheUpdater = std::make_shared<impl::CacheUpdater>(backend->cache());
-    auto amendmentBlockHandler = std::make_shared<impl::AmendmentBlockHandler>(ctx, *state);
     auto monitorProvider = std::make_shared<impl::MonitorProvider>();
 
     backend->setCorruptionDetector(CorruptionDetector{*state, backend->cache()});
@@ -298,7 +298,7 @@ ETLService::loadInitialLedgerIfNeeded()
 
             auto [ledger, timeDiff] = ::util::timed<std::chrono::duration<double>>([this, seq]() {
                 return extractor_->extractLedgerOnly(seq).and_then(
-                    [this, seq](auto&& data) -> std::optional<ripple::LedgerHeader> {
+                    [this, seq](auto&& data) -> std::optional<xrpl::LedgerHeader> {
                         // TODO: loadInitialLedger in balancer should be called fetchEdgeKeys or
                         // similar
                         auto res = balancer_->loadInitialLedger(seq, *initialLoadObserver_);

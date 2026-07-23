@@ -19,7 +19,7 @@
 using namespace util::config;
 
 namespace {
-constexpr auto kEPS = 1e-9;
+constexpr auto kEps = 1e-9;
 }  // namespace
 
 struct ConfigFileJsonParseTestBundle {
@@ -56,7 +56,7 @@ TEST_P(ConfigFileJsonParseTest, parseValues)
                 },
                 [&flatJson, &key](double const v) {
                     EXPECT_TRUE(flatJson.at(key).is_double()) << key << ": " << v;
-                    EXPECT_NEAR(flatJson.at(key).as_double(), v, kEPS) << key << ": " << v;
+                    EXPECT_NEAR(flatJson.at(key).as_double(), v, kEps) << key << ": " << v;
                 },
                 [&flatJson, &key](bool const v) {
                     EXPECT_TRUE(flatJson.at(key).is_bool()) << key << ": " << v;
@@ -296,7 +296,7 @@ INSTANTIATE_TEST_CASE_P(
                   boost::json::array{boost::json::value{}, "some string"}}}
         }
     ),
-    tests::util::kNAME_GENERATOR
+    tests::util::kNameGenerator
 );
 
 struct ConfigFileJsonTest : public virtual ::testing::Test {};
@@ -325,7 +325,7 @@ TEST_F(ConfigFileJsonTest, getValue)
 
     auto const doubleValue = jsonFileObj.getValue("double");
     ASSERT_TRUE(std::holds_alternative<double>(doubleValue));
-    EXPECT_NEAR(std::get<double>(doubleValue), 123.456, kEPS);
+    EXPECT_NEAR(std::get<double>(doubleValue), 123.456, kEps);
 
     EXPECT_FALSE(jsonFileObj.containsKey("object.int"));
 }
@@ -377,7 +377,7 @@ TEST_F(ConfigFileJsonTest, getArray)
 
     auto const value2 = (*array.at(2));  // NOLINT(bugprone-unchecked-optional-access)
     ASSERT_TRUE(std::holds_alternative<double>(value2));
-    EXPECT_NEAR(std::get<double>(value2), 3.14, kEPS);
+    EXPECT_NEAR(std::get<double>(value2), 3.14, kEps);
 
     auto const value3 = (*array.at(3));  // NOLINT(bugprone-unchecked-optional-access)
     ASSERT_TRUE(std::holds_alternative<bool>(value3));

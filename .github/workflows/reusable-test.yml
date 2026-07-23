@@ -13,10 +13,16 @@ on:
         required: true
         type: string
 
-      conan_profile:
-        description: Conan profile to use
+      compiler:
+        description: 'Compiler the binaries were built with ("gcc", "clang" or "apple-clang")'
         required: true
         type: string
+
+      sanitizers:
+        description: 'Sanitizers the binaries were built with ("address", "thread", "undefinedbehavior" or empty)'
+        required: false
+        type: string
+        default: ""
 
       build_type:
         description: Build type
@@ -50,13 +56,23 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: XRPLF/actions/cleanup-workspace@c7d9ce5ebb03c752a354889ecd870cadfc2b1cd4
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
+      - name: Generate build identifier
+        uses: ./.github/actions/build-identifier
+        id: build_identifier
+        with:
+          build_type: ${{ inputs.build_type }}
+          compiler: ${{ inputs.compiler }}
+          # code_coverage is run inside build environment
+          code_coverage: false
+          sanitizers: ${{ inputs.sanitizers }}
+
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          name: clio_tests_${{ steps.build_identifier.outputs.build_identifier }}
 
       - name: Make clio_tests executable
         run: chmod +x ./clio_tests
@@ -67,11 +83,11 @@ jobs:
         run: ./clio_tests
 
       - name: Create an issue
-        if: ${{ steps.run_clio_tests.outcome == 'failure' && endsWith(inputs.conan_profile, 'san') }}
-        uses: XRPLF/actions/create-issue@fbcc16eb7f20dc3199eaf1aed0d3523a5ba9008c
+        if: ${{ steps.run_clio_tests.outcome == 'failure' && inputs.sanitizers != '' }}
+        uses: XRPLF/actions/create-issue@2b8bc36af85b88bca0dd7bfac2e2dc05f94ad712
         with:
-          title: "[${{ inputs.conan_profile }}] reported issues"
-          body: "Clio tests failed one or more sanitizer checks when built with `${{ inputs.conan_profile }}`."
+          title: "[${{ inputs.compiler }} ${{ inputs.sanitizers }}] reported issues"
+          body: "Clio tests failed one or more sanitizers checks when built with `${{ inputs.compiler }}` and the `${{ inputs.sanitizers }}` sanitizers."
           labels: "bug"
           assignees: "godexsoft,kuznetsss,mathbunnyru"
 
@@ -88,7 +104,7 @@ jobs:
 
     services:
       scylladb:
-        image: ${{ inputs.container != '' && 'scylladb/scylla' || '' }}
+        image: ${{ inputs.container != '' && 'scylladb/scylla:2026.1' || '' }}
         options: >-
           --health-cmd "cqlsh -e 'describe cluster'"
           --health-interval 10s
@@ -100,6 +116,20 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: XRPLF/actions/cleanup-workspace@c7d9ce5ebb03c752a354889ecd870cadfc2b1cd4
 
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Generate build identifier
+        uses: ./.github/actions/build-identifier
+        id: build_identifier
+        with:
+          build_type: ${{ inputs.build_type }}
+          compiler: ${{ inputs.compiler }}
+          # code_coverage is run inside build environment
+          code_coverage: false
+          sanitizers: ${{ inputs.sanitizers }}
+
       - name: Delete and start colima (macOS)
         # This is a temporary workaround for colima issues on macOS runners
         if: ${{ runner.os == 'macOS' }}
@@ -107,32 +137,38 @@ jobs:
           colima delete --force
           colima start
 
+      - name: Remove leftover scylladb container (macOS)
+        # A previous run that didn't clean up (e.g. a cancelled job) can leave the
+        # container behind, otherwise the name is still taken on the persistent runner.
+        if: ${{ runner.os == 'macOS' }}
+        run: docker rm --force scylladb || true
+
       - name: Spin up scylladb (macOS)
         if: ${{ runner.os == 'macOS' }}
         timeout-minutes: 1
         run: |
           docker run \
-            --detach \
-            --name scylladb \
-            --health-cmd "cqlsh -e 'describe cluster'" \
-            --health-interval 10s \
-            --health-timeout 5s \
-            --health-retries 5 \
-            --publish 9042:9042 \
-            --memory 16G \
-            scylladb/scylla
+              --detach \
+              --name scylladb \
+              --health-cmd "cqlsh -e 'describe cluster'" \
+              --health-interval 10s \
+              --health-timeout 5s \
+              --health-retries 5 \
+              --publish 9042:9042 \
+              --memory 16G \
+              scylladb/scylla:2026.1
 
       - name: Wait for scylladb container to be healthy (macOS)
         if: ${{ runner.os == 'macOS' }}
         timeout-minutes: 1
         run: |
           until [ "$(docker inspect -f '{{.State.Health.Status}}' scylladb)" == "healthy" ]; do
-            sleep 1
+              sleep 1
           done
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          name: clio_integration_tests_${{ steps.build_identifier.outputs.build_identifier }}
 
       - name: Run clio_integration_tests
         run: |

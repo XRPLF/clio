@@ -8,7 +8,6 @@
 
 #include <optional>
 
-namespace json = boost::json;
 using namespace util;
 using namespace testing;
 
@@ -26,7 +25,7 @@ TEST_F(ETLStateTest, Error)
 
 TEST_F(ETLStateTest, NetworkIdValid)
 {
-    auto const json = json::parse(
+    auto const json = boost::json::parse(
         R"JSON({
             "result": {
                 "info": {
@@ -43,7 +42,7 @@ TEST_F(ETLStateTest, NetworkIdValid)
 
 TEST_F(ETLStateTest, NetworkIdInvalid)
 {
-    auto const json = json::parse(
+    auto const json = boost::json::parse(
         R"JSON({
             "result": {
                 "info": {
@@ -60,7 +59,7 @@ TEST_F(ETLStateTest, NetworkIdInvalid)
 
 TEST_F(ETLStateTest, ResponseHasError)
 {
-    auto const json = json::parse(
+    auto const json = boost::json::parse(
         R"JSON({
             "error": "error"
         })JSON"

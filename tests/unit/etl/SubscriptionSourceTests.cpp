@@ -16,7 +16,6 @@
 
 #include <chrono>
 #include <cstdint>
-#include <cstdlib>
 #include <optional>
 #include <string>
 #include <thread>

@@ -72,7 +72,9 @@ public:
         ConnectionBase::isAdmin_ = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
     }
 
-    /** @return The secure websocket stream. */
+    /**
+     * @return The secure websocket stream.
+     */
     StreamType&
     ws()
     {
@@ -139,7 +141,9 @@ public:
 
     ~SslWsUpgrader() = default;
 
-    /** @brief Initiate the upgrade. */
+    /**
+     * @brief Initiate the upgrade.
+     */
     void
     run()
     {
@@ -160,8 +164,8 @@ private:
         parser_.emplace();
 
         // Apply a reasonable limit to the allowed size of the body in bytes to prevent abuse.
-        static constexpr auto kMAX_BODY_SIZE = 10000;
-        parser_->body_limit(kMAX_BODY_SIZE);
+        static constexpr auto kMaxBodySize = 10000;
+        parser_->body_limit(kMaxBodySize);
 
         boost::beast::get_lowest_layer(https_).expires_after(std::chrono::seconds(30));
         onUpgrade();

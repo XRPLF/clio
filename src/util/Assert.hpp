@@ -1,7 +1,5 @@
 #pragma once
 
-#include "util/SourceLocation.hpp"
-
 #include <boost/log/core/core.hpp>
 #include <fmt/base.h>
 
@@ -53,7 +51,7 @@ private:
 template <typename... Args>
 constexpr void
 assertImpl(
-    SourceLocationType const location,
+    std::source_location const location,
     char const* expression,
     bool const condition,
     fmt::format_string<Args...> format,
@@ -86,7 +84,7 @@ assertImpl(
 
 }  // namespace util::impl
 
-#define ASSERT(condition, ...)                                                      \
-    util::impl::assertImpl(                                                         \
-        CURRENT_SRC_LOCATION, #condition, static_cast<bool>(condition), __VA_ARGS__ \
+#define ASSERT(condition, ...)                                                                 \
+    util::impl::assertImpl(                                                                    \
+        std::source_location::current(), #condition, static_cast<bool>(condition), __VA_ARGS__ \
     )

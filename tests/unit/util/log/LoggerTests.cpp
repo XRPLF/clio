@@ -84,11 +84,11 @@ TEST_F(LoggerTest, LOGMacro)
 
 TEST_F(LoggerTest, ManyDynamicLoggers)
 {
-    static constexpr size_t kNUM_LOGGERS = 10'000;
+    static constexpr size_t kNumLoggers = 10'000;
 
     auto initialLoggers = loggersNum();
 
-    for (size_t i = 0; i < kNUM_LOGGERS; ++i) {
+    for (size_t i = 0; i < kNumLoggers; ++i) {
         std::string const loggerName = "DynamicLogger" + std::to_string(i);
 
         Logger const log{loggerName};
@@ -180,7 +180,9 @@ struct LogFileRotationTests : ::testing::Test {
         LogServiceState::replaceSinks(LogServiceState::sinks_);
     }
 
-    /** @brief Returns the number of regular files in tmpDir_. */
+    /**
+     * @brief Returns the number of regular files in tmpDir_.
+     */
     [[nodiscard]] std::size_t
     countLogFiles() const
     {

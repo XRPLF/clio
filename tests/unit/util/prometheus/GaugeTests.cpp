@@ -77,30 +77,30 @@ TEST_F(GaugeIntTests, set)
 
 TEST_F(GaugeIntTests, multithreadAddAndSubtract)
 {
-    static constexpr auto kNUM_ADDITIONS = 1000;
-    static constexpr auto kNUM_NUMBER_ADDITIONS = 100;
-    static constexpr auto kNUMBER_TO_ADD = 11;
-    static constexpr auto kNUM_SUBTRACTIONS = 2000;
-    static constexpr auto kNUM_NUMBER_SUBTRACTIONS = 300;
-    static constexpr auto kNUMBER_TO_SUBTRACT = 300;
+    static constexpr auto kNumAdditions = 1000;
+    static constexpr auto kNumNumberAdditions = 100;
+    static constexpr auto kNumberToAdd = 11;
+    static constexpr auto kNumSubtractions = 2000;
+    static constexpr auto kNumNumberSubtractions = 300;
+    static constexpr auto kNumberToSubtract = 300;
     std::thread thread1([&] {
-        for (int i = 0; i < kNUM_ADDITIONS; ++i) {
+        for (int i = 0; i < kNumAdditions; ++i) {
             ++gauge;
         }
     });
     std::thread thread2([&] {
-        for (int i = 0; i < kNUM_NUMBER_ADDITIONS; ++i) {
-            gauge += kNUMBER_TO_ADD;
+        for (int i = 0; i < kNumNumberAdditions; ++i) {
+            gauge += kNumberToAdd;
         }
     });
     std::thread thread3([&] {
-        for (int i = 0; i < kNUM_SUBTRACTIONS; ++i) {
+        for (int i = 0; i < kNumSubtractions; ++i) {
             --gauge;
         }
     });
     std::thread thread4([&] {
-        for (int i = 0; i < kNUM_NUMBER_SUBTRACTIONS; ++i) {
-            gauge -= kNUMBER_TO_SUBTRACT;
+        for (int i = 0; i < kNumNumberSubtractions; ++i) {
+            gauge -= kNumberToSubtract;
         }
     });
     thread1.join();
@@ -109,8 +109,8 @@ TEST_F(GaugeIntTests, multithreadAddAndSubtract)
     thread4.join();
     EXPECT_EQ(
         gauge.value(),
-        kNUM_ADDITIONS + (kNUM_NUMBER_ADDITIONS * kNUMBER_TO_ADD) - kNUM_SUBTRACTIONS -
-            (kNUM_NUMBER_SUBTRACTIONS * kNUMBER_TO_SUBTRACT)
+        kNumAdditions + (kNumNumberAdditions * kNumberToAdd) - kNumSubtractions -
+            (kNumNumberSubtractions * kNumberToSubtract)
     );
 }
 
@@ -151,30 +151,30 @@ TEST_F(GaugeDoubleTests, set)
 
 TEST_F(GaugeDoubleTests, multithreadAddAndSubtract)
 {
-    static constexpr auto kNUM_ADDITIONS = 1000;
-    static constexpr auto kNUM_NUMBER_ADDITIONS = 100;
-    static constexpr auto kNUMBER_TO_ADD = 11.1234;
-    static constexpr auto kNUM_SUBTRACTIONS = 2000;
-    static constexpr auto kNUM_NUMBER_SUBTRACTIONS = 300;
-    static constexpr auto kNUMBER_TO_SUBTRACT = 300.321;
+    static constexpr auto kNumAdditions = 1000;
+    static constexpr auto kNumNumberAdditions = 100;
+    static constexpr auto kNumberToAdd = 11.1234;
+    static constexpr auto kNumSubtractions = 2000;
+    static constexpr auto kNumNumberSubtractions = 300;
+    static constexpr auto kNumberToSubtract = 300.321;
     std::thread thread1([&] {
-        for (int i = 0; i < kNUM_ADDITIONS; ++i) {
+        for (int i = 0; i < kNumAdditions; ++i) {
             ++gauge;
         }
     });
     std::thread thread2([&] {
-        for (int i = 0; i < kNUM_NUMBER_ADDITIONS; ++i) {
-            gauge += kNUMBER_TO_ADD;
+        for (int i = 0; i < kNumNumberAdditions; ++i) {
+            gauge += kNumberToAdd;
         }
     });
     std::thread thread3([&] {
-        for (int i = 0; i < kNUM_SUBTRACTIONS; ++i) {
+        for (int i = 0; i < kNumSubtractions; ++i) {
             --gauge;
         }
     });
     std::thread thread4([&] {
-        for (int i = 0; i < kNUM_NUMBER_SUBTRACTIONS; ++i) {
-            gauge -= kNUMBER_TO_SUBTRACT;
+        for (int i = 0; i < kNumNumberSubtractions; ++i) {
+            gauge -= kNumberToSubtract;
         }
     });
     thread1.join();
@@ -183,8 +183,8 @@ TEST_F(GaugeDoubleTests, multithreadAddAndSubtract)
     thread4.join();
     EXPECT_NEAR(
         gauge.value(),
-        kNUM_ADDITIONS + (kNUM_NUMBER_ADDITIONS * kNUMBER_TO_ADD) - kNUM_SUBTRACTIONS -
-            (kNUM_NUMBER_SUBTRACTIONS * kNUMBER_TO_SUBTRACT),
+        kNumAdditions + (kNumNumberAdditions * kNumberToAdd) - kNumSubtractions -
+            (kNumNumberSubtractions * kNumberToSubtract),
         1e-9
     );
 }

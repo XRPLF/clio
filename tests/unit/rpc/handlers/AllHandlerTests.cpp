@@ -57,13 +57,12 @@ using ::testing::Types;
 using namespace rpc;
 using TestServerInfoHandler = BaseServerInfoHandler<MockCounters>;
 
-static constexpr auto kINDEX1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
-static constexpr auto kAMM_ACCOUNT = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";
-static constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-static constexpr auto kNFT_ID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
-static constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
-static constexpr auto kVAULT_ID =
-    "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303";
+static constexpr auto kIndex1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+static constexpr auto kAmmAccount = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";
+static constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+static constexpr auto kNftId = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
+static constexpr auto kCurrency = "0158415500000000C1F76FF6ECB0BAC600000000";
+static constexpr auto kVaultId = "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303";
 
 using AnyHandlerType = Types<
     AccountChannelsHandler,
@@ -169,7 +168,7 @@ AccountInfoHandler::Input
 createInput<AccountInfoHandler>()
 {
     AccountInfoHandler::Input input{};
-    input.account = kACCOUNT;
+    input.account = kAccount;
     input.ident = "asdf";
     return input;
 }
@@ -179,7 +178,7 @@ AccountTxHandler::Input
 createInput<AccountTxHandler>()
 {
     AccountTxHandler::Input input{};
-    input.account = kACCOUNT;
+    input.account = kAccount;
     return input;
 }
 
@@ -188,7 +187,7 @@ AMMInfoHandler::Input
 createInput<AMMInfoHandler>()
 {
     AMMInfoHandler::Input input{};
-    input.ammAccount = getAccountIdWithString(kAMM_ACCOUNT);
+    input.ammAccount = getAccountIdWithString(kAmmAccount);
     return input;
 }
 
@@ -197,10 +196,10 @@ BookOffersHandler::Input
 createInput<BookOffersHandler>()
 {
     BookOffersHandler::Input input{};
-    input.paysCurrency = ripple::xrpCurrency();
-    input.getsCurrency = ripple::Currency(kCURRENCY);
-    input.paysID = ripple::xrpAccount();
-    input.getsID = getAccountIdWithString(kACCOUNT);
+    input.paysCurrency = xrpl::xrpCurrency();
+    input.getsCurrency = xrpl::Currency(kCurrency);
+    input.paysID = xrpl::xrpAccount();
+    input.getsID = getAccountIdWithString(kAccount);
 
     return input;
 }
@@ -210,7 +209,7 @@ LedgerEntryHandler::Input
 createInput<LedgerEntryHandler>()
 {
     LedgerEntryHandler::Input input{};
-    input.index = kINDEX1;
+    input.index = kIndex1;
     return input;
 }
 
@@ -219,7 +218,7 @@ NFTBuyOffersHandler::Input
 createInput<NFTBuyOffersHandler>()
 {
     NFTBuyOffersHandler::Input input{};
-    input.nftID = kNFT_ID;
+    input.nftID = kNftId;
     return input;
 }
 
@@ -228,7 +227,7 @@ NFTInfoHandler::Input
 createInput<NFTInfoHandler>()
 {
     NFTInfoHandler::Input input{};
-    input.nftID = kNFT_ID;
+    input.nftID = kNftId;
     return input;
 }
 
@@ -237,7 +236,7 @@ NFTSellOffersHandler::Input
 createInput<NFTSellOffersHandler>()
 {
     NFTSellOffersHandler::Input input{};
-    input.nftID = kNFT_ID;
+    input.nftID = kNftId;
     return input;
 }
 
@@ -248,7 +247,7 @@ createInput<SubscribeHandler>()
     SubscribeHandler::Input input{};
 
     input.books = std::vector<SubscribeHandler::OrderBook>{SubscribeHandler::OrderBook{
-        .book = ripple::Book{}, .taker = kACCOUNT, .snapshot = true, .both = true
+        .book = xrpl::Book{}, .taker = kAccount, .snapshot = true, .both = true
     }};
     return input;
 }
@@ -258,7 +257,7 @@ VaultInfoHandler::Input
 createInput<VaultInfoHandler>()
 {
     VaultInfoHandler::Input input{};
-    input.vaultID = kVAULT_ID;
+    input.vaultID = kVaultId;
 
     return input;
 }

@@ -93,7 +93,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(full), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(full), check::Deprecated{}},
             {JS(accounts), validation::Type<bool>{}, validation::NotSupported{true}},
@@ -110,7 +110,7 @@ public:
             {JS(type), check::Deprecated{}},
         };
 
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
     /**

@@ -8,13 +8,13 @@
 #include <string>
 
 namespace {
-constexpr auto kCONTEXT_DELETER = [](CassSsl* ptr) { cass_ssl_free(ptr); };
+constexpr auto kContextDeleter = [](CassSsl* ptr) { cass_ssl_free(ptr); };
 }  // namespace
 
 namespace data::cassandra::impl {
 
 SslContext::SslContext(std::string const& certificate)
-    : ManagedObject{cass_ssl_new(), kCONTEXT_DELETER}
+    : ManagedObject{cass_ssl_new(), kContextDeleter}
 {
     cass_ssl_set_verify_flags(*this, CASS_SSL_VERIFY_NONE);
     if (auto const rc = cass_ssl_add_trusted_cert(*this, certificate.c_str()); rc != CASS_OK) {

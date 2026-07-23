@@ -14,9 +14,9 @@
 
 namespace {
 
-constexpr auto kDEFAULT_API_VERSION = 3u;
-constexpr auto kMIN_API_VERSION = 2u;
-constexpr auto kMAX_API_VERSION = 10u;
+constexpr auto kDefaultApiVersion = 3u;
+constexpr auto kMinApiVersion = 2u;
+constexpr auto kMaxApiVersion = 10u;
 
 }  // namespace
 
@@ -28,9 +28,9 @@ class RPCVersionHandlerTest : public HandlerBaseTest {};
 TEST_F(RPCVersionHandlerTest, Default)
 {
     ClioConfigDefinition cfg{
-        {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(kMIN_API_VERSION)},
-        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(kMAX_API_VERSION)},
-        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(kDEFAULT_API_VERSION)}
+        {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(kMinApiVersion)},
+        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(kMaxApiVersion)},
+        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(kDefaultApiVersion)}
     };
 
     boost::json::value jsonData = boost::json::parse(
@@ -40,9 +40,9 @@ TEST_F(RPCVersionHandlerTest, Default)
                 "api_version.max": {},
                 "api_version.default": {}
             }})JSON",
-            kMIN_API_VERSION,
-            kMAX_API_VERSION,
-            kDEFAULT_API_VERSION
+            kMinApiVersion,
+            kMaxApiVersion,
+            kDefaultApiVersion
         )
     );
 

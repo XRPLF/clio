@@ -32,9 +32,9 @@ class AccountChannelsHandler {
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
 public:
-    static constexpr auto kLIMIT_MIN = 10;
-    static constexpr auto kLIMIT_MAX = 400;
-    static constexpr auto kLIMIT_DEFAULT = 200;
+    static constexpr auto kLimitMin = 10;
+    static constexpr auto kLimitMax = 400;
+    static constexpr auto kLimitDefault = 200;
 
     /**
      * @brief A struct to hold data for one channel response
@@ -78,7 +78,7 @@ public:
         std::optional<std::string> destinationAccount;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = kLIMIT_DEFAULT;
+        uint32_t limit = kLimitDefault;
         std::optional<std::string> marker;
     };
 
@@ -103,7 +103,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
             {JS(destination_account),
              validation::Type<std::string>{},
@@ -112,12 +112,12 @@ public:
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
+             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(marker), validation::CustomValidators::accountMarkerValidator},
         };
 
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
     /**
@@ -132,7 +132,7 @@ public:
 
 private:
     static void
-    addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle);
+    addChannel(std::vector<ChannelResponse>& jsonChannels, xrpl::SLE const& channelSle);
 
     /**
      * @brief Convert the Output to a JSON object

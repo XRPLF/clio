@@ -26,7 +26,7 @@ class ConfigValue;
 /**
  * @brief specific values that are accepted for logger levels in config.
  */
-static constexpr std::array<std::string_view, 6> kLOG_LEVELS = {
+static constexpr std::array<std::string_view, 6> kLogLevels = {
     "trace",
     "debug",
     "info",
@@ -38,7 +38,7 @@ static constexpr std::array<std::string_view, 6> kLOG_LEVELS = {
 /**
  * @brief specific values that are accepted for logger tag style in config.
  */
-static constexpr std::array<std::string_view, 5> kLOG_TAGS = {
+static constexpr std::array<std::string_view, 5> kLogTags = {
     "int",
     "uint",
     "null",
@@ -49,7 +49,7 @@ static constexpr std::array<std::string_view, 5> kLOG_TAGS = {
 /**
  * @brief specific values that are accepted for cache loading in config.
  */
-static constexpr std::array<std::string_view, 3> kLOAD_CACHE_MODE = {
+static constexpr std::array<std::string_view, 3> kLoadCacheMode = {
     "sync",
     "async",
     "none",
@@ -58,17 +58,17 @@ static constexpr std::array<std::string_view, 3> kLOAD_CACHE_MODE = {
 /**
  * @brief specific values that are accepted for database type in config.
  */
-static constexpr std::array<std::string_view, 1> kDATABASE_TYPE = {"cassandra"};
+static constexpr std::array<std::string_view, 1> kDatabaseType = {"cassandra"};
 
 /**
  * @brief specific values that are accepted for server's processing_policy in config.
  */
-static constexpr std::array<std::string_view, 2> kPROCESSING_POLICY = {"parallel", "sequent"};
+static constexpr std::array<std::string_view, 2> kProcessingPolicy = {"parallel", "sequent"};
 
 /**
  * @brief specific values that are accepted for database provider in config.
  */
-static constexpr std::array<std::string_view, 2> kPROVIDER = {"cassandra", "aws_keyspace"};
+static constexpr std::array<std::string_view, 2> kProvider = {"cassandra", "aws_keyspace"};
 
 /**
  * @brief An interface to enforce constraints on certain values within ClioConfigDefinition.
@@ -199,12 +199,12 @@ private:
     print(std::ostream& stream) const override
     {
         stream << fmt::format(
-            "The minimum value is `{}`. The maximum value is `{}`.", kPORT_MIN, kPORT_MAX
+            "The minimum value is `{}`. The maximum value is `{}`.", kPortMin, kPortMax
         );
     }
 
-    static constexpr uint32_t kPORT_MIN = 1;
-    static constexpr uint32_t kPORT_MAX = 65535;
+    static constexpr uint32_t kPortMin = 1;
+    static constexpr uint32_t kPortMax = 65535;
 };
 
 /**
@@ -462,13 +462,13 @@ private:
 static constinit PortConstraint gValidatePort{};
 static constinit ValidIPConstraint gValidateIp{};
 
-static constinit OneOf gValidateChannelName{"channel", Logger::kCHANNELS};
-static constinit OneOf gValidateLogLevelName{"log.level", kLOG_LEVELS};
-static constinit OneOf gValidateCassandraName{"database.type", kDATABASE_TYPE};
-static constinit OneOf gValidateLoadMode{"cache.load", kLOAD_CACHE_MODE};
-static constinit OneOf gValidateLogTag{"log.tag_style", kLOG_TAGS};
-static constinit OneOf gValidateProcessingPolicy{"server.processing_policy", kPROCESSING_POLICY};
-static constinit OneOf gValidateProvider{"database.cassandra.provider", kPROVIDER};
+static constinit OneOf gValidateChannelName{"channel", Logger::kChannels};
+static constinit OneOf gValidateLogLevelName{"log.level", kLogLevels};
+static constinit OneOf gValidateCassandraName{"database.type", kDatabaseType};
+static constinit OneOf gValidateLoadMode{"cache.load", kLoadCacheMode};
+static constinit OneOf gValidateLogTag{"log.tag_style", kLogTags};
+static constinit OneOf gValidateProcessingPolicy{"server.processing_policy", kProcessingPolicy};
+static constinit OneOf gValidateProvider{"database.cassandra.provider", kProvider};
 
 static constinit PositiveDouble gValidatePositiveDouble{};
 
@@ -498,8 +498,8 @@ static constinit NumberValueConstraint<uint32_t> gValidateNonNegativeUint32{
     std::numeric_limits<uint32_t>::max()
 };
 static constinit NumberValueConstraint<uint32_t> gValidateApiVersion{
-    rpc::kAPI_VERSION_MIN,
-    rpc::kAPI_VERSION_MAX
+    rpc::kApiVersionMin,
+    rpc::kApiVersionMax
 };
 
 static constinit RpcNameConstraint gRpcNameConstraint{};

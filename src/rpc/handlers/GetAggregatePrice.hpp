@@ -39,9 +39,9 @@ public:
      * @brief A struct to hold the statistics
      */
     struct Stats {
-        ripple::STAmount avg{};  // NOLINT(readability-redundant-member-init)
+        xrpl::STAmount avg{};  // NOLINT(readability-redundant-member-init)
         // standard deviation
-        ripple::Number sd{};  // NOLINT(readability-redundant-member-init)
+        xrpl::Number sd{};  // NOLINT(readability-redundant-member-init)
         uint32_t size{0};
     };
 
@@ -63,7 +63,7 @@ public:
      */
     struct Oracle {
         std::uint32_t documentId{0};
-        ripple::AccountID account;
+        xrpl::AccountID account;
     };
 
     /**
@@ -100,19 +100,19 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static constexpr auto kORACLES_MAX = 200;
+        static constexpr auto kOraclesMax = 200;
 
-        static auto const kORACLES_VALIDATOR = modifiers::CustomModifier{
+        static auto const kOraclesValidator = modifiers::CustomModifier{
             [](boost::json::value& value, std::string_view) -> MaybeError {
                 if (!value.is_array() or value.as_array().empty() or
-                    value.as_array().size() > kORACLES_MAX)
-                    return Error{Status{RippledError::rpcORACLE_MALFORMED}};
+                    value.as_array().size() > kOraclesMax)
+                    return Error{Status{RippledError::RpcOracleMalformed}};
 
                 for (auto& oracle : value.as_array()) {
                     if (!oracle.is_object() or
                         !oracle.as_object().contains(JS(oracle_document_id)) or
                         !oracle.as_object().contains(JS(account)))
-                        return Error{Status{RippledError::rpcORACLE_MALFORMED}};
+                        return Error{Status{RippledError::RpcOracleMalformed}};
 
                     auto maybeError = validation::Type<std::uint32_t, std::string>{}.verify(
                         oracle, JS(oracle_document_id)
@@ -128,14 +128,14 @@ public:
                         oracle.as_object(), JS(account)
                     );
                     if (!maybeError)
-                        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+                        return Error{Status{RippledError::RpcInvalidParams}};
                 };
 
                 return MaybeError{};
             }
         };
 
-        static auto const kRPC_SPEC = RpcSpec{
+        static auto const kRpcSpec = RpcSpec{
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             // validate quoteAsset and base_asset in accordance to the currency code found in XRPL
@@ -147,15 +147,15 @@ public:
              validation::Required{},
              meta::WithCustomError{
                  validation::CustomValidators::currencyValidator,
-                 Status(RippledError::rpcINVALID_PARAMS)
+                 Status(RippledError::RpcInvalidParams)
              }},
             {JS(quote_asset),
              validation::Required{},
              meta::WithCustomError{
                  validation::CustomValidators::currencyValidator,
-                 Status(RippledError::rpcINVALID_PARAMS)
+                 Status(RippledError::RpcInvalidParams)
              }},
-            {JS(oracles), validation::Required{}, kORACLES_VALIDATOR},
+            {JS(oracles), validation::Required{}, kOraclesValidator},
             // note: Unlike `rippled`, Clio only supports UInt as input, no string, no `null`, etc.
             {JS(time_threshold), validation::Type<std::uint32_t>{}},
             {
@@ -165,7 +165,7 @@ public:
             }
         };
 
-        return kRPC_SPEC;
+        return kRpcSpec;
     }
 
     /**
@@ -181,14 +181,15 @@ public:
 private:
     /**
      * @brief Calls callback on the oracle ledger entry
-     If the oracle entry does not contains the price pair, search up to three previous metadata
-     objects. Stops early if the callback returns true.
+     *
+     * If the oracle entry does not contains the price pair, search up to three previous metadata
+     * objects. Stops early if the callback returns true.
      */
     void
     tracebackOracleObject(
         boost::asio::yield_context yield,
-        ripple::STObject const& oracleObject,
-        std::function<bool(ripple::STObject const&)> const& callback
+        xrpl::STObject const& oracleObject,
+        std::function<bool(xrpl::STObject const&)> const& callback
     ) const;
 
     /**

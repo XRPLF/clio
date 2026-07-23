@@ -24,18 +24,18 @@ class GrpcSource {
     std::unique_ptr<std::atomic_bool> initialLoadShouldStop_;
     std::chrono::system_clock::duration deadline_;
 
-    static constexpr auto kKEEPALIVE_PING_INTERVAL_MS = 10000;
-    static constexpr auto kKEEPALIVE_TIMEOUT_MS = 5000;
-    static constexpr auto kKEEPALIVE_PERMIT_WITHOUT_CALLS =
-        true;                                           // Allow keepalive pings when no calls
-    static constexpr auto kMAX_PINGS_WITHOUT_DATA = 0;  // No limit
-    static constexpr auto kDEADLINE = std::chrono::seconds(30);
+    static constexpr auto kKeepalivePingIntervalMs = 10000;
+    static constexpr auto kKeepaliveTimeoutMs = 5000;
+    static constexpr auto kKeepalivePermitWithoutCalls =
+        true;                                        // Allow keepalive pings when no calls
+    static constexpr auto kMaxPingsWithoutData = 0;  // No limit
+    static constexpr auto kDeadline = std::chrono::seconds(30);
 
 public:
     GrpcSource(
         std::string const& ip,
         std::string const& grpcPort,
-        std::chrono::system_clock::duration deadline = kDEADLINE
+        std::chrono::system_clock::duration deadline = kDeadline
     );
 
     /**

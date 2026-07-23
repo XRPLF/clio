@@ -6,7 +6,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 
@@ -31,9 +30,9 @@ TEST_F(NetworkValidatedLedgersTests, WaitUntilValidatedByNetworkWithoutTimeout)
 
 TEST_F(NetworkValidatedLedgersTests, WaitUntilValidatedByNetworkWithTimeout)
 {
-    static constexpr auto kTIMEOUT_MILLIS = 10u;
+    static constexpr auto kTimeoutMillis = 10u;
     auto awaitable = ctx_.execute([this] {
-        return ledgers_->waitUntilValidatedByNetwork(123u, kTIMEOUT_MILLIS);
+        return ledgers_->waitUntilValidatedByNetwork(123u, kTimeoutMillis);
     });
 
     ledgers_->push(122u);

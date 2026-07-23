@@ -60,7 +60,7 @@ public:
      */
     SignalsHandler(
         util::config::ClioConfigDefinition const& config,
-        std::function<void()> forceExitHandler = kDEFAULT_FORCE_EXIT_HANDLER
+        std::function<void()> forceExitHandler = kDefaultForceExitHandler
     );
 
     SignalsHandler(SignalsHandler const&) = delete;
@@ -96,7 +96,7 @@ public:
     void
     notifyGracefulShutdownComplete();
 
-    static constexpr auto kHANDLED_SIGNALS = {SIGINT, SIGTERM};
+    static constexpr auto kHandledSignals = {SIGINT, SIGTERM};
 
 private:
     /**
@@ -113,7 +113,7 @@ private:
     void
     runStateMachine();
 
-    static constexpr auto kDEFAULT_FORCE_EXIT_HANDLER = []() { std::exit(EXIT_FAILURE); };
+    static constexpr auto kDefaultForceExitHandler = []() { std::exit(EXIT_FAILURE); };
 };
 
 }  // namespace util

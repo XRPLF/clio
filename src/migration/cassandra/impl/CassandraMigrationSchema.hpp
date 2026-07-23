@@ -71,7 +71,7 @@ public:
     data::cassandra::PreparedStatement const&
     getPreparedInsertMigratedMigrator(data::cassandra::Handle const& handler)
     {
-        static auto kPREPARED = handler.prepare(
+        static auto kPrepared = handler.prepare(
             fmt::format(
                 R"(
             INSERT INTO {}
@@ -83,7 +83,7 @@ public:
                 )
             )
         );
-        return kPREPARED;
+        return kPrepared;
     }
 };
 }  // namespace migration::cassandra::impl

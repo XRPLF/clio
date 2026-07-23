@@ -6,5 +6,5 @@ find_package(
     1.82
     REQUIRED
     CONFIG
-    COMPONENTS program_options coroutine system log log_setup
+    COMPONENTS program_options system log log_setup
 )

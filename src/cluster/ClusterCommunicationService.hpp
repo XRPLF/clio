@@ -36,8 +36,8 @@ class ClusterCommunicationService : public ClusterCommunicationServiceTag {
     CacheLoaderDecider cacheLoaderDecider_;
 
 public:
-    static constexpr std::chrono::milliseconds kDEFAULT_READ_INTERVAL{1000};
-    static constexpr std::chrono::milliseconds kDEFAULT_WRITE_INTERVAL{1000};
+    static constexpr std::chrono::milliseconds kDefaultReadInterval{1000};
+    static constexpr std::chrono::milliseconds kDefaultWriteInterval{1000};
 
     /**
      * @brief Construct a new Cluster Communication Service object.
@@ -52,8 +52,8 @@ public:
         std::shared_ptr<data::BackendInterface> backend,
         std::unique_ptr<etl::WriterStateInterface> writerState,
         std::unique_ptr<data::LedgerCacheLoadingStateInterface> cacheLoadingState,
-        std::chrono::steady_clock::duration readInterval = kDEFAULT_READ_INTERVAL,
-        std::chrono::steady_clock::duration writeInterval = kDEFAULT_WRITE_INTERVAL
+        std::chrono::steady_clock::duration readInterval = kDefaultReadInterval,
+        std::chrono::steady_clock::duration writeInterval = kDefaultWriteInterval
     );
 
     ~ClusterCommunicationService() override;

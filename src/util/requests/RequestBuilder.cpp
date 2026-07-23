@@ -12,7 +12,6 @@
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/field.hpp>
-#include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
@@ -118,18 +117,16 @@ std::expected<std::string, RequestError>
 RequestBuilder::doSslRequest(asio::yield_context yield, beast::http::verb method)
 {
     auto streamData = impl::SslTcpStreamData::create(yield);
-    if (not streamData.has_value())
-        return std::unexpected{std::move(streamData).error()};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-    if (!SSL_set_tlsext_host_name(streamData->stream.native_handle(), host_.c_str())) {
+    if (!SSL_set_tlsext_host_name(streamData.stream.native_handle(), host_.c_str())) {
 #pragma GCC diagnostic pop
         beast::error_code errorCode;
         errorCode.assign(static_cast<int>(::ERR_get_error()), asio::error::get_ssl_category());
         return std::unexpected{RequestError{"SSL setup failed", errorCode}};
     }
-    return doRequestImpl(std::move(streamData).value(), yield, method);
+    return doRequestImpl(std::move(streamData), yield, method);
 }
 
 std::expected<std::string, RequestError>
@@ -185,7 +182,7 @@ RequestBuilder::doRequestImpl(
 
     request_.method(method);
 
-    if constexpr (StreamDataType::kSSL_ENABLED) {
+    if constexpr (StreamDataType::kSslEnabled) {
         beast::get_lowest_layer(stream).expires_after(timeout_);
         stream.async_handshake(asio::ssl::stream_base::client, yield[errorCode]);
         if (errorCode)

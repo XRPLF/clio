@@ -60,7 +60,7 @@ public:
     /**
      * @brief The prefix for the password in the request header.
      */
-    static constexpr std::string_view kPASSWORD_PREFIX = "Password ";
+    static constexpr std::string_view kPasswordPrefix = "Password ";
 
     /**
      * @brief Construct a new PasswordAdminVerificationStrategy object

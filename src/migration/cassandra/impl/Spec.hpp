@@ -16,7 +16,7 @@ concept TableSpec = requires {
     requires std::tuple_size_v<typename T::Row> >= 0;  // Ensures 'row' is a tuple
 
     // Check that static constexpr members 'partitionKey' and 'tableName' exist
-    { T::kPARTITION_KEY } -> std::convertible_to<char const*>;
-    { T::kTABLE_NAME } -> std::convertible_to<char const*>;
+    { T::kPartitionKey } -> std::convertible_to<char const*>;
+    { T::kTableName } -> std::convertible_to<char const*>;
 };
 }  // namespace migration::cassandra::impl

@@ -119,21 +119,22 @@ class BasicExecutionContext : public ExecutionContextTag {
     /** @endcond */
 
 public:
-    /** @brief Whether operations on this execution context are noexcept */
-    static constexpr bool kIS_NOEXCEPT =
-        noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; })) and
+    /**
+     * @brief Whether operations on this execution context are noexcept
+     */
+    static constexpr bool kIsNoexcept = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; })) and
         noexcept(ErrorHandlerType::catchAndAssert([] { throw 0; }));
 
     using ContextHolderType = ContextType;
 
-    using ExecutorType = typename ContextHolderType::Executor;
+    using ExecutorType = ContextHolderType::Executor;
 
     template <typename T>
     using ValueType = std::expected<T, ExecutionError>;
 
     using StopSource = StopSourceType;
 
-    using StopToken = typename StopSourceType::Token;
+    using StopToken = StopSourceType::Token;
 
     template <typename T>
     using StoppableOperation = StoppableOperation<ValueType<T>, StopSourceType>;
@@ -148,7 +149,7 @@ public:
         TimerContextProvider,
         ErrorHandlerType>;
 
-    using Timer = typename ContextHolderType::Timer;
+    using Timer = ContextHolderType::Timer;
 
     // note: scheduled operations are always stoppable
     template <typename T>
@@ -190,7 +191,7 @@ public:
         SomeStdDuration auto delay,
         SomeHandlerWith<StopToken> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    ) noexcept(kIS_NOEXCEPT)
+    ) noexcept(kIsNoexcept)
     {
         if constexpr (not std::is_same_v<
                           decltype(TimerContextProvider::getContext(*this)),
@@ -235,7 +236,7 @@ public:
         SomeStdDuration auto delay,
         SomeHandlerWith<StopToken, bool> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    ) noexcept(kIS_NOEXCEPT)
+    ) noexcept(kIsNoexcept)
     {
         if constexpr (not std::is_same_v<
                           decltype(TimerContextProvider::getContext(*this)),
@@ -283,7 +284,7 @@ public:
     executeRepeatedly(
         SomeStdDuration auto interval,
         SomeHandlerWithoutStopToken auto&& fn
-    ) noexcept(kIS_NOEXCEPT)
+    ) noexcept(kIsNoexcept)
     {
         if constexpr (not std::is_same_v<
                           decltype(TimerContextProvider::getContext(*this)),
@@ -309,7 +310,7 @@ public:
     execute(
         SomeHandlerWith<StopToken> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    ) noexcept(kIS_NOEXCEPT)
+    ) noexcept(kIsNoexcept)
     {
         return DispatcherType::dispatch(
             context_,
@@ -343,7 +344,7 @@ public:
      */
     [[nodiscard]] auto
     execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(
-        kIS_NOEXCEPT
+        kIsNoexcept
     )
     {
         return execute(
@@ -360,7 +361,7 @@ public:
      * @return A unstoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept(kIS_NOEXCEPT)
+    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept(kIsNoexcept)
     {
         return DispatcherType::dispatch(
             context_,
@@ -384,7 +385,7 @@ public:
      * @param fn The block of code to execute
      */
     void
-    submit(SomeHandlerWithoutStopToken auto&& fn) noexcept(kIS_NOEXCEPT)
+    submit(SomeHandlerWithoutStopToken auto&& fn) noexcept(kIsNoexcept)
     {
         DispatcherType::post(context_, ErrorHandlerType::catchAndAssert(fn));
     }
@@ -426,7 +427,7 @@ public:
      *
      * @return Reference to the underlying executor
      */
-    typename ContextType::Executor&
+    ContextType::Executor&
     getExecutor()
     {
         return context_.getExecutor();

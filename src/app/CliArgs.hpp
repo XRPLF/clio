@@ -16,31 +16,39 @@ public:
     /**
      * @brief Default configuration path.
      */
-    static constexpr char kDEFAULT_CONFIG_PATH[] = "/etc/opt/clio/config.json";
+    static constexpr char kDefaultConfigPath[] = "/etc/opt/clio/config.json";
 
     /**
      * @brief An action parsed from the command line.
      */
     class Action {
     public:
-        /** @brief Run action. */
+        /**
+         * @brief Run action.
+         */
         struct Run {
             std::string configPath;  ///< Configuration file path.
             bool useNgWebServer;     ///< Whether to use a ng web server
         };
 
-        /** @brief Exit action. */
+        /**
+         * @brief Exit action.
+         */
         struct Exit {
             int exitCode;  ///< Exit code.
         };
 
-        /** @brief Migration action. */
+        /**
+         * @brief Migration action.
+         */
         struct Migrate {
             std::string configPath;
             MigrateSubCmd subCmd;
         };
 
-        /** @brief Verify Config action. */
+        /**
+         * @brief Verify Config action.
+         */
         struct VerifyConfig {
             std::string configPath;
         };

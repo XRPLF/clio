@@ -143,7 +143,9 @@ public:
         return res;
     }
 
-    /** @return String representation of the source (for debug) */
+    /**
+     * @return String representation of the source (for debug)
+     */
     [[nodiscard]] std::string
     toString() const final
     {
