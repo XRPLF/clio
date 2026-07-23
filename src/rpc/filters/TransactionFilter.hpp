@@ -32,7 +32,7 @@ namespace rpc {
  */
 struct FilterResult {
     bool shouldInclude;
-    std::optional<ripple::AccountID> relevantAccount;
+    std::optional<xrpl::AccountID> relevantAccount;
 };
 
 /**

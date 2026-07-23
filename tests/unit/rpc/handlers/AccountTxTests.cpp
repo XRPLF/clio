@@ -1262,10 +1262,10 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
 
 TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent)
 {
-    auto transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
+    auto transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
 
     for (auto& txn : transactions) {
-        txn.transaction = createDelegateBlob(kACCOUNT2, kACCOUNT);
+        txn.transaction = createDelegateBlob(kAccount2, kAccount);
     }
 
     auto const transCursor =
@@ -1279,17 +1279,17 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(R"JSON({
+        static auto const kInput = boost::json::parse(R"JSON({
             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "delegate": {
                 "delegate_filter": "delegator"
             }
         })JSON");
 
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
 
-        EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
+        EXPECT_EQ(output.result->at("account").as_string(), kAccount);
         auto const& txs = output.result->at("transactions").as_array();
         ASSERT_EQ(txs.size(), 2);
 
@@ -1301,11 +1301,11 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent)
 
 TEST_F(RPCAccountTxHandlerTest, WithDelegateFromAndCounterparty)
 {
-    auto transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto constexpr kCOUNTERPARTY = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+    auto transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
+    auto constexpr kCounterparty = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 
     for (auto& txn : transactions) {
-        txn.transaction = createDelegateBlob(kACCOUNT, kCOUNTERPARTY);
+        txn.transaction = createDelegateBlob(kAccount, kCounterparty);
     }
 
     auto const transCursor =
@@ -1320,7 +1320,7 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateFromAndCounterparty)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(
+        static auto const kInput = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -1329,18 +1329,18 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateFromAndCounterparty)
                         "counterparty": "{}"
                     }}
                 }})JSON",
-                kCOUNTERPARTY
+                kCounterparty
             )
         );
 
-        auto const output = handler.process(kINPUT, Context{yield});
+        auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
 
         auto const& txs = output.result->at("transactions").as_array();
         ASSERT_EQ(txs.size(), 2);
 
         EXPECT_TRUE(txs[0].as_object().contains("delegatee"));
-        EXPECT_EQ(txs[0].at("delegatee").as_string(), kCOUNTERPARTY);
+        EXPECT_EQ(txs[0].at("delegatee").as_string(), kCounterparty);
     });
 }
 

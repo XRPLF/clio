@@ -78,7 +78,7 @@ createLedgerHeader(std::string_view ledgerHash, xrpl::LedgerIndex seq, std::opti
         // Note: be cautious of using age values close to each other as the underlying NetClock
         // precision is seconds and the small time difference may lead to comparison bugs
         auto const now = duration_cast<seconds>(system_clock::now().time_since_epoch());
-        auto const closeTime = (now - seconds{*age}).count() - kxrplEpochStart;
+        auto const closeTime = (now - seconds{*age}).count() - kRippleEpochStart;
         ledgerHeader.closeTime = xrpl::NetClock::time_point{seconds{closeTime}};
     }
 
@@ -98,7 +98,7 @@ createLedgerHeaderWithUnixTime(
     ledgerHeader.hash = xrpl::uint256{ledgerHash};
     ledgerHeader.seq = seq;
 
-    auto const closeTime = closeTimeUnixStamp - seconds{kxrplEpochStart}.count();
+    auto const closeTime = closeTimeUnixStamp - seconds{kRippleEpochStart}.count();
     ledgerHeader.closeTime = xrpl::NetClock::time_point{seconds{closeTime}};
 
     return ledgerHeader;
@@ -463,7 +463,7 @@ createPaymentChannelLedgerObject(
 }
 
 [[nodiscard]] xrpl::STObject
-createxrplStateLedgerObject(
+createRippleStateLedgerObject(
     std::string_view currency,
     std::string_view issuerId,
     int balance,

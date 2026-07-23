@@ -23,11 +23,9 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/filters/TransactionFilter.hpp"
 
-#include <ripple/basics/Log.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/TxFlags.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/Serializer.h>
 
 #include <optional>
@@ -37,26 +35,26 @@ namespace rpc {
 
 DelegateTransactionFilter::DelegateTransactionFilter(
     rpc::DelegateFilter filter,
-    ripple::AccountID queriedAccount
+    xrpl::AccountID queriedAccount
 )
     : delegateFilter_(std::move(filter)), queriedAccount_(queriedAccount)
 {
     if (delegateFilter_.counterParty)
-        counterparty_ = ripple::parseBase58<ripple::AccountID>(*delegateFilter_.counterParty);
+        counterparty_ = xrpl::parseBase58<xrpl::AccountID>(*delegateFilter_.counterParty);
 }
 
 FilterResult
 DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta) const
 {
-    ripple::SerialIter sit{txnPlusMeta.transaction.data(), txnPlusMeta.transaction.size()};
-    ripple::STTx const sttx{sit};
+    xrpl::SerialIter sit{txnPlusMeta.transaction.data(), txnPlusMeta.transaction.size()};
+    xrpl::STTx const sttx{sit};
 
     // The account where the funds are withdrawn is always delegator
-    auto const txAccount = sttx.getAccountID(ripple::sfAccount);
+    auto const txAccount = sttx.getAccountID(xrpl::sfAccount);
 
-    std::optional<ripple::AccountID> txDelegate;
-    if (sttx.isFieldPresent(ripple::sfDelegate))
-        txDelegate = sttx.getAccountID(ripple::sfDelegate);
+    std::optional<xrpl::AccountID> txDelegate;
+    if (sttx.isFieldPresent(xrpl::sfDelegate))
+        txDelegate = sttx.getAccountID(xrpl::sfDelegate);
 
     // txn with no delegate filter should return immediately
     // Note: should already have been checked in handler code before calling this function though

@@ -40,15 +40,15 @@ public:
      * @param queriedAccount The account currently being queried in account_tx (input from
      * account_tx handler)
      */
-    DelegateTransactionFilter(rpc::DelegateFilter filter, ripple::AccountID queriedAccount);
+    DelegateTransactionFilter(rpc::DelegateFilter filter, xrpl::AccountID queriedAccount);
 
     FilterResult
     check(data::TransactionAndMetadata const& txnPlusMeta) const override;
 
 private:
     rpc::DelegateFilter delegateFilter_;
-    ripple::AccountID queriedAccount_;
-    std::optional<ripple::AccountID> counterparty_;
+    xrpl::AccountID queriedAccount_;
+    std::optional<xrpl::AccountID> counterparty_;
 };
 
 }  // namespace rpc

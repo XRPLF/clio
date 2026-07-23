@@ -51,7 +51,7 @@ struct TransactionAndMetadata {
     Blob metadata;
     std::uint32_t ledgerSequence = 0;
     std::uint32_t date = 0;
-    std::optional<ripple::AccountID> delegatedAccount;
+    std::optional<xrpl::AccountID> delegatedAccount;
 
     TransactionAndMetadata() = default;
 
