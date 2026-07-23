@@ -1874,7 +1874,7 @@ createDelegateBlob(std::string_view owner, std::string_view delegate)
     obj.setFieldU32(xrpl::sfSequence, 1);
     obj.setFieldVL(xrpl::sfSigningPubKey, xrpl::Slice(nullptr, 0));
 
-    xrpl::STTx tx(std::move(obj));
+    xrpl::STTx const tx(std::move(obj));
     xrpl::Serializer s;
     tx.add(s);
     return s.getData();

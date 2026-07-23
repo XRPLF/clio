@@ -13,7 +13,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/STObject.h>
 
 #include <cstdint>

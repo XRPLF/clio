@@ -115,8 +115,12 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     auto const accountID = accountFromStringStrict(input.account);
 
     std::optional<rpc::DelegateTransactionFilter> txFilter;
-    if (input.delegateFilter)
-        txFilter.emplace(*input.delegateFilter, *accountID);
+    if (input.delegateFilter) {
+        txFilter.emplace(
+            *input.delegateFilter,
+            *accountID  // NOLINT(bugprone-unchecked-optional-access)
+        );
+    }
 
     auto const limit = input.limit.value_or(kLimitDefault);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
@@ -207,6 +211,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                 }
 
                 if (relevantAccount) {
+                    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
                     if (input.delegateFilter->delegateType ==
                         rpc::DelegateFilter::Role::Authorizer) {
                         obj[JS(authorizer)] = xrpl::to_string(*relevantAccount);

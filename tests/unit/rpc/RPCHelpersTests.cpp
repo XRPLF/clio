@@ -619,11 +619,13 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_TrustLineIsFrozenAndCheckFreez
 TEST_F(RPCHelpersTest, ParseDelegateType)
 {
     auto result = parseDelegateType(boost::json::value("authorizer"));
-    EXPECT_TRUE(result.has_value());
+    ASSERT_TRUE(result.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(*result, DelegateFilter::Role::Authorizer);
 
     result = parseDelegateType(boost::json::value("actor"));
-    EXPECT_TRUE(result.has_value());
+    ASSERT_TRUE(result.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(*result, DelegateFilter::Role::Actor);
 
     // invalid types
@@ -648,8 +650,10 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
 
         auto const result = parseDelegateFilter(json);
         ASSERT_TRUE(result.has_value());
+        // NOLINTBEGIN(bugprone-unchecked-optional-access)
         EXPECT_EQ(result->delegateType, DelegateFilter::Role::Authorizer);
         EXPECT_FALSE(result->counterParty.has_value());
+        // NOLINTEND(bugprone-unchecked-optional-access)
     }
 
     // delegate agent + counter_party is valid
@@ -662,9 +666,11 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
 
         auto const result = parseDelegateFilter(json);
         ASSERT_TRUE(result.has_value());
+        // NOLINTBEGIN(bugprone-unchecked-optional-access)
         EXPECT_EQ(result->delegateType, DelegateFilter::Role::Actor);
         ASSERT_TRUE(result->counterParty.has_value());
         EXPECT_EQ(*result->counterParty, "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun");
+        // NOLINTEND(bugprone-unchecked-optional-access)
     }
 }
 
