@@ -91,9 +91,8 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_MatchesWhenUserIsSigner)
     auto const& result = filter.check(blob);
     EXPECT_TRUE(result.shouldInclude);
     ASSERT_TRUE(result.relevantAccount.has_value());
-    EXPECT_EQ(
-        *result.relevantAccount, kAccountOwner
-    );  // NOLINT(bugprone-unchecked-optional-access)
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(*result.relevantAccount, kAccountOwner);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_FailsWhenUserIsNotSigner)
@@ -125,9 +124,8 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Match)
     auto const& result = filter.check(blob);
     EXPECT_TRUE(result.shouldInclude);
     ASSERT_TRUE(result.relevantAccount.has_value());
-    EXPECT_EQ(
-        *result.relevantAccount, kAccountOwner
-    );  // NOLINT(bugprone-unchecked-optional-access)
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(*result.relevantAccount, kAccountOwner);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Mismatch)
@@ -161,9 +159,8 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_MatchesWhenUserIsOwner)
     EXPECT_TRUE(result.shouldInclude);
     ASSERT_TRUE(result.relevantAccount.has_value());
     // Should return Signer.
-    EXPECT_EQ(
-        *result.relevantAccount, kAccountDelegator
-    );  // NOLINT(bugprone-unchecked-optional-access)
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(*result.relevantAccount, kAccountDelegator);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleActor_FailsWhenUserIsNotOwner)
@@ -195,9 +192,8 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Match)
     auto const& result = filter.check(blob);
     EXPECT_TRUE(result.shouldInclude);
     ASSERT_TRUE(result.relevantAccount.has_value());
-    EXPECT_EQ(
-        *result.relevantAccount, kAccountDelegator
-    );  // NOLINT(bugprone-unchecked-optional-access)
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(*result.relevantAccount, kAccountDelegator);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Mismatch)
