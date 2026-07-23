@@ -751,7 +751,7 @@ TEST_F(BackendCassandraTest, Basic)
             auto retTxns = backend_->fetchAllTransactionsInLedger(seq, yield);
             for (auto [hash, txn, meta] : txns) {
                 bool found = false;
-                for (auto [retTxn, retMeta, retSeq, retDate, retFilter] : retTxns) {
+                for (auto [retTxn, retMeta, retSeq, retDate] : retTxns) {
                     if (std::strncmp(
                             reinterpret_cast<char const*>(retTxn.data()),
                             static_cast<char const*>(txn.data()),
@@ -782,8 +782,8 @@ TEST_F(BackendCassandraTest, Basic)
                 } while (cursor);
                 EXPECT_EQ(retData.size(), data.size());
                 for (size_t i = 0; i < retData.size(); ++i) {
-                    auto [txn, meta, _, _2, _3] = retData[i];
-                    auto [_4, expTxn, expMeta] = data[i];
+                    auto [txn, meta, _, _2] = retData[i];
+                    auto [_3, expTxn, expMeta] = data[i];
                     EXPECT_STREQ(
                         reinterpret_cast<char const*>(txn.data()),
                         static_cast<char const*>(expTxn.data())

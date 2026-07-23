@@ -23,7 +23,6 @@
 #include "util/TestObject.hpp"
 
 #include <gtest/gtest.h>
-
 #include <xrpl/basics/Slice.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/STTx.h>
@@ -79,16 +78,16 @@ TEST_F(DelegateTransactionFilterTest, ReturnsFalseIfNoDelegateField)
     EXPECT_FALSE(result.shouldInclude);
 }
 
-TEST_F(DelegateTransactionFilterTest, RoleDelegator_MatchesWhenUserIsSigner)
+TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_MatchesWhenUserIsSigner)
 {
-    // I am Account B (Signer). I want to see transactions where I acted as delegator (signed for
-    // someone).
+    // I am Account B (the actor/signer). I want to see transactions where I acted as authorizer's
+    // delegate (signed for someone).
     DelegateFilter filterParams{
         .delegateType = DelegateFilter::Role::Authorizer, .counterParty = std::nullopt
     };
     DelegateTransactionFilter filter(filterParams, kAccountDelegator);
 
-    // Tx: Owner/delegator=A, Signer/delegatee=B
+    // Tx: Owner/authorizer=A, Signer/actor=B
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const& result = filter.check(blob);
@@ -97,22 +96,22 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegator_MatchesWhenUserIsSigner)
     EXPECT_EQ(*result.relevantAccount, kAccountOwner);
 }
 
-TEST_F(DelegateTransactionFilterTest, RoleDelegator_FailsWhenUserIsNotSigner)
+TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_FailsWhenUserIsNotSigner)
 {
-    // I am Account C. I query for Delegator work.
+    // I am Account C. I query for authorizer work.
     DelegateFilter filterParams{
         .delegateType = DelegateFilter::Role::Authorizer, .counterParty = std::nullopt
     };
     DelegateTransactionFilter filter(filterParams, kAccountDestination);
 
-    // Tx: Owner/delegator=A, Signer/delegatee=B (C is not involved)
+    // Tx: Owner/authorizer=A, Signer/actor=B (C is not involved)
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const& result = filter.check(blob);
     EXPECT_FALSE(result.shouldInclude);
 }
 
-TEST_F(DelegateTransactionFilterTest, RoleDelegator_WithCounterparty_Match)
+TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Match)
 {
     // I am Account B (Signer). I want to see work I did specifically for Account A.
     DelegateFilter filterParams{
@@ -120,7 +119,7 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegator_WithCounterparty_Match)
     };
     DelegateTransactionFilter filter(filterParams, kAccountDelegator);
 
-    // Tx: Owner/delegator=A, Signer/delegatee=B
+    // Tx: Owner/authorizer=A, Signer/actor=B
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const& result = filter.check(blob);
@@ -128,7 +127,7 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegator_WithCounterparty_Match)
     EXPECT_EQ(*result.relevantAccount, kAccountOwner);
 }
 
-TEST_F(DelegateTransactionFilterTest, RoleDelegator_WithCounterparty_Mismatch)
+TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Mismatch)
 {
     // I am Account B (Signer). I want to see work I did for Account C.
     DelegateFilter filterParams{
@@ -137,14 +136,14 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegator_WithCounterparty_Mismatch)
     };
     DelegateTransactionFilter filter(filterParams, kAccountDelegator);
 
-    // Tx: Owner/delegator=A, Signer/delegatee=B (Owner A != Counterparty C)
+    // Tx: Owner/authorizer=A, Signer/actor=B (Owner A != Counterparty C)
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const& result = filter.check(blob);
     EXPECT_FALSE(result.shouldInclude);
 }
 
-TEST_F(DelegateTransactionFilterTest, RoleDelegatee_MatchesWhenUserIsOwner)
+TEST_F(DelegateTransactionFilterTest, RoleActor_MatchesWhenUserIsOwner)
 {
     // I am Account A (Owner). I want to see who signed for me.
     DelegateFilter filterParams{
@@ -152,7 +151,7 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegatee_MatchesWhenUserIsOwner)
     };
     DelegateTransactionFilter filter(filterParams, kAccountOwner);
 
-    // Tx: Owner/delegator=A, Signer/delegatee=B
+    // Tx: Owner/authorizer=A, Signer/actor=B
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const& result = filter.check(blob);
@@ -161,22 +160,22 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegatee_MatchesWhenUserIsOwner)
     EXPECT_EQ(*result.relevantAccount, kAccountDelegator);  // Should return Signer
 }
 
-TEST_F(DelegateTransactionFilterTest, RoleDelegatee_FailsWhenUserIsNotOwner)
+TEST_F(DelegateTransactionFilterTest, RoleActor_FailsWhenUserIsNotOwner)
 {
-    // I am Account C. I query for Delegatee work.
+    // I am Account C. I query for actor work.
     DelegateFilter filterParams{
         .delegateType = DelegateFilter::Role::Actor, .counterParty = std::nullopt
     };
     DelegateTransactionFilter filter(filterParams, kAccountDestination);
 
-    // Tx: Owner/delegator=A, Signer/delegatee=B (C is not involved)
+    // Tx: Owner/authorizer=A, Signer/actor=B (C is not involved)
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const& result = filter.check(blob);
     EXPECT_FALSE(result.shouldInclude);
 }
 
-TEST_F(DelegateTransactionFilterTest, RoleDelegatee_WithCounterparty_Match)
+TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Match)
 {
     // I am Account A (Owner). I want to see work signed specifically by B.
     DelegateFilter filterParams{
@@ -184,7 +183,7 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegatee_WithCounterparty_Match)
     };
     DelegateTransactionFilter filter(filterParams, kAccountOwner);
 
-    // Tx: Owner/delegator=A, Signer/delegatee=B
+    // Tx: Owner/authorizer=A, Signer/actor=B
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const& result = filter.check(blob);
@@ -192,7 +191,7 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegatee_WithCounterparty_Match)
     EXPECT_EQ(*result.relevantAccount, kAccountDelegator);
 }
 
-TEST_F(DelegateTransactionFilterTest, RoleDelegatee_WithCounterparty_Mismatch)
+TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Mismatch)
 {
     // I am Account A (Owner). I want to see work signed by C.
     DelegateFilter filterParams{
@@ -200,7 +199,7 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegatee_WithCounterparty_Mismatch)
     };
     DelegateTransactionFilter filter(filterParams, kAccountOwner);
 
-    // Tx: Owner/delegator=A, Signer/delegatee=B (Signer B != Counterparty C)
+    // Tx: Owner/authorizer=A, Signer/actor=B (Signer B != Counterparty C)
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const& result = filter.check(blob);

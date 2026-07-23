@@ -388,7 +388,7 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
 CustomValidator CustomValidators::delegateValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_object())
-            return Error{Status{RippledError::RpcInvalidParams, std::string(key) + " not object"}};
+            return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotObject"}};
 
         auto const& delegate = value.as_object();
         if (!delegate.contains(JS(delegate_filter))) {
@@ -407,7 +407,7 @@ CustomValidator CustomValidators::delegateValidator =
         if (delegate.contains(JS(counter_party)) &&
             !accountValidator.verify(delegate, JS(counter_party))) {
             return Error{Status{
-                RippledError::RpcInvalidParams,
+                RippledError::RpcActMalformed,
                 "Field 'counter_party' value must be a valid account."
             }};
         }

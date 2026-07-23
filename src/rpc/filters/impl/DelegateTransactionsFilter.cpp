@@ -49,7 +49,8 @@ DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta
     xrpl::SerialIter sit{txnPlusMeta.transaction.data(), txnPlusMeta.transaction.size()};
     xrpl::STTx const sttx{sit};
 
-    // The account where the funds are withdrawn is always delegator
+    // The account is always the owner whose funds move; when sfDelegate is present, sfAccount is
+    // the "authorizer" and sfDelegate is the "actor" that signed on its behalf.
     auto const txAccount = sttx.getAccountID(xrpl::sfAccount);
 
     std::optional<xrpl::AccountID> txDelegate;
@@ -61,8 +62,8 @@ DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta
     if (not txDelegate.has_value())
         return {.shouldInclude = false, .relevantAccount = std::nullopt};
 
-    // Filter by "Delegator" ie. User wants to find the Owner.
-    // This implies the user must be the Delegatee that acted on someone's behalf.
+    // Filter by "authorizer" ie. the queried account is the actor (signer) and the user wants to
+    // find the authorizer (owner) it acted for.
     if (delegateFilter_.delegateType == rpc::DelegateFilter::Role::Authorizer) {
         if (*txDelegate == queriedAccount_) {
             if (!counterparty_ || *counterparty_ == txAccount)
@@ -70,8 +71,8 @@ DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta
         }
     }
 
-    // Filter by "Delegatee" ie. User wants to find the Signer who acted on behalf of the user.
-    // This implies the user must be the delegator.
+    // Filter by "actor" ie. the queried account is the authorizer (owner) and the user wants to
+    // find the actor (signer) that acted on its behalf.
     else if (delegateFilter_.delegateType == rpc::DelegateFilter::Role::Actor) {
         if (txAccount == queriedAccount_) {
             if (!counterparty_ || *counterparty_ == *txDelegate)

@@ -112,14 +112,13 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         }
     }
 
+    auto const accountID = accountFromStringStrict(input.account);
+
     std::optional<rpc::DelegateTransactionFilter> txFilter;
-    if (input.delegateFilter) {
-        auto const accountID = accountFromStringStrict(input.account);
+    if (input.delegateFilter)
         txFilter.emplace(*input.delegateFilter, *accountID);
-    }
 
     auto const limit = input.limit.value_or(kLimitDefault);
-    auto const accountID = accountFromStringStrict(input.account);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
         return sharedPtrBackend_->fetchAccountTransactions(
             *accountID, limit, input.forward, cursor, ctx.yield

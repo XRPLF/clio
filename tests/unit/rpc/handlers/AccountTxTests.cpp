@@ -400,7 +400,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "delegate": 123
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "delegate not object"
+                .expectedErrorMessage = "delegateNotObject"
             },
             AccountTxParamTestCaseBundle{
                 .testName = "DelegateFilterMissing",
@@ -430,7 +430,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                         "counter_party": "not_an_account"
                     }
                 })JSON",
-                .expectedError = "invalidParams",
+                .expectedError = "actMalformed",
                 .expectedErrorMessage = "Field 'counter_party' value must be a valid account."
             },
             AccountTxParamTestCaseBundle{
@@ -1341,6 +1341,82 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateFromAndCounterparty)
 
         EXPECT_TRUE(txs[0].as_object().contains("actor"));
         EXPECT_EQ(txs[0].at("actor").as_string(), kCounterparty);
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent_PartialPageMatch)
+{
+    // The fetched page can contain a mix of delegated and non-delegated transactions; only the
+    // ones matching the filter should be in output, so the result can be smaller than the page.
+    auto transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
+    transactions[0].transaction = createDelegateBlob(kAccount2, kAccount);
+
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    EXPECT_CALL(
+        *backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_)
+    )
+        .WillOnce(Return(transCursor));
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
+        static auto const kInput = boost::json::parse(R"JSON({
+            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "delegate": {
+                "delegate_filter": "authorizer"
+            }
+        })JSON");
+
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_TRUE(output);
+
+        auto const& txs = output.result->at("transactions").as_array();
+        ASSERT_EQ(txs.size(), 1);
+        EXPECT_TRUE(txs[0].as_object().contains("authorizer"));
+
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent_ResumesFromMarker)
+{
+    // A marker (from any prior page) combined with a delegate filter should just resume the raw
+    // scan from that position and filter from there; the two are independent of each other.
+    auto transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
+
+    for (auto& txn : transactions) {
+        txn.transaction = createDelegateBlob(kAccount2, kAccount);
+    }
+
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = std::nullopt};
+    EXPECT_CALL(
+        *backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_)
+    )
+        .WillOnce(Return(transCursor));
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
+        static auto const kInput = boost::json::parse(R"JSON({
+            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "marker": {"ledger": 12, "seq": 34},
+            "delegate": {
+                "delegate_filter": "authorizer"
+            }
+        })JSON");
+
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_TRUE(output);
+
+        auto const& txs = output.result->at("transactions").as_array();
+        ASSERT_EQ(txs.size(), 2);
+        EXPECT_FALSE(output.result->as_object().contains("marker"));
     });
 }
 
