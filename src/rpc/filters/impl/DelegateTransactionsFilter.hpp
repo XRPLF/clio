@@ -42,7 +42,7 @@ public:
      */
     DelegateTransactionFilter(rpc::DelegateFilter filter, xrpl::AccountID queriedAccount);
 
-    FilterResult
+    [[nodiscard]] FilterResult
     check(data::TransactionAndMetadata const& txnPlusMeta) const override;
 
 private:

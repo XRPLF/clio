@@ -31,7 +31,7 @@ namespace rpc {
  * @brief Result of a filter check.
  */
 struct FilterResult {
-    bool shouldInclude;
+    bool shouldInclude = false;
     std::optional<xrpl::AccountID> relevantAccount;
 };
 
