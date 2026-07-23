@@ -3,6 +3,7 @@
 
 #include "data/DBHelpers.hpp"
 
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/TxMeta.h>
 
@@ -50,5 +51,24 @@ getMPTHolderFromObj(std::string const& key, std::string const& blob);
  */
 std::vector<MPTokenIssuanceTransactionsData>
 getMPTokenIssuanceTxsFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
+
+/**
+ * @brief Check whether a transaction references a specific MPT issuance.
+ *
+ * @note Scans the same sources as getMPTokenIssuanceTxsFromTx (metadata's affected
+ * MPTokenIssuance/MPToken nodes, and the transaction's own MPTokenIssuanceID/MPT issue fields), but
+ * exits as soon as a match is found instead of collecting every distinct issuance touched.
+ *
+ * @param txMeta Transaction metadata.
+ * @param sttx The transaction.
+ * @param mptIssuanceID The MPT issuance to check for.
+ * @return true if the transaction references mptIssuanceID.
+ */
+bool
+referencesMptIssuance(
+    xrpl::TxMeta const& txMeta,
+    xrpl::STTx const& sttx,
+    xrpl::uint192 const& mptIssuanceID
+);
 
 }  // namespace etl

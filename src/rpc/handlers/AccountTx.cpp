@@ -1,6 +1,7 @@
 #include "rpc/handlers/AccountTx.hpp"
 
 #include "data/Types.hpp"
+#include "etl/MPTHelpers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -16,6 +17,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
@@ -128,6 +130,10 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     if (retCursor)
         response.marker = {.ledger = retCursor->ledgerSequence, .seq = retCursor->transactionIndex};
 
+    std::optional<xrpl::uint192> mptIssuanceFilter;
+    if (input.mptIssuanceId)
+        mptIssuanceFilter = xrpl::uint192{input.mptIssuanceId->c_str()};
+
     for (auto const& txnPlusMeta : blobs) {
         // over the range
         if ((txnPlusMeta.ledgerSequence < minIndex && !input.forward) ||
@@ -150,6 +156,14 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                 util::toLower(boost::json::value_to<std::string>(txn[JS(TransactionType)])) !=
                     *input.transactionTypeInLowercase)
                 continue;
+
+            // Skip all Txns where the specified filter mpt_id doesn't match the query
+            if (mptIssuanceFilter) {
+                auto const [sttx, txMeta] =
+                    deserializeTxPlusMeta(txnPlusMeta, txnPlusMeta.ledgerSequence);
+                if (!etl::referencesMptIssuance(*txMeta, *sttx, *mptIssuanceFilter))
+                    continue;
+            }
 
             if (!input.binary) {
                 auto const txKey = ctx.apiVersion < 2u ? JS(tx) : JS(tx_json);
@@ -296,6 +310,11 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     if (jsonObject.contains("tx_type")) {
         input.transactionTypeInLowercase =
             boost::json::value_to<std::string>(jsonObject.at("tx_type"));
+    }
+
+    if (jsonObject.contains(JS(mpt_issuance_id))) {
+        input.mptIssuanceId =
+            boost::json::value_to<std::string>(jsonObject.at(JS(mpt_issuance_id)));
     }
 
     return input;

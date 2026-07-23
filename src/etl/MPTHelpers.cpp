@@ -155,6 +155,25 @@ getMPTokenIssuanceTxsFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
     return result;
 }
 
+bool
+referencesMptIssuance(
+    xrpl::TxMeta const& txMeta,
+    xrpl::STTx const& sttx,
+    xrpl::uint192 const& mptIssuanceID
+)
+{
+    if (txMeta.getResultTER() == xrpl::tesSUCCESS) {
+        for (auto const& node : txMeta.getNodes()) {
+            if (getMPTokenIssuanceIDFromNode(node) == mptIssuanceID)
+                return true;
+        }
+    }
+
+    MPTokenIssuanceIDs issuanceIDs;
+    addMPTokenIssuanceIDsFromTx(issuanceIDs, sttx);
+    return issuanceIDs.contains(mptIssuanceID);
+}
+
 std::optional<MPTHolderData>
 getMPTHolderFromObj(std::string const& key, std::string const& blob)
 {
