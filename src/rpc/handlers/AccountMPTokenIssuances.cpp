@@ -55,6 +55,7 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
     setFlag(issuance.mptCanTrade, xrpl::lsfMPTCanTrade);
     setFlag(issuance.mptCanTransfer, xrpl::lsfMPTCanTransfer);
     setFlag(issuance.mptCanClawback, xrpl::lsfMPTCanClawback);
+    setFlag(issuance.mptCanHoldConfidentialBalance, xrpl::lsfMPTCanHoldConfidentialBalance);
 
     if (sle.isFieldPresent(xrpl::sfMutableFlags)) {
         auto const mutableFlags = sle.getFieldU32(xrpl::sfMutableFlags);
@@ -94,6 +95,17 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
 
     if (sle.isFieldPresent(xrpl::sfDomainID))
         issuance.domainID = xrpl::strHex(sle.getFieldH256(xrpl::sfDomainID));
+
+    if (sle.isFieldPresent(xrpl::sfConfidentialOutstandingAmount)) {
+        issuance.confidentialOutstandingAmount =
+            sle.getFieldU64(xrpl::sfConfidentialOutstandingAmount);
+    }
+
+    if (sle.isFieldPresent(xrpl::sfIssuerEncryptionKey))
+        issuance.issuerEncryptionKey = xrpl::strHex(sle.getFieldVL(xrpl::sfIssuerEncryptionKey));
+
+    if (sle.isFieldPresent(xrpl::sfAuditorEncryptionKey))
+        issuance.auditorEncryptionKey = xrpl::strHex(sle.getFieldVL(xrpl::sfAuditorEncryptionKey));
 
     issuances.push_back(issuance);
 }
@@ -273,6 +285,15 @@ tag_invoke(
     setIfPresent("mpt_can_mutate_can_clawback", issuance.mptCanMutateCanClawback);
     setIfPresent("mpt_can_mutate_metadata", issuance.mptCanMutateMetadata);
     setIfPresent("mpt_can_mutate_transfer_fee", issuance.mptCanMutateTransferFee);
+
+    setIfPresent("mpt_can_hold_confidential_balance", issuance.mptCanHoldConfidentialBalance);
+    setUint64IfPresent(
+        "confidential_outstanding_amount",
+        xrpl::sfConfidentialOutstandingAmount,
+        issuance.confidentialOutstandingAmount
+    );
+    setIfPresent("issuer_encryption_key", issuance.issuerEncryptionKey);
+    setIfPresent("auditor_encryption_key", issuance.auditorEncryptionKey);
 
     jv = std::move(obj);
 }

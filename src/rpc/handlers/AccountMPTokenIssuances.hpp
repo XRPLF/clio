@@ -71,6 +71,11 @@ public:
         std::optional<bool> mptCanMutateCanClawback;
         std::optional<bool> mptCanMutateMetadata;
         std::optional<bool> mptCanMutateTransferFee;
+
+        std::optional<bool> mptCanHoldConfidentialBalance;
+        std::optional<std::uint64_t> confidentialOutstandingAmount;
+        std::optional<std::string> issuerEncryptionKey;
+        std::optional<std::string> auditorEncryptionKey;
     };
 
     /**

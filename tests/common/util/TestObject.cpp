@@ -1493,7 +1493,10 @@ createMptIssuanceObject(
     std::optional<std::uint64_t> maxAmount,
     std::optional<std::uint64_t> lockedAmount,
     std::optional<std::string_view> domainId,
-    std::optional<std::uint32_t> mutableFlags
+    std::optional<std::uint32_t> mutableFlags,
+    std::optional<std::string_view> issuerEncryptionKey,
+    std::optional<std::string_view> auditorEncryptionKey,
+    std::optional<std::uint64_t> confidentialOutstandingAmount
 )
 {
     xrpl::STObject mptIssuance(xrpl::sfLedgerEntry);
@@ -1522,6 +1525,19 @@ createMptIssuanceObject(
         mptIssuance.setFieldH256(xrpl::sfDomainID, xrpl::uint256{*domainId});
     if (mutableFlags.has_value())
         mptIssuance.setFieldU32(xrpl::sfMutableFlags, *mutableFlags);
+    if (issuerEncryptionKey.has_value()) {
+        xrpl::Slice const slice(issuerEncryptionKey->data(), issuerEncryptionKey->size());
+        mptIssuance.setFieldVL(xrpl::sfIssuerEncryptionKey, slice);
+    }
+    if (auditorEncryptionKey.has_value()) {
+        xrpl::Slice const slice(auditorEncryptionKey->data(), auditorEncryptionKey->size());
+        mptIssuance.setFieldVL(xrpl::sfAuditorEncryptionKey, slice);
+    }
+    if (confidentialOutstandingAmount.has_value()) {
+        mptIssuance.setFieldU64(
+            xrpl::sfConfidentialOutstandingAmount, *confidentialOutstandingAmount
+        );
+    }
 
     return mptIssuance;
 }
@@ -1532,7 +1548,13 @@ createMpTokenObject(
     xrpl::uint192 issuanceID,
     std::uint64_t mptAmount,
     std::uint32_t flags,
-    std::optional<uint64_t> lockedAmount
+    std::optional<uint64_t> lockedAmount,
+    std::optional<std::string_view> confidentialBalanceInbox,
+    std::optional<std::string_view> confidentialBalanceSpending,
+    std::optional<std::uint32_t> confidentialBalanceVersion,
+    std::optional<std::string_view> issuerEncryptedBalance,
+    std::optional<std::string_view> auditorEncryptedBalance,
+    std::optional<std::string_view> holderEncryptionKey
 )
 {
     xrpl::STObject mptoken(xrpl::sfLedgerEntry);
@@ -1548,6 +1570,23 @@ createMpTokenObject(
         mptoken.setFieldU64(xrpl::sfMPTAmount, mptAmount);
     if (lockedAmount.has_value())
         mptoken.setFieldU64(xrpl::sfLockedAmount, *lockedAmount);
+
+    auto const setVL = [&](xrpl::SField const& field,
+                           std::optional<std::string_view> const& value) {
+        if (value.has_value()) {
+            xrpl::Slice const slice(value->data(), value->size());
+            mptoken.setFieldVL(field, slice);
+        }
+    };
+
+    setVL(xrpl::sfConfidentialBalanceInbox, confidentialBalanceInbox);
+    setVL(xrpl::sfConfidentialBalanceSpending, confidentialBalanceSpending);
+    setVL(xrpl::sfIssuerEncryptedBalance, issuerEncryptedBalance);
+    setVL(xrpl::sfAuditorEncryptedBalance, auditorEncryptedBalance);
+    setVL(xrpl::sfHolderEncryptionKey, holderEncryptionKey);
+
+    if (confidentialBalanceVersion.has_value())
+        mptoken.setFieldU32(xrpl::sfConfidentialBalanceVersion, *confidentialBalanceVersion);
 
     return mptoken;
 }
