@@ -419,26 +419,26 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage =
-                    "Field 'delegate_filter' value must be 'delegator' or 'delegatee'."
+                    "Field 'delegate_filter' value must be 'actor' or 'authorizer'."
             },
             AccountTxParamTestCaseBundle{
                 .testName = "DelegateCounterpartyInvalid",
                 .testJson = R"JSON({
                     "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                     "delegate": {
-                        "delegate_filter": "delegatee",
-                        "counterparty": "not_an_account"
+                        "delegate_filter": "actor",
+                        "counter_party": "not_an_account"
                     }
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Field 'counterparty' value must be a valid account."
+                .expectedErrorMessage = "Field 'counter_party' value must be a valid account."
             },
             AccountTxParamTestCaseBundle{
                 .testName = "DelegateOnlyCounterparty",
                 .testJson = R"JSON({
                     "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                     "delegate": {
-                        "counterparty": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+                        "counter_party": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                     }
                 })JSON",
                 .expectedError = "invalidParams",
@@ -1282,7 +1282,7 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent)
         static auto const kInput = boost::json::parse(R"JSON({
             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "delegate": {
-                "delegate_filter": "delegator"
+                "delegate_filter": "authorizer"
             }
         })JSON");
 
@@ -1293,9 +1293,9 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent)
         auto const& txs = output.result->at("transactions").as_array();
         ASSERT_EQ(txs.size(), 2);
 
-        // Check the transactions contains delegator
-        EXPECT_TRUE(txs[0].as_object().contains("delegator"));
-        EXPECT_TRUE(txs[1].as_object().contains("delegator"));
+        // Check the transactions contains authorizer
+        EXPECT_TRUE(txs[0].as_object().contains("authorizer"));
+        EXPECT_TRUE(txs[1].as_object().contains("authorizer"));
     });
 }
 
@@ -1325,8 +1325,8 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateFromAndCounterparty)
                 R"JSON({{
                     "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                     "delegate": {{
-                        "delegate_filter": "delegatee",
-                        "counterparty": "{}"
+                        "delegate_filter": "actor",
+                        "counter_party": "{}"
                     }}
                 }})JSON",
                 kCounterparty
@@ -1339,8 +1339,8 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateFromAndCounterparty)
         auto const& txs = output.result->at("transactions").as_array();
         ASSERT_EQ(txs.size(), 2);
 
-        EXPECT_TRUE(txs[0].as_object().contains("delegatee"));
-        EXPECT_EQ(txs[0].at("delegatee").as_string(), kCounterparty);
+        EXPECT_TRUE(txs[0].as_object().contains("actor"));
+        EXPECT_EQ(txs[0].at("actor").as_string(), kCounterparty);
     });
 }
 

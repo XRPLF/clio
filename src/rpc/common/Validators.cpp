@@ -1,6 +1,7 @@
 #include "rpc/common/Validators.hpp"
 
 #include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
@@ -17,6 +18,7 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <charconv>
 #include <cstdint>
@@ -389,23 +391,24 @@ CustomValidator CustomValidators::delegateValidator =
             return Error{Status{RippledError::RpcInvalidParams, std::string(key) + " not object"}};
 
         auto const& delegate = value.as_object();
-        if (!delegate.contains("delegate_filter")){
+        if (!delegate.contains(JS(delegate_filter))) {
             return Error{Status{
                 RippledError::RpcInvalidParams, "Field 'delegate_filter' is required but missing."
             }};
         }
 
-        if (!parseDelegateType(delegate.at("delegate_filter")).has_value()){
+        if (!parseDelegateType(delegate.at(JS(delegate_filter))).has_value()) {
             return Error{Status{
                 RippledError::RpcInvalidParams,
-                "Field 'delegate_filter' value must be 'delegator' or 'delegatee'."
+                "Field 'delegate_filter' value must be 'actor' or 'authorizer'."
             }};
         }
 
-        if (delegate.contains("counterparty") && !accountValidator.verify(delegate, "counterparty")){
+        if (delegate.contains(JS(counter_party)) &&
+            !accountValidator.verify(delegate, JS(counter_party))) {
             return Error{Status{
                 RippledError::RpcInvalidParams,
-                "Field 'counterparty' value must be a valid account."
+                "Field 'counter_party' value must be a valid account."
             }};
         }
 

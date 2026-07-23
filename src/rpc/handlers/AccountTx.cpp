@@ -210,9 +210,9 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                 if (relevantAccount) {
                     if (input.delegateFilter->delegateType ==
                         rpc::DelegateFilter::Role::Authorizer) {
-                        obj["delegator"] = xrpl::to_string(*relevantAccount);
+                        obj[JS(authorizer)] = xrpl::to_string(*relevantAccount);
                     } else {
-                        obj["delegatee"] = xrpl::to_string(*relevantAccount);
+                        obj[JS(actor)] = xrpl::to_string(*relevantAccount);
                     }
                 }
 
@@ -324,8 +324,8 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
             boost::json::value_to<std::string>(jsonObject.at("tx_type"));
     }
 
-    if (jsonObject.contains("delegate")) {
-        input.delegateFilter = parseDelegateFilter(jsonObject.at("delegate").as_object());
+    if (jsonObject.contains(JS(delegate))) {
+        input.delegateFilter = parseDelegateFilter(jsonObject.at(JS(delegate)).as_object());
     }
 
     return input;

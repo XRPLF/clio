@@ -142,7 +142,7 @@ public:
                     typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()
                 ),
             },
-            {"delegate", validation::CustomValidators::delegateValidator}
+            {JS(delegate), validation::CustomValidators::delegateValidator}
         };
 
         static auto const kRpcSpec = RpcSpec{

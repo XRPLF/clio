@@ -1661,9 +1661,9 @@ parseDelegateType(boost::json::value const& delegateType)
 
     auto const& type = delegateType.as_string();
 
-    if (type == "delegator")
+    if (type == JS(authorizer))
         return DelegateFilter::Role::Authorizer;
-    if (type == "delegatee")
+    if (type == JS(actor))
         return DelegateFilter::Role::Actor;
 
     return {};
@@ -1673,10 +1673,10 @@ std::optional<DelegateFilter>
 parseDelegateFilter(boost::json::object const& delegateObject)
 {
     DelegateFilter delegate{};
-    if (!delegateObject.contains("delegate_filter"))
+    if (!delegateObject.contains(JS(delegate_filter)))
         return {};
 
-    auto const& filterVal = delegateObject.at("delegate_filter");
+    auto const& filterVal = delegateObject.at(JS(delegate_filter));
     if (!filterVal.is_string())
         return {};
 
@@ -1685,8 +1685,8 @@ parseDelegateFilter(boost::json::object const& delegateObject)
         return {};
 
     delegate.delegateType = *delegateTypeOpt;
-    if (delegateObject.contains("counterparty")) {
-        auto const& counterpartyVal = delegateObject.at("counterparty");
+    if (delegateObject.contains(JS(counter_party))) {
+        auto const& counterpartyVal = delegateObject.at(JS(counter_party));
 
         if (!counterpartyVal.is_string())
             return {};

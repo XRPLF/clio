@@ -618,11 +618,11 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_TrustLineIsFrozenAndCheckFreez
 
 TEST_F(RPCHelpersTest, ParseDelegateType)
 {
-    auto result = parseDelegateType(boost::json::value("delegator"));
+    auto result = parseDelegateType(boost::json::value("authorizer"));
     EXPECT_TRUE(result.has_value());
     EXPECT_EQ(*result, DelegateFilter::Role::Authorizer);
 
-    result = parseDelegateType(boost::json::value("delegatee"));
+    result = parseDelegateType(boost::json::value("actor"));
     EXPECT_TRUE(result.has_value());
     EXPECT_EQ(*result, DelegateFilter::Role::Actor);
 
@@ -642,7 +642,7 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
     // only delegate agent is valid
     {
         auto const json = boost::json::parse(R"JSON({
-            "delegate_filter": "delegator"
+            "delegate_filter": "authorizer"
         })JSON")
                               .as_object();
 
@@ -652,11 +652,11 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
         EXPECT_FALSE(result->counterParty.has_value());
     }
 
-    // delegate agent + counterparty is valid
+    // delegate agent + counter_party is valid
     {
         auto const json = boost::json::parse(R"JSON({
-            "delegate_filter": "delegatee",
-            "counterparty": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
+            "delegate_filter": "actor",
+            "counter_party": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })JSON")
                               .as_object();
 
@@ -673,7 +673,7 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
     // Missing required "delegate_filter" key
     {
         auto const json = boost::json::parse(R"JSON({
-            "counterparty": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
+            "counter_party": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })JSON")
                               .as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
@@ -697,11 +697,11 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
     }
 
-    // "counterparty" exists but is not a string (it's a number)
+    // "counter_party" exists but is not a string (it's a number)
     {
         auto const json = boost::json::parse(R"JSON({
-            "delegate_filter": "delegator",
-            "counterparty": 9999
+            "delegate_filter": "authorizer",
+            "counter_party": 9999
         })JSON")
                               .as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
