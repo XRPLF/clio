@@ -730,6 +730,548 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
     });
 }
 
+TEST_F(RPCMPTHoldersHandlerTest, AccountsNotArray)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "accounts": "{}"
+                }})JSON",
+                kMptId,
+                kHoldeR1Account
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "accountsNotArray");
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsEmpty)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "accounts": []
+                }})JSON",
+                kMptId
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "accountsMalformed");
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsMalformedEntry)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "accounts": ["{}", "not-an-account"]
+                }})JSON",
+                kMptId,
+                kHoldeR1Account
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "accountsMalformed");
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsTooMany)
+{
+    std::string accountsList;
+    for (auto i = 0; i <= MPTHoldersHandler::kMaxAccounts; ++i)
+        accountsList += fmt::format(R"("{}",)", kHoldeR1Account);
+    accountsList.pop_back();  // drop trailing comma
+
+    runSpawn([&, this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "accounts": [{}]
+                }})JSON",
+                kMptId,
+                accountsList
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "accountsMalformed");
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsWithMarker)
+{
+    auto const marker = xrpl::strHex(getAccountIdWithString(kHoldeR1Account));
+    runSpawn([&, this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "accounts": ["{}"],
+                    "marker": "{}"
+                }})JSON",
+                kMptId,
+                kHoldeR1Account,
+                marker
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "accountsWithMarker");
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsFilter)
+{
+    auto const currentOutput = fmt::format(
+        R"JSON({{
+            "mpt_issuance_id": "{}",
+            "limit": 50,
+            "ledger_index": 30,
+            "mptokens": [{}, {}],
+            "validated": true
+        }})JSON",
+        kMptId,
+        kMptOuT1,
+        kMptOuT2
+    );
+
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const mptoken1 = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId));
+    auto const mptoken2 = createMpTokenObject(kHoldeR2Account, xrpl::uint192(kMptId));
+    std::vector<Blob> const objs = {
+        mptoken1.getSerializer().peekData(), mptoken2.getSerializer().peekData()
+    };
+    // The handler must query exactly the MPToken keys for the requested accounts, in order.
+    std::vector<xrpl::uint256> const expectedKeys = {
+        xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHoldeR1Account)).key,
+        xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHoldeR2Account)).key
+    };
+    EXPECT_CALL(*backend_, doFetchLedgerObjects(expectedKeys, 30, _)).WillOnce(Return(objs));
+    // The accounts filter must not fall back to the holder-index scan.
+    EXPECT_CALL(*backend_, fetchMPTHolders).Times(0);
+
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuance_id": "{}",
+                "accounts": ["{}", "{}"]
+            }})JSON",
+            kMptId,
+            kHoldeR1Account,
+            kHoldeR2Account
+        )
+    );
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterMissingHolderOmitted)
+{
+    auto const currentOutput = fmt::format(
+        R"JSON({{
+            "mpt_issuance_id": "{}",
+            "limit": 50,
+            "ledger_index": 30,
+            "mptokens": [{}],
+            "validated": true
+        }})JSON",
+        kMptId,
+        kMptOuT1
+    );
+
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const mptoken1 = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId));
+    // holder2 is not a holder: its object comes back empty and must be dropped.
+    std::vector<Blob> const objs = {mptoken1.getSerializer().peekData(), Blob{}};
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(objs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend_, fetchMPTHolders).Times(0);
+
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuance_id": "{}",
+                "accounts": ["{}", "{}"]
+            }})JSON",
+            kMptId,
+            kHoldeR1Account,
+            kHoldeR2Account
+        )
+    );
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsNonStringEntry)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "accounts": ["{}", 123]
+                }})JSON",
+                kMptId,
+                kHoldeR1Account
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "accountsMalformed");
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsMaxAllowed)
+{
+    std::string accountsList;
+    for (auto i = 0; i < MPTHoldersHandler::kMaxAccounts; ++i)
+        accountsList += fmt::format(R"("{}",)", kHoldeR1Account);
+    accountsList.pop_back();  // drop trailing comma
+
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const mptoken = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId));
+    std::vector<Blob> const objs(
+        MPTHoldersHandler::kMaxAccounts, mptoken.getSerializer().peekData()
+    );
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(objs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend_, fetchMPTHolders).Times(0);
+
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuance_id": "{}",
+                "accounts": [{}]
+            }})JSON",
+            kMptId,
+            accountsList
+        )
+    );
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(
+            static_cast<int>(output.result->as_object().at("mptokens").as_array().size()),
+            MPTHoldersHandler::kMaxAccounts
+        );
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterAllAbsent)
+{
+    auto const currentOutput = fmt::format(
+        R"JSON({{
+            "mpt_issuance_id": "{}",
+            "limit": 50,
+            "ledger_index": 30,
+            "mptokens": [],
+            "validated": true
+        }})JSON",
+        kMptId
+    );
+
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    std::vector<Blob> const objs = {Blob{}, Blob{}};
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(objs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend_, fetchMPTHolders).Times(0);
+
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuance_id": "{}",
+                "accounts": ["{}", "{}"]
+            }})JSON",
+            kMptId,
+            kHoldeR1Account,
+            kHoldeR2Account
+        )
+    );
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterConfidentialFields)
+{
+    constexpr auto kConfidentialBalanceInbox = "inbox-ciphertext";
+    constexpr auto kConfidentialBalanceSpending = "spending-ciphertext";
+    constexpr auto kConfidentialBalanceVersion = 3u;
+    constexpr auto kIssuerEncryptedBalance = "issuer-balance-ciphertext";
+    constexpr auto kAuditorEncryptedBalance = "auditor-balance-ciphertext";
+    constexpr auto kHolderEncryptionKey = "holder-pubkey";
+    constexpr auto kLockedAmount = 5;
+
+    auto const currentOutput = fmt::format(
+        R"JSON({{
+            "mpt_issuance_id": "{}",
+            "limit": 50,
+            "ledger_index": 30,
+            "mptokens": [{{
+                "account": "{}",
+                "flags": 0,
+                "mpt_amount": "1",
+                "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A",
+                "locked_amount": "{}",
+                "confidential_balance_inbox": "{}",
+                "confidential_balance_spending": "{}",
+                "confidential_balance_version": {},
+                "issuer_encrypted_balance": "{}",
+                "auditor_encrypted_balance": "{}",
+                "holder_encryption_key": "{}"
+            }}],
+            "validated": true
+        }})JSON",
+        kMptId,
+        kHoldeR1Account,
+        kLockedAmount,
+        xrpl::strHex(std::string_view{kConfidentialBalanceInbox}),
+        xrpl::strHex(std::string_view{kConfidentialBalanceSpending}),
+        kConfidentialBalanceVersion,
+        xrpl::strHex(std::string_view{kIssuerEncryptedBalance}),
+        xrpl::strHex(std::string_view{kAuditorEncryptedBalance}),
+        xrpl::strHex(std::string_view{kHolderEncryptionKey})
+    );
+
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const mptoken = createMpTokenObject(
+        kHoldeR1Account,
+        xrpl::uint192(kMptId),
+        1,
+        0,
+        kLockedAmount,
+        kConfidentialBalanceInbox,
+        kConfidentialBalanceSpending,
+        kConfidentialBalanceVersion,
+        kIssuerEncryptedBalance,
+        kAuditorEncryptedBalance,
+        kHolderEncryptionKey
+    );
+    std::vector<Blob> const objs = {mptoken.getSerializer().peekData()};
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(objs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend_, fetchMPTHolders).Times(0);
+
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuance_id": "{}",
+                "accounts": ["{}"]
+            }})JSON",
+            kMptId,
+            kHoldeR1Account
+        )
+    );
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterMPTNotFound)
+{
+    auto ledgerinfo = createLedgerHeader(kLedgerHash, 30);
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
+        .WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
+    // Must not attempt to fetch holder objects when the issuance does not exist.
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(0);
+
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuance_id": "{}",
+                "ledger_hash": "{}",
+                "accounts": ["{}"]
+            }})JSON",
+            kMptId,
+            kLedgerHash,
+            kHoldeR1Account
+        )
+    );
+    runSpawn([&, this](boost::asio::yield_context yield) {
+        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const output = handler.process(input, Context{.yield = yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "objectNotFound");
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterSpecificLedger)
+{
+    auto const specificLedger = 20;
+    auto const currentOutput = fmt::format(
+        R"JSON({{
+            "mpt_issuance_id": "{}",
+            "limit": 50,
+            "ledger_index": {},
+            "mptokens": [{}],
+            "validated": true
+        }})JSON",
+        kMptId,
+        specificLedger,
+        kMptOuT1
+    );
+
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, specificLedger);
+    ON_CALL(*backend_, fetchLedgerBySequence(specificLedger, _)).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, specificLedger, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const mptoken1 = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId));
+    std::vector<Blob> const objs = {mptoken1.getSerializer().peekData()};
+    std::vector<xrpl::uint256> const expectedKeys = {
+        xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHoldeR1Account)).key
+    };
+    EXPECT_CALL(*backend_, doFetchLedgerObjects(expectedKeys, specificLedger, _))
+        .WillOnce(Return(objs));
+    EXPECT_CALL(*backend_, fetchMPTHolders).Times(0);
+
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuance_id": "{}",
+                "ledger_index": {},
+                "accounts": ["{}"]
+            }})JSON",
+            kMptId,
+            specificLedger,
+            kHoldeR1Account
+        )
+    );
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterDuplicates)
+{
+    auto const currentOutput = fmt::format(
+        R"JSON({{
+            "mpt_issuance_id": "{}",
+            "limit": 50,
+            "ledger_index": 30,
+            "mptokens": [{}, {}],
+            "validated": true
+        }})JSON",
+        kMptId,
+        kMptOuT1,
+        kMptOuT1
+    );
+
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const mptoken1 = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId));
+    std::vector<Blob> const objs = {
+        mptoken1.getSerializer().peekData(), mptoken1.getSerializer().peekData()
+    };
+    auto const key =
+        xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHoldeR1Account)).key;
+    std::vector<xrpl::uint256> const expectedKeys = {key, key};
+    EXPECT_CALL(*backend_, doFetchLedgerObjects(expectedKeys, 30, _)).WillOnce(Return(objs));
+    EXPECT_CALL(*backend_, fetchMPTHolders).Times(0);
+
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuance_id": "{}",
+                "accounts": ["{}", "{}"]
+            }})JSON",
+            kMptId,
+            kHoldeR1Account,
+            kHoldeR1Account
+        )
+    );
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
+    });
+}
+
 TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
 {
     auto const currentOutput = fmt::format(

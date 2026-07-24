@@ -24,14 +24,84 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
 
 using namespace xrpl;
 
 namespace rpc {
 
+namespace {
+
+/**
+ * @brief Serialize a single MPToken ledger object blob into the mpt_holders JSON shape.
+ *
+ * @param mptID The MPTokenIssuance ID the holder belongs to.
+ * @param mpt The serialized MPToken ledger object.
+ * @return The holder entry as a JSON object.
+ */
+boost::json::object
+mpTokenToJson(xrpl::uint192 const& mptID, data::Blob const& mpt)
+{
+    xrpl::STLedgerEntry const sle{
+        xrpl::SerialIter{mpt.data(), mpt.size()}, keylet::mptokenIssuance(mptID).key
+    };
+    boost::json::object mptJson;
+
+    mptJson[JS(account)] = toBase58(sle[xrpl::sfAccount]);
+    mptJson[JS(flags)] = sle.getFlags();
+    mptJson[JS(mpt_amount)] = toBoostJson(
+        xrpl::STUInt64{xrpl::sfMPTAmount, sle[xrpl::sfMPTAmount]}.getJson(JsonOptions::Values::None)
+    );
+    mptJson[JS(mptoken_index)] =
+        xrpl::to_string(xrpl::keylet::mptoken(mptID, sle[xrpl::sfAccount]).key);
+
+    if (sle.isFieldPresent(xrpl::sfLockedAmount)) {
+        mptJson["locked_amount"] = toBoostJson(
+            xrpl::STUInt64{xrpl::sfLockedAmount, sle[xrpl::sfLockedAmount]}.getJson(
+                JsonOptions::Values::None
+            )
+        );
+    }
+
+    if (sle.isFieldPresent(xrpl::sfConfidentialBalanceInbox)) {
+        mptJson[JS(confidential_balance_inbox)] =
+            xrpl::strHex(sle.getFieldVL(xrpl::sfConfidentialBalanceInbox));
+    }
+
+    if (sle.isFieldPresent(xrpl::sfConfidentialBalanceSpending)) {
+        mptJson[JS(confidential_balance_spending)] =
+            xrpl::strHex(sle.getFieldVL(xrpl::sfConfidentialBalanceSpending));
+    }
+
+    if (sle.isFieldPresent(xrpl::sfConfidentialBalanceVersion))
+        mptJson[JS(confidential_balance_version)] = sle[xrpl::sfConfidentialBalanceVersion];
+
+    if (sle.isFieldPresent(xrpl::sfIssuerEncryptedBalance)) {
+        mptJson[JS(issuer_encrypted_balance)] =
+            xrpl::strHex(sle.getFieldVL(xrpl::sfIssuerEncryptedBalance));
+    }
+
+    if (sle.isFieldPresent(xrpl::sfAuditorEncryptedBalance)) {
+        mptJson[JS(auditor_encrypted_balance)] =
+            xrpl::strHex(sle.getFieldVL(xrpl::sfAuditorEncryptedBalance));
+    }
+
+    if (sle.isFieldPresent(xrpl::sfHolderEncryptionKey)) {
+        mptJson[JS(holder_encryption_key)] =
+            xrpl::strHex(sle.getFieldVL(xrpl::sfHolderEncryptionKey));
+    }
+
+    return mptJson;
+}
+
+}  // namespace
+
 MPTHoldersHandler::Result
 MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const& ctx) const
 {
+    if (input.accounts && input.marker)
+        return Error{Status{RippledError::RpcInvalidParams, "accountsWithMarker"}};
+
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "MPTHolder's ledger range must be available");
 
@@ -55,72 +125,40 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
     if (!issuanceLedgerObject)
         return Error{Status{RippledError::RpcObjectNotFound, "objectNotFound"}};
 
+    auto output = MPTHoldersHandler::Output{};
+    output.mptID = to_string(mptID);
+    output.limit = limit;
+    output.ledgerIndex = lgrInfo.seq;
+
+    // Account-list filter: bounded lookup by key, so non-holders are dropped and no
+    // paging marker is produced.
+    if (input.accounts) {
+        std::vector<xrpl::uint256> keys;
+        keys.reserve(input.accounts->size());
+        for (auto const& account : *input.accounts) {
+            auto const accountID = accountFromStringStrict(account);
+            ASSERT(accountID.has_value(), "Account must be valid after spec validation");
+            keys.push_back(xrpl::keylet::mptoken(mptID, *accountID).key);
+        }
+
+        auto const mptObjects = sharedPtrBackend_->fetchLedgerObjects(keys, lgrInfo.seq, ctx.yield);
+        for (auto const& mpt : mptObjects) {
+            if (not mpt.empty())
+                output.mpts.push_back(mpTokenToJson(mptID, mpt));
+        }
+
+        return output;
+    }
+
     std::optional<xrpl::AccountID> cursor;
     if (input.marker)
         cursor = xrpl::AccountID{input.marker->c_str()};
 
     auto const dbResponse =
         sharedPtrBackend_->fetchMPTHolders(mptID, limit, cursor, lgrInfo.seq, ctx.yield);
-    auto output = MPTHoldersHandler::Output{};
-    output.mptID = to_string(mptID);
-    output.limit = limit;
-    output.ledgerIndex = lgrInfo.seq;
 
-    boost::json::array const mpts;
-    for (auto const& mpt : dbResponse.mptokens) {
-        xrpl::STLedgerEntry const sle{
-            xrpl::SerialIter{mpt.data(), mpt.size()}, keylet::mptokenIssuance(mptID).key
-        };
-        boost::json::object mptJson;
-
-        mptJson[JS(account)] = toBase58(sle[xrpl::sfAccount]);
-        mptJson[JS(flags)] = sle.getFlags();
-        mptJson[JS(mpt_amount)] = toBoostJson(
-            xrpl::STUInt64{xrpl::sfMPTAmount, sle[xrpl::sfMPTAmount]}.getJson(
-                JsonOptions::Values::None
-            )
-        );
-        mptJson[JS(mptoken_index)] =
-            xrpl::to_string(xrpl::keylet::mptoken(mptID, sle[xrpl::sfAccount]).key);
-
-        if (sle.isFieldPresent(xrpl::sfLockedAmount)) {
-            mptJson["locked_amount"] = toBoostJson(
-                xrpl::STUInt64{xrpl::sfLockedAmount, sle[xrpl::sfLockedAmount]}.getJson(
-                    JsonOptions::Values::None
-                )
-            );
-        }
-
-        if (sle.isFieldPresent(xrpl::sfConfidentialBalanceInbox)) {
-            mptJson[JS(confidential_balance_inbox)] =
-                xrpl::strHex(sle.getFieldVL(xrpl::sfConfidentialBalanceInbox));
-        }
-
-        if (sle.isFieldPresent(xrpl::sfConfidentialBalanceSpending)) {
-            mptJson[JS(confidential_balance_spending)] =
-                xrpl::strHex(sle.getFieldVL(xrpl::sfConfidentialBalanceSpending));
-        }
-
-        if (sle.isFieldPresent(xrpl::sfConfidentialBalanceVersion))
-            mptJson[JS(confidential_balance_version)] = sle[xrpl::sfConfidentialBalanceVersion];
-
-        if (sle.isFieldPresent(xrpl::sfIssuerEncryptedBalance)) {
-            mptJson[JS(issuer_encrypted_balance)] =
-                xrpl::strHex(sle.getFieldVL(xrpl::sfIssuerEncryptedBalance));
-        }
-
-        if (sle.isFieldPresent(xrpl::sfAuditorEncryptedBalance)) {
-            mptJson[JS(auditor_encrypted_balance)] =
-                xrpl::strHex(sle.getFieldVL(xrpl::sfAuditorEncryptedBalance));
-        }
-
-        if (sle.isFieldPresent(xrpl::sfHolderEncryptionKey)) {
-            mptJson[JS(holder_encryption_key)] =
-                xrpl::strHex(sle.getFieldVL(xrpl::sfHolderEncryptionKey));
-        }
-
-        output.mpts.push_back(mptJson);
-    }
+    for (auto const& mpt : dbResponse.mptokens)
+        output.mpts.push_back(mpTokenToJson(mptID, mpt));
 
     if (dbResponse.cursor.has_value())
         output.marker = strHex(*dbResponse.cursor);
@@ -169,6 +207,12 @@ tag_invoke(boost::json::value_to_tag<MPTHoldersHandler::Input>, boost::json::val
 
     if (jsonObject.contains(JS(marker)))
         input.marker = jsonObject.at(JS(marker)).as_string().c_str();
+
+    if (jsonObject.contains(JS(accounts))) {
+        auto& accounts = input.accounts.emplace();
+        for (auto const& account : jsonObject.at(JS(accounts)).as_array())
+            accounts.emplace_back(account.as_string().c_str());
+    }
 
     return input;
 }
