@@ -1,5 +1,6 @@
 #include "rpc/handlers/MPTHolders.hpp"
 
+#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -138,6 +139,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
         for (auto const& account : *input.accounts) {
             auto const accountID = accountFromStringStrict(account);
             ASSERT(accountID.has_value(), "Account must be valid after spec validation");
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
             keys.push_back(xrpl::keylet::mptoken(mptID, *accountID).key);
         }
 
