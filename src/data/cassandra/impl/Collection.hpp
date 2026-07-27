@@ -1,18 +1,29 @@
 #pragma once
 
-#include "data/cassandra/Error.hpp"
 #include "data/cassandra/impl/ManagedObject.hpp"
 
 #include <cassandra.h>
 #include <xrpl/basics/base_uint.h>
 
 #include <cstdint>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 #include <vector>
 
 namespace data::cassandra::impl {
 
 class Collection : public ManagedObject<CassCollection> {
     static constexpr auto kDeleter = [](CassCollection* ptr) { cass_collection_free(ptr); };
+
+    static void
+    throwErrorIfNeeded(CassError const rc, std::string_view const label)
+    {
+        if (rc == CASS_OK)
+            return;
+        auto const tag = '[' + std::string{label} + ']';
+        throw std::logic_error(tag + ": " + cass_error_desc(rc));
+    }
 
 public:
     /* implicit */ Collection(CassCollection* ptr);
