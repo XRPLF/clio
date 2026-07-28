@@ -51,14 +51,26 @@ MPTExt::writeMPTDataFromTransactions(model::LedgerData const& data)
     std::vector<MPTHolderData> holders;
     std::vector<MPTokenIssuanceTransactionsData> issuanceTxs;
     std::size_t indexRowsWritten = 0;
+    static constexpr std::size_t kIndexRowsPerTxWarningThreshold = 1000;
 
     for (auto const& tx : data.transactions) {
         auto const mptHolders = getMPTHolderFromTx(tx.meta, tx.sttx);
         holders.append_range(mptHolders);
 
         auto txIndexData = getMPTokenIssuanceTxsFromTx(tx.meta, tx.sttx);
+
+        std::size_t txIndexRows = 0;
         for (auto const& record : txIndexData)
-            indexRowsWritten += 1 + record.accounts.size();
+            txIndexRows += 1 + record.accounts.size();
+
+        if (txIndexRows > kIndexRowsPerTxWarningThreshold) {
+            LOG(log_.warn()) << "MPT issuance tx index fanout of " << txIndexRows
+                             << " rows exceeds the expected bound of "
+                             << kIndexRowsPerTxWarningThreshold << " for tx "
+                             << xrpl::strHex(tx.id);
+        }
+
+        indexRowsWritten += txIndexRows;
         issuanceTxs.insert(
             issuanceTxs.end(),
             std::make_move_iterator(txIndexData.begin()),
