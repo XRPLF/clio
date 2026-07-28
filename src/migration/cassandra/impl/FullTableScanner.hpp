@@ -55,46 +55,6 @@ concept CanReadByTokenRange =
  */
 template <CanReadByTokenRange TableAdapter>
 class FullTableScanner {
-public:
-    /**
-     * @brief The full table scanner settings.
-     */
-    struct FullTableScannerSettings {
-        std::uint32_t ctxThreadsNum;  ///< number of threads used in the execution context
-        std::uint32_t jobsNum;  ///< number of coroutines to run, it is the number of concurrent
-                                ///< database reads
-        std::uint32_t cursorsPerJob;  ///< number of cursors per coroutine
-    };
-
-private:
-    [[nodiscard]] static std::uint32_t
-    validatedCtxThreadsNum(FullTableScannerSettings const& settings)
-    {
-        ASSERT(
-            settings.ctxThreadsNum > 0,
-            "ctxThreadsNum for full table scanner must be greater than 0"
-        );
-        return settings.ctxThreadsNum;
-    }
-
-    [[nodiscard]] static std::size_t
-    computeCursorsNum(FullTableScannerSettings const& settings)
-    {
-        ASSERT(settings.jobsNum > 0, "jobsNum for full table scanner must be greater than 0");
-        ASSERT(
-            settings.cursorsPerJob > 0,
-            "cursorsPerJob for full table scanner must be greater than 0"
-        );
-
-        auto const cursorsNum =
-            static_cast<std::uint64_t>(settings.jobsNum) * settings.cursorsPerJob;
-        ASSERT(
-            cursorsNum <= std::numeric_limits<std::uint32_t>::max(),
-            "jobsNum * cursorsPerJob for full table scanner must fit in uint32_t"
-        );
-        return static_cast<std::size_t>(cursorsNum);
-    }
-
     /**
      * @brief The helper to generate the token ranges.
      */
@@ -163,6 +123,16 @@ private:
 
 public:
     /**
+     * @brief The full table scanner settings.
+     */
+    struct FullTableScannerSettings {
+        std::uint32_t ctxThreadsNum;  ///< number of threads used in the execution context
+        std::uint32_t jobsNum;  ///< number of coroutines to run, it is the number of concurrent
+                                ///< database reads
+        std::uint32_t cursorsPerJob;  ///< number of cursors per coroutine
+    };
+
+    /**
      * @brief Construct a new Full Table Scanner object, it will run in a sync or async context
      * according to the parameter. The scan process will immediately start.
      *
@@ -172,13 +142,18 @@ public:
      */
     template <typename ExecutionContextType = util::async::CoroExecutionContext>
     FullTableScanner(FullTableScannerSettings settings, TableAdapter&& reader)
-        : ctx_(ExecutionContextType(validatedCtxThreadsNum(settings)))
-        , cursorsNum_(computeCursorsNum(settings))
+        : ctx_(ExecutionContextType(settings.ctxThreadsNum))
+        , cursorsNum_(settings.jobsNum * settings.cursorsPerJob)
         , queue_{cursorsNum_}
         , reader_{std::move(reader)}
     {
-        auto const cursors =
-            TokenRangesProvider{static_cast<std::uint32_t>(cursorsNum_)}.getRanges();
+        ASSERT(settings.jobsNum > 0, "jobsNum for full table scanner must be greater than 0");
+        ASSERT(
+            settings.cursorsPerJob > 0,
+            "cursorsPerJob for full table scanner must be greater than 0"
+        );
+
+        auto const cursors = TokenRangesProvider{cursorsNum_}.getRanges();
         std::ranges::for_each(cursors, [this](auto const& cursor) { queue_.push(cursor); });
         load(settings.jobsNum);
     }

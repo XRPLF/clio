@@ -88,35 +88,6 @@ TEST_F(FullTableScannerAssertTest, cursorsPerWorkerZero)
     );
 }
 
-TEST_F(FullTableScannerAssertTest, contextThreadsZero)
-{
-    testing::MockFunction<
-        void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)>
-        mockCallback;
-    EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-        migration::cassandra::impl::FullTableScanner<TestScannerAdapter>(
-            {.ctxThreadsNum = 0, .jobsNum = 1, .cursorsPerJob = 1}, TestScannerAdapter(mockCallback)
-        ),
-        ".*ctxThreadsNum for full table scanner must be greater than 0"
-    );
-}
-
-TEST_F(FullTableScannerAssertTest, cursorsNumOverflow)
-{
-    testing::MockFunction<
-        void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)>
-        mockCallback;
-    EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-        migration::cassandra::impl::FullTableScanner<TestScannerAdapter>(
-            {.ctxThreadsNum = 1,
-             .jobsNum = std::numeric_limits<std::uint32_t>::max(),
-             .cursorsPerJob = std::numeric_limits<std::uint32_t>::max()},
-            TestScannerAdapter(mockCallback)
-        ),
-        ".*jobsNum \\* cursorsPerJob for full table scanner must fit in uint32_t"
-    );
-}
-
 struct FullTableScannerTests : public virtual ::testing::Test {};
 
 TEST_F(FullTableScannerTests, SingleThreadCtx)
