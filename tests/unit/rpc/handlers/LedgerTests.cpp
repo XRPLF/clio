@@ -1033,7 +1033,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
 
     // fee object 2*2+3->7 ; balance 200 - 7 -> 193
     auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kRangeMax, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kRangeMax, _))
         .WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -1108,7 +1108,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
 
     // fee object 2*2+3->7 ; balance 200 - 7 -> 193
     auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kRangeMax, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kRangeMax, _))
         .WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -1222,7 +1222,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
 
     // fee object 2*2+3->7 ; balance 6 - 7 -> -1
     auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kRangeMax, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kRangeMax, _))
         .WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -1268,7 +1268,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
     auto const line = createRippleStateLedgerObject(
         kCurrency, kAccount2, 50 /*balance*/, kAccount, 10, kAccount2, 20, kIndex1, 123
     );
-    auto lineKey = xrpl::keylet::line(
+    auto lineKey = xrpl::keylet::trustLine(
                        getAccountIdWithString(kAccount),
                        getAccountIdWithString(kAccount2),
                        xrpl::toCurrency(std::string(kCurrency))
@@ -1336,7 +1336,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
         123,
         xrpl::lsfLowFreeze | xrpl::lsfHighFreeze
     );
-    auto lineKey = xrpl::keylet::line(
+    auto lineKey = xrpl::keylet::trustLine(
                        getAccountIdWithString(kAccount),
                        getAccountIdWithString(kAccount2),
                        xrpl::toCurrency(std::string(kCurrency))

@@ -537,7 +537,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
     // first is nft offer object
     auto const cursor =
         xrpl::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"};
-    auto const first = xrpl::keylet::nftoffer(cursor);
+    auto const first = xrpl::keylet::nftokenOffer(cursor);
     ON_CALL(*backend_, doFetchLedgerObject(first.key, testing::_, testing::_))
         .WillByDefault(Return(cursorBuyOffer.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject(first.key, testing::_, testing::_)).Times(1);
@@ -601,7 +601,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
     // first is nft offer object
     auto const cursor =
         xrpl::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"};
-    auto const first = xrpl::keylet::nftoffer(cursor);
+    auto const first = xrpl::keylet::nftokenOffer(cursor);
     ON_CALL(*backend_, doFetchLedgerObject(first.key, testing::_, testing::_))
         .WillByDefault(Return(cursorBuyOffer.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject(first.key, testing::_, testing::_)).Times(1);

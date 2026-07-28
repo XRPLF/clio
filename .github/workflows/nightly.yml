@@ -47,7 +47,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos15
+          - os: macos-26-apple-clang-21
             compiler: apple-clang
             build_type: Release
           - os: heavy
@@ -108,7 +108,7 @@ jobs:
           - os: heavy
             compiler: clang
             container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
-          - os: macos15
+          - os: macos-26-apple-clang-21
             compiler: apple-clang
             container: ""
     uses: ./.github/workflows/reusable-build.yml
@@ -162,7 +162,7 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Create an issue
         uses: XRPLF/actions/create-issue@2b8bc36af85b88bca0dd7bfac2e2dc05f94ad712

@@ -3,15 +3,21 @@
 #include "etl/impl/ext/MPT.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "util/BinaryTestObject.hpp"
+#include "util/MPTokenTestObjects.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <xrpl/basics/Slice.h>
+#include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STArray.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STTx.h>
@@ -21,8 +27,10 @@
 #include <xrpl/protocol/TxMeta.h>
 
 #include <algorithm>
+#include <array>
+#include <cstdint>
+#include <iterator>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -68,6 +76,125 @@ constinit auto const kHash = "6005B465CBBF7FA8E41AC0C0CD38491026D9411FCB7BA46E2A
 constinit auto const kHash2 = "6005B465CBBF7FA8E41AC0C0CD38491026D9411FCB7BA46E2AEBB3AF7654261C";
 constinit auto const kHash3 = "6005B465CBBF7FA8E41AC0C0CD38491026D9411FCB7BA46E2AEBB3AF7654261D";
 
+// The issuance ID carried by the ltMPTOKEN CreatedNode in kTxnMeta.
+constinit auto const kIssuanceID = "002DBD1817E0AF9FDE4F9978B8FCD8A5063630B5737DA605";
+
+constinit auto const kAccount = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
+constinit auto const kAccount2 = "rnd1nHuzceyQDqnLH8urWNr4QBKt4v7WVk";
+constexpr auto kHighFanoutAccountCount = 1001u;
+
+xrpl::AccountID
+accountIDFromSeed(std::uint32_t seed)
+{
+    std::array<unsigned char, xrpl::AccountID::size()> bytes{};
+    bytes[16] = static_cast<unsigned char>(seed >> 24);
+    bytes[17] = static_cast<unsigned char>(seed >> 16);
+    bytes[18] = static_cast<unsigned char>(seed >> 8);
+    bytes[19] = static_cast<unsigned char>(seed);
+    return xrpl::AccountID::fromVoid(bytes.data());
+}
+
+xrpl::STObject
+createAccountRootNode(xrpl::AccountID const& account)
+{
+    xrpl::STObject fields(xrpl::sfFinalFields);
+    fields.setAccountID(xrpl::sfAccount, account);
+
+    xrpl::STObject node(xrpl::sfModifiedNode);
+    node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltACCOUNT_ROOT);
+    node.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
+    node.set(std::move(fields));
+    return node;
+}
+
+// One Payment transaction touching two distinct issuances with three affected accounts.
+etl::model::Transaction
+createMultiIssuanceTransaction()
+{
+    xrpl::Slice const slice("test", 4);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttPAYMENT);
+    tx.setAccountID(xrpl::sfAccount, getAccountIdWithString(kAccount));
+    tx.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(100, false));
+    tx.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10, false));
+    tx.setAccountID(xrpl::sfDestination, getAccountIdWithString(kAccount2));
+    tx.setFieldU32(xrpl::sfSequence, 1);
+    tx.setFieldVL(xrpl::sfSigningPubKey, slice);
+
+    auto const serialized = tx.getSerializer();
+    auto const sttx = xrpl::STTx{xrpl::SerialIter{serialized.slice()}};
+
+    auto const issuanceA = xrpl::makeMptID(1, getAccountIdWithString(kHolderAccount));
+    auto const issuanceB = xrpl::makeMptID(2, getAccountIdWithString(kHolderAccount));
+
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
+
+    xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
+    affectedNodes.push_back(util::createMPTokenNode(xrpl::sfModifiedNode, issuanceA, kAccount));
+    affectedNodes.push_back(util::createMPTokenNode(xrpl::sfModifiedNode, issuanceB, kAccount2));
+    affectedNodes.push_back(
+        util::createMPTokenIssuanceNode(xrpl::sfModifiedNode, 1, kHolderAccount)
+    );  // issuanceA again
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
+
+    auto const txMeta =
+        xrpl::TxMeta{sttx.getTransactionID(), kSeq, metaObj.getSerializer().peekData()};
+
+    return etl::model::Transaction{
+        .raw = "",
+        .metaRaw = "",
+        .sttx = sttx,
+        .meta = txMeta,
+        .id = sttx.getTransactionID(),
+        .key = "0000000000000000000000000000000000000000000000000000000000000002",
+        .type = sttx.getTxnType()
+    };
+}
+
+etl::model::Transaction
+createHighFanoutIssuanceTransaction()
+{
+    xrpl::Slice const slice("test", 4);
+    xrpl::STObject tx(xrpl::sfTransaction);
+    tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttPAYMENT);
+    tx.setAccountID(xrpl::sfAccount, getAccountIdWithString(kAccount));
+    tx.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(100, false));
+    tx.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10, false));
+    tx.setAccountID(xrpl::sfDestination, getAccountIdWithString(kAccount2));
+    tx.setFieldU32(xrpl::sfSequence, 1);
+    tx.setFieldVL(xrpl::sfSigningPubKey, slice);
+
+    auto const serialized = tx.getSerializer();
+    auto const sttx = xrpl::STTx{xrpl::SerialIter{serialized.slice()}};
+
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
+
+    xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
+    affectedNodes.push_back(
+        util::createMPTokenNode(xrpl::sfModifiedNode, xrpl::uint192{kMptIssuanceID}, kHolderAccount)
+    );
+    for (std::uint32_t i = 0; i < kHighFanoutAccountCount; ++i)
+        affectedNodes.push_back(createAccountRootNode(accountIDFromSeed(i + 1)));
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
+
+    auto const txMeta =
+        xrpl::TxMeta{sttx.getTransactionID(), kSeq, metaObj.getSerializer().peekData()};
+
+    return etl::model::Transaction{
+        .raw = "",
+        .metaRaw = "",
+        .sttx = sttx,
+        .meta = txMeta,
+        .id = sttx.getTransactionID(),
+        .key = "0000000000000000000000000000000000000000000000000000000000000003",
+        .type = sttx.getTxnType()
+    };
+}
+
 auto
 createTransactionFromObjects(
     xrpl::STObject const& txObj,
@@ -93,21 +220,6 @@ createTransactionFromObjects(
 }
 
 xrpl::STObject
-createNewMPTokenNode(std::string_view holder)
-{
-    xrpl::STObject newFields(xrpl::sfNewFields);
-    newFields.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
-    newFields[xrpl::sfMPTokenIssuanceID] = xrpl::uint192{kMptIssuanceID};
-    newFields.setAccountID(xrpl::sfAccount, getAccountIdWithString(holder));
-
-    xrpl::STObject createdNode(xrpl::sfCreatedNode);
-    createdNode.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN);
-    createdNode.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
-    createdNode.set(std::move(newFields));
-    return createdNode;
-}
-
-xrpl::STObject
 createPaymentMetaWithNewMPTokens(xrpl::TER result = xrpl::tesSUCCESS)
 {
     xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
@@ -115,8 +227,12 @@ createPaymentMetaWithNewMPTokens(xrpl::TER result = xrpl::tesSUCCESS)
     metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
 
     xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
-    affectedNodes.push_back(createNewMPTokenNode(kHolderAccount));
-    affectedNodes.push_back(createNewMPTokenNode(kHolderAccount2));
+    affectedNodes.push_back(
+        util::createMPTokenNode(xrpl::sfCreatedNode, xrpl::uint192{kMptIssuanceID}, kHolderAccount)
+    );
+    affectedNodes.push_back(
+        util::createMPTokenNode(xrpl::sfCreatedNode, xrpl::uint192{kMptIssuanceID}, kHolderAccount2)
+    );
     metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
 
     return metaObj;
@@ -168,6 +284,7 @@ createTestDataWithoutMPToken()
 auto
 createTestData()
 {
+    // Only the AUTHORIZE transaction carries metadata with MPT affected nodes.
     auto transactions = std::vector{
         util::createTransaction(
             xrpl::TxType::ttMPTOKEN_ISSUANCE_CREATE
@@ -191,13 +308,33 @@ createTestData()
     };
 }
 
+// Same AUTHORIZE fixture as kTxnMeta, with a distinct transaction index.
+etl::model::Transaction
+createAuthorizeTransactionWithIndex(std::string const& hashStr, std::uint32_t txIndex)
+{
+    auto tx =
+        util::createTransaction(xrpl::TxType::ttMPTOKEN_AUTHORIZE, hashStr, kTxnMeta, kTxnHex);
+
+    auto const metaBlob = xrpl::strUnHex(kTxnMeta);
+    EXPECT_TRUE(metaBlob.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    xrpl::SerialIter sitMeta{xrpl::makeSlice(*metaBlob)};
+    xrpl::STObject metaObj{sitMeta, xrpl::sfMetadata};
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, txIndex);
+
+    xrpl::uint256 hash;
+    EXPECT_TRUE(hash.parseHex(hashStr));
+    tx.meta = xrpl::TxMeta{hash, kSeq, metaObj.getSerializer().peekData()};
+    return tx;
+}
+
 auto
 createMultipleHoldersTestData()
 {
     auto transactions = std::vector{
-        util::createTransaction(xrpl::TxType::ttMPTOKEN_AUTHORIZE, kHash, kTxnMeta, kTxnHex),
-        util::createTransaction(xrpl::TxType::ttMPTOKEN_AUTHORIZE, kHash2, kTxnMeta, kTxnHex),
-        util::createTransaction(xrpl::TxType::ttMPTOKEN_AUTHORIZE, kHash3, kTxnMeta, kTxnHex)
+        createAuthorizeTransactionWithIndex(kHash, 0),
+        createAuthorizeTransactionWithIndex(kHash2, 1),
+        createAuthorizeTransactionWithIndex(kHash3, 2)
     };
 
     auto const header = createLedgerHeader(kLedgerHash, kSeq);
@@ -227,7 +364,20 @@ TEST_F(MPTExtTests, OnLedgerDataFiltersAndWritesMPTs)
         EXPECT_EQ(holders.size(), 1);  // Only metadata creating an MPToken is written
     });
 
+    std::vector<MPTokenIssuanceTransactionsData> issuanceTxs;
+    std::vector<MPTokenIssuanceTransactionsData> accountIssuanceTxs;
+    EXPECT_CALL(*backend_, writeMPTokenIssuanceTransactions).WillOnce(SaveArg<0>(&issuanceTxs));
+    EXPECT_CALL(*backend_, writeAccountMPTokenIssuanceTransactions)
+        .WillOnce(SaveArg<0>(&accountIssuanceTxs));
+
     ext_.onLedgerData(data);
+
+    // Only the AUTHORIZE fixture touches an MPT object.
+    ASSERT_EQ(issuanceTxs.size(), 1);
+    EXPECT_EQ(issuanceTxs[0].mptIssuanceID, xrpl::uint192(kIssuanceID));
+    EXPECT_FALSE(issuanceTxs[0].accounts.empty());
+    EXPECT_TRUE(issuanceTxs[0].accounts.contains(getAccountIdWithString(kHolderAccount)));
+    EXPECT_EQ(issuanceTxs, accountIssuanceTxs);  // same vector goes to both tables
 }
 
 TEST_F(MPTExtTests, OnInitialDataFiltersAndWritesMPTs)
@@ -238,7 +388,20 @@ TEST_F(MPTExtTests, OnInitialDataFiltersAndWritesMPTs)
         EXPECT_EQ(holders.size(), 1);  // Only metadata creating an MPToken is written
     });
 
+    std::vector<MPTokenIssuanceTransactionsData> issuanceTxs;
+    std::vector<MPTokenIssuanceTransactionsData> accountIssuanceTxs;
+    EXPECT_CALL(*backend_, writeMPTokenIssuanceTransactions).WillOnce(SaveArg<0>(&issuanceTxs));
+    EXPECT_CALL(*backend_, writeAccountMPTokenIssuanceTransactions)
+        .WillOnce(SaveArg<0>(&accountIssuanceTxs));
+
     ext_.onInitialData(data);
+
+    // Only the AUTHORIZE fixture touches an MPT object.
+    ASSERT_EQ(issuanceTxs.size(), 1);
+    EXPECT_EQ(issuanceTxs[0].mptIssuanceID, xrpl::uint192(kIssuanceID));
+    EXPECT_FALSE(issuanceTxs[0].accounts.empty());
+    EXPECT_TRUE(issuanceTxs[0].accounts.contains(getAccountIdWithString(kHolderAccount)));
+    EXPECT_EQ(issuanceTxs, accountIssuanceTxs);  // same vector goes to both tables
 }
 
 TEST_F(MPTExtTests, OnInitialObjectWritesMPT)
@@ -257,16 +420,131 @@ TEST_F(MPTExtTests, OnInitialDataWithMultipleHolders)
     auto const data = createMultipleHoldersTestData();
 
     EXPECT_CALL(*backend_, writeMPTHolders).WillOnce([](auto const& holders) {
-        EXPECT_EQ(holders.size(), 3);  // Expect all three AUTHORIZE transactions
+        EXPECT_EQ(holders.size(), 3);  // All three AUTHORIZE transactions
 
         auto const expectedAccount =
-            rpc::accountFromStringStrict(kHolderAccount);  // Expect all three to be the same
+            rpc::accountFromStringStrict(kHolderAccount);  // Same holder in each fixture
         EXPECT_TRUE(std::ranges::all_of(holders, [&expectedAccount](auto const& data) {
             return data.holder == expectedAccount;
         }));
     });
 
+    std::vector<MPTokenIssuanceTransactionsData> issuanceTxs;
+    std::vector<MPTokenIssuanceTransactionsData> accountIssuanceTxs;
+    EXPECT_CALL(*backend_, writeMPTokenIssuanceTransactions).WillOnce(SaveArg<0>(&issuanceTxs));
+    EXPECT_CALL(*backend_, writeAccountMPTokenIssuanceTransactions)
+        .WillOnce(SaveArg<0>(&accountIssuanceTxs));
+
     ext_.onInitialData(data);
+
+    // One record per AUTHORIZE transaction; each has a distinct transaction index.
+    ASSERT_EQ(issuanceTxs.size(), 3);
+    EXPECT_TRUE(std::ranges::all_of(issuanceTxs, [](auto const& record) {
+        return record.mptIssuanceID == xrpl::uint192(kIssuanceID);
+    }));
+    std::vector<std::uint32_t> indices;
+    std::ranges::transform(issuanceTxs, std::back_inserter(indices), [](auto const& record) {
+        return record.transactionIndex;
+    });
+    EXPECT_THAT(indices, UnorderedElementsAre(0, 1, 2));
+    EXPECT_EQ(issuanceTxs, accountIssuanceTxs);
+}
+
+TEST_F(MPTExtTests, NoMPTTransactionsWritesNothing)
+{
+    auto transactions = std::vector{
+        util::createTransaction(xrpl::TxType::ttAMM_CREATE),
+        util::createTransaction(xrpl::TxType::ttAMM_CREATE)
+    };
+
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
+    auto const data = etl::model::LedgerData{
+        .transactions = std::move(transactions),
+        .objects = {},
+        .successors = {},
+        .edgeKeys = {},
+        .header = header,
+        .rawHeader = {},
+        .seq = kSeq
+    };
+
+    EXPECT_CALL(*backend_, writeMPTHolders).Times(0);
+    EXPECT_CALL(*backend_, writeMPTokenIssuanceTransactions).Times(0);
+    EXPECT_CALL(*backend_, writeAccountMPTokenIssuanceTransactions).Times(0);
+
+    ext_.onLedgerData(data);
+}
+
+TEST_F(MPTExtTests, OnLedgerDataDedupsMultiIssuanceFanout)
+{
+    auto transactions = std::vector{createMultiIssuanceTransaction()};
+
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
+    auto const data = etl::model::LedgerData{
+        .transactions = std::move(transactions),
+        .objects = {},
+        .successors = {},
+        .edgeKeys = {},
+        .header = header,
+        .rawHeader = {},
+        .seq = kSeq
+    };
+
+    std::vector<MPTokenIssuanceTransactionsData> issuanceTxs;
+    std::vector<MPTokenIssuanceTransactionsData> accountIssuanceTxs;
+    EXPECT_CALL(*backend_, writeMPTokenIssuanceTransactions).WillOnce(SaveArg<0>(&issuanceTxs));
+    EXPECT_CALL(*backend_, writeAccountMPTokenIssuanceTransactions)
+        .WillOnce(SaveArg<0>(&accountIssuanceTxs));
+
+    ext_.onLedgerData(data);
+
+    // issuanceA is touched twice, issuanceB once; each record carries the full account set.
+    auto const issuanceA = xrpl::makeMptID(1, getAccountIdWithString(kHolderAccount));
+    auto const issuanceB = xrpl::makeMptID(2, getAccountIdWithString(kHolderAccount));
+
+    ASSERT_EQ(issuanceTxs.size(), 2);
+    EXPECT_EQ(issuanceTxs[0].mptIssuanceID, issuanceA);
+    EXPECT_EQ(issuanceTxs[1].mptIssuanceID, issuanceB);
+    for (auto const& record : issuanceTxs) {
+        EXPECT_EQ(record.accounts.size(), 3);
+        EXPECT_TRUE(record.accounts.contains(getAccountIdWithString(kAccount)));
+        EXPECT_TRUE(record.accounts.contains(getAccountIdWithString(kAccount2)));
+        EXPECT_TRUE(record.accounts.contains(getAccountIdWithString(kHolderAccount)));
+        EXPECT_EQ(record.ledgerSequence, kSeq);
+    }
+    EXPECT_EQ(issuanceTxs, accountIssuanceTxs);
+}
+
+TEST_F(MPTExtTests, OnLedgerDataWritesHighFanoutIssuanceIndexWithoutHolders)
+{
+    auto transactions = std::vector{createHighFanoutIssuanceTransaction()};
+
+    auto const header = createLedgerHeader(kLedgerHash, kSeq);
+    auto const data = etl::model::LedgerData{
+        .transactions = std::move(transactions),
+        .objects = {},
+        .successors = {},
+        .edgeKeys = {},
+        .header = header,
+        .rawHeader = {},
+        .seq = kSeq
+    };
+
+    EXPECT_CALL(*backend_, writeMPTHolders).Times(0);
+
+    std::vector<MPTokenIssuanceTransactionsData> issuanceTxs;
+    std::vector<MPTokenIssuanceTransactionsData> accountIssuanceTxs;
+    EXPECT_CALL(*backend_, writeMPTokenIssuanceTransactions).WillOnce(SaveArg<0>(&issuanceTxs));
+    EXPECT_CALL(*backend_, writeAccountMPTokenIssuanceTransactions)
+        .WillOnce(SaveArg<0>(&accountIssuanceTxs));
+
+    ext_.onLedgerData(data);
+
+    ASSERT_EQ(issuanceTxs.size(), 1);
+    EXPECT_EQ(issuanceTxs[0].mptIssuanceID, xrpl::uint192{kMptIssuanceID});
+    EXPECT_GT(issuanceTxs[0].accounts.size(), kHighFanoutAccountCount);
+    EXPECT_EQ(issuanceTxs[0].ledgerSequence, kSeq);
+    EXPECT_EQ(issuanceTxs, accountIssuanceTxs);
 }
 
 TEST_F(MPTExtTests, OnInitialDataDoesNotWriteFailedMPTokenCreations)

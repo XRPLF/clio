@@ -25,7 +25,9 @@ namespace util::config {
  */
 struct ClioConfigDescription {
 public:
-    /** @brief Struct to represent a key-value pair*/
+    /**
+     * @brief Struct to represent a key-value pair
+     */
     struct KV {
         std::string_view key;
         std::string_view value;

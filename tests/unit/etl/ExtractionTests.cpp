@@ -4,6 +4,7 @@
 #include "etl/Models.hpp"
 #include "etl/impl/Extraction.hpp"
 #include "util/BinaryTestObject.hpp"
+#include "util/MockAmendmentBlockHandler.hpp"
 #include "util/MockAssert.hpp"
 #include "util/TestObject.hpp"
 
@@ -22,6 +23,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -370,8 +372,24 @@ struct MockFetcher : etl::LedgerFetcherInterface {
 
 struct ExtractorTests : ExtractionTests {
     std::shared_ptr<MockFetcher> fetcher = std::make_shared<MockFetcher>();
-    etl::impl::Extractor extractor{fetcher};
+    std::shared_ptr<MockAmendmentBlockHandler> amendmentBlockHandler =
+        std::make_shared<MockAmendmentBlockHandler>();
+    etl::impl::Extractor extractor{fetcher, amendmentBlockHandler};
 };
+
+inline etl::impl::PBLedgerResponseType
+makeResponseWithUndeserializableTx()
+{
+    auto response = util::createData();
+    auto& txs = *response.mutable_transactions_list();
+
+    auto blob = txs.transactions(0).transaction_blob();
+    blob.at(1) = static_cast<char>(0xff);
+    blob.at(2) = static_cast<char>(0xff);
+    txs.mutable_transactions(0)->set_transaction_blob(std::move(blob));
+
+    return response;
+}
 
 TEST_F(ExtractorTests, ExtractLedgerWithDiffNoResult)
 {
@@ -384,6 +402,26 @@ TEST_F(ExtractorTests, ExtractLedgerOnlyNoResult)
 {
     EXPECT_CALL(*fetcher, fetchData(kSeq)).WillOnce(testing::Return(std::nullopt));
     auto res = extractor.extractLedgerOnly(kSeq);
+    EXPECT_FALSE(res.has_value());
+}
+
+TEST_F(ExtractorTests, ExtractLedgerOnlyDeserializeFailureTriggersAmendmentBlock)
+{
+    EXPECT_CALL(*fetcher, fetchData(kSeq))
+        .WillOnce(testing::Return(makeResponseWithUndeserializableTx()));
+    EXPECT_CALL(*amendmentBlockHandler, notifyAmendmentBlocked()).Times(1);
+
+    auto const res = extractor.extractLedgerOnly(kSeq);
+    EXPECT_FALSE(res.has_value());
+}
+
+TEST_F(ExtractorTests, ExtractLedgerWithDiffDeserializeFailureTriggersAmendmentBlock)
+{
+    EXPECT_CALL(*fetcher, fetchDataAndDiff(kSeq))
+        .WillOnce(testing::Return(makeResponseWithUndeserializableTx()));
+    EXPECT_CALL(*amendmentBlockHandler, notifyAmendmentBlocked()).Times(1);
+
+    auto const res = extractor.extractLedgerWithDiff(kSeq);
     EXPECT_FALSE(res.has_value());
 }
 

@@ -596,8 +596,8 @@ traverseNFTObjects(
     std::function<void(xrpl::SLE)> atOwnedNode
 )
 {
-    auto const firstNFTPage = xrpl::keylet::nftpageMin(accountID);
-    auto const lastNFTPage = xrpl::keylet::nftpageMax(accountID);
+    auto const firstNFTPage = xrpl::keylet::nftokenPageMin(accountID);
+    auto const lastNFTPage = xrpl::keylet::nftokenPageMax(accountID);
 
     // check if nextPage is valid
     if (nextPage != beast::kZero and firstNFTPage.key != (nextPage & ~xrpl::nft::kPageMask))
@@ -968,7 +968,7 @@ isFrozen(
         ))
         return true;
 
-    auto const trustLineKeylet = xrpl::keylet::line(account, issuer, currency);
+    auto const trustLineKeylet = xrpl::keylet::trustLine(account, issuer, currency);
     return issuer != account &&
         fetchAndCheckAnyFlagsExists(
                backend,
@@ -995,7 +995,7 @@ isDeepFrozen(
     if (issuer == account)
         return false;
 
-    auto const trustLineKeylet = xrpl::keylet::line(account, issuer, currency);
+    auto const trustLineKeylet = xrpl::keylet::trustLine(account, issuer, currency);
 
     return fetchAndCheckAnyFlagsExists(
         backend, sequence, trustLineKeylet, {xrpl::lsfHighDeepFreeze, xrpl::lsfLowDeepFreeze}, yield
@@ -1035,13 +1035,20 @@ xrpLiquid(
 
     std::uint32_t const ownerCount = sle.getFieldU32(xrpl::sfOwnerCount);
 
+    // A sponsored account pays no base reserve of its own, and an account pays one extra base
+    // reserve for every account it sponsors. Before the Sponsor amendment activates neither field
+    // is ever set, so this evaluates to 1 and matches the previous behaviour.
+    std::uint32_t const accountCount = (sle.isFieldPresent(xrpl::sfSponsor) ? 0 : 1) +
+        sle.getFieldU32(xrpl::sfSponsoringAccountCount);
+
     auto balance = sle.getFieldAmount(xrpl::sfBalance);
 
     xrpl::STAmount const amount = [&]() {
         // AMM doesn't require the reserves
         if ((sle.getFlags() & xrpl::lsfAMMNode) != 0u)
             return balance;
-        auto const reserve = backend.fetchFees(sequence, yield)->accountReserve(ownerCount);
+        auto const reserve =
+            backend.fetchFees(sequence, yield)->accountReserve(ownerCount, accountCount);
         xrpl::STAmount amount = balance - reserve;
         if (balance < reserve)
             amount.clear();
@@ -1093,7 +1100,7 @@ ammAccountHolds(
     if (xrpl::isXRP(currency))
         return {xrpLiquid(backend, sequence, account, yield)};
 
-    auto const key = xrpl::keylet::line(account, issuer, currency).key;
+    auto const key = xrpl::keylet::trustLine(account, issuer, currency).key;
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob) {
@@ -1138,7 +1145,7 @@ accountHolds(
     if (xrpl::isXRP(currency))
         return {xrpLiquid(backend, sequence, account, yield)};
 
-    auto const key = xrpl::keylet::line(account, issuer, currency).key;
+    auto const key = xrpl::keylet::trustLine(account, issuer, currency).key;
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob) {

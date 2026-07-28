@@ -1135,7 +1135,8 @@ TEST_F(RPCHelpersTest, isDeepFrozen_TrustLineIsDeepFrozen)
     auto const account2 = getAccountIdWithString(kAccount2);
 
     // create a trustline between account and account2 and is deep frozen
-    auto const trustLineKey = xrpl::keylet::line(account, account2, xrpl::Currency{kCurrency}).key;
+    auto const trustLineKey =
+        xrpl::keylet::trustLine(account, account2, xrpl::Currency{kCurrency}).key;
     auto const trustlineDeepFrozen = createRippleStateLedgerObject(
         "USD", kAccount, 8, kAccount, 1000, kAccount2, 2000, kIndex1, 2, xrpl::lsfLowDeepFreeze
     );
@@ -1156,7 +1157,8 @@ TEST_F(RPCHelpersTest, isDeepFrozen_TrustLineIsNotDeepFrozen)
     auto const account2 = getAccountIdWithString(kAccount2);
 
     // create a trustline between account and account2 that is frozen (NOT DeepFrozen)
-    auto const trustLineKey = xrpl::keylet::line(account, account2, xrpl::Currency{kCurrency}).key;
+    auto const trustLineKey =
+        xrpl::keylet::trustLine(account, account2, xrpl::Currency{kCurrency}).key;
     auto const trustlineFrozen = createRippleStateLedgerObject(
         "USD", kAccount, 8, kAccount, 1000, kAccount2, 2000, kIndex1, 2, xrpl::lsfLowFreeze
     );
@@ -1176,7 +1178,8 @@ TEST_F(RPCHelpersTest, isDeepFrozen_IssuerAndAccountIsSameWillNotBeDeepFrozen)
     auto const account = getAccountIdWithString(kAccount);
     auto const issuer = getAccountIdWithString(kAccount2);
 
-    auto const trustLineKey = xrpl::keylet::line(account, issuer, xrpl::Currency{kCurrency}).key;
+    auto const trustLineKey =
+        xrpl::keylet::trustLine(account, issuer, xrpl::Currency{kCurrency}).key;
     auto const trustlineDeepFrozen = createRippleStateLedgerObject(
         "USD", kAccount, 8, kAccount, 1000, kAccount2, 2000, kIndex1, 2, xrpl::lsfLowDeepFreeze
     );
@@ -1216,7 +1219,8 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerAndAccountIsSameWillNotBeFrozen)
     auto const account = getAccountIdWithString(kAccount);
     auto const issuer = getAccountIdWithString(kAccount2);
 
-    auto const trustLineKey = xrpl::keylet::line(account, issuer, xrpl::Currency{kCurrency}).key;
+    auto const trustLineKey =
+        xrpl::keylet::trustLine(account, issuer, xrpl::Currency{kCurrency}).key;
     auto const trustlineDeepFrozen = createRippleStateLedgerObject(
         "USD", kAccount, 8, kAccount, 1000, kAccount2, 2000, kIndex1, 2, xrpl::lsfHighFreeze
     );
@@ -1237,7 +1241,7 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerTrustLineIsFrozen)
     auto const issuer = getAccountIdWithString(kAccount2);
     xrpl::Currency const currency{kCurrency};
 
-    auto const trustLineKey = xrpl::keylet::line(account, issuer, currency).key;
+    auto const trustLineKey = xrpl::keylet::trustLine(account, issuer, currency).key;
 
     // issuer is higher than account, so the correct flag to set is High freeze
     auto const trustlineFrozen = createRippleStateLedgerObject(
@@ -1258,7 +1262,7 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerWithLowFreezeIsNotFrozen)
     auto const issuer = getAccountIdWithString(kAccount2);
     xrpl::Currency const currency{kCurrency};
 
-    auto const trustLineKey = xrpl::keylet::line(account, issuer, currency).key;
+    auto const trustLineKey = xrpl::keylet::trustLine(account, issuer, currency).key;
 
     // issuer is higher than account, but the flag set here is low freeze
     auto const trustlineFrozen = createRippleStateLedgerObject(
@@ -1279,7 +1283,7 @@ TEST_F(RPCHelpersTest, AccountHolds_TrustLineNotfrozen)
     auto const issuer = getAccountIdWithString(kAccount2);
     xrpl::Currency const currency{kCurrency};
 
-    auto const trustLineKey = xrpl::keylet::line(account, issuer, currency).key;
+    auto const trustLineKey = xrpl::keylet::trustLine(account, issuer, currency).key;
     auto const trustLine = createRippleStateLedgerObject(
         kCurrency, kAccount2, 500, kAccount, 1000, kAccount2, 1000, kTxnId, 1, 0
     );
@@ -1309,7 +1313,7 @@ TEST_F(RPCHelpersTest, AccountHolds_NoTrustLine)
     auto const issuer = getAccountIdWithString(kAccount2);
     xrpl::Currency const currency{kCurrency};
 
-    auto const key = xrpl::keylet::line(account, issuer, currency).key;
+    auto const key = xrpl::keylet::trustLine(account, issuer, currency).key;
 
     // return no trustline found
     EXPECT_CALL(*backend_, doFetchLedgerObject(key, kLedgerSeqObject, _))
@@ -1338,7 +1342,7 @@ TEST_F(RPCHelpersTest, AccountHolds_TrustLineButFrozen)
     xrpl::Currency const currency{kCurrency};
 
     // balance of 500, but trustline is frozen
-    auto const trustLineKey = xrpl::keylet::line(account, issuer, currency).key;
+    auto const trustLineKey = xrpl::keylet::trustLine(account, issuer, currency).key;
 
     auto const trustLine = createRippleStateLedgerObject(
         kCurrency, kAccount2, 500, kAccount, 1000, kAccount2, 1000, kTxnId, 1, xrpl::lsfHighFreeze
@@ -1371,7 +1375,7 @@ TEST_F(RPCHelpersTest, AccountHoldsFixLPTAmendmentDisabled)
         kLptokenCurrency, kAmmAccount, 100, kAccount, 100, kAmmAccount, 100, kTxnId, 3
     );
     auto const lptRippleStateKk =
-        xrpl::keylet::line(ammAccount, account, xrpl::toCurrency(kLptokenCurrency)).key;
+        xrpl::keylet::trustLine(ammAccount, account, xrpl::toCurrency(kLptokenCurrency)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
     EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
@@ -1417,7 +1421,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenNotAMMAccount)
         "USD", kAccount2, 100, kAccount, 100, kAccount2, 100, kTxnId, 3
     );
     auto const usdRippleStateKk =
-        xrpl::keylet::line(account2, account, xrpl::toCurrency("USD")).key;
+        xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
     EXPECT_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_))
@@ -1463,7 +1467,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
         kLptokenCurrency, kAmmAccount, 100, kAccount, 100, kAmmAccount, 100, kTxnId, 3
     );
     auto const lptRippleStateKk =
-        xrpl::keylet::line(ammAccount, account, xrpl::toCurrency(kLptokenCurrency)).key;
+        xrpl::keylet::trustLine(ammAccount, account, xrpl::toCurrency(kLptokenCurrency)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
     EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
@@ -1526,7 +1530,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset2Frozen)
         kLptokenCurrency, kAmmAccount, 100, kAccount, 100, kAmmAccount, 100, kTxnId, 3
     );
     auto const lptRippleStateKk =
-        xrpl::keylet::line(ammAccount, account, xrpl::toCurrency(kLptokenCurrency)).key;
+        xrpl::keylet::trustLine(ammAccount, account, xrpl::toCurrency(kLptokenCurrency)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
     EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_)).Times(2);
@@ -1588,7 +1592,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
         kLptokenCurrency, kAmmAccount, 100, kAccount, 100, kAmmAccount, 100, kTxnId, 3
     );
     auto const lptRippleStateKk =
-        xrpl::keylet::line(ammAccount, account, xrpl::toCurrency(kLptokenCurrency)).key;
+        xrpl::keylet::trustLine(ammAccount, account, xrpl::toCurrency(kLptokenCurrency)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
     EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
@@ -1625,7 +1629,8 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
 
     auto const usdRippleState =
         createRippleStateLedgerObject("USD", kIssuer, 100, kAccount, 100, kIssuer, 100, kTxnId, 3);
-    auto const usdRippleStateKk = xrpl::keylet::line(issuer, account, xrpl::toCurrency("USD")).key;
+    auto const usdRippleStateKk =
+        xrpl::keylet::trustLine(issuer, account, xrpl::toCurrency("USD")).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_))
         .WillOnce(Return(usdRippleState.getSerializer().peekData()));

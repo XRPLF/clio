@@ -67,7 +67,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
     // if a marker was passed, start at the page specified in marker. Else, start at the max page
     auto const pageKey = input.marker ? xrpl::uint256{input.marker->c_str()}
                                       // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                                      : xrpl::keylet::nftpageMax(*accountID).key;
+                                      : xrpl::keylet::nftokenPageMax(*accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
     if (!blob) {
@@ -104,7 +104,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
             obj[SFS(sfFlags)] = xrpl::nft::getFlags(nftokenID);
             obj[SFS(sfIssuer)] = to_string(xrpl::nft::getIssuer(nftokenID));
             obj[SFS(sfNFTokenTaxon)] = xrpl::nft::toUInt32(xrpl::nft::getTaxon(nftokenID));
-            obj[JS(nft_serial)] = xrpl::nft::getSerial(nftokenID);
+            obj[JS(nft_serial)] = xrpl::nft::getSequence(nftokenID);
 
             if (std::uint16_t const xferFee = {xrpl::nft::getTransferFee(nftokenID)})
                 obj[SFS(sfTransferFee)] = xferFee;

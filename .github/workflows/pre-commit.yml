@@ -8,7 +8,7 @@ on:
 
 jobs:
   run-hooks:
-    uses: XRPLF/actions/.github/workflows/pre-commit.yml@cba1f0891650baf1a9c88624dc2d72573be2eb81
+    uses: XRPLF/actions/.github/workflows/pre-commit.yml@3ba08d6ddf114092891d48491fc2e26c3ba15552
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-pre-commit:14342e087ceb8b593027198bf9ef06a43833c696" }'
+      container: '{ "image": "ghcr.io/xrplf/xrpld/pre-commit:sha-f56b79f" }'

@@ -54,7 +54,7 @@ public:
     /**
      * @brief Check if stop is requested
      *
-     * @returns true if stop is requested; false otherwise
+     * @return true if stop is requested; false otherwise
      */
     [[nodiscard]] bool
     isStopRequested() const noexcept
@@ -65,7 +65,7 @@ public:
     /**
      * @brief Check if stop is requested
      *
-     * @returns true if stop is requested; false otherwise
+     * @return true if stop is requested; false otherwise
      */
     [[nodiscard]]
     operator bool() const noexcept
@@ -77,7 +77,7 @@ public:
      * @brief Get the underlying boost::asio::yield_context
      * @note ASSERTs if the stop token is not convertible to boost::asio::yield_context
      *
-     * @returns The underlying boost::asio::yield_context
+     * @return The underlying boost::asio::yield_context
      */
     [[nodiscard]]
     operator boost::asio::yield_context() const

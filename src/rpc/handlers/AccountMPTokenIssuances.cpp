@@ -17,6 +17,7 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STInteger.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/jss.h>
 
@@ -54,6 +55,7 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
     setFlag(issuance.mptCanTrade, xrpl::lsfMPTCanTrade);
     setFlag(issuance.mptCanTransfer, xrpl::lsfMPTCanTransfer);
     setFlag(issuance.mptCanClawback, xrpl::lsfMPTCanClawback);
+    setFlag(issuance.mptCanHoldConfidentialBalance, xrpl::lsfMPTCanHoldConfidentialBalance);
 
     if (sle.isFieldPresent(xrpl::sfMutableFlags)) {
         auto const mutableFlags = sle.getFieldU32(xrpl::sfMutableFlags);
@@ -63,12 +65,12 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
                 field = true;
         };
 
-        setMutableFlag(issuance.mptCanMutateCanLock, xrpl::lsmfMPTCanMutateCanLock);
-        setMutableFlag(issuance.mptCanMutateRequireAuth, xrpl::lsmfMPTCanMutateRequireAuth);
-        setMutableFlag(issuance.mptCanMutateCanEscrow, xrpl::lsmfMPTCanMutateCanEscrow);
-        setMutableFlag(issuance.mptCanMutateCanTrade, xrpl::lsmfMPTCanMutateCanTrade);
-        setMutableFlag(issuance.mptCanMutateCanTransfer, xrpl::lsmfMPTCanMutateCanTransfer);
-        setMutableFlag(issuance.mptCanMutateCanClawback, xrpl::lsmfMPTCanMutateCanClawback);
+        setMutableFlag(issuance.mptCanMutateCanLock, xrpl::lsmfMPTCanEnableCanLock);
+        setMutableFlag(issuance.mptCanMutateRequireAuth, xrpl::lsmfMPTCanEnableRequireAuth);
+        setMutableFlag(issuance.mptCanMutateCanEscrow, xrpl::lsmfMPTCanEnableCanEscrow);
+        setMutableFlag(issuance.mptCanMutateCanTrade, xrpl::lsmfMPTCanEnableCanTrade);
+        setMutableFlag(issuance.mptCanMutateCanTransfer, xrpl::lsmfMPTCanEnableCanTransfer);
+        setMutableFlag(issuance.mptCanMutateCanClawback, xrpl::lsmfMPTCanEnableCanClawback);
         setMutableFlag(issuance.mptCanMutateMetadata, xrpl::lsmfMPTCanMutateMetadata);
         setMutableFlag(issuance.mptCanMutateTransferFee, xrpl::lsmfMPTCanMutateTransferFee);
     }
@@ -93,6 +95,17 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
 
     if (sle.isFieldPresent(xrpl::sfDomainID))
         issuance.domainID = xrpl::strHex(sle.getFieldH256(xrpl::sfDomainID));
+
+    if (sle.isFieldPresent(xrpl::sfConfidentialOutstandingAmount)) {
+        issuance.confidentialOutstandingAmount =
+            sle.getFieldU64(xrpl::sfConfidentialOutstandingAmount);
+    }
+
+    if (sle.isFieldPresent(xrpl::sfIssuerEncryptionKey))
+        issuance.issuerEncryptionKey = xrpl::strHex(sle.getFieldVL(xrpl::sfIssuerEncryptionKey));
+
+    if (sle.isFieldPresent(xrpl::sfAuditorEncryptionKey))
+        issuance.auditorEncryptionKey = xrpl::strHex(sle.getFieldVL(xrpl::sfAuditorEncryptionKey));
 
     issuances.push_back(issuance);
 }
@@ -236,11 +249,23 @@ tag_invoke(
         }
     };
 
+    // UInt64 amount fields must be serialized as base-10 strings (matching rippled's
+    // STUInt64::getJson) so that JSON parsers using IEEE-754 doubles do not silently lose
+    // precision for values greater than 2^53.
+    auto const setUint64IfPresent =
+        [&](boost::json::string_view field, xrpl::SField const& sField, auto const& value) {
+            if (value.has_value()) {
+                obj[field] = toBoostJson(
+                    xrpl::STUInt64{sField, *value}.getJson(xrpl::JsonOptions::Values::None)
+                );
+            }
+        };
+
     setIfPresent("transfer_fee", issuance.transferFee);
     setIfPresent("asset_scale", issuance.assetScale);
-    setIfPresent("maximum_amount", issuance.maximumAmount);
-    setIfPresent("outstanding_amount", issuance.outstandingAmount);
-    setIfPresent("locked_amount", issuance.lockedAmount);
+    setUint64IfPresent("maximum_amount", xrpl::sfMaximumAmount, issuance.maximumAmount);
+    setUint64IfPresent("outstanding_amount", xrpl::sfOutstandingAmount, issuance.outstandingAmount);
+    setUint64IfPresent("locked_amount", xrpl::sfLockedAmount, issuance.lockedAmount);
     setIfPresent("mptoken_metadata", issuance.mptokenMetadata);
     setIfPresent("domain_id", issuance.domainID);
 
@@ -260,6 +285,15 @@ tag_invoke(
     setIfPresent("mpt_can_mutate_can_clawback", issuance.mptCanMutateCanClawback);
     setIfPresent("mpt_can_mutate_metadata", issuance.mptCanMutateMetadata);
     setIfPresent("mpt_can_mutate_transfer_fee", issuance.mptCanMutateTransferFee);
+
+    setIfPresent("mpt_can_hold_confidential_balance", issuance.mptCanHoldConfidentialBalance);
+    setUint64IfPresent(
+        "confidential_outstanding_amount",
+        xrpl::sfConfidentialOutstandingAmount,
+        issuance.confidentialOutstandingAmount
+    );
+    setIfPresent("issuer_encryption_key", issuance.issuerEncryptionKey);
+    setIfPresent("auditor_encryption_key", issuance.auditorEncryptionKey);
 
     jv = std::move(obj);
 }

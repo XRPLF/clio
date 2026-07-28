@@ -311,7 +311,7 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
     ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(accountID).key, 30, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
-    auto const firstPage = xrpl::keylet::nftpageMax(accountID).key;
+    auto const firstPage = xrpl::keylet::nftokenPageMax(accountID).key;
     auto const pageObject = createNftTokenPage(
         std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, std::nullopt
     );
@@ -348,7 +348,7 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
     ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(accountID).key, 30, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
-    auto const firstPage = xrpl::keylet::nftpageMax(accountID).key;
+    auto const firstPage = xrpl::keylet::nftokenPageMax(accountID).key;
     auto const pageObject = createNftTokenPage(
         std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, firstPage
     );
@@ -551,7 +551,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
     ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(accountID).key, 30, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
-    auto const firstPage = xrpl::keylet::nftpageMax(accountID).key;
+    auto const firstPage = xrpl::keylet::nftokenPageMax(accountID).key;
     auto const pageObject = createNftTokenPage(
         std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, std::nullopt
     );
@@ -617,7 +617,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
     ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(accountID).key, 30, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
-    auto const firstPage = xrpl::keylet::nftpageMax(accountID).key;
+    auto const firstPage = xrpl::keylet::nftokenPageMax(accountID).key;
     auto const pageObject = createNftTokenPage(
         std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, std::nullopt
     );

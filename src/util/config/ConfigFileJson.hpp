@@ -15,7 +15,9 @@
 
 namespace util::config {
 
-/** @brief Json representation of config */
+/**
+ * @brief Json representation of config
+ */
 class ConfigFileJson final : public ConfigFileInterface {
     boost::json::object jsonObject_;
 

@@ -17,7 +17,7 @@ class ClioConan(ConanFile):
         "fmt/12.1.0",
         "libbacktrace/cci.20210118",
         "spdlog/1.17.0",
-        "xrpl/3.2.0",
+        "xrpl/3.3.0-rc1",
     ]
 
     default_options = {
@@ -46,7 +46,7 @@ class ClioConan(ConanFile):
         # (only boost/date/xxhash are required with transitive_headers=True).
         # So they must be direct requirements of clio to get their include dirs;
         # the version pins match xrpl's, so this does not change any package_id.
-        self.requires("grpc/1.78.1")
+        self.requires("grpc/1.81.1")
         self.requires("openssl/3.6.3", force=True)
         # Pin the remaining transitive deps to the exact versions xrpl uses.
         # override=True only sets the version when the package appears

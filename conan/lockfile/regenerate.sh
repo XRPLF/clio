@@ -22,4 +22,4 @@ rm -f conan.lock
 # Create a new lockfile that is compatible with macOS.
 # It should also work on Linux.
 conan lock create . \
-    --profile:all=./conan/profiles/apple-clang-17.profile
+    --profile:all=./conan/lockfile/apple-clang-21.profile

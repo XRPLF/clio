@@ -180,7 +180,9 @@ struct LogFileRotationTests : ::testing::Test {
         LogServiceState::replaceSinks(LogServiceState::sinks_);
     }
 
-    /** @brief Returns the number of regular files in tmpDir_. */
+    /**
+     * @brief Returns the number of regular files in tmpDir_.
+     */
     [[nodiscard]] std::size_t
     countLogFiles() const
     {

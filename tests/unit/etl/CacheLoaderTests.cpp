@@ -3,6 +3,7 @@
 #include "etl/CacheLoaderSettings.hpp"
 #include "etl/FakeDiffProvider.hpp"
 #include "etl/impl/CacheLoader.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockLedgerCache.hpp"
 #include "util/MockLedgerCacheLoadingState.hpp"
@@ -22,6 +23,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -74,6 +76,59 @@ using Settings = etl::CacheLoaderSettings;
 struct ParametrizedCacheLoaderTest : CacheLoaderTest, WithParamInterface<Settings> {};
 
 };  // namespace
+
+//
+// Tests of the exception-guarding wrapper (friended so we can drive the private members directly)
+//
+struct CacheLoaderImplTests : util::prometheus::WithPrometheus, MockBackendTest, LoggerFixture {
+    testing::StrictMock<MockLedgerCache> cache;
+    async::CoroExecutionContext ctx{1};
+
+    etl::impl::CacheLoaderImpl<MockLedgerCache> loader{
+        ctx,
+        backend_,
+        cache,
+        kSeq,
+        /* numCacheMarkers */ 0,
+        /* cachePageFetchSize */ 512,
+        {}
+    };
+
+    template <typename Work>
+    void
+    runGuarded(Work&& work)
+    {
+        loader.runGuarded(std::forward<Work>(work));
+    }
+};
+
+TEST_F(CacheLoaderImplTests, GuardDisablesCacheAndLogsOnStdException)
+{
+    EXPECT_CALL(cache, setDisabled).Times(1);
+
+    runGuarded([] { throw std::runtime_error("boom"); });
+
+    EXPECT_THAT(getLoggerString(), HasSubstr("boom"));
+}
+
+TEST_F(CacheLoaderImplTests, GuardDisablesCacheAndLogsUnknownOnNonStdException)
+{
+    EXPECT_CALL(cache, setDisabled).Times(1);
+
+    runGuarded([] { throw 42; });
+
+    EXPECT_THAT(getLoggerString(), HasSubstr("unknown"));
+}
+
+TEST_F(CacheLoaderImplTests, GuardDoesNotDisableCacheOnSuccess)
+{
+    EXPECT_CALL(cache, setDisabled).Times(0);
+
+    bool called = false;
+    runGuarded([&] { called = true; });
+
+    EXPECT_TRUE(called);
+}
 
 //
 // Tests of implementation
@@ -266,6 +321,38 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
 
     EXPECT_CALL(cache, isDisabled).WillOnce(Return(false)).WillRepeatedly(Return(true));
     EXPECT_CALL(cache, updateImpl).Times(AtMost(1));
+    EXPECT_CALL(cache, setFull).Times(0);
+
+    async::CoroExecutionContext ctx{settings.numThreads};
+    etl::impl::CursorFromFixDiffNumProvider const provider{backend_, settings.numCacheDiffs};
+
+    etl::impl::CacheLoaderImpl<MockLedgerCache> loader{
+        ctx,
+        backend_,
+        cache,
+        kSeq,
+        settings.numCacheMarkers,
+        settings.cachePageFetchSize,
+        provider.getCursors(kSeq)
+    };
+
+    loader.wait();
+}
+
+TEST_P(ParametrizedCacheLoaderTest, NonTimeoutErrorDisablesCacheInsteadOfEscaping)
+{
+    auto const& settings = GetParam();
+    auto const diffs = diffProvider.getLatestDiff();
+
+    EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).WillRepeatedly(Return(diffs));
+
+    EXPECT_CALL(*backend_, doFetchSuccessorKey(_, kSeq, _))
+        .WillRepeatedly(Throw(std::runtime_error("simulated non-timeout backend failure")));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects(_, kSeq, _))
+        .WillRepeatedly(Return(std::vector<Blob>{}));
+
+    EXPECT_CALL(cache, isDisabled).WillRepeatedly(Return(false));
+    EXPECT_CALL(cache, setDisabled).Times(AtLeast(1));
     EXPECT_CALL(cache, setFull).Times(0);
 
     async::CoroExecutionContext ctx{settings.numThreads};

@@ -29,20 +29,20 @@ struct ChannelInstantiated;
  * @brief Specifies the producer concurrency model for a Channel.
  */
 enum class ProducerType {
-    Single, /**< Only one Sender can exist (non-copyable). Uses direct Guard ownership for zero
-               overhead. */
-    Multi   /**< Multiple Senders can exist (copyable). Uses shared_ptr<Guard> for shared ownership.
-             */
+    Single,  ///< Only one Sender can exist (non-copyable).
+             ///< Uses direct Guard ownership for zero overhead.
+    Multi    ///< Multiple Senders can exist (copyable).
+             ///< Uses shared_ptr<Guard> for shared ownership.
 };
 
 /**
  * @brief Specifies the consumer concurrency model for a Channel.
  */
 enum class ConsumerType {
-    Single, /**< Only one Receiver can exist (non-copyable). Uses direct Guard ownership for zero
-               overhead. */
-    Multi /**< Multiple Receivers can exist (copyable). Uses shared_ptr<Guard> for shared ownership.
-           */
+    Single,  ///< Only one Receiver can exist (non-copyable).
+             ///< Uses direct Guard ownership for zero overhead.
+    Multi    ///< Multiple Receivers can exist (copyable).
+             ///< Uses shared_ptr<Guard> for shared ownership.
 };
 
 /**

@@ -2,6 +2,7 @@
 
 #include "etl/AmendmentBlockHandlerInterface.hpp"
 #include "etl/SystemState.hpp"
+#include "util/Mutex.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/async/AnyOperation.hpp"
 
@@ -18,12 +19,13 @@ namespace etl::impl {
 class AmendmentBlockHandler : public AmendmentBlockHandlerInterface {
 public:
     using ActionType = std::function<void()>;
+    using OperationType = std::optional<util::async::AnyOperation<void>>;
 
 private:
     std::reference_wrapper<SystemState> state_;
     std::chrono::steady_clock::duration interval_;
     util::async::AnyExecutionContext ctx_;
-    std::optional<util::async::AnyOperation<void>> operation_;
+    util::Mutex<OperationType> operation_;
 
     ActionType action_;
 

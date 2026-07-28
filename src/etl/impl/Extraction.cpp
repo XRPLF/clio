@@ -2,7 +2,6 @@
 
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
-#include "etl/LedgerFetcherInterface.hpp"
 #include "etl/Models.hpp"
 #include "etl/impl/LedgerFetcher.hpp"
 #include "util/Assert.hpp"
@@ -23,6 +22,7 @@
 #include <iterator>
 #include <optional>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -181,18 +181,35 @@ Extractor::unpack()
 }
 
 std::optional<model::LedgerData>
+Extractor::guardedUnpack(std::optional<PBLedgerResponseType>&& response, uint32_t seq)
+{
+    try {
+        return std::move(response).and_then(unpack());
+    } catch (std::runtime_error const& e) {
+        LOG(log_.fatal()) << "Failed to extract/deserialize ledger " << seq
+                          << " - the network likely has an amendment this Clio does not support: "
+                          << e.what();
+        amendmentBlockHandler_->notifyAmendmentBlocked();
+        return std::nullopt;
+    }
+}
+
+std::optional<model::LedgerData>
 Extractor::extractLedgerWithDiff(uint32_t seq)
 {
     LOG(log_.debug()) << "Extracting DIFF " << seq;
 
     auto const [batch, time] = ::util::timed<std::chrono::duration<double>>([this, seq] {
-        return fetcher_->fetchDataAndDiff(seq).and_then(unpack());
+        return guardedUnpack(fetcher_->fetchDataAndDiff(seq), seq);
     });
 
-    LOG(log_.debug()) << "Extracted and Transformed diff for " << seq << " in " << time << "ms";
+    if (batch.has_value()) {
+        LOG(log_.debug()) << "Extracted and transformed diff for " << seq << " in " << time << "ms";
+    } else {
+        LOG(log_.debug()) << "Did not produce diff for " << seq << " (no data) after " << time
+                          << "ms";
+    }
 
-    // can be nullopt. this means that either the server is stopping or another node took over ETL
-    // writing.
     return batch;
 }
 
@@ -202,14 +219,17 @@ Extractor::extractLedgerOnly(uint32_t seq)
     LOG(log_.debug()) << "Extracting FULL " << seq;
 
     auto const [batch, time] = ::util::timed<std::chrono::duration<double>>([this, seq] {
-        return fetcher_->fetchData(seq).and_then(unpack());
+        return guardedUnpack(fetcher_->fetchData(seq), seq);
     });
 
-    LOG(log_.debug()) << "Extracted and Transformed full ledger for " << seq << " in " << time
-                      << "ms";
+    if (batch.has_value()) {
+        LOG(log_.debug()) << "Extracted and transformed full ledger " << seq << " in " << time
+                          << "ms";
+    } else {
+        LOG(log_.debug()) << "Did not produce full ledger " << seq << " (no data) after " << time
+                          << "ms";
+    }
 
-    // can be nullopt. this means that either the server is stopping or another node took over ETL
-    // writing.
     return batch;
 }
 

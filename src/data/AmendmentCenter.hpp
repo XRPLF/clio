@@ -139,6 +139,13 @@ struct Amendments {
     REGISTER(fixBatchInnerSigs);
     REGISTER(fixCleanup3_1_3);
     REGISTER(fixCleanup3_2_0);
+    REGISTER(ConfidentialTransfer);
+
+    // These amendments are added because of libxrpl 3.3.0, but they are not yet supported in Clio.
+    REGISTER(LendingProtocolV1_1);
+    REGISTER(BatchV1_1);
+    REGISTER(Sponsor);
+    REGISTER(fixCleanup3_3_0);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);

@@ -104,7 +104,7 @@ It is implicitly used when running `conan` commands, you don't need to specify i
 
 You have to update this file every time you add a new dependency or change a revision or version of an existing dependency.
 
-To update a lockfile, run from the repository root: `./.github/scripts/conan/regenerate_lockfile.sh`
+To update a lockfile, run from the repository root: `./conan/lockfile/regenerate.sh`
 
 ## Building Clio
 

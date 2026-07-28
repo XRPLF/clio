@@ -21,6 +21,7 @@ target_sources(
         Retry.cpp
         Repeat.cpp
         requests/RequestBuilder.cpp
+        requests/SslContext.cpp
         requests/Types.cpp
         requests/WsConnection.cpp
         requests/impl/SslContext.cpp

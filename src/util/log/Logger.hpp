@@ -1,13 +1,12 @@
 #pragma once
 
-#include "util/SourceLocation.hpp"
-
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <memory>
 #include <optional>
+#include <source_location>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -88,14 +87,14 @@ class Logger {
     class Pump final {
         std::shared_ptr<spdlog::logger> logger_;
         Severity const severity_;
-        SourceLocationType const sourceLocation_;
+        std::source_location const sourceLocation_;
         std::ostringstream stream_;
         bool const enabled_;
 
     public:
         ~Pump();
 
-        Pump(std::shared_ptr<spdlog::logger> logger, Severity sev, SourceLocationType const& loc);
+        Pump(std::shared_ptr<spdlog::logger> logger, Severity sev, std::source_location const& loc);
 
         Pump(Pump&&) = delete;
         Pump(Pump const&) = delete;
@@ -170,7 +169,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] Pump
-    trace(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
+    trace(std::source_location const& loc = std::source_location::current()) const;
 
     /**
      * @brief Interface for logging at Severity::DBG severity
@@ -179,7 +178,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] Pump
-    debug(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
+    debug(std::source_location const& loc = std::source_location::current()) const;
 
     /**
      * @brief Interface for logging at Severity::NFO severity
@@ -188,7 +187,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] Pump
-    info(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
+    info(std::source_location const& loc = std::source_location::current()) const;
 
     /**
      * @brief Interface for logging at Severity::WRN severity
@@ -197,7 +196,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] Pump
-    warn(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
+    warn(std::source_location const& loc = std::source_location::current()) const;
 
     /**
      * @brief Interface for logging at Severity::ERR severity
@@ -206,7 +205,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] Pump
-    error(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
+    error(std::source_location const& loc = std::source_location::current()) const;
 
     /**
      * @brief Interface for logging at Severity::FTL severity
@@ -215,7 +214,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] Pump
-    fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
+    fatal(std::source_location const& loc = std::source_location::current()) const;
 
 private:
     Logger(std::shared_ptr<spdlog::logger> logger);
@@ -333,7 +332,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] static Logger::Pump
-    trace(SourceLocationType const& loc = CURRENT_SRC_LOCATION);
+    trace(std::source_location const& loc = std::source_location::current());
 
     /**
      * @brief Globally accessible General logger at Severity::DBG severity
@@ -342,7 +341,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] static Logger::Pump
-    debug(SourceLocationType const& loc = CURRENT_SRC_LOCATION);
+    debug(std::source_location const& loc = std::source_location::current());
 
     /**
      * @brief Globally accessible General logger at Severity::NFO severity
@@ -351,7 +350,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] static Logger::Pump
-    info(SourceLocationType const& loc = CURRENT_SRC_LOCATION);
+    info(std::source_location const& loc = std::source_location::current());
 
     /**
      * @brief Globally accessible General logger at Severity::WRN severity
@@ -360,7 +359,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] static Logger::Pump
-    warn(SourceLocationType const& loc = CURRENT_SRC_LOCATION);
+    warn(std::source_location const& loc = std::source_location::current());
 
     /**
      * @brief Globally accessible General logger at Severity::ERR severity
@@ -369,7 +368,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] static Logger::Pump
-    error(SourceLocationType const& loc = CURRENT_SRC_LOCATION);
+    error(std::source_location const& loc = std::source_location::current());
 
     /**
      * @brief Globally accessible General logger at Severity::FTL severity
@@ -378,7 +377,7 @@ public:
      * @return The pump to use for logging
      */
     [[nodiscard]] static Logger::Pump
-    fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION);
+    fatal(std::source_location const& loc = std::source_location::current());
 
 private:
     /**

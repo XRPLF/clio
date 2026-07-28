@@ -2853,7 +2853,7 @@ generateTestValuesForNormalPathTest()
                 kAccount,
                 kAccount2
             ),
-            .expectedIndex = xrpl::keylet::line(account1, account2, currency).key,
+            .expectedIndex = xrpl::keylet::trustLine(account1, account2, currency).key,
             .mockedEntity = createRippleStateLedgerObject(
                 "USD", kAccount2, 100, kAccount, 10, kAccount2, 20, kIndex1, 123, 0
             )
@@ -3167,7 +3167,7 @@ generateTestValuesForNormalPathTest()
                 }})JSON",
                 xrpl::to_string(xrpl::makeMptID(2, account1))
             ),
-            .expectedIndex = xrpl::keylet::mptIssuance(xrpl::makeMptID(2, account1)).key,
+            .expectedIndex = xrpl::keylet::mptokenIssuance(xrpl::makeMptID(2, account1)).key,
             .mockedEntity = createMptIssuanceObject(kAccount, 2, "metadata")
         },
         NormalPathTestBundle{
@@ -3310,7 +3310,7 @@ generateTestValuesForNormalPathTest()
                 kAccount,
                 kRangeMax
             ),
-            .expectedIndex = xrpl::keylet::loanbroker(
+            .expectedIndex = xrpl::keylet::loanBroker(
                                  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
                                  *xrpl::parseBase58<xrpl::AccountID>(kAccount),
                                  kRangeMax
@@ -3545,7 +3545,7 @@ TEST_F(RPCLedgerEntryTest, LoanBroker_BinaryFalse)
         kAccount, kAccount, kRangeMax, xrpl::uint256{kIndex1}, 1, xrpl::uint256{1}, 0
     );
 
-    auto const loanBrokerKey = xrpl::keylet::loanbroker(
+    auto const loanBrokerKey = xrpl::keylet::loanBroker(
                                    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
                                    *xrpl::parseBase58<xrpl::AccountID>(kAccount),
                                    kRangeMax
@@ -4150,7 +4150,9 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = createMptIssuanceObject(kAccount, 2, "metadata");
-    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::mptIssuance(mptId).key, kRangeMax, _))
+    EXPECT_CALL(
+        *backend_, doFetchLedgerObject(xrpl::keylet::mptokenIssuance(mptId).key, kRangeMax, _)
+    )
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {

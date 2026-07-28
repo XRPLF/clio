@@ -63,7 +63,7 @@ public:
      * @brief Execute a function on the execution context
      *
      * @param fn The function to execute
-     * @returns A unstoppable operation that can be used to wait for the result
+     * @return A unstoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
     execute(SomeHandlerWithoutStopToken auto&& fn)
@@ -87,7 +87,7 @@ public:
      * @brief Execute a function on the execution context
      *
      * @param fn The function to execute
-     * @returns A stoppable operation that can be used to wait for the result
+     * @return A stoppable operation that can be used to wait for the result
      *
      * @note The function is expected to take a stop token
      */
@@ -116,7 +116,7 @@ public:
      *
      * @param fn The function to execute
      * @param timeout The timeout after which the function should be cancelled
-     * @returns A stoppable operation that can be used to wait for the result
+     * @return A stoppable operation that can be used to wait for the result
      *
      * @note The function is expected to take a stop token
      */
@@ -146,7 +146,7 @@ public:
      *
      * @param delay The delay after which the function should be executed
      * @param fn The function to execute
-     * @returns A stoppable operation that can be used to wait for the result
+     * @return A stoppable operation that can be used to wait for the result
      *
      * @note The function is expected to take a stop token
      */
@@ -176,7 +176,7 @@ public:
      *
      * @param delay The delay after which the function should be executed
      * @param fn The function to execute
-     * @returns A stoppable operation that can be used to wait for the result
+     * @return A stoppable operation that can be used to wait for the result
      *
      * @note The function is expected to take a stop token and a boolean representing whether the
      * scheduled operation got cancelled

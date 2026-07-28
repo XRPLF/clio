@@ -350,8 +350,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
     auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
     auto const ammKey = xrpl::uint256{kAmmId};
     auto const ammKeylet = xrpl::keylet::amm(ammKey);
-    auto const feesKey = xrpl::keylet::fees().key;
-    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::toCurrency("JPY")).key;
+    auto const feesKey = xrpl::keylet::feeSettings().key;
+    auto const issue2LineKey =
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
@@ -432,8 +433,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
     auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
     auto const ammKey = xrpl::uint256{kAmmId};
     auto const ammKeylet = xrpl::keylet::amm(ammKey);
-    auto const feesKey = xrpl::keylet::fees().key;
-    auto const issue2LineKey = xrpl::keylet::line(account2, account1, xrpl::toCurrency("JPY")).key;
+    auto const feesKey = xrpl::keylet::feeSettings().key;
+    auto const issue2LineKey =
+        xrpl::keylet::trustLine(account2, account1, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
@@ -447,7 +449,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
         kLpIssueCurrency
     );
     auto const lptCurrency = createLptCurrency("XRP", "JPY");
-    auto const accountHoldsKeylet = xrpl::keylet::line(account2, account2, lptCurrency);
+    auto const accountHoldsKeylet = xrpl::keylet::trustLine(account2, account2, lptCurrency);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustline = createRippleStateLedgerObject(
         kLpIssueCurrency, kAmmAccount, 12, kAmmAccounT2, 1000, kAmmAccount, 2000, kIndex1, 2
@@ -524,8 +526,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
     auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
     auto const ammKey = xrpl::uint256{kAmmId};
     auto const ammKeylet = xrpl::keylet::amm(ammKey);
-    auto const feesKey = xrpl::keylet::fees().key;
-    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::toCurrency("JPY")).key;
+    auto const feesKey = xrpl::keylet::feeSettings().key;
+    auto const issue2LineKey =
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
@@ -606,8 +609,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
     auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
     auto const ammKey = xrpl::uint256{kAmmId};
     auto const ammKeylet = xrpl::keylet::amm(ammKey);
-    auto const feesKey = xrpl::keylet::fees().key;
-    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::toCurrency("JPY")).key;
+    auto const feesKey = xrpl::keylet::feeSettings().key;
+    auto const issue2LineKey =
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj =
@@ -689,9 +693,11 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
     auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
     auto const ammKey = xrpl::uint256{kAmmId};
     auto const ammKeylet = xrpl::keylet::amm(ammKey);
-    auto const feesKey = xrpl::keylet::fees().key;
-    auto const issue1LineKey = xrpl::keylet::line(account1, account1, xrpl::toCurrency("USD")).key;
-    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::toCurrency("JPY")).key;
+    auto const feesKey = xrpl::keylet::feeSettings().key;
+    auto const issue1LineKey =
+        xrpl::keylet::trustLine(account1, account1, xrpl::toCurrency("USD")).key;
+    auto const issue2LineKey =
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj =
@@ -801,9 +807,11 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
     auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
     auto const ammKey = xrpl::uint256{kAmmId};
     auto const ammKeylet = xrpl::keylet::amm(ammKey);
-    auto const feesKey = xrpl::keylet::fees().key;
-    auto const issue1LineKey = xrpl::keylet::line(account1, account1, xrpl::toCurrency("USD")).key;
-    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::toCurrency("JPY")).key;
+    auto const feesKey = xrpl::keylet::feeSettings().key;
+    auto const issue1LineKey =
+        xrpl::keylet::trustLine(account1, account1, xrpl::toCurrency("USD")).key;
+    auto const issue2LineKey =
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     // asset1 will be frozen because flag set here
     auto accountRoot =
@@ -915,8 +923,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
     auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
     auto const ammKey = xrpl::uint256{kAmmId};
     auto const ammKeylet = xrpl::keylet::amm(ammKey);
-    auto const feesKey = xrpl::keylet::fees().key;
-    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::toCurrency("JPY")).key;
+    auto const feesKey = xrpl::keylet::feeSettings().key;
+    auto const issue2LineKey =
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
@@ -1000,8 +1009,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
     auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
     auto const ammKey = xrpl::uint256{kAmmId};
     auto const ammKeylet = xrpl::keylet::amm(ammKey);
-    auto const feesKey = xrpl::keylet::fees().key;
-    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::toCurrency("JPY")).key;
+    auto const feesKey = xrpl::keylet::feeSettings().key;
+    auto const issue2LineKey =
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
@@ -1101,8 +1111,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
     auto const lgrInfo = createLedgerHeader(kLedgerHash, kSeq);
     auto const ammKey = xrpl::uint256{kAmmId};
     auto const ammKeylet = xrpl::keylet::amm(ammKey);
-    auto const feesKey = xrpl::keylet::fees().key;
-    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::toCurrency("JPY")).key;
+    auto const feesKey = xrpl::keylet::feeSettings().key;
+    auto const issue2LineKey =
+        xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
     auto ammObj = createAmmObject(
