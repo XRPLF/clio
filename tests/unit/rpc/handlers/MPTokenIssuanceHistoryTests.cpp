@@ -27,7 +27,6 @@ using namespace data;
 using namespace testing;
 
 namespace {
-
 constexpr auto kMinSeq = 10;
 constexpr auto kMaxSeq = 30;
 constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
@@ -51,10 +50,6 @@ struct RPCMPTokenIssuanceHistoryHandlerTest : HandlerBaseTest {
             .WillByDefault(Return(migration::MigratorStatus::Status::Migrated));
     }
 };
-
-// =============================================================================
-// Parameterized validation tests
-// =============================================================================
 
 struct MPTokenIssuanceHistoryParamTestCaseBundle {
     std::string testName;
@@ -217,10 +212,6 @@ TEST_P(MPTokenIssuanceHistoryParameterTest, InvalidParams)
     });
 }
 
-// =============================================================================
-// In-process range check tests (require Migrated gate)
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMinOutOfRange)
 {
     runSpawn([&, this](auto yield) {
@@ -311,10 +302,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ContainsLedgerSpecifierAndRange)
     });
 }
 
-// =============================================================================
-// Backfill gate tests
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateNotMigratedReturnsNotReady)
 {
     ON_CALL(*migrationInspectorMock, getMigratorStatusByName)
@@ -363,7 +350,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateNotReadyErrorMessageContent)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "notReady");
-        // error message should mention the migrator name and how to run it
         auto const msg = err.at("error_message").as_string();
         EXPECT_TRUE(msg.find("MPTTransactionHistoryMigrator") != std::string::npos);
     });
@@ -371,7 +357,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateNotReadyErrorMessageContent)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateMigratedServesRequest)
 {
-    // Default ON_CALL returns Migrated; verify a successful response is returned
     auto const transCursor = TransactionsAndCursor{.txns = {}, .cursor = std::nullopt};
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
@@ -388,8 +373,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateMigratedServesRequest)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateCachedMigratedShortCircuit)
 {
-    // One handler instance is reused across both calls -- the shared migrated_ atomic_bool is set
-    // on the first call and cached for the second, so getMigratorStatusByName is invoked only once.
     EXPECT_CALL(
         *migrationInspectorMock,
         getMigratorStatusByName(MPTokenIssuanceHistoryHandler::kMigratorName)
@@ -400,7 +383,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateCachedMigratedShortCircuit)
     auto const transCursor = TransactionsAndCursor{.txns = {}, .cursor = std::nullopt};
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
-    // One handler instance reused across both process() calls.
+    // Same handler instance across both calls: the cached Migrated flag skips the second check.
     auto anyHandler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
 
     runSpawn([&](auto yield) {
@@ -408,15 +391,10 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateCachedMigratedShortCircuit)
             boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
         auto const output1 = anyHandler.process(req, Context{yield});
         ASSERT_TRUE(output1);
-        // Second call: should NOT invoke getMigratorStatusByName again
         auto const output2 = anyHandler.process(req, Context{yield});
         ASSERT_TRUE(output2);
     });
 }
-
-// =============================================================================
-// Helper: build a pair of payment transactions at given ledger sequences
-// =============================================================================
 
 static std::vector<TransactionAndMetadata>
 genTransactions(uint32_t seq1, uint32_t seq2)
@@ -474,10 +452,6 @@ genMixedTypeTransactions(uint32_t seqPayment, uint32_t seqOffer)
     return transactions;
 }
 
-// =============================================================================
-// Routing tests: with / without account
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, RoutingWithoutAccountCallsFetchMPTIssuanceTxns)
 {
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
@@ -520,10 +494,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, RoutingWithAccountCallsFetchAccount
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
     });
 }
-
-// =============================================================================
-// Cursor seeding tests (forward vs reverse)
-// =============================================================================
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ForwardCursorSeedFromMinIndex)
 {
@@ -675,10 +645,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, NoIndexSpecifiedReverseSeedsFromGlo
     });
 }
 
-// =============================================================================
-// Response shape tests: V1 forward=false full JSON
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, IndexSpecificForwardFalseV1)
 {
     constexpr auto kOutput = R"JSON({
@@ -813,10 +779,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, IndexSpecificForwardFalseV1)
         EXPECT_EQ(output.result.value(), boost::json::parse(kOutput));
     });
 }
-
-// =============================================================================
-// Response shape tests: V2 with ledger info
-// =============================================================================
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, IndexSpecificForwardFalseV2)
 {
@@ -961,10 +923,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, IndexSpecificForwardFalseV2)
     });
 }
 
-// =============================================================================
-// Binary output tests: V1 and V2
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryTrueV1)
 {
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
@@ -1068,10 +1026,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryTrueV2)
     });
 }
 
-// =============================================================================
-// Limit and marker tests
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LimitAndMarkerRoundTrip)
 {
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
@@ -1141,7 +1095,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LimitMoreThanMax)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // The limit in output should be clamped to kLimitMax
         EXPECT_EQ(output.result->at("limit").as_uint64(), MPTokenIssuanceHistoryHandler::kLimitMax);
     });
 }
@@ -1158,19 +1111,13 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LimitNotSetDefaultUsedAndNotInRespo
             boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // When limit is not specified, it should not appear in the response
         EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
 }
 
-// =============================================================================
-// Ledger range clipping tests
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxBelowMinSeqClipped)
 {
-    // reverse traversal: first tx is at kMaxSeq-1 (ok), second at kMinSeq+1 (below
-    // minIndex=kMinSeq+2)
+    // Reverse: first tx at kMaxSeq-1 is in range, second at kMinSeq+1 is below minIndex.
     auto const transactions = genTransactions(kMaxSeq - 1, kMinSeq + 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1205,7 +1152,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxBelowMinSeqClipped)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // Only first transaction (at kMaxSeq-1) should be returned; marker cleared
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
         EXPECT_FALSE(output.result->as_object().contains("marker"));
     });
@@ -1213,8 +1159,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxBelowMinSeqClipped)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxAboveMaxSeqClipped)
 {
-    // reverse traversal: first tx at kMaxSeq-1 (above maxIndex=kMaxSeq-2, skip), second at
-    // kMinSeq+1 (ok)
+    // Reverse: first tx at kMaxSeq-1 is above maxIndex, second at kMinSeq+1 is in range.
     auto const transactions = genTransactions(kMaxSeq - 1, kMinSeq + 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1249,19 +1194,13 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxAboveMaxSeqClipped)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // First tx (at kMaxSeq-1) skipped (above max); second (at kMinSeq+1) included
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
-        // marker still present from the backend cursor
         EXPECT_EQ(
             output.result->at("marker").as_object(),
             boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
         );
     });
 }
-
-// =============================================================================
-// Specific ledger tests
-// =============================================================================
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, SpecificLedgerIndex)
 {
@@ -1382,10 +1321,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, SpecificLedgerHash)
     });
 }
 
-// =============================================================================
-// Empty results
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, EmptyResultForUnseenId)
 {
     auto const transCursor = TransactionsAndCursor{.txns = {}, .cursor = std::nullopt};
@@ -1423,13 +1358,8 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, EmptyResultForUnseenIdWithAccount)
     });
 }
 
-// =============================================================================
-// Missing blob (empty transaction or metadata) handling
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingBlobMidPageSkipped)
 {
-    // Build a 3-element list: valid, empty (both blobs missing), valid
     auto transactions = std::vector<TransactionAndMetadata>{};
 
     auto trans1 = TransactionAndMetadata();
@@ -1441,7 +1371,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingBlobMidPageSkipped)
     trans1.date = 1;
     transactions.push_back(trans1);
 
-    // Empty record (both blobs empty)
     auto emptyTrans = TransactionAndMetadata();
     emptyTrans.ledgerSequence = kMinSeq + 2;
     emptyTrans.date = 2;
@@ -1476,9 +1405,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingBlobMidPageSkipped)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // Only 2 valid transactions; the empty one is skipped
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
-        // Marker still present (empty record doesn't disturb it)
         EXPECT_EQ(
             output.result->at("marker").as_object(),
             boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
@@ -1488,8 +1415,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingBlobMidPageSkipped)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingBlobInBinaryModeSkipped)
 {
-    // 3-element page [valid, empty, valid] -- the mid-page empty record must be skipped without
-    // disturbing the surrounding records or the marker.
+    // Page of [valid, empty, valid]: the empty record is skipped, marker unaffected.
     auto transactions = std::vector<TransactionAndMetadata>{};
 
     auto trans1 = TransactionAndMetadata();
@@ -1501,7 +1427,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingBlobInBinaryModeSkipped)
     trans1.date = 1;
     transactions.push_back(trans1);
 
-    // Default-constructed empty record in the middle (both blobs empty)
     auto emptyTrans = TransactionAndMetadata();
     emptyTrans.ledgerSequence = kMinSeq + 2;
     emptyTrans.date = 2;
@@ -1534,11 +1459,9 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingBlobInBinaryModeSkipped)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // Only the 2 valid txns; the mid-page empty record is skipped
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         for (auto const& tx : output.result->at("transactions").as_array())
             EXPECT_TRUE(tx.as_object().contains("tx_blob"));
-        // marker is still present
         EXPECT_EQ(
             output.result->at("marker").as_object(),
             boost::json::parse(R"JSON({"ledger": 5, "seq": 6})JSON")
@@ -1546,15 +1469,9 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingBlobInBinaryModeSkipped)
     });
 }
 
-// =============================================================================
-// tx_type post-fetch filter tests
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterSparseMixedPageKeepsMarker)
 {
-    // Page with one Payment and one OfferCreate; the backend returns a non-null cursor.
-    // Filtering for Payment yields a sparse page (1 of 2), but the marker must still ride the raw
-    // SELECT page boundary and remain present.
+    // Filtering 1 of 2 yields a sparse page, but the marker rides the raw page boundary.
     auto const transactions = genMixedTypeTransactions(kMaxSeq - 1, kMinSeq + 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1575,11 +1492,9 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterSparseMixedPageKeepsMar
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // Exactly the Payment survives the filter
         ASSERT_EQ(output.result->at("transactions").as_array().size(), 1);
         auto const& tx = output.result->at("transactions").as_array()[0].as_object();
         EXPECT_EQ(tx.at("tx").as_object().at("TransactionType").as_string(), "Payment");
-        // Marker present despite filtered count < limit -- it rides the raw page boundary
         EXPECT_EQ(
             output.result->at("marker").as_object(),
             boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
@@ -1589,7 +1504,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterSparseMixedPageKeepsMar
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterNonMatchReturnsEmpty)
 {
-    // Both generated transactions are Payment type; filter for OfferCreate → none pass
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1609,9 +1523,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterNonMatchReturnsEmpty)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // No transactions of OfferCreate type
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 0);
-        // Marker is still present (tx_type filter doesn't clear the backend cursor)
         EXPECT_EQ(
             output.result->at("marker").as_object(),
             boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
@@ -1621,8 +1533,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterNonMatchReturnsEmpty)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterCaseInsensitive)
 {
-    // tx_type is lowercased by the ToLower modifier; genuinely mixed-case "pAyMeNt" must still
-    // match Payment transactions.
+    // ToLower modifier means mixed-case "pAyMeNt" still matches.
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1648,14 +1559,13 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterCaseInsensitive)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterSparseMixedPageWithAccountKeepsMarker)
 {
-    // Same sparse mixed-type scenario as the non-account test, but via the account routing path.
+    // As the non-account sparse-page test, but via the account routing path.
     auto const transactions = genMixedTypeTransactions(kMaxSeq - 1, kMinSeq + 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchAccountMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     EXPECT_CALL(*backend_, fetchAccountMPTokenIssuanceTransactions).Times(1);
-    // Wrong-path routing must not happen
     EXPECT_CALL(*backend_, fetchMPTokenIssuanceTransactions).Times(0);
 
     runSpawn([&, this](auto yield) {
@@ -1674,11 +1584,9 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterSparseMixedPageWithAcco
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // Exactly the Payment survives the filter (OfferCreate dropped)
         ASSERT_EQ(output.result->at("transactions").as_array().size(), 1);
         auto const& tx = output.result->at("transactions").as_array()[0].as_object();
         EXPECT_EQ(tx.at("tx").as_object().at("TransactionType").as_string(), "Payment");
-        // Marker present despite filtered count < limit
         EXPECT_EQ(
             output.result->at("marker").as_object(),
             boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
@@ -1688,7 +1596,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterSparseMixedPageWithAcco
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterWithAccountNonMatchReturnsEmpty)
 {
-    // Account routing, OfferCreate filter: all Payment txns dropped
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1711,7 +1618,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterWithAccountNonMatchRetu
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 0);
-        // Marker still present from backend
         EXPECT_EQ(
             output.result->at("marker").as_object(),
             boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
@@ -1719,15 +1625,9 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterWithAccountNonMatchRetu
     });
 }
 
-// =============================================================================
-// Forward-mode over-range clip
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ForwardTxAboveMaxSeqClippedAndMarkerCleared)
 {
-    // forward=true; transactions ascend. First tx is in-range, second exceeds maxIndex.
-    // The over-range tx must be dropped and the marker cleared (exercises the
-    // `(ledgerSequence > maxIndex && forward)` branch).
+    // Forward: second tx exceeds maxIndex, so it is dropped and the marker cleared.
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1758,22 +1658,14 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ForwardTxAboveMaxSeqClippedAndMarke
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // Only the first (in-range, at kMinSeq+1) tx survives; the second (at kMaxSeq-1) is over
-        // max
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
-        // Marker cleared because we broke out on the over-range tx
         EXPECT_FALSE(output.result->as_object().contains("marker"));
     });
 }
 
-// =============================================================================
-// Binary + tx_type combined (expand-to-filter-then-binary-format path)
-// =============================================================================
-
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryWithTxTypeFilterV1)
 {
-    // binary=true AND tx_type set forces the handler to expand each tx to read its type, drop
-    // non-matching, then emit the matching ones in binary form. Mixed page; filter for Payment.
+    // binary + tx_type: expand to filter by type, then emit the survivors in binary form.
     auto const transactions = genMixedTypeTransactions(kMaxSeq - 1, kMinSeq + 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1794,15 +1686,12 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryWithTxTypeFilterV1)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // Only the Payment survives; OfferCreate dropped
         ASSERT_EQ(output.result->at("transactions").as_array().size(), 1);
         auto const& tx = output.result->at("transactions").as_array()[0].as_object();
-        // Binary keys present (V1 uses meta, not meta_blob)
         EXPECT_TRUE(tx.contains("tx_blob"));
         EXPECT_TRUE(tx.contains("meta"));
         EXPECT_TRUE(tx.contains("ledger_index"));
         EXPECT_TRUE(tx.contains("date"));
-        // Marker survives despite the sparse filtered page
         EXPECT_EQ(
             output.result->at("marker").as_object(),
             boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
@@ -1812,7 +1701,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryWithTxTypeFilterV1)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryWithTxTypeFilterV2)
 {
-    // Same as V1 but api version 2 -> binary record uses meta_blob.
+    // As above, but V2 binary uses meta_blob.
     auto const transactions = genMixedTypeTransactions(kMaxSeq - 1, kMinSeq + 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1846,10 +1735,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryWithTxTypeFilterV2)
         );
     });
 }
-
-// =============================================================================
-// Common response fields always present
-// =============================================================================
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ResponseAlwaysHasMandatoryFields)
 {

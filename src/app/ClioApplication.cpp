@@ -124,8 +124,6 @@ ClioApplication::run(bool const useNgWebServer)
 
     auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
 
-    // Kept alive for the lifetime of the application: the migration inspector backs the
-    // mptoken_issuance_history backfill-status gate in addition to the startup blocking check.
     auto const migrationInspector = migration::makeMigrationInspector(config_, backend);
     // Check if any migration is blocking Clio server starting.
     if (migrationInspector->isBlockingClio() and backend->hardFetchLedgerRangeNoThrow()) {

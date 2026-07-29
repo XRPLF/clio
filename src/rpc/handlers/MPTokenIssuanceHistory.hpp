@@ -32,17 +32,14 @@ namespace rpc {
  * @brief The mptoken_issuance_history command returns past transactions associated with the queried
  * MPTokenIssuance, optionally filtered by an affected account and/or transaction type.
  *
- * This is a Clio-only method (sibling of nft_history). Because complete history requires the MPT
- * transaction-history backfill, the handler is gated on that migrator's status: until the node
- * reports `Migrated`, every request returns a `notReady` error rather than partial history.
+ * @note This is a Clio-only method. Requests fail with `notReady` until the MPT
+ * transaction-history backfill reports `Migrated`, so partial history is never served.
  */
 class MPTokenIssuanceHistoryHandler {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<migration::MigrationInspectorInterface const> migrationInspector_;
-    // Shared across copies of the handler so the terminal `Migrated` result is cached process-wide.
-    // Status is monotonic (NotMigrated -> Migrated), so once set the gate check is skipped
-    // entirely.
+    // Status is monotonic, so the terminal Migrated result is cached across handler copies.
     std::shared_ptr<std::atomic_bool> migrated_ = std::make_shared<std::atomic_bool>(false);
 
 public:
@@ -50,12 +47,12 @@ public:
     static constexpr auto kLimitMax = 100;
     static constexpr auto kLimitDefault = 50;
 
-    // Must match migration::cassandra::MPTTransactionHistoryMigrator::kName. Kept as a literal to
-    // avoid pulling the Cassandra migration headers into the RPC layer.
+    // Literal rather than a reference to migration::cassandra::MPTTransactionHistoryMigrator::kName
+    // to keep the Cassandra migration headers out of the RPC layer.
     static constexpr char const* kMigratorName = "MPTTransactionHistoryMigrator";
 
     /**
-     * @brief A struct to hold the marker data
+     * @brief A struct to hold the marker data.
      */
     struct Marker {
         uint32_t ledger;
@@ -63,7 +60,7 @@ public:
     };
 
     /**
-     * @brief A struct to hold the output data of the command
+     * @brief A struct to hold the output data of the command.
      */
     struct Output {
         std::string mptIssuanceID;
@@ -78,14 +75,15 @@ public:
     };
 
     /**
-     * @brief A struct to hold the input data for the command
+     * @brief A struct to hold the input data for the command.
+     *
+     * @note A request must use at least one of ledger_index, ledger_hash, ledger_index_min or
+     * ledger_index_max.
      */
     struct Input {
         std::string mptIssuanceID;
         std::optional<std::string> account;
         std::optional<std::string> transactionTypeInLowercase;
-        // You must use at least one of the following fields in your request:
-        // ledger_index, ledger_hash, ledger_index_min, or ledger_index_max.
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         std::optional<int32_t> ledgerIndexMin;
@@ -99,10 +97,10 @@ public:
     using Result = HandlerReturnType<Output>;
 
     /**
-     * @brief Construct a new MPTokenIssuanceHistoryHandler object
+     * @brief Construct a new MPTokenIssuanceHistoryHandler object.
      *
-     * @param sharedPtrBackend The backend to use
-     * @param migrationInspector The migration inspector used to gate on backfill completion
+     * @param sharedPtrBackend The backend to use.
+     * @param migrationInspector The migration inspector used to gate on backfill completion.
      */
     MPTokenIssuanceHistoryHandler(
         std::shared_ptr<BackendInterface> sharedPtrBackend,
@@ -114,10 +112,10 @@ public:
     }
 
     /**
-     * @brief Returns the API specification for the command
+     * @brief Returns the API specification for the command.
      *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
+     * @param apiVersion The api version to return the spec for.
+     * @return The spec for the given apiVersion.
      */
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
@@ -161,39 +159,39 @@ public:
     }
 
     /**
-     * @brief Process the MPTokenIssuanceHistory command
+     * @brief Process the MPTokenIssuanceHistory command.
      *
-     * @param input The input data for the command
-     * @param ctx The context of the request
-     * @return The result of the operation
+     * @param input The input data for the command.
+     * @param ctx The context of the request.
+     * @return The result of the operation.
      */
     [[nodiscard]] Result
     process(Input const& input, Context const& ctx) const;
 
 private:
     /**
-     * @brief Convert the Output to a JSON object
+     * @brief Convert the Output to a JSON object.
      *
-     * @param [out] jv The JSON object to convert to
-     * @param output The output to convert
+     * @param [out] jv The JSON object to convert to.
+     * @param output The output to convert.
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
     /**
-     * @brief Convert a JSON object to Input type
+     * @brief Convert a JSON object to Input type.
      *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
+     * @param jv The JSON object to convert.
+     * @return Input parsed from the JSON object.
      */
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 
     /**
-     * @brief Convert the Marker to a JSON object
+     * @brief Convert the Marker to a JSON object.
      *
-     * @param [out] jv The JSON object to convert to
-     * @param marker The marker to convert
+     * @param [out] jv The JSON object to convert to.
+     * @param marker The marker to convert.
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);

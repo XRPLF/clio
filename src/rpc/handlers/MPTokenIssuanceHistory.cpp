@@ -31,22 +31,18 @@
 
 namespace rpc {
 
-// TODO: this shares much of its pagination/response logic with account_tx and nft_history. We keep
-// a dedicated copy for now and should aim to factor out the common logic in the future.
 MPTokenIssuanceHistoryHandler::Result
 MPTokenIssuanceHistoryHandler::process(
     MPTokenIssuanceHistoryHandler::Input const& input,
     Context const& ctx
 ) const
 {
-    // Backfill-status gate: never serve partial history. Status is monotonic, so once a node
-    // reports Migrated we cache that permanently and skip the check on every subsequent request.
+    // Fail closed unless the backfill is done: partial history must never be served.
     if (not migrated_->load(std::memory_order_relaxed)) {
         auto const status = migrationInspector_->getMigratorStatusByName(kMigratorName);
         if (status == migration::MigratorStatus::Status::Migrated) {
             migrated_->store(true, std::memory_order_relaxed);
         } else {
-            // NotMigrated or NotKnown -> fail closed. We cannot prove history is complete.
             if (status == migration::MigratorStatus::Status::NotKnown) {
                 LOG(log_.warn()) << "mptoken_issuance_history requested but migrator '"
                                  << kMigratorName
@@ -125,14 +121,10 @@ MPTokenIssuanceHistoryHandler::process(
     auto const limit = input.limit.value_or(kLimitDefault);
     auto const mptIssuanceID = xrpl::uint192{input.mptIssuanceID.c_str()};
 
-    // Route by whether an account filter is present. The tx_type filter (if any) is applied
-    // post-fetch below, exactly as account_tx does, so both tx_type shapes use the same two
-    // fetches.
+    // tx_type is applied post-fetch below, as account_tx does.
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() -> data::TransactionsAndCursor {
         if (input.account) {
             auto const account = accountFromStringStrict(*input.account);
-            // accountValidator already parsed the account string in the spec, so it is guaranteed
-            // decodable by the time process() runs. Assert to make that precondition explicit.
             ASSERT(account.has_value(), "Account must be decodable after spec validation");
             return sharedPtrBackend_->fetchAccountMPTokenIssuanceTransactions(
                 mptIssuanceID, *account, limit, input.forward, cursor, ctx.yield
@@ -152,9 +144,8 @@ MPTokenIssuanceHistoryHandler::process(
         response.marker = {.ledger = retCursor->ledgerSequence, .seq = retCursor->transactionIndex};
 
     for (auto const& txnPlusMeta : blobs) {
-        // A hash with no matching Transactions row yields a default-constructed record in-position
-        // (Decision #3). Skip it before the range check so the empty record neither shortens the
-        // page nor disturbs the marker, which rides the raw SELECT page boundary.
+        // A hash with no matching Transactions row yields a default-constructed record in-position.
+        // Skip it before the range check so it neither shortens the page nor disturbs the marker.
         if (txnPlusMeta.transaction.empty() || txnPlusMeta.metadata.empty())
             continue;
 
@@ -171,8 +162,7 @@ MPTokenIssuanceHistoryHandler::process(
 
         boost::json::object obj;
 
-        // if binary is false or tx_type is specified, we need to expand the transaction to read its
-        // TransactionType for the post-fetch filter.
+        // tx_type needs the expanded form to read TransactionType, even when binary is set
         if (!input.binary || input.transactionTypeInLowercase.has_value()) {
             auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion);
 
