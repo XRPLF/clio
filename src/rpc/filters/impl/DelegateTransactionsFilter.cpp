@@ -57,8 +57,7 @@ DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta
     if (sttx.isFieldPresent(xrpl::sfDelegate))
         txDelegate = sttx.getAccountID(xrpl::sfDelegate);
 
-    // txn with no delegate filter should return immediately
-    // Note: should already have been checked in handler code before calling this function though
+    // Transactions without an sfDelegate field are not delegated; exclude them immediately.
     if (not txDelegate.has_value())
         return {.shouldInclude = false, .relevantAccount = std::nullopt};
 
