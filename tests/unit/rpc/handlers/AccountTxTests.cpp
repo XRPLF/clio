@@ -1994,7 +1994,10 @@ TEST_F(RPCAccountTxHandlerTest, MPTIssuanceIdFilterBinary)
     auto const expectedMetaBlob = xrpl::strHex(mptTx.metadata);
     auto const expectedTxBlob = xrpl::strHex(mptTx.transaction);
 
-    auto transactions = std::vector<TransactionAndMetadata>{std::move(mptTx)};
+    // non-matching transactions (no mpt_issuance_id reference) mixed in alongside the matching one,
+    // to prove the binary path actually filters rather than just passing everything through
+    auto transactions = genTransactions(kMinSeq + 2, kMinSeq + 3);
+    transactions.push_back(std::move(mptTx));
     auto const transCursor =
         TransactionsAndCursor{.txns = std::move(transactions), .cursor = std::nullopt};
 

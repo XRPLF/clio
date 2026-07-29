@@ -148,6 +148,14 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
         boost::json::object obj;
 
+        // Skip all Txns where the specified filter mpt_id doesn't match the query
+        if (mptIssuanceFilter) {
+            auto const [sttx, txMeta] =
+                deserializeTxPlusMeta(txnPlusMeta, txnPlusMeta.ledgerSequence);
+            if (!etl::referencesMptIssuance(*txMeta, *sttx, *mptIssuanceFilter))
+                continue;
+        }
+
         // if binary is false or transactionType is specified, we need to expand the transaction
         if (!input.binary || input.transactionTypeInLowercase.has_value()) {
             auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion, NFTokenjson::ENABLE);
@@ -156,14 +164,6 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                 util::toLower(boost::json::value_to<std::string>(txn[JS(TransactionType)])) !=
                     *input.transactionTypeInLowercase)
                 continue;
-
-            // Skip all Txns where the specified filter mpt_id doesn't match the query
-            if (mptIssuanceFilter) {
-                auto const [sttx, txMeta] =
-                    deserializeTxPlusMeta(txnPlusMeta, txnPlusMeta.ledgerSequence);
-                if (!etl::referencesMptIssuance(*txMeta, *sttx, *mptIssuanceFilter))
-                    continue;
-            }
 
             if (!input.binary) {
                 auto const txKey = ctx.apiVersion < 2u ? JS(tx) : JS(tx_json);
