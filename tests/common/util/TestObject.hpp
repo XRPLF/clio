@@ -466,7 +466,10 @@ createMptIssuanceObject(
     std::optional<std::uint64_t> maxAmount = std::nullopt,
     std::optional<std::uint64_t> lockedAmount = std::nullopt,
     std::optional<std::string_view> domainId = std::nullopt,
-    std::optional<std::uint32_t> mutableFlags = std::nullopt
+    std::optional<std::uint32_t> mutableFlags = std::nullopt,
+    std::optional<std::string_view> issuerEncryptionKey = std::nullopt,
+    std::optional<std::string_view> auditorEncryptionKey = std::nullopt,
+    std::optional<std::uint64_t> confidentialOutstandingAmount = std::nullopt
 );
 
 [[nodiscard]] xrpl::STObject
@@ -475,7 +478,13 @@ createMpTokenObject(
     xrpl::uint192 issuanceID,
     std::uint64_t mptAmount = 1,
     std::uint32_t flags = 0,
-    std::optional<uint64_t> lockedAmount = std::nullopt
+    std::optional<uint64_t> lockedAmount = std::nullopt,
+    std::optional<std::string_view> confidentialBalanceInbox = std::nullopt,
+    std::optional<std::string_view> confidentialBalanceSpending = std::nullopt,
+    std::optional<std::uint32_t> confidentialBalanceVersion = std::nullopt,
+    std::optional<std::string_view> issuerEncryptedBalance = std::nullopt,
+    std::optional<std::string_view> auditorEncryptedBalance = std::nullopt,
+    std::optional<std::string_view> holderEncryptionKey = std::nullopt
 );
 
 [[nodiscard]] xrpl::STObject
