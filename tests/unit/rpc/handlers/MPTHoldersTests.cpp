@@ -19,6 +19,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using namespace rpc;
@@ -452,6 +453,93 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const mptoken = createMpTokenObject(kHoldeR1Account, xrpl::uint192(kMptId), 0);
+    std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
+    ON_CALL(*backend_, fetchMPTHolders)
+        .WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
+    EXPECT_CALL(
+        *backend_,
+        fetchMPTHolders(
+            xrpl::uint192(kMptId), testing::_, testing::Eq(std::nullopt), Const(30), testing::_
+        )
+    )
+        .Times(1);
+
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuance_id": "{}"
+            }})JSON",
+            kMptId
+        )
+    );
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, ConfidentialFields)
+{
+    constexpr auto kConfidentialBalanceInbox = "inbox-ciphertext";
+    constexpr auto kConfidentialBalanceSpending = "spending-ciphertext";
+    constexpr auto kConfidentialBalanceVersion = 3u;
+    constexpr auto kIssuerEncryptedBalance = "issuer-balance-ciphertext";
+    constexpr auto kAuditorEncryptedBalance = "auditor-balance-ciphertext";
+    constexpr auto kHolderEncryptionKey = "holder-pubkey";
+    constexpr auto kLockedAmount = 5;
+
+    auto const currentOutput = fmt::format(
+        R"JSON({{
+            "mpt_issuance_id": "{}",
+            "limit": 50,
+            "ledger_index": 30,
+            "mptokens": [{{
+                "account": "{}",
+                "flags": 0,
+                "mpt_amount": "1",
+                "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A",
+                "locked_amount": "{}",
+                "confidential_balance_inbox": "{}",
+                "confidential_balance_spending": "{}",
+                "confidential_balance_version": {},
+                "issuer_encrypted_balance": "{}",
+                "auditor_encrypted_balance": "{}",
+                "holder_encryption_key": "{}"
+            }}],
+            "validated": true
+        }})JSON",
+        kMptId,
+        kHoldeR1Account,
+        kLockedAmount,
+        xrpl::strHex(std::string_view{kConfidentialBalanceInbox}),
+        xrpl::strHex(std::string_view{kConfidentialBalanceSpending}),
+        kConfidentialBalanceVersion,
+        xrpl::strHex(std::string_view{kIssuerEncryptedBalance}),
+        xrpl::strHex(std::string_view{kAuditorEncryptedBalance}),
+        xrpl::strHex(std::string_view{kHolderEncryptionKey})
+    );
+
+    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
+    auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
+    ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const mptoken = createMpTokenObject(
+        kHoldeR1Account,
+        xrpl::uint192(kMptId),
+        1,
+        0,
+        kLockedAmount,
+        kConfidentialBalanceInbox,
+        kConfidentialBalanceSpending,
+        kConfidentialBalanceVersion,
+        kIssuerEncryptedBalance,
+        kAuditorEncryptedBalance,
+        kHolderEncryptionKey
+    );
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend_, fetchMPTHolders)
         .WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));

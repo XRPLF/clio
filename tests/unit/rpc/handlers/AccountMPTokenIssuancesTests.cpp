@@ -15,6 +15,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
@@ -26,6 +27,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using namespace rpc;
@@ -1071,6 +1073,92 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
             kIssuancE2OutstandingAmount,
             kIssuancE2TransferFee,
             kIssuancE2MetadataHex
+        );
+
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(boost::json::parse(correctOutput), *output.result);
+    });
+}
+
+TEST_F(RPCAccountMPTokenIssuancesHandlerTest, ConfidentialFields)
+{
+    constexpr auto kIssuerEncryptionKey = "issuer-pubkey";
+    constexpr auto kAuditorEncryptionKey = "auditor-pubkey";
+    constexpr uint64_t kConfidentialOutstandingAmount = 42;
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
+        .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    xrpl::STObject const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndeX1}}, kIssuanceIndeX1);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
+
+    auto const issuance = createMptIssuanceObject(
+        kAccount,
+        1,
+        std::nullopt,
+        xrpl::lsfMPTCanHoldConfidentialBalance,
+        kIssuancE1OutstandingAmount,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        kIssuerEncryptionKey,
+        kAuditorEncryptionKey,
+        kConfidentialOutstandingAmount
+    );
+    auto const bbs = std::vector<Blob>{issuance.getSerializer().peekData()};
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
+
+    runSpawn([&](auto yield) {
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}"
+                }})JSON",
+                kAccount
+            )
+        );
+
+        auto const correctOutput = fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_hash": "{}",
+                "ledger_index": 30,
+                "validated": true,
+                "limit": 200,
+                "mpt_issuances": [
+                    {{
+                        "mpt_issuance_id": "{}",
+                        "issuer": "{}",
+                        "sequence": 1,
+                        "outstanding_amount": "{}",
+                        "mpt_can_hold_confidential_balance": true,
+                        "confidential_outstanding_amount": "{}",
+                        "issuer_encryption_key": "{}",
+                        "auditor_encryption_key": "{}"
+                    }}
+                ]
+            }})JSON",
+            kAccount,
+            kLedgerHash,
+            kIssuanceIndeX1,
+            kAccount,
+            kIssuancE1OutstandingAmount,
+            kConfidentialOutstandingAmount,
+            xrpl::strHex(std::string_view{kIssuerEncryptionKey}),
+            xrpl::strHex(std::string_view{kAuditorEncryptionKey})
         );
 
         auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};

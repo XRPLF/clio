@@ -49,6 +49,13 @@ public:
 
         std::optional<bool> mptLocked;
         std::optional<bool> mptAuthorized;
+
+        std::optional<std::string> confidentialBalanceInbox;
+        std::optional<std::string> confidentialBalanceSpending;
+        std::optional<uint32_t> confidentialBalanceVersion;
+        std::optional<std::string> issuerEncryptedBalance;
+        std::optional<std::string> auditorEncryptedBalance;
+        std::optional<std::string> holderEncryptionKey;
     };
 
     /**

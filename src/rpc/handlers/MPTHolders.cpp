@@ -17,6 +17,7 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STInteger.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/jss.h>
 
@@ -74,13 +75,49 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
 
         mptJson[JS(account)] = toBase58(sle[xrpl::sfAccount]);
         mptJson[JS(flags)] = sle.getFlags();
-        mptJson["mpt_amount"] = toBoostJson(
+        mptJson[JS(mpt_amount)] = toBoostJson(
             xrpl::STUInt64{xrpl::sfMPTAmount, sle[xrpl::sfMPTAmount]}.getJson(
                 JsonOptions::Values::None
             )
         );
-        mptJson["mptoken_index"] =
+        mptJson[JS(mptoken_index)] =
             xrpl::to_string(xrpl::keylet::mptoken(mptID, sle[xrpl::sfAccount]).key);
+
+        if (sle.isFieldPresent(xrpl::sfLockedAmount)) {
+            mptJson["locked_amount"] = toBoostJson(
+                xrpl::STUInt64{xrpl::sfLockedAmount, sle[xrpl::sfLockedAmount]}.getJson(
+                    JsonOptions::Values::None
+                )
+            );
+        }
+
+        if (sle.isFieldPresent(xrpl::sfConfidentialBalanceInbox)) {
+            mptJson[JS(confidential_balance_inbox)] =
+                xrpl::strHex(sle.getFieldVL(xrpl::sfConfidentialBalanceInbox));
+        }
+
+        if (sle.isFieldPresent(xrpl::sfConfidentialBalanceSpending)) {
+            mptJson[JS(confidential_balance_spending)] =
+                xrpl::strHex(sle.getFieldVL(xrpl::sfConfidentialBalanceSpending));
+        }
+
+        if (sle.isFieldPresent(xrpl::sfConfidentialBalanceVersion))
+            mptJson[JS(confidential_balance_version)] = sle[xrpl::sfConfidentialBalanceVersion];
+
+        if (sle.isFieldPresent(xrpl::sfIssuerEncryptedBalance)) {
+            mptJson[JS(issuer_encrypted_balance)] =
+                xrpl::strHex(sle.getFieldVL(xrpl::sfIssuerEncryptedBalance));
+        }
+
+        if (sle.isFieldPresent(xrpl::sfAuditorEncryptedBalance)) {
+            mptJson[JS(auditor_encrypted_balance)] =
+                xrpl::strHex(sle.getFieldVL(xrpl::sfAuditorEncryptedBalance));
+        }
+
+        if (sle.isFieldPresent(xrpl::sfHolderEncryptionKey)) {
+            mptJson[JS(holder_encryption_key)] =
+                xrpl::strHex(sle.getFieldVL(xrpl::sfHolderEncryptionKey));
+        }
 
         output.mpts.push_back(mptJson);
     }
