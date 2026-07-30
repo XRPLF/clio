@@ -328,9 +328,8 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
             boost::json::value_to<std::string>(jsonObject.at("tx_type"));
     }
 
-    if (jsonObject.contains(JS(delegate))) {
+    if (jsonObject.contains(JS(delegate)))
         input.delegateFilter = parseDelegateFilter(jsonObject.at(JS(delegate)).as_object());
-    }
 
     return input;
 }
