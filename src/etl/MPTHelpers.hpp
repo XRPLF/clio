@@ -62,6 +62,15 @@ getMPTokenIssuanceIDFromNode(xrpl::STObject const& node)
     );
 }
 
+/**
+ * @brief Collect every MPTokenIssuanceID referenced by a transaction's own fields.
+ *
+ * @note Checks the top-level sfMPTokenIssuanceID field, plus any STI_AMOUNT/STI_ISSUE field holding
+ * an xrpl::MPTIssue (e.g. Payment's sfAmount, AMM's sfAsset/sfAsset2).
+ *
+ * @param issuanceIDs Set to insert each found issuance ID into.
+ * @param sttx The transaction.
+ */
 void
 addMPTokenIssuanceIDsFromTx(MPTokenIssuanceIDs& issuanceIDs, xrpl::STTx const& sttx)
 {
@@ -136,8 +145,7 @@ getMPTokenIssuanceTxsFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx);
  *
  * @note Scans the same sources as getMPTokenIssuanceTxsFromTx (metadata's affected
  * MPTokenIssuance/MPToken nodes, and the transaction's own MPTokenIssuanceID/MPT issue fields), but
- * exits as soon as a match is found instead of collecting every distinct issuance touched. Defined
- * inline (header-only) so callers do not need to link the clio_etl library for this predicate.
+ * exits as soon as a match is found instead of collecting every distinct issuance touched.
  *
  * @param txMeta Transaction metadata.
  * @param sttx The transaction.
