@@ -39,15 +39,12 @@ MPTokenIssuanceHistoryHandler::process(
 {
     // Fail closed unless the backfill is done: partial history must never be served.
     if (not migrated_->load(std::memory_order_relaxed)) {
-        auto const status = migrationInspector_->getMigratorStatusByName(kMigratorName);
-        if (status == migration::MigratorStatus::Status::Migrated) {
+        auto const statusString = sharedPtrBackend_->fetchMigratorStatus(kMigratorName, ctx.yield);
+        if (statusString.has_value() and
+            migration::MigratorStatus::fromString(*statusString) ==
+                migration::MigratorStatus::Status::Migrated) {
             migrated_->store(true, std::memory_order_relaxed);
         } else {
-            if (status == migration::MigratorStatus::Status::NotKnown) {
-                LOG(log_.warn()) << "mptoken_issuance_history requested but migrator '"
-                                 << kMigratorName
-                                 << "' status is NotKnown; failing closed with notReady";
-            }
             return Error{Status{
                 RippledError::RpcNotReady,
                 "mptoken_issuance_history is unavailable until the MPT transaction-history "

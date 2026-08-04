@@ -124,12 +124,14 @@ ClioApplication::run(bool const useNgWebServer)
 
     auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
 
-    auto const migrationInspector = migration::makeMigrationInspector(config_, backend);
-    // Check if any migration is blocking Clio server starting.
-    if (migrationInspector->isBlockingClio() and backend->hardFetchLedgerRangeNoThrow()) {
-        LOG(util::LogService::error()) << "Existing Migration is blocking Clio, Please "
-                                          "complete the database migration first.";
-        return EXIT_FAILURE;
+    {
+        auto const migrationInspector = migration::makeMigrationInspector(config_, backend);
+        // Check if any migration is blocking Clio server starting.
+        if (migrationInspector->isBlockingClio() and backend->hardFetchLedgerRangeNoThrow()) {
+            LOG(util::LogService::error()) << "Existing Migration is blocking Clio, Please "
+                                              "complete the database migration first.";
+            return EXIT_FAILURE;
+        }
     }
 
     // Manages clients subscribed to streams
@@ -164,14 +166,7 @@ ClioApplication::run(bool const useNgWebServer)
     auto counters = rpc::Counters::makeCounters(workQueue);
 
     auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
-        config_,
-        backend,
-        subscriptions,
-        balancer,
-        etl,
-        amendmentCenter,
-        migrationInspector,
-        counters
+        config_, backend, subscriptions, balancer, etl, amendmentCenter, counters
     );
 
     using RPCEngineType = rpc::RPCEngine<rpc::Counters>;

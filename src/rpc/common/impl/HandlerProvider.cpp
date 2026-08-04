@@ -5,7 +5,6 @@
 #include "etl/ETLServiceInterface.hpp"
 #include "etl/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "migration/MigrationInspectorInterface.hpp"
 #include "rpc/Counters.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/handlers/AMMInfo.hpp"
@@ -63,7 +62,6 @@ ProductionHandlerProvider::ProductionHandlerProvider(
     std::shared_ptr<etl::LoadBalancerInterface> const& balancer,
     std::shared_ptr<etl::ETLServiceInterface const> const& etl,
     std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
-    std::shared_ptr<migration::MigrationInspectorInterface const> const& migrationInspector,
     Counters const& counters
 )
     : handlerMap_{
@@ -95,8 +93,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"mpt_holders",
            {.handler = MPTHoldersHandler{backend}, .isClioOnly = true}},  // clio only
           {"mptoken_issuance_history",
-           {.handler = MPTokenIssuanceHistoryHandler{backend, migrationInspector},
-            .isClioOnly = true}},  // clio only
+           {.handler = MPTokenIssuanceHistoryHandler{backend}, .isClioOnly = true}},  // clio only
           {"nfts_by_issuer",
            {.handler = NFTsByIssuerHandler{backend}, .isClioOnly = true}},  // clio only
           {"nft_history",

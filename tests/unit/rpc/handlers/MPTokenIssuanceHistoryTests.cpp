@@ -5,7 +5,6 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/MPTokenIssuanceHistory.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
-#include "util/MockMigrationInspector.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
@@ -37,17 +36,19 @@ constexpr auto kCurrency = "0158415500000000C1F76FF6ECB0BAC600000000";
 constexpr auto kMptId = "000004C463C52827307480341125DA0577DEFC38405B0E3E";
 constexpr auto kApiVersion = 2;
 
+auto const kMigratedStatus =
+    migration::MigratorStatus{migration::MigratorStatus::Status::Migrated}.toString();
+auto const kNotMigratedStatus =
+    migration::MigratorStatus{migration::MigratorStatus::Status::NotMigrated}.toString();
+
 }  // namespace
 
 struct RPCMPTokenIssuanceHistoryHandlerTest : HandlerBaseTest {
-    MockMigrationInspectorSharedPtr migrationInspectorMock =
-        std::make_shared<NiceMock<MockMigrationInspector>>();
-
     RPCMPTokenIssuanceHistoryHandlerTest()
     {
         backend_->setRange(kMinSeq, kMaxSeq);
-        ON_CALL(*migrationInspectorMock, getMigratorStatusByName)
-            .WillByDefault(Return(migration::MigratorStatus::Status::Migrated));
+        ON_CALL(*backend_, fetchMigratorStatus)
+            .WillByDefault(Return(std::optional<std::string>{kMigratedStatus}));
     }
 };
 
@@ -201,8 +202,7 @@ TEST_P(MPTokenIssuanceHistoryParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -215,8 +215,7 @@ TEST_P(MPTokenIssuanceHistoryParameterTest, InvalidParams)
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMinOutOfRange)
 {
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -237,8 +236,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMinOutOfRange)
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMaxOutOfRange)
 {
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -259,8 +257,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMaxOutOfRange)
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, InvertedLedgerRange)
 {
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -281,8 +278,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, InvertedLedgerRange)
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ContainsLedgerSpecifierAndRange)
 {
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -304,12 +300,11 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ContainsLedgerSpecifierAndRange)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateNotMigratedReturnsNotReady)
 {
-    ON_CALL(*migrationInspectorMock, getMigratorStatusByName)
-        .WillByDefault(Return(migration::MigratorStatus::Status::NotMigrated));
+    ON_CALL(*backend_, fetchMigratorStatus)
+        .WillByDefault(Return(std::optional<std::string>{kNotMigratedStatus}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req =
             boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
         auto const output = handler.process(req, Context{yield});
@@ -319,14 +314,28 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateNotMigratedReturnsNotReady)
     });
 }
 
-TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateNotKnownReturnsNotReady)
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateMissingStatusReturnsNotReady)
 {
-    ON_CALL(*migrationInspectorMock, getMigratorStatusByName)
-        .WillByDefault(Return(migration::MigratorStatus::Status::NotKnown));
+    ON_CALL(*backend_, fetchMigratorStatus).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "notReady");
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateUnknownStatusStringReturnsNotReady)
+{
+    ON_CALL(*backend_, fetchMigratorStatus)
+        .WillByDefault(Return(std::optional<std::string>{"NotAStatus"}));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req =
             boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
         auto const output = handler.process(req, Context{yield});
@@ -338,12 +347,11 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateNotKnownReturnsNotReady)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateNotReadyErrorMessageContent)
 {
-    ON_CALL(*migrationInspectorMock, getMigratorStatusByName)
-        .WillByDefault(Return(migration::MigratorStatus::Status::NotMigrated));
+    ON_CALL(*backend_, fetchMigratorStatus)
+        .WillByDefault(Return(std::optional<std::string>{kNotMigratedStatus}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req =
             boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
         auto const output = handler.process(req, Context{yield});
@@ -361,8 +369,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateMigratedServesRequest)
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req =
             boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
         auto const output = handler.process(req, Context{yield});
@@ -373,18 +380,15 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateMigratedServesRequest)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateCachedMigratedShortCircuit)
 {
-    EXPECT_CALL(
-        *migrationInspectorMock,
-        getMigratorStatusByName(MPTokenIssuanceHistoryHandler::kMigratorName)
-    )
+    EXPECT_CALL(*backend_, fetchMigratorStatus(MPTokenIssuanceHistoryHandler::kMigratorName, _))
         .Times(1)
-        .WillOnce(Return(migration::MigratorStatus::Status::Migrated));
+        .WillOnce(Return(std::optional<std::string>{kMigratedStatus}));
 
     auto const transCursor = TransactionsAndCursor{.txns = {}, .cursor = std::nullopt};
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     // Same handler instance across both calls: the cached Migrated flag skips the second check.
-    auto anyHandler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+    auto anyHandler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
 
     runSpawn([&](auto yield) {
         auto const req =
@@ -463,8 +467,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, RoutingWithoutAccountCallsFetchMPTI
     EXPECT_CALL(*backend_, fetchAccountMPTokenIssuanceTransactions).Times(0);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req =
             boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
         auto const output = handler.process(req, Context{yield});
@@ -484,8 +487,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, RoutingWithAccountCallsFetchAccount
     EXPECT_CALL(*backend_, fetchMPTokenIssuanceTransactions).Times(0);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(R"JSON({{"mpt_issuance_id": "{}", "account": "{}"}})JSON", kMptId, kAccount)
         );
@@ -510,8 +512,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ForwardCursorSeedFromMinIndex)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -555,8 +556,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ReverseCursorSeedFromMaxIndex)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -590,8 +590,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, NoIndexSpecifiedForwardSeedsFromGlo
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -625,8 +624,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, NoIndexSpecifiedReverseSeedsFromGlo
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -759,8 +757,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, IndexSpecificForwardFalseV1)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -901,8 +898,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, IndexSpecificForwardFalseV2)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(2);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -938,8 +934,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryTrueV1)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -985,8 +980,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryTrueV2)
         .WillOnce(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1041,8 +1035,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LimitAndMarkerRoundTrip)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1076,8 +1069,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LimitMoreThanMax)
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1105,8 +1097,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LimitNotSetDefaultUsedAndNotInRespo
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req =
             boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
         auto const output = handler.process(req, Context{yield});
@@ -1135,8 +1126,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxBelowMinSeqClipped)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1177,8 +1167,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxAboveMaxSeqClipped)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1226,8 +1215,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, SpecificLedgerIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(kMaxSeq - 1, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1255,8 +1243,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, SpecificNonExistLedgerIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(kMaxSeq - 1, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1298,8 +1285,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, SpecificLedgerHash)
         .WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1327,8 +1313,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, EmptyResultForUnseenId)
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req =
             boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
         auto const output = handler.process(req, Context{yield});
@@ -1345,8 +1330,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, EmptyResultForUnseenIdWithAccount)
     ON_CALL(*backend_, fetchAccountMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(R"JSON({{"mpt_issuance_id": "{}", "account": "{}"}})JSON", kMptId, kAccount)
         );
@@ -1390,8 +1374,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingBlobMidPageSkipped)
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1446,8 +1429,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingBlobInBinaryModeSkipped)
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1479,8 +1461,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterSparseMixedPageKeepsMar
     EXPECT_CALL(*backend_, fetchAccountMPTokenIssuanceTransactions).Times(0);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1510,8 +1491,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterNonMatchReturnsEmpty)
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1540,8 +1520,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterCaseInsensitive)
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1569,8 +1548,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterSparseMixedPageWithAcco
     EXPECT_CALL(*backend_, fetchMPTokenIssuanceTransactions).Times(0);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1602,8 +1580,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, TxTypeFilterWithAccountNonMatchRetu
     ON_CALL(*backend_, fetchAccountMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1641,8 +1618,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ForwardTxAboveMaxSeqClippedAndMarke
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1672,8 +1648,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryWithTxTypeFilterV1)
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1708,8 +1683,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, BinaryWithTxTypeFilterV2)
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -1742,8 +1716,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ResponseAlwaysHasMandatoryFields)
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{MPTokenIssuanceHistoryHandler{backend_, migrationInspectorMock}};
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req =
             boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
         auto const output = handler.process(req, Context{yield});

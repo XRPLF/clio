@@ -1,7 +1,6 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "migration/MigrationInspectorInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/MetaProcessors.hpp"
@@ -38,7 +37,6 @@ namespace rpc {
 class MPTokenIssuanceHistoryHandler {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    std::shared_ptr<migration::MigrationInspectorInterface const> migrationInspector_;
     // Status is monotonic, so the terminal Migrated result is cached across handler copies.
     std::shared_ptr<std::atomic_bool> migrated_ = std::make_shared<std::atomic_bool>(false);
 
@@ -100,14 +98,9 @@ public:
      * @brief Construct a new MPTokenIssuanceHistoryHandler object.
      *
      * @param sharedPtrBackend The backend to use.
-     * @param migrationInspector The migration inspector used to gate on backfill completion.
      */
-    MPTokenIssuanceHistoryHandler(
-        std::shared_ptr<BackendInterface> sharedPtrBackend,
-        std::shared_ptr<migration::MigrationInspectorInterface const> migrationInspector
-    )
+    explicit MPTokenIssuanceHistoryHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
         : sharedPtrBackend_(std::move(sharedPtrBackend))
-        , migrationInspector_(std::move(migrationInspector))
     {
     }
 

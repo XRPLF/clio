@@ -5,7 +5,6 @@
 #include "etl/ETLServiceInterface.hpp"
 #include "etl/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "migration/MigrationInspectorInterface.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/HandlerProvider.hpp"
 #include "rpc/common/Types.hpp"
@@ -39,7 +38,6 @@ public:
         std::shared_ptr<etl::LoadBalancerInterface> const& balancer,
         std::shared_ptr<etl::ETLServiceInterface const> const& etl,
         std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
-        std::shared_ptr<migration::MigrationInspectorInterface const> const& migrationInspector,
         Counters const& counters
     );
 
