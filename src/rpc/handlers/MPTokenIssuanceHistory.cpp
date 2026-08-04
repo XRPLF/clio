@@ -143,8 +143,12 @@ MPTokenIssuanceHistoryHandler::process(
     for (auto const& txnPlusMeta : blobs) {
         // A hash with no matching Transactions row yields a default-constructed record in-position.
         // Skip it before the range check so it neither shortens the page nor disturbs the marker.
-        if (txnPlusMeta.transaction.empty() || txnPlusMeta.metadata.empty())
+        if (txnPlusMeta.transaction.empty() || txnPlusMeta.metadata.empty()) {
+            LOG(log_.warn()) << "Skipping index entry with no matching transaction record; "
+                                "mpt_issuance_id = "
+                             << input.mptIssuanceID;
             continue;
+        }
 
         // over the range
         if ((txnPlusMeta.ledgerSequence < minIndex && !input.forward) ||
