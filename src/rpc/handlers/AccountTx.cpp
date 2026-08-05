@@ -1,7 +1,6 @@
 #include "rpc/handlers/AccountTx.hpp"
 
 #include "data/Types.hpp"
-#include "etl/MPTHelpers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -9,6 +8,7 @@
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
+#include "util/MPTIssuanceUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
@@ -152,7 +152,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         if (mptIssuanceFilter) {
             auto const [sttx, txMeta] =
                 deserializeTxPlusMeta(txnPlusMeta, txnPlusMeta.ledgerSequence);
-            if (!etl::referencesMptIssuance(*txMeta, *sttx, *mptIssuanceFilter))
+            if (!util::referencesMptIssuance(*txMeta, *sttx, *mptIssuanceFilter))
                 continue;
         }
 

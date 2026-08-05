@@ -29,4 +29,4 @@ target_sources(
         impl/ext/Successor.cpp
 )
 
-target_link_libraries(clio_etl PUBLIC clio_data)
+target_link_libraries(clio_etl PUBLIC clio_data clio_util)

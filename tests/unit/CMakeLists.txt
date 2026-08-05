@@ -181,6 +181,7 @@ target_sources(
         util/ChannelTests.cpp
         util/CoroutineTest.cpp
         util/MoveTrackerTests.cpp
+        util/MPTIssuanceUtilsTests.cpp
         util/ObservableValueTest.cpp
         util/ObservableValueAtomicTest.cpp
         util/RandomTests.cpp
