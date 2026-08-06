@@ -158,11 +158,9 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
         std::optional<xrpl::AccountID> relevantAccount;
         if (txFilter) {
-            auto const result = txFilter->check(txnPlusMeta);
-            if (not result.shouldInclude)
+            relevantAccount = txFilter->check(txnPlusMeta);
+            if (not relevantAccount.has_value())
                 continue;
-
-            relevantAccount = result.relevantAccount;
         }
 
         boost::json::object obj;

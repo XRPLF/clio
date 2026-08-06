@@ -23,7 +23,7 @@ public:
      */
     DelegateTransactionFilter(rpc::DelegateFilter filter, xrpl::AccountID queriedAccount);
 
-    [[nodiscard]] FilterResult
+    [[nodiscard]] std::optional<xrpl::AccountID>
     check(data::TransactionAndMetadata const& txnPlusMeta) const override;
 
 private:

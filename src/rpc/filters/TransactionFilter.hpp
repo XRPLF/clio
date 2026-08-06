@@ -9,14 +9,6 @@
 namespace rpc {
 
 /**
- * @brief Result of a filter check.
- */
-struct FilterResult {
-    bool shouldInclude = false;
-    std::optional<xrpl::AccountID> relevantAccount;
-};
-
-/**
  * @brief Interface for filtering transactions.
  */
 class TransactionFilter {
@@ -26,9 +18,10 @@ public:
     /**
      * @brief Check if a transaction blob matches the filter criteria.
      * @param txnPlusMeta The transaction and metadata blob from the backend.
-     * @return FilterResult indicating if the txn should be included in the output Json or not
+     * @return The relevant account to report for this txn if it should be included in the output
+     * Json, or std::nullopt if the txn should be excluded
      */
-    [[nodiscard]] virtual FilterResult
+    [[nodiscard]] virtual std::optional<xrpl::AccountID>
     check(data::TransactionAndMetadata const& txnPlusMeta) const = 0;
 };
 

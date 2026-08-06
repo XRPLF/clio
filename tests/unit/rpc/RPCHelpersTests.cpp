@@ -525,10 +525,13 @@ TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV2)
 
 TEST_F(RPCHelpersTest, ParseIssue)
 {
-    constexpr auto kJson = R"JSON({
-        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-        "currency": "JPY"
-    })JSON";
+    auto const kJson = fmt::format(
+        R"JSON({{
+            "issuer": "{}",
+            "currency": "JPY"
+        }})JSON",
+        kAccount2
+    );
     auto issue = parseIssue(boost::json::parse(kJson).as_object());
     EXPECT_TRUE(issue.account == getAccountIdWithString(kAccount2));
 
@@ -552,8 +555,7 @@ TEST_F(RPCHelpersTest, ParseIssue)
 
     EXPECT_THROW(
         parseIssue(
-            boost::json::parse(R"JSON({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})JSON")
-                .as_object()
+            boost::json::parse(fmt::format(R"JSON({{"issuer": "{}"}})JSON", kAccount2)).as_object()
         ),
         std::runtime_error
     );
@@ -658,10 +660,15 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
 
     // delegate agent + counter_party is valid
     {
-        auto const json = boost::json::parse(R"JSON({
-            "delegate_filter": "actor",
-            "counter_party": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-        })JSON")
+        auto const json = boost::json::parse(
+                              fmt::format(
+                                  R"JSON({{
+                                      "delegate_filter": "actor",
+                                      "counter_party": "{}"
+                                  }})JSON",
+                                  kAccount2
+                              )
+        )
                               .as_object();
 
         auto const result = parseDelegateFilter(json);
@@ -669,7 +676,7 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
         // NOLINTBEGIN(bugprone-unchecked-optional-access)
         EXPECT_EQ(result->delegateType, DelegateFilter::Role::Actor);
         ASSERT_TRUE(result->counterParty.has_value());
-        EXPECT_EQ(*result->counterParty, "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun");
+        EXPECT_EQ(*result->counterParty, kAccount2);
         // NOLINTEND(bugprone-unchecked-optional-access)
     }
 }
@@ -678,9 +685,14 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
 {
     // Missing required "delegate_filter" key
     {
-        auto const json = boost::json::parse(R"JSON({
-            "counter_party": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-        })JSON")
+        auto const json = boost::json::parse(
+                              fmt::format(
+                                  R"JSON({{
+                                      "counter_party": "{}"
+                                  }})JSON",
+                                  kAccount2
+                              )
+        )
                               .as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
     }

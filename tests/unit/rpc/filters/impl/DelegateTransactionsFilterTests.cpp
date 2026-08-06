@@ -53,8 +53,8 @@ TEST_F(DelegateTransactionFilterTest, ReturnsFalseIfNoDelegateField)
     data::TransactionAndMetadata blob;
     blob.transaction = s.getData();
 
-    auto const& result = filter.check(blob);
-    EXPECT_FALSE(result.shouldInclude);
+    auto const result = filter.check(blob);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_MatchesWhenUserIsSigner)
@@ -66,11 +66,10 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_MatchesWhenUserIsSigner)
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
-    auto const& result = filter.check(blob);
-    EXPECT_TRUE(result.shouldInclude);
-    ASSERT_TRUE(result.relevantAccount.has_value());
+    auto const result = filter.check(blob);
+    ASSERT_TRUE(result.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(*result.relevantAccount, kAccountOwner);
+    EXPECT_EQ(*result, kAccountOwner);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_FailsWhenUserIsNotSigner)
@@ -82,8 +81,8 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_FailsWhenUserIsNotSigner)
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
-    auto const& result = filter.check(blob);
-    EXPECT_FALSE(result.shouldInclude);
+    auto const result = filter.check(blob);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Match)
@@ -95,11 +94,10 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Match)
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
-    auto const& result = filter.check(blob);
-    EXPECT_TRUE(result.shouldInclude);
-    ASSERT_TRUE(result.relevantAccount.has_value());
+    auto const result = filter.check(blob);
+    ASSERT_TRUE(result.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(*result.relevantAccount, kAccountOwner);
+    EXPECT_EQ(*result, kAccountOwner);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Mismatch)
@@ -112,8 +110,8 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Mismatch)
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
-    auto const& result = filter.check(blob);
-    EXPECT_FALSE(result.shouldInclude);
+    auto const result = filter.check(blob);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleActor_MatchesWhenUserIsOwner)
@@ -125,11 +123,10 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_MatchesWhenUserIsOwner)
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
-    auto const& result = filter.check(blob);
-    EXPECT_TRUE(result.shouldInclude);
-    ASSERT_TRUE(result.relevantAccount.has_value());
+    auto const result = filter.check(blob);
+    ASSERT_TRUE(result.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(*result.relevantAccount, kAccountDelegator);
+    EXPECT_EQ(*result, kAccountDelegator);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleActor_FailsWhenUserIsNotOwner)
@@ -141,8 +138,8 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_FailsWhenUserIsNotOwner)
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
-    auto const& result = filter.check(blob);
-    EXPECT_FALSE(result.shouldInclude);
+    auto const result = filter.check(blob);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Match)
@@ -154,11 +151,10 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Match)
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
-    auto const& result = filter.check(blob);
-    EXPECT_TRUE(result.shouldInclude);
-    ASSERT_TRUE(result.relevantAccount.has_value());
+    auto const result = filter.check(blob);
+    ASSERT_TRUE(result.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(*result.relevantAccount, kAccountDelegator);
+    EXPECT_EQ(*result, kAccountDelegator);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Mismatch)
@@ -170,6 +166,6 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Mismatch)
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
-    auto const& result = filter.check(blob);
-    EXPECT_FALSE(result.shouldInclude);
+    auto const result = filter.check(blob);
+    EXPECT_FALSE(result.has_value());
 }

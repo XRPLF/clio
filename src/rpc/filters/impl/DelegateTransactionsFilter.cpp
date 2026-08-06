@@ -24,7 +24,7 @@ DelegateTransactionFilter::DelegateTransactionFilter(
         counterparty_ = xrpl::parseBase58<xrpl::AccountID>(*delegateFilter_.counterParty);
 }
 
-FilterResult
+std::optional<xrpl::AccountID>
 DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta) const
 {
     xrpl::SerialIter sit{txnPlusMeta.transaction.data(), txnPlusMeta.transaction.size()};
@@ -40,25 +40,25 @@ DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta
 
     // Transactions without an sfDelegate field are not delegated; exclude them immediately.
     if (not txDelegate.has_value())
-        return {.shouldInclude = false, .relevantAccount = std::nullopt};
+        return std::nullopt;
 
     switch (delegateFilter_.delegateType) {
         case rpc::DelegateFilter::Role::Authorizer:
             // The queried account is the actor (signer) and the user wants to find the
             // authorizer (owner) it acted for.
             if (*txDelegate == queriedAccount_ && (!counterparty_ || *counterparty_ == txAccount))
-                return {.shouldInclude = true, .relevantAccount = txAccount};
+                return txAccount;
             break;
 
         case rpc::DelegateFilter::Role::Actor:
             // The queried account is the authorizer (owner) and the user wants to find the
             // actor (signer) that acted on its behalf.
             if (txAccount == queriedAccount_ && (!counterparty_ || *counterparty_ == *txDelegate))
-                return {.shouldInclude = true, .relevantAccount = txDelegate};
+                return txDelegate;
             break;
     }
 
-    return {.shouldInclude = false, .relevantAccount = std::nullopt};
+    return std::nullopt;
 }
 
 }  // namespace rpc
