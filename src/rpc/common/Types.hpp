@@ -182,7 +182,7 @@ struct DelegateFilter {
     /**
      * @brief A delegate type used in delegate filter
      */
-    enum class Role {
+    enum class Role : std::uint8_t {
         Actor, /**< This account is the *active* sender, acting on behalf of another party.
                 * e.g., Account A in "A sends payment to B on behalf of C." */
 
@@ -190,7 +190,7 @@ struct DelegateFilter {
                     * e.g., Account C in "A sends payment to B on behalf of C." */
     };
 
-    Role delegateType = Role::Actor;
+    Role delegateType;
     std::optional<std::string> counterParty;
 };
 

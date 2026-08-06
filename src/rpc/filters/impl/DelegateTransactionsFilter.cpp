@@ -42,22 +42,20 @@ DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta
     if (not txDelegate.has_value())
         return {.shouldInclude = false, .relevantAccount = std::nullopt};
 
-    // Filter by "authorizer" ie. the queried account is the actor (signer) and the user wants to
-    // find the authorizer (owner) it acted for.
-    if (delegateFilter_.delegateType == rpc::DelegateFilter::Role::Authorizer) {
-        if (*txDelegate == queriedAccount_) {
-            if (!counterparty_ || *counterparty_ == txAccount)
+    switch (delegateFilter_.delegateType) {
+        case rpc::DelegateFilter::Role::Authorizer:
+            // The queried account is the actor (signer) and the user wants to find the
+            // authorizer (owner) it acted for.
+            if (*txDelegate == queriedAccount_ && (!counterparty_ || *counterparty_ == txAccount))
                 return {.shouldInclude = true, .relevantAccount = txAccount};
-        }
-    }
+            break;
 
-    // Filter by "actor" ie. the queried account is the authorizer (owner) and the user wants to
-    // find the actor (signer) that acted on its behalf.
-    else if (delegateFilter_.delegateType == rpc::DelegateFilter::Role::Actor) {
-        if (txAccount == queriedAccount_) {
-            if (!counterparty_ || *counterparty_ == *txDelegate)
+        case rpc::DelegateFilter::Role::Actor:
+            // The queried account is the authorizer (owner) and the user wants to find the
+            // actor (signer) that acted on its behalf.
+            if (txAccount == queriedAccount_ && (!counterparty_ || *counterparty_ == *txDelegate))
                 return {.shouldInclude = true, .relevantAccount = txDelegate};
-        }
+            break;
     }
 
     return {.shouldInclude = false, .relevantAccount = std::nullopt};
