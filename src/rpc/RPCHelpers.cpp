@@ -1672,7 +1672,6 @@ parseDelegateType(boost::json::value const& delegateType)
 std::optional<DelegateFilter>
 parseDelegateFilter(boost::json::object const& delegateObject)
 {
-    DelegateFilter delegate{};
     if (!delegateObject.contains(JS(delegate_filter)))
         return {};
 
@@ -1684,17 +1683,19 @@ parseDelegateFilter(boost::json::object const& delegateObject)
     if (!delegateTypeOpt.has_value())
         return {};
 
-    delegate.delegateType = *delegateTypeOpt;
+    std::optional<std::string> counterParty;
     if (delegateObject.contains(JS(counter_party))) {
         auto const& counterpartyVal = delegateObject.at(JS(counter_party));
 
         if (!counterpartyVal.is_string())
             return {};
 
-        delegate.counterParty = counterpartyVal.as_string();
+        counterParty = counterpartyVal.as_string();
     }
 
-    return delegate;
+    return DelegateFilter{
+        .delegateType = *delegateTypeOpt, .counterParty = std::move(counterParty)
+    };
 }
 
 }  // namespace rpc

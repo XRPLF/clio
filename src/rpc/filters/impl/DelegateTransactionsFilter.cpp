@@ -2,7 +2,6 @@
 
 #include "data/Types.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/filters/TransactionFilter.hpp"
 
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/SField.h>
