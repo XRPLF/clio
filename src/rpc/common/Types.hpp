@@ -190,7 +190,7 @@ struct DelegateFilter {
                     * e.g., Account C in "A sends payment to B on behalf of C." */
     };
 
-    Role delegateType;
+    Role delegateType = Role::Actor;
     std::optional<std::string> counterParty;
 };
 
