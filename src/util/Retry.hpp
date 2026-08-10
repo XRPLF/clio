@@ -1,7 +1,9 @@
 #pragma once
 
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/strand.hpp>
 
@@ -66,6 +68,16 @@ class Retry {
 
 public:
     /**
+     * @brief The delays to use between retry attempts
+     *
+     * Equal `initial` and `max` mean a flat delay with no backoff.
+     */
+    struct Delays {
+        std::chrono::steady_clock::duration initial;
+        std::chrono::steady_clock::duration max;
+    };
+
+    /**
      * @brief Construct a new Retry object
      *
      * @param strategy The retry strategy to use
@@ -75,6 +87,16 @@ public:
         RetryStrategyPtr strategy,
         boost::asio::strand<boost::asio::io_context::executor_type> strand
     );
+
+    /**
+     * @brief Construct a new Retry object from any I/O executor
+     *
+     * For coroutines, pass `yield.get_executor()` and drive it with @ref wait().
+     *
+     * @param strategy The retry strategy to use
+     * @param executor The executor to run the retry timer on
+     */
+    Retry(RetryStrategyPtr strategy, boost::asio::any_io_executor executor);
 
     /**
      * @brief Destroy the Retry object
@@ -104,6 +126,17 @@ public:
             func();
         });
     }
+
+    /**
+     * @brief Wait out the current delay by suspending the calling coroutine, then back off.
+     *
+     * Unlike @ref retry() this returns once the delay elapsed instead of scheduling a callback, so
+     * the caller can keep its own loop. Advances the delay and attempt number like @ref retry().
+     *
+     * @param yield The coroutine to suspend
+     */
+    void
+    wait(boost::asio::yield_context yield);
 
     /**
      * @brief Cancel scheduled retry if any
@@ -140,13 +173,9 @@ public:
     /**
      * @brief Construct a new Exponential Backoff Strategy object
      *
-     * @param delay The initial delay value
-     * @param maxDelay The maximum delay value
+     * @param delays The delays to use between attempts
      */
-    ExponentialBackoffStrategy(
-        std::chrono::steady_clock::duration delay,
-        std::chrono::steady_clock::duration maxDelay
-    );
+    explicit ExponentialBackoffStrategy(Retry::Delays delays);
 
 private:
     [[nodiscard]] std::chrono::steady_clock::duration
@@ -156,16 +185,24 @@ private:
 /**
  * @brief Create a retry mechanism with exponential backoff strategy
  *
- * @param delay The initial delay value
- * @param maxDelay The maximum delay value
+ * @param delays The delays to use between attempts
  * @param strand The strand to use for async operations
  * @return The retry object
  */
 Retry
 makeRetryExponentialBackoff(
-    std::chrono::steady_clock::duration delay,
-    std::chrono::steady_clock::duration maxDelay,
+    Retry::Delays delays,
     boost::asio::strand<boost::asio::io_context::executor_type> strand
 );
+
+/**
+ * @brief Create a retry mechanism with exponential backoff strategy on any I/O executor
+ *
+ * @param delays The delays to use between attempts
+ * @param executor The executor to run the retry timer on
+ * @return The retry object
+ */
+Retry
+makeRetryExponentialBackoff(Retry::Delays delays, boost::asio::any_io_executor executor);
 
 }  // namespace util

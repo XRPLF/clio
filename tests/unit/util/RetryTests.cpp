@@ -1,6 +1,7 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/Retry.hpp"
 
+#include <boost/asio/post.hpp>
 #include <boost/asio/strand.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -18,7 +19,7 @@ protected:
 
 TEST_F(RetryTests, ExponentialBackoffStrategy)
 {
-    ExponentialBackoffStrategy strategy{delay_, maxDelay_};
+    ExponentialBackoffStrategy strategy{{.initial = delay_, .max = maxDelay_}};
 
     EXPECT_EQ(strategy.getDelay(), delay_);
 
@@ -46,7 +47,10 @@ struct RetryWithExponentialBackoffStrategyTests : SyncAsioContextTest, RetryTest
     }
 
 protected:
-    Retry retry_ = makeRetryExponentialBackoff(delay_, maxDelay_, boost::asio::make_strand(ctx_));
+    Retry retry_ = makeRetryExponentialBackoff(
+        {.initial = delay_, .max = maxDelay_},
+        boost::asio::make_strand(ctx_)
+    );
     testing::MockFunction<void()> mockCallback_;
 };
 
@@ -87,4 +91,45 @@ TEST_F(RetryWithExponentialBackoffStrategyTests, Reset)
     retry_.reset();
     EXPECT_EQ(retry_.attemptNumber(), 0);
     EXPECT_EQ(retry_.delayValue(), delay_);
+}
+
+struct RetryWaitTests : SyncAsioContextTest, RetryTests {};
+
+TEST_F(RetryWaitTests, WaitOnCoroutineAdvancesAttemptAndDelay)
+{
+    runSpawn([this](auto yield) {
+        auto retry = makeRetryExponentialBackoff(
+            {.initial = delay_, .max = maxDelay_}, yield.get_executor()
+        );
+
+        EXPECT_EQ(retry.attemptNumber(), 0);
+        EXPECT_EQ(retry.delayValue(), delay_);
+
+        retry.wait(yield);
+        EXPECT_EQ(retry.attemptNumber(), 1);
+        EXPECT_EQ(retry.delayValue(), delay_ * 2);
+
+        retry.wait(yield);
+        EXPECT_EQ(retry.attemptNumber(), 2);
+    });
+}
+
+TEST_F(RetryWaitTests, WaitDoesNotBlockItsThread)
+{
+    bool ran = false;
+    bool ranBeforeWaitReturned = false;
+
+    runSpawn([this, &ran, &ranBeforeWaitReturned](auto yield) {
+        boost::asio::post(ctx_, [&ran]() { ran = true; });
+
+        auto retry = makeRetryExponentialBackoff(
+            {.initial = std::chrono::milliseconds{20}, .max = std::chrono::milliseconds{20}},
+            yield.get_executor()
+        );
+        retry.wait(yield);
+
+        ranBeforeWaitReturned = ran;
+    });
+
+    EXPECT_TRUE(ranBeforeWaitReturned);
 }

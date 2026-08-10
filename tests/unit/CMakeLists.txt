@@ -15,6 +15,7 @@ target_sources(
         data/LedgerCacheLoadingStateTests.cpp
         data/LedgerCacheSaverTests.cpp
         data/cassandra/AsyncExecutorTests.cpp
+        data/cassandra/ErrorTests.cpp
         data/cassandra/ExecutionStrategyTests.cpp
         data/cassandra/LedgerHeaderCacheTests.cpp
         data/cassandra/RetryPolicyTests.cpp

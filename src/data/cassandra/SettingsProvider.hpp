@@ -4,6 +4,7 @@
 #include "data/cassandra/impl/Cluster.hpp"
 #include "util/config/ObjectView.hpp"
 
+#include <chrono>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -19,6 +20,8 @@ class SettingsProvider {
     std::string keyspace_;
     std::optional<std::string> tablePrefix_;
     uint16_t replicationFactor_;
+    std::chrono::milliseconds initialRetryDelay_;
+    std::chrono::milliseconds maxRetryDelay_;
     Settings settings_;
 
 public:
@@ -60,6 +63,24 @@ public:
     getReplicationFactor() const
     {
         return replicationFactor_;
+    }
+
+    /**
+     * @return Delay before the first retry of a failed request
+     */
+    [[nodiscard]] std::chrono::milliseconds
+    getInitialRetryDelay() const
+    {
+        return initialRetryDelay_;
+    }
+
+    /**
+     * @return Upper bound for the retry backoff
+     */
+    [[nodiscard]] std::chrono::milliseconds
+    getMaxRetryDelay() const
+    {
+        return maxRetryDelay_;
     }
 
 private:
