@@ -1,6 +1,8 @@
 #include "util/Retry.hpp"
 
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/asio/strand.hpp>
 
 #include <algorithm>
@@ -42,6 +44,11 @@ Retry::Retry(
 {
 }
 
+Retry::Retry(RetryStrategyPtr strategy, boost::asio::any_io_executor executor)
+    : strategy_(std::move(strategy)), timer_(executor)
+{
+}
+
 Retry::~Retry()
 {
     *canceled_ = true;
@@ -73,11 +80,8 @@ Retry::reset()
     (*strategy_).reset();
 }
 
-ExponentialBackoffStrategy::ExponentialBackoffStrategy(
-    std::chrono::steady_clock::duration delay,
-    std::chrono::steady_clock::duration maxDelay
-)
-    : RetryStrategy(delay), maxDelay_(maxDelay)
+ExponentialBackoffStrategy::ExponentialBackoffStrategy(Retry::Delays delays)
+    : RetryStrategy(delays.initial), maxDelay_(delays.max)
 {
 }
 
@@ -88,14 +92,32 @@ ExponentialBackoffStrategy::nextDelay() const
     return std::min(next, maxDelay_);
 }
 
+void
+Retry::wait(boost::asio::yield_context yield)
+{
+    *canceled_ = false;
+    timer_.expires_after(strategy_->getDelay());
+    strategy_->increaseDelay();
+    ++attemptNumber_;
+
+    // error ignored on purpose: a cancelled timer just means the caller retries sooner
+    boost::system::error_code ec;
+    timer_.async_wait(yield[ec]);
+}
+
 Retry
 makeRetryExponentialBackoff(
-    std::chrono::steady_clock::duration delay,
-    std::chrono::steady_clock::duration maxDelay,
+    Retry::Delays delays,
     boost::asio::strand<boost::asio::io_context::executor_type> strand
 )
 {
-    return Retry(std::make_unique<ExponentialBackoffStrategy>(delay, maxDelay), std::move(strand));
+    return Retry(std::make_unique<ExponentialBackoffStrategy>(delays), std::move(strand));
+}
+
+Retry
+makeRetryExponentialBackoff(Retry::Delays delays, boost::asio::any_io_executor executor)
+{
+    return Retry(std::make_unique<ExponentialBackoffStrategy>(delays), std::move(executor));
 }
 
 }  // namespace util

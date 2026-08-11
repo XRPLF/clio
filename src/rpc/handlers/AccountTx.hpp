@@ -85,6 +85,7 @@ public:
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
         std::optional<std::string> transactionTypeInLowercase;
+        std::optional<std::string> mptIssuanceId;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -141,6 +142,7 @@ public:
                     typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()
                 ),
             },
+            {JS(mpt_issuance_id), validation::CustomValidators::uint192HexStringValidator},
         };
 
         static auto const kRpcSpec = RpcSpec{
