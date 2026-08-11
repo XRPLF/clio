@@ -33,6 +33,7 @@ constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25
 constexpr auto kCurrency = "0158415500000000C1F76FF6ECB0BAC600000000";
 // Valid 48-hex MPT issuance ID (from MPTHoldersTests.cpp)
 constexpr auto kMptId = "000004C463C52827307480341125DA0577DEFC38405B0E3E";
+constexpr auto kMptIdLowercase = "000004c463c52827307480341125da0577defc38405b0e3e";
 constexpr auto kApiVersion = 2;
 
 auto const kMigratedStatus =
@@ -1726,5 +1727,382 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ResponseAlwaysHasMandatoryFields)
         EXPECT_TRUE(obj.contains("ledger_index_max"));
         EXPECT_TRUE(obj.contains("transactions"));
         EXPECT_TRUE(obj.contains("validated"));
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMinAboveRangeMax)
+{
+    // The other side of the min range check: above the range's max rather than below its min.
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "ledger_index_min": {}
+                }})JSON",
+                kMptId,
+                kMaxSeq + 1
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrIdxMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerSeqMinOutOfRange");
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMaxBelowRangeMin)
+{
+    // The other side of the max range check: below the range's min rather than above its max.
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "ledger_index_max": {}
+                }})JSON",
+                kMptId,
+                kMinSeq - 1
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrIdxMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerSeqMaxOutOfRange");
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerHashWithOnlyLedgerIndexMin)
+{
+    // ledger_index_min alone is still a range, so it conflicts with a ledger specifier.
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "ledger_hash": "{}",
+                    "ledger_index_min": {}
+                }})JSON",
+                kMptId,
+                kLedgerHash,
+                kMinSeq + 1
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "containsLedgerSpecifierAndRange");
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerHashWithOnlyLedgerIndexMax)
+{
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "ledger_hash": "{}",
+                    "ledger_index_max": {}
+                }})JSON",
+                kMptId,
+                kLedgerHash,
+                kMaxSeq - 1
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "containsLedgerSpecifierAndRange");
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexValidatedStringIsNotASpecifier)
+{
+    // "validated" yields no concrete index, so the request keeps the full ledger range and does
+    // not trip the specifier-plus-range check.
+    auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
+    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(0);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "ledger_index": "validated"
+                }})JSON",
+                kMptId
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMinSeq);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMaxSeq);
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexNumericStringAccepted)
+{
+    // A numeric string is parsed into a concrete index and behaves like the numeric form.
+    auto const transactions = genTransactions(kMaxSeq - 1, kMinSeq + 1);
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq - 1);
+    ON_CALL(*backend_, fetchLedgerBySequence(kMaxSeq - 1, _)).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "ledger_index": "{}"
+                }})JSON",
+                kMptId,
+                kMaxSeq - 1
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMaxSeq - 1);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMaxSeq - 1);
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingMetadataOnlySkipped)
+{
+    // An index entry whose Transactions row has a transaction blob but no metadata is still an
+    // incomplete record: skip it without shortening the page or clearing the marker.
+    auto transactions = std::vector<TransactionAndMetadata>{};
+
+    auto noMeta = TransactionAndMetadata();
+    xrpl::STObject const noMetaObj = createPaymentTransactionObject(kAccount, kAccount2, 1, 1, 32);
+    noMeta.transaction = noMetaObj.getSerializer().peekData();
+    noMeta.ledgerSequence = kMaxSeq - 1;
+    noMeta.date = 1;
+    transactions.push_back(noMeta);
+
+    auto complete = TransactionAndMetadata();
+    xrpl::STObject const completeObj =
+        createPaymentTransactionObject(kAccount, kAccount2, 1, 1, 32);
+    complete.transaction = completeObj.getSerializer().peekData();
+    complete.ledgerSequence = kMinSeq + 1;
+    xrpl::STObject const completeMeta =
+        createPaymentTransactionMetaObject(kAccount, kAccount2, 22, 23);
+    complete.metadata = completeMeta.getSerializer().peekData();
+    complete.date = 2;
+    transactions.push_back(complete);
+
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        ASSERT_EQ(output.result->at("transactions").as_array().size(), 1);
+        auto const& tx = output.result->at("transactions").as_array()[0].as_object();
+        EXPECT_EQ(tx.at("tx").as_object().at("ledger_index").as_uint64(), kMinSeq + 1);
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, V2MissingLedgerHeaderOmitsCloseTimeAndLedgerHash)
+{
+    // API v2 enriches each transaction from its ledger header; if that header cannot be read the
+    // transaction is still returned, just without close_time_iso / ledger_hash.
+    auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = std::nullopt};
+    ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(2);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
+        auto const output =
+            handler.process(req, Context{.yield = yield, .apiVersion = kApiVersion});
+        ASSERT_TRUE(output);
+        ASSERT_EQ(output.result->at("transactions").as_array().size(), 2);
+        for (auto const& tx : output.result->at("transactions").as_array()) {
+            auto const& obj = tx.as_object();
+            EXPECT_FALSE(obj.contains("close_time_iso"));
+            EXPECT_FALSE(obj.contains("ledger_hash"));
+            EXPECT_TRUE(obj.contains("hash"));
+            EXPECT_TRUE(obj.contains("tx_json"));
+            EXPECT_TRUE(obj.contains("ledger_index"));
+            EXPECT_TRUE(obj.at("validated").as_bool());
+        }
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ForwardTxBelowMinSeqNotClipped)
+{
+    // Forward traversal only clips above maxIndex; a transaction below minIndex is passed through,
+    // matching account_tx.
+    auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *backend_,
+        fetchMPTokenIssuanceTransactions(
+            _, _, true, testing::Optional(testing::Eq(TransactionsCursor{kMinSeq + 2, 0})), _
+        )
+    )
+        .Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": true
+                }})JSON",
+                kMptId,
+                kMinSeq + 2,
+                kMaxSeq
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            boost::json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MarkerSeedsCursorInForwardMode)
+{
+    // A marker wins over the direction-based seed in forward mode too.
+    auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = std::nullopt};
+    ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *backend_,
+        fetchMPTokenIssuanceTransactions(
+            _, _, true, testing::Optional(testing::Eq(TransactionsCursor{21, 22})), _
+        )
+    )
+        .Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "forward": true,
+                    "marker": {{"ledger": 21, "seq": 22}}
+                }})JSON",
+                kMptId
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_FALSE(output.result->as_object().contains("marker"));
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LimitAtMinIsPassedThrough)
+{
+    auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *backend_,
+        fetchMPTokenIssuanceTransactions(
+            _, static_cast<uint32_t>(MPTokenIssuanceHistoryHandler::kLimitMin), _, _, _
+        )
+    )
+        .Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "mpt_issuance_id": "{}",
+                    "limit": {}
+                }})JSON",
+                kMptId,
+                MPTokenIssuanceHistoryHandler::kLimitMin
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->at("limit").as_uint64(), MPTokenIssuanceHistoryHandler::kLimitMin);
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, DefaultLimitPassedToBackend)
+{
+    auto const transCursor = TransactionsAndCursor{.txns = {}, .cursor = std::nullopt};
+    ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(
+        *backend_,
+        fetchMPTokenIssuanceTransactions(
+            _, static_cast<uint32_t>(MPTokenIssuanceHistoryHandler::kLimitDefault), _, _, _
+        )
+    )
+        .Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+    });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MptIssuanceIDIsNormalizedInOutput)
+{
+    // The response echoes the canonical uppercase form of the parsed uint192.
+    auto const transCursor = TransactionsAndCursor{.txns = {}, .cursor = std::nullopt};
+    ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
+
+    EXPECT_CALL(*backend_, fetchMPTokenIssuanceTransactions(xrpl::uint192{kMptId}, _, _, _, _))
+        .Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req = boost::json::parse(
+            fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptIdLowercase)
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->at("mpt_issuance_id").as_string(), kMptId);
     });
 }
