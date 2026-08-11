@@ -400,6 +400,29 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateCachedMigratedShortCircuit)
     });
 }
 
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateCachedMigratedSurvivesHandlerCopy)
+{
+    EXPECT_CALL(*backend_, fetchMigratorStatus(MPTokenIssuanceHistoryHandler::kMigratorName, _))
+        .Times(1)
+        .WillOnce(Return(std::optional<std::string>{kMigratedStatus}));
+
+    auto const transCursor = TransactionsAndCursor{.txns = {}, .cursor = std::nullopt};
+    ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
+
+    // Every request gets a copy of the registered handler, so the cached flag survives the copy.
+    auto original = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+    auto const copy = original;
+
+    runSpawn([&](auto yield) {
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
+        auto const output = original.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        auto const outputFromCopy = copy.process(req, Context{yield});
+        ASSERT_TRUE(outputFromCopy);
+    });
+}
+
 static std::vector<TransactionAndMetadata>
 genTransactions(uint32_t seq1, uint32_t seq2)
 {
@@ -1732,7 +1755,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ResponseAlwaysHasMandatoryFields)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMinAboveRangeMax)
 {
-    // The other side of the min range check: above the range's max rather than below its min.
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
@@ -1755,7 +1777,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMinAboveRangeMax)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMaxBelowRangeMin)
 {
-    // The other side of the max range check: below the range's min rather than above its max.
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
@@ -1778,7 +1799,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexMaxBelowRangeMin)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerHashWithOnlyLedgerIndexMin)
 {
-    // ledger_index_min alone is still a range, so it conflicts with a ledger specifier.
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
         auto const req = boost::json::parse(
@@ -1827,8 +1847,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerHashWithOnlyLedgerIndexMax)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexValidatedStringIsNotASpecifier)
 {
-    // "validated" yields no concrete index, so the request keeps the full ledger range and does
-    // not trip the specifier-plus-range check.
+    // "validated" resolves to no concrete index, so the request keeps the full ledger range.
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1857,7 +1876,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexValidatedStringIsNotASpe
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexNumericStringAccepted)
 {
-    // A numeric string is parsed into a concrete index and behaves like the numeric form.
     auto const transactions = genTransactions(kMaxSeq - 1, kMinSeq + 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1889,8 +1907,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexNumericStringAccepted)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingMetadataOnlySkipped)
 {
-    // An index entry whose Transactions row has a transaction blob but no metadata is still an
-    // incomplete record: skip it without shortening the page or clearing the marker.
+    // Page of [no metadata, valid]: the incomplete record is skipped, marker unaffected.
     auto transactions = std::vector<TransactionAndMetadata>{};
 
     auto noMeta = TransactionAndMetadata();
@@ -1933,8 +1950,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MissingMetadataOnlySkipped)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, V2MissingLedgerHeaderOmitsCloseTimeAndLedgerHash)
 {
-    // API v2 enriches each transaction from its ledger header; if that header cannot be read the
-    // transaction is still returned, just without close_time_iso / ledger_hash.
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = std::nullopt};
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
@@ -1963,8 +1978,7 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, V2MissingLedgerHeaderOmitsCloseTime
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ForwardTxBelowMinSeqNotClipped)
 {
-    // Forward traversal only clips above maxIndex; a transaction below minIndex is passed through,
-    // matching account_tx.
+    // Forward traversal only clips above maxIndex; one below minIndex is kept, as account_tx does.
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -2004,7 +2018,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, ForwardTxBelowMinSeqNotClipped)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MarkerSeedsCursorInForwardMode)
 {
-    // A marker wins over the direction-based seed in forward mode too.
     auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = std::nullopt};
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
@@ -2089,7 +2102,6 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, DefaultLimitPassedToBackend)
 
 TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MptIssuanceIDIsNormalizedInOutput)
 {
-    // The response echoes the canonical uppercase form of the parsed uint192.
     auto const transCursor = TransactionsAndCursor{.txns = {}, .cursor = std::nullopt};
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
 
