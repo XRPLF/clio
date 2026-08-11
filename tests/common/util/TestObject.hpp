@@ -466,7 +466,7 @@ createMptIssuanceObject(
     std::optional<std::uint64_t> maxAmount = std::nullopt,
     std::optional<std::uint64_t> lockedAmount = std::nullopt,
     std::optional<std::string_view> domainId = std::nullopt,
-    std::optional<std::uint32_t> mutableFlags = std::nullopt,
+    std::optional<std::uint32_t> immutableFlags = std::nullopt,
     std::optional<std::string_view> issuerEncryptionKey = std::nullopt,
     std::optional<std::string_view> auditorEncryptionKey = std::nullopt,
     std::optional<std::uint64_t> confidentialOutstandingAmount = std::nullopt

@@ -63,14 +63,15 @@ public:
         std::optional<bool> mptCanTransfer;
         std::optional<bool> mptCanClawback;
 
-        std::optional<bool> mptCanMutateCanLock;
-        std::optional<bool> mptCanMutateRequireAuth;
-        std::optional<bool> mptCanMutateCanEscrow;
-        std::optional<bool> mptCanMutateCanTrade;
-        std::optional<bool> mptCanMutateCanTransfer;
-        std::optional<bool> mptCanMutateCanClawback;
-        std::optional<bool> mptCanMutateMetadata;
-        std::optional<bool> mptCanMutateTransferFee;
+        std::optional<bool> mptImmutableCanLock;
+        std::optional<bool> mptImmutableRequireAuth;
+        std::optional<bool> mptImmutableCanEscrow;
+        std::optional<bool> mptImmutableCanTrade;
+        std::optional<bool> mptImmutableCanTransfer;
+        std::optional<bool> mptImmutableCanClawback;
+        std::optional<bool> mptImmutableCanHoldConfidentialBalance;
+        std::optional<bool> mptImmutableMetadata;
+        std::optional<bool> mptImmutableTransferFee;
 
         std::optional<bool> mptCanHoldConfidentialBalance;
         std::optional<std::uint64_t> confidentialOutstandingAmount;
