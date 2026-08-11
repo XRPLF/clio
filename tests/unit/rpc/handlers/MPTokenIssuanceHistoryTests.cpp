@@ -16,7 +16,6 @@
 #include <xrpl/protocol/STObject.h>
 
 #include <cstdint>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
