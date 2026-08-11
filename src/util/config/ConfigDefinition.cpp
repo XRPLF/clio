@@ -278,7 +278,15 @@ getClioConfig()
          {"database.cassandra.connect_timeout",
           ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
          {"database.cassandra.request_timeout",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
+          ConfigValue{ConfigType::Double}.optional().withConstraint(gValidatePositiveDouble)},
+         {"database.cassandra.initial_request_retry_delay",
+          ConfigValue{ConfigType::Double}.defaultValue(0.5).withConstraint(
+              gValidatePositiveDouble
+          )},
+         {"database.cassandra.max_request_retry_delay",
+          ConfigValue{ConfigType::Double}.defaultValue(5.0).withConstraint(
+              gValidatePositiveDouble
+          )},
          {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
          {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
          {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
