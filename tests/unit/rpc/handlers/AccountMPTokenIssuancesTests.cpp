@@ -956,15 +956,13 @@ TEST_P(AccountMPTokenIssuancesAmountSerializationTest, SerializedAsStrings)
     });
 }
 
-TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
+TEST_F(RPCAccountMPTokenIssuancesHandlerTest, ImmutableFlags)
 {
-    uint32_t const mutableFlags1 = xrpl::lsmfMPTCanEnableCanLock |
-        xrpl::lsmfMPTCanEnableRequireAuth | xrpl::lsmfMPTCanEnableCanEscrow |
-        xrpl::lsmfMPTCanEnableCanTrade;
+    uint32_t const immutableFlags1 = xrpl::lsifMPTCanLock | xrpl::lsifMPTRequireAuth |
+        xrpl::lsifMPTCanEscrow | xrpl::lsifMPTCanTrade;
 
-    uint32_t const mutableFlags2 = xrpl::lsmfMPTCanEnableCanTransfer |
-        xrpl::lsmfMPTCanEnableCanClawback | xrpl::lsmfMPTCanMutateMetadata |
-        xrpl::lsmfMPTCanMutateTransferFee;
+    uint32_t const immutableFlags2 = xrpl::lsifMPTCanTransfer | xrpl::lsifMPTCanClawback |
+        xrpl::lsifMPTMetadata | xrpl::lsifMPTTransferFee;
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -993,7 +991,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
             std::nullopt,
             std::nullopt,
             std::nullopt,
-            mutableFlags1
+            immutableFlags1
         )
             .getSerializer()
             .peekData(),
@@ -1009,7 +1007,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
             std::nullopt,
             std::nullopt,
             std::nullopt,
-            mutableFlags2
+            immutableFlags2
         )
             .getSerializer()
             .peekData()
@@ -1042,10 +1040,10 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
                         "outstanding_amount": "{}",
                         "transfer_fee": {},
                         "mpt_can_transfer": true,
-                        "mpt_can_mutate_can_lock": true,
-                        "mpt_can_mutate_require_auth": true,
-                        "mpt_can_mutate_can_escrow": true,
-                        "mpt_can_mutate_can_trade": true
+                        "mpt_immutable_can_lock": true,
+                        "mpt_immutable_require_auth": true,
+                        "mpt_immutable_can_escrow": true,
+                        "mpt_immutable_can_trade": true
                     }},
                     {{
                         "mpt_issuance_id": "{}",
@@ -1055,10 +1053,10 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
                         "transfer_fee": {},
                         "mptoken_metadata": "{}",
                         "mpt_can_transfer": true,
-                        "mpt_can_mutate_can_transfer": true,
-                        "mpt_can_mutate_can_clawback": true,
-                        "mpt_can_mutate_metadata": true,
-                        "mpt_can_mutate_transfer_fee": true
+                        "mpt_immutable_can_transfer": true,
+                        "mpt_immutable_can_clawback": true,
+                        "mpt_immutable_metadata": true,
+                        "mpt_immutable_transfer_fee": true
                     }}
                 ]
             }})JSON",
@@ -1174,8 +1172,8 @@ struct SingleFlagTest {
     std::string expectedJsonKey;
 };
 
-struct AccountMPTokenIssuancesImmutableFlagsTest : RPCAccountMPTokenIssuancesHandlerTest,
-                                                   WithParamInterface<SingleFlagTest> {};
+struct AccountMPTokenIssuancesLedgerFlagsTest : RPCAccountMPTokenIssuancesHandlerTest,
+                                                WithParamInterface<SingleFlagTest> {};
 
 static auto
 generateSingleFlagTests()
@@ -1200,13 +1198,13 @@ generateSingleFlagTests()
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    RPCAccountMPTokenIssuancesImmutableFlagsGroup,
-    AccountMPTokenIssuancesImmutableFlagsTest,
+    RPCAccountMPTokenIssuancesLedgerFlagsGroup,
+    AccountMPTokenIssuancesLedgerFlagsTest,
     ValuesIn(generateSingleFlagTests()),
     tests::util::kNameGenerator
 );
 
-TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
+TEST_P(AccountMPTokenIssuancesLedgerFlagsTest, SingleFlag)
 {
     auto const testParams = GetParam();
 
@@ -1254,54 +1252,57 @@ TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
     });
 }
 
-struct SingleMutableFlagTest {
+struct SingleImmutableFlagTest {
     std::string testName;
-    uint32_t mutableFlag;
+    uint32_t immutableFlag;
     std::string expectedJsonKey;
 };
 
-struct AccountMPTokenIssuancesMutableFlagsTest : RPCAccountMPTokenIssuancesHandlerTest,
-                                                 WithParamInterface<SingleMutableFlagTest> {};
+struct AccountMPTokenIssuancesImmutableFlagsTest : RPCAccountMPTokenIssuancesHandlerTest,
+                                                   WithParamInterface<SingleImmutableFlagTest> {};
 
 static auto
-generateSingleMutableFlagTests()
+generateSingleImmutableFlagTests()
 {
-    return std::vector<SingleMutableFlagTest>{
-        {.testName = "CanMutateCanLock",
-         .mutableFlag = xrpl::lsmfMPTCanEnableCanLock,
-         .expectedJsonKey = "mpt_can_mutate_can_lock"},
-        {.testName = "CanMutateRequireAuth",
-         .mutableFlag = xrpl::lsmfMPTCanEnableRequireAuth,
-         .expectedJsonKey = "mpt_can_mutate_require_auth"},
-        {.testName = "CanMutateCanEscrow",
-         .mutableFlag = xrpl::lsmfMPTCanEnableCanEscrow,
-         .expectedJsonKey = "mpt_can_mutate_can_escrow"},
-        {.testName = "CanMutateCanTrade",
-         .mutableFlag = xrpl::lsmfMPTCanEnableCanTrade,
-         .expectedJsonKey = "mpt_can_mutate_can_trade"},
-        {.testName = "CanMutateCanTransfer",
-         .mutableFlag = xrpl::lsmfMPTCanEnableCanTransfer,
-         .expectedJsonKey = "mpt_can_mutate_can_transfer"},
-        {.testName = "CanMutateCanClawback",
-         .mutableFlag = xrpl::lsmfMPTCanEnableCanClawback,
-         .expectedJsonKey = "mpt_can_mutate_can_clawback"},
-        {.testName = "CanMutateMetadata",
-         .mutableFlag = xrpl::lsmfMPTCanMutateMetadata,
-         .expectedJsonKey = "mpt_can_mutate_metadata"},
-        {.testName = "CanMutateTransferFee",
-         .mutableFlag = xrpl::lsmfMPTCanMutateTransferFee,
-         .expectedJsonKey = "mpt_can_mutate_transfer_fee"},
+    return std::vector<SingleImmutableFlagTest>{
+        {.testName = "ImmutableCanLock",
+         .immutableFlag = xrpl::lsifMPTCanLock,
+         .expectedJsonKey = "mpt_immutable_can_lock"},
+        {.testName = "ImmutableRequireAuth",
+         .immutableFlag = xrpl::lsifMPTRequireAuth,
+         .expectedJsonKey = "mpt_immutable_require_auth"},
+        {.testName = "ImmutableCanEscrow",
+         .immutableFlag = xrpl::lsifMPTCanEscrow,
+         .expectedJsonKey = "mpt_immutable_can_escrow"},
+        {.testName = "ImmutableCanTrade",
+         .immutableFlag = xrpl::lsifMPTCanTrade,
+         .expectedJsonKey = "mpt_immutable_can_trade"},
+        {.testName = "ImmutableCanTransfer",
+         .immutableFlag = xrpl::lsifMPTCanTransfer,
+         .expectedJsonKey = "mpt_immutable_can_transfer"},
+        {.testName = "ImmutableCanClawback",
+         .immutableFlag = xrpl::lsifMPTCanClawback,
+         .expectedJsonKey = "mpt_immutable_can_clawback"},
+        {.testName = "ImmutableCanHoldConfidentialBalance",
+         .immutableFlag = xrpl::lsifMPTCanHoldConfidentialBalance,
+         .expectedJsonKey = "mpt_immutable_can_hold_confidential_balance"},
+        {.testName = "ImmutableMetadata",
+         .immutableFlag = xrpl::lsifMPTMetadata,
+         .expectedJsonKey = "mpt_immutable_metadata"},
+        {.testName = "ImmutableTransferFee",
+         .immutableFlag = xrpl::lsifMPTTransferFee,
+         .expectedJsonKey = "mpt_immutable_transfer_fee"},
     };
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    RPCAccountMPTokenIssuancesMutableFlagsGroup,
-    AccountMPTokenIssuancesMutableFlagsTest,
-    ValuesIn(generateSingleMutableFlagTests()),
+    RPCAccountMPTokenIssuancesImmutableFlagsGroup,
+    AccountMPTokenIssuancesImmutableFlagsTest,
+    ValuesIn(generateSingleImmutableFlagTests()),
     tests::util::kNameGenerator
 );
 
-TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
+TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleImmutableFlag)
 {
     auto const testParams = GetParam();
 
@@ -1330,7 +1331,7 @@ TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
                                            std::nullopt,
                                            std::nullopt,
                                            std::nullopt,
-                                           testParams.mutableFlag
+                                           testParams.immutableFlag
     )
                                            .getSerializer()
                                            .peekData()};

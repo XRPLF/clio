@@ -132,10 +132,26 @@ This document provides a list of all available Clio configuration properties in 
 ### database.cassandra.request_timeout
 
 - **Required**: False
-- **Type**: int
+- **Type**: double
 - **Default value**: None
-- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
-- **Description**: The maximum amount of time in seconds that the system waits for a request to be fetched from the database.
+- **Constraints**: The value must be a positive double number.
+- **Description**: The maximum amount of time in seconds that the system waits for a request to be fetched from the database. Should be set higher than the server side read timeout. If omitted, no request timeout is applied.
+
+### database.cassandra.initial_request_retry_delay
+
+- **Required**: True
+- **Type**: double
+- **Default value**: `0.5`
+- **Constraints**: The value must be a positive double number.
+- **Description**: How long in seconds to wait before the first retry of a database request that failed with a transient error.
+
+### database.cassandra.max_request_retry_delay
+
+- **Required**: True
+- **Type**: double
+- **Default value**: `5`
+- **Constraints**: The value must be a positive double number.
+- **Description**: Upper bound in seconds for the exponential backoff between retries of a database request.
 
 ### database.cassandra.username
 
