@@ -66,7 +66,6 @@ MPTokenIssuanceHistoryHandler::process(
 MaybeError
 MPTokenIssuanceHistoryHandler::verifyHistoryAvailable(Context const& ctx) const
 {
-    // Fail closed: partial history must never be served.
     if (migrated_->load(std::memory_order_relaxed))
         return {};
 
@@ -78,6 +77,7 @@ MPTokenIssuanceHistoryHandler::verifyHistoryAvailable(Context const& ctx) const
         return {};
     }
 
+    // Fail closed: partial history must never be served.
     return Error{Status{
         RippledError::RpcNotReady,
         "mptoken_issuance_history is not available on this server because the required "
@@ -88,21 +88,21 @@ MPTokenIssuanceHistoryHandler::verifyHistoryAvailable(Context const& ctx) const
 std::expected<MPTokenIssuanceHistoryHandler::SequenceRange, Status>
 MPTokenIssuanceHistoryHandler::resolveSequenceRange(Input const& input, Context const& ctx) const
 {
-    auto const range = sharedPtrBackend_->fetchLedgerRange();
-    ASSERT(range.has_value(), "MPTokenIssuanceHistory's ledger range must be available");
+    auto const ledgerRange = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(ledgerRange.has_value(), "MPTokenIssuanceHistory's ledger range must be available");
 
-    // NOLINTBEGIN(bugprone-unchecked-optional-access)
-    auto resolved = SequenceRange{.min = range->minSequence, .max = range->maxSequence};
+    auto const [dbMinSeq, dbMaxSeq] = *ledgerRange;  // NOLINT(bugprone-unchecked-optional-access)
+    auto resolved = SequenceRange{.min = dbMinSeq, .max = dbMaxSeq};
 
     if (input.ledgerIndexMin.has_value()) {
-        if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
+        if (dbMaxSeq < input.ledgerIndexMin || dbMinSeq > input.ledgerIndexMin)
             return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
 
         resolved.min = *input.ledgerIndexMin;
     }
 
     if (input.ledgerIndexMax.has_value()) {
-        if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
+        if (dbMaxSeq < input.ledgerIndexMax || dbMinSeq > input.ledgerIndexMax)
             return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
 
         resolved.max = *input.ledgerIndexMax;
@@ -117,7 +117,7 @@ MPTokenIssuanceHistoryHandler::resolveSequenceRange(Input const& input, Context 
             return Error{Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
 
         auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, dbMaxSeq
         );
 
         if (not expectedLgrInfo.has_value())
@@ -125,7 +125,6 @@ MPTokenIssuanceHistoryHandler::resolveSequenceRange(Input const& input, Context 
 
         resolved.max = resolved.min = expectedLgrInfo->seq;
     }
-    // NOLINTEND(bugprone-unchecked-optional-access)
 
     return resolved;
 }
@@ -176,10 +175,11 @@ MPTokenIssuanceHistoryHandler::processTransactionsPage(
     Output& response
 ) const
 {
-    if (page.cursor.has_value())
+    if (page.cursor.has_value()) {
         response.marker = {
             .ledger = page.cursor->ledgerSequence, .seq = page.cursor->transactionIndex
         };
+    }
 
     for (auto const& txnPlusMeta : page.txns) {
         // A hash with no matching Transactions row yields a default-constructed record in-position.
