@@ -24,6 +24,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <expected>
 #include <limits>
 #include <optional>
 #include <string>
@@ -37,107 +38,150 @@ MPTokenIssuanceHistoryHandler::process(
     Context const& ctx
 ) const
 {
+    if (auto const available = verifyHistoryAvailable(ctx); not available.has_value())
+        return Error{available.error()};
+
+    auto const range = resolveSequenceRange(input, ctx);
+    if (not range.has_value())
+        return Error{range.error()};
+
+    auto const mptIssuanceID = xrpl::uint192{input.mptIssuanceID.c_str()};
+
+    auto const [page, timeDiff] =
+        util::timed([&] { return fetchTransactions(input, ctx, mptIssuanceID, *range); });
+    LOG(log_.info()) << "db fetch took " << timeDiff
+                     << " milliseconds - num blobs = " << page.txns.size();
+
+    Output response;
+    response.mptIssuanceID = xrpl::to_string(mptIssuanceID);
+    response.ledgerIndexMin = range->min;
+    response.ledgerIndexMax = range->max;
+    response.limit = input.limit;
+
+    processTransactionsPage(input, ctx, *range, page, response);
+
+    return response;
+}
+
+MaybeError
+MPTokenIssuanceHistoryHandler::verifyHistoryAvailable(Context const& ctx) const
+{
     // Fail closed: partial history must never be served.
-    if (not migrated_->load(std::memory_order_relaxed)) {
-        auto const statusString = sharedPtrBackend_->fetchMigratorStatus(kMigratorName, ctx.yield);
-        if (statusString.has_value() and
-            migration::MigratorStatus::fromString(*statusString) ==
-                migration::MigratorStatus::Status::Migrated) {
-            migrated_->store(true, std::memory_order_relaxed);
-        } else {
-            return Error{Status{
-                RippledError::RpcNotReady,
-                "mptoken_issuance_history is not available on this server because the required "
-                "transaction-history backfill has not completed."
-            }};
-        }
+    if (migrated_->load(std::memory_order_relaxed))
+        return {};
+
+    auto const statusString = sharedPtrBackend_->fetchMigratorStatus(kMigratorName, ctx.yield);
+    if (statusString.has_value() and
+        migration::MigratorStatus::fromString(*statusString) ==
+            migration::MigratorStatus::Status::Migrated) {
+        migrated_->store(true, std::memory_order_relaxed);
+        return {};
     }
 
+    return Error{Status{
+        RippledError::RpcNotReady,
+        "mptoken_issuance_history is not available on this server because the required "
+        "transaction-history backfill has not completed."
+    }};
+}
+
+std::expected<MPTokenIssuanceHistoryHandler::SequenceRange, Status>
+MPTokenIssuanceHistoryHandler::resolveSequenceRange(Input const& input, Context const& ctx) const
+{
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "MPTokenIssuanceHistory's ledger range must be available");
 
-    auto [minIndex, maxIndex] = *range;  // NOLINT(bugprone-unchecked-optional-access)
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
+    auto resolved = SequenceRange{.min = range->minSequence, .max = range->maxSequence};
 
     if (input.ledgerIndexMin.has_value()) {
-        // NOLINTBEGIN(bugprone-unchecked-optional-access)
         if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
             return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
-        // NOLINTEND(bugprone-unchecked-optional-access)
 
-        minIndex = *input.ledgerIndexMin;
+        resolved.min = *input.ledgerIndexMin;
     }
 
     if (input.ledgerIndexMax.has_value()) {
-        // NOLINTBEGIN(bugprone-unchecked-optional-access)
         if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
             return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
-        // NOLINTEND(bugprone-unchecked-optional-access)
 
-        maxIndex = *input.ledgerIndexMax;
+        resolved.max = *input.ledgerIndexMax;
     }
 
-    if (minIndex > maxIndex)
+    if (resolved.min > resolved.max)
         return Error{Status{RippledError::RpcLgrIdxsInvalid}};
 
     if (input.ledgerHash.has_value() || input.ledgerIndex.has_value()) {
         // rippled does not have this check
-        if (input.ledgerIndexMax.has_value() || input.ledgerIndexMin.has_value()) {
+        if (input.ledgerIndexMax.has_value() || input.ledgerIndexMin.has_value())
             return Error{Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
-        }
 
         auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-            *sharedPtrBackend_,
-            ctx.yield,
-            input.ledgerHash,
-            input.ledgerIndex,
-            range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
+            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
         );
 
         if (not expectedLgrInfo.has_value())
             return Error{expectedLgrInfo.error()};
 
-        maxIndex = minIndex = expectedLgrInfo->seq;
+        resolved.max = resolved.min = expectedLgrInfo->seq;
     }
+    // NOLINTEND(bugprone-unchecked-optional-access)
 
-    // Cursor position: {ledgerSequence, transactionIndex}.
-    std::optional<data::TransactionsCursor> cursor;
+    return resolved;
+}
 
-    if (input.marker.has_value()) {
-        cursor = {input.marker->ledger, input.marker->seq};
-    } else if (input.forward) {
-        // Start at the first possible transaction in the lowest ledger.
-        cursor = {minIndex, 0};
-    } else {
-        // Start after all possible transactions in the highest ledger.
-        cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
-    }
+data::TransactionsAndCursor
+MPTokenIssuanceHistoryHandler::fetchTransactions(
+    Input const& input,
+    Context const& ctx,
+    xrpl::uint192 const& mptIssuanceID,
+    SequenceRange range
+) const
+{
+    // Construct the database cursor as {ledgerSequence, transactionIndex}.
+    auto const startCursor = [&]() -> data::TransactionsCursor {
+        if (input.marker.has_value())
+            return {input.marker->ledger, input.marker->seq};
+
+        // Forward iteration starts at the first possible transaction in the lowest ledger.
+        if (input.forward)
+            return {range.min, 0};
+
+        // Reverse iteration starts after all possible transactions in the highest ledger.
+        return {range.max, std::numeric_limits<int32_t>::max()};
+    }();
 
     auto const limit = input.limit.value_or(kLimitDefault);
-    auto const mptIssuanceID = xrpl::uint192{input.mptIssuanceID.c_str()};
 
-    // tx_type is applied post-fetch below, as account_tx does.
-    auto const [txnsAndCursor, timeDiff] = util::timed([&]() -> data::TransactionsAndCursor {
-        if (input.account.has_value()) {
-            auto const account = accountFromStringStrict(*input.account);
-            ASSERT(account.has_value(), "Account must be decodable after spec validation");
-            return sharedPtrBackend_->fetchAccountMPTokenIssuanceTransactions(
-                mptIssuanceID, *account, limit, input.forward, cursor, ctx.yield
-            );
-        }
-        return sharedPtrBackend_->fetchMPTokenIssuanceTransactions(
-            mptIssuanceID, limit, input.forward, cursor, ctx.yield
+    // tx_type is applied post-fetch, as account_tx does.
+    if (input.account.has_value()) {
+        auto const account = accountFromStringStrict(*input.account);
+        ASSERT(account.has_value(), "Account must be decodable after spec validation");
+        return sharedPtrBackend_->fetchAccountMPTokenIssuanceTransactions(
+            mptIssuanceID, *account, limit, input.forward, startCursor, ctx.yield
         );
-    });
-    LOG(log_.info()) << "db fetch took " << timeDiff
-                     << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
+    }
 
-    Output response;
-    auto const [blobs, retCursor] = txnsAndCursor;
+    return sharedPtrBackend_->fetchMPTokenIssuanceTransactions(
+        mptIssuanceID, limit, input.forward, startCursor, ctx.yield
+    );
+}
 
-    if (retCursor.has_value())
-        response.marker = {.ledger = retCursor->ledgerSequence, .seq = retCursor->transactionIndex};
+void
+MPTokenIssuanceHistoryHandler::processTransactionsPage(
+    Input const& input,
+    Context const& ctx,
+    SequenceRange range,
+    data::TransactionsAndCursor const& page,
+    Output& response
+) const
+{
+    if (page.cursor.has_value())
+        response.marker = {
+            .ledger = page.cursor->ledgerSequence, .seq = page.cursor->transactionIndex
+        };
 
-    for (auto const& txnPlusMeta : blobs) {
+    for (auto const& txnPlusMeta : page.txns) {
         // A hash with no matching Transactions row yields a default-constructed record in-position.
         // Skip it before the range check so it neither shortens the page nor disturbs the marker.
         if (txnPlusMeta.transaction.empty() || txnPlusMeta.metadata.empty()) {
@@ -147,68 +191,83 @@ MPTokenIssuanceHistoryHandler::process(
             continue;
         }
 
-        // over the range
-        if ((txnPlusMeta.ledgerSequence < minIndex && !input.forward) ||
-            (txnPlusMeta.ledgerSequence > maxIndex && input.forward)) {
+        // Stop once iteration passes the far edge of the requested range.
+        if ((txnPlusMeta.ledgerSequence < range.min && !input.forward) ||
+            (txnPlusMeta.ledgerSequence > range.max && input.forward)) {
             response.marker = std::nullopt;
             break;
         }
-        if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward) {
+        if (txnPlusMeta.ledgerSequence > range.max && !input.forward) {
             LOG(log_.debug()) << "Skipping over transactions from incomplete ledger";
             continue;
         }
 
-        boost::json::object obj;
+        if (auto obj = transactionToJsonIfTypeMatches(txnPlusMeta, input, ctx); obj.has_value())
+            response.transactions.push_back(std::move(*obj));
+    }
+}
 
-        // tx_type needs the expanded form to read TransactionType, even when binary is set
-        if (!input.binary || input.transactionTypeInLowercase.has_value()) {
-            auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion);
+std::optional<boost::json::object>
+MPTokenIssuanceHistoryHandler::transactionToJsonIfTypeMatches(
+    data::TransactionAndMetadata const& txnPlusMeta,
+    Input const& input,
+    Context const& ctx
+) const
+{
+    // The type filter needs the expanded form to read TransactionType, even for binary output.
+    if (!input.binary || input.transactionTypeInLowercase.has_value()) {
+        auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion);
 
-            if (txn.contains(JS(TransactionType)) && input.transactionTypeInLowercase.has_value() &&
-                util::toLower(boost::json::value_to<std::string>(txn[JS(TransactionType)])) !=
-                    *input.transactionTypeInLowercase)
-                continue;
+        if (txn.contains(JS(TransactionType)) && input.transactionTypeInLowercase.has_value() &&
+            util::toLower(boost::json::value_to<std::string>(txn[JS(TransactionType)])) !=
+                *input.transactionTypeInLowercase)
+            return std::nullopt;
 
-            if (!input.binary) {
-                auto const txKey = ctx.apiVersion > 1u ? JS(tx_json) : JS(tx);
-                obj[JS(meta)] = std::move(meta);
-                obj[txKey] = std::move(txn);
-                obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
-                obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
-                if (ctx.apiVersion > 1u) {
-                    obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
-                    if (obj[txKey].as_object().contains(JS(hash))) {
-                        obj[JS(hash)] = obj[txKey].at(JS(hash));
-                        obj[txKey].as_object().erase(JS(hash));
-                    }
-                    if (auto const lgrInfo = sharedPtrBackend_->fetchLedgerBySequence(
-                            txnPlusMeta.ledgerSequence, ctx.yield
-                        );
-                        lgrInfo.has_value()) {
-                        obj[JS(close_time_iso)] = xrpl::toStringIso(lgrInfo->closeTime);
-                        obj[JS(ledger_hash)] = xrpl::strHex(lgrInfo->hash);
-                    }
-                }
-                obj[JS(validated)] = true;
-                response.transactions.push_back(std::move(obj));
-                continue;
-            }
-        }
-
-        // binary is true
-        obj = toJsonWithBinaryTx(txnPlusMeta, ctx.apiVersion);
-        obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
-        obj[JS(date)] = txnPlusMeta.date;
-        obj[JS(validated)] = true;
-        response.transactions.push_back(std::move(obj));
+        if (!input.binary)
+            return expandedTransactionToJson(std::move(txn), std::move(meta), txnPlusMeta, ctx);
     }
 
-    response.limit = input.limit;
-    response.mptIssuanceID = xrpl::to_string(mptIssuanceID);
-    response.ledgerIndexMin = minIndex;
-    response.ledgerIndexMax = maxIndex;
+    auto obj = toJsonWithBinaryTx(txnPlusMeta, ctx.apiVersion);
+    obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+    obj[JS(date)] = txnPlusMeta.date;
+    obj[JS(validated)] = true;
 
-    return response;
+    return obj;
+}
+
+boost::json::object
+MPTokenIssuanceHistoryHandler::expandedTransactionToJson(
+    boost::json::object txn,
+    boost::json::object meta,
+    data::TransactionAndMetadata const& txnPlusMeta,
+    Context const& ctx
+) const
+{
+    auto const txKey = ctx.apiVersion > 1u ? JS(tx_json) : JS(tx);
+
+    boost::json::object obj;
+    obj[JS(meta)] = std::move(meta);
+    obj[txKey] = std::move(txn);
+    obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+    obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
+
+    if (ctx.apiVersion > 1u) {
+        obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+        if (obj[txKey].as_object().contains(JS(hash))) {
+            obj[JS(hash)] = obj[txKey].at(JS(hash));
+            obj[txKey].as_object().erase(JS(hash));
+        }
+        if (auto const lgrInfo =
+                sharedPtrBackend_->fetchLedgerBySequence(txnPlusMeta.ledgerSequence, ctx.yield);
+            lgrInfo.has_value()) {
+            obj[JS(close_time_iso)] = xrpl::toStringIso(lgrInfo->closeTime);
+            obj[JS(ledger_hash)] = xrpl::strHex(lgrInfo->hash);
+        }
+    }
+
+    obj[JS(validated)] = true;
+
+    return obj;
 }
 
 void
