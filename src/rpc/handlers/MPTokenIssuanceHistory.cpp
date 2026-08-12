@@ -58,7 +58,7 @@ MPTokenIssuanceHistoryHandler::process(
 
     auto [minIndex, maxIndex] = *range;  // NOLINT(bugprone-unchecked-optional-access)
 
-    if (input.ledgerIndexMin) {
+    if (input.ledgerIndexMin.has_value()) {
         // NOLINTBEGIN(bugprone-unchecked-optional-access)
         if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
             return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
@@ -67,7 +67,7 @@ MPTokenIssuanceHistoryHandler::process(
         minIndex = *input.ledgerIndexMin;
     }
 
-    if (input.ledgerIndexMax) {
+    if (input.ledgerIndexMax.has_value()) {
         // NOLINTBEGIN(bugprone-unchecked-optional-access)
         if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
             return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
@@ -79,9 +79,9 @@ MPTokenIssuanceHistoryHandler::process(
     if (minIndex > maxIndex)
         return Error{Status{RippledError::RpcLgrIdxsInvalid}};
 
-    if (input.ledgerHash || input.ledgerIndex) {
+    if (input.ledgerHash.has_value() || input.ledgerIndex.has_value()) {
         // rippled does not have this check
-        if (input.ledgerIndexMax || input.ledgerIndexMin) {
+        if (input.ledgerIndexMax.has_value() || input.ledgerIndexMin.has_value()) {
             return Error{Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
         }
 
@@ -102,7 +102,7 @@ MPTokenIssuanceHistoryHandler::process(
     std::optional<data::TransactionsCursor> cursor;
 
     // if marker exists
-    if (input.marker) {
+    if (input.marker.has_value()) {
         cursor = {input.marker->ledger, input.marker->seq};
     } else {
         if (input.forward) {
@@ -117,7 +117,7 @@ MPTokenIssuanceHistoryHandler::process(
 
     // tx_type is applied post-fetch below, as account_tx does.
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() -> data::TransactionsAndCursor {
-        if (input.account) {
+        if (input.account.has_value()) {
             auto const account = accountFromStringStrict(*input.account);
             ASSERT(account.has_value(), "Account must be decodable after spec validation");
             return sharedPtrBackend_->fetchAccountMPTokenIssuanceTransactions(
@@ -134,7 +134,7 @@ MPTokenIssuanceHistoryHandler::process(
     Output response;
     auto const [blobs, retCursor] = txnsAndCursor;
 
-    if (retCursor)
+    if (retCursor.has_value())
         response.marker = {.ledger = retCursor->ledgerSequence, .seq = retCursor->transactionIndex};
 
     for (auto const& txnPlusMeta : blobs) {
@@ -184,7 +184,7 @@ MPTokenIssuanceHistoryHandler::process(
                     if (auto const lgrInfo = sharedPtrBackend_->fetchLedgerBySequence(
                             txnPlusMeta.ledgerSequence, ctx.yield
                         );
-                        lgrInfo) {
+                        lgrInfo.has_value()) {
                         obj[JS(close_time_iso)] = xrpl::toStringIso(lgrInfo->closeTime);
                         obj[JS(ledger_hash)] = xrpl::strHex(lgrInfo->hash);
                     }
@@ -226,10 +226,10 @@ tag_invoke(
         {JS(validated), output.validated},
     };
 
-    if (output.marker)
+    if (output.marker.has_value())
         jv.as_object()[JS(marker)] = boost::json::value_from(*(output.marker));
 
-    if (output.limit)
+    if (output.limit.has_value())
         jv.as_object()[JS(limit)] = *(output.limit);
 }
 
