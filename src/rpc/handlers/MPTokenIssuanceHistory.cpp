@@ -99,17 +99,17 @@ MPTokenIssuanceHistoryHandler::process(
         maxIndex = minIndex = expectedLgrInfo->seq;
     }
 
+    // Cursor position: {ledgerSequence, transactionIndex}.
     std::optional<data::TransactionsCursor> cursor;
 
-    // if marker exists
     if (input.marker.has_value()) {
         cursor = {input.marker->ledger, input.marker->seq};
+    } else if (input.forward) {
+        // Start at the first possible transaction in the lowest ledger.
+        cursor = {minIndex, 0};
     } else {
-        if (input.forward) {
-            cursor = {minIndex, 0};
-        } else {
-            cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
-        }
+        // Start after all possible transactions in the highest ledger.
+        cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
     }
 
     auto const limit = input.limit.value_or(kLimitDefault);
