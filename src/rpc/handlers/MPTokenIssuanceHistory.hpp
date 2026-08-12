@@ -31,8 +31,8 @@ namespace rpc {
  * @brief The mptoken_issuance_history command returns past transactions associated with the queried
  * MPTokenIssuance, optionally filtered by an affected account and/or transaction type.
  *
- * @note This is a Clio-only method. Requests fail with `notReady` until the MPT
- * transaction-history backfill reports `Migrated`, so partial history is never served.
+ * @note This is a Clio-only method. Requests fail with `notReady` until the issuance-history
+ * backfill reports `Migrated`, so partial history is never served.
  */
 class MPTokenIssuanceHistoryHandler {
     util::Logger log_{"RPC"};
@@ -45,9 +45,8 @@ public:
     static constexpr auto kLimitMax = 100;
     static constexpr auto kLimitDefault = 50;
 
-    // Literal rather than a reference to migration::cassandra::MPTTransactionHistoryMigrator::kName
-    // to keep the Cassandra migration headers out of the RPC layer.
-    static constexpr char const* kMigratorName = "MPTTransactionHistoryMigrator";
+    // Literal rather than the migrator's kName, to keep Cassandra migration headers out of RPC.
+    static constexpr char const* kMigratorName = "MPTokenIssuanceHistoryMigrator";
 
     /**
      * @brief A struct to hold the marker data.

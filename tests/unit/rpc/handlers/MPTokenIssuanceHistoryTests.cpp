@@ -359,7 +359,10 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, GateNotReadyErrorMessageContent)
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "notReady");
         auto const msg = err.at("error_message").as_string();
-        EXPECT_TRUE(msg.find("MPTTransactionHistoryMigrator") != std::string::npos);
+        EXPECT_TRUE(msg.find("backfill has not completed") != std::string::npos);
+        // The remedy is the operator's, not the caller's: no CLI invocation in a client-facing
+        // error.
+        EXPECT_TRUE(msg.find("clio_server") == std::string::npos);
     });
 }
 

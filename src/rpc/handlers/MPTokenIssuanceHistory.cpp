@@ -37,7 +37,7 @@ MPTokenIssuanceHistoryHandler::process(
     Context const& ctx
 ) const
 {
-    // Fail closed unless the backfill is done: partial history must never be served.
+    // Fail closed: partial history must never be served.
     if (not migrated_->load(std::memory_order_relaxed)) {
         auto const statusString = sharedPtrBackend_->fetchMigratorStatus(kMigratorName, ctx.yield);
         if (statusString.has_value() and
@@ -47,11 +47,8 @@ MPTokenIssuanceHistoryHandler::process(
         } else {
             return Error{Status{
                 RippledError::RpcNotReady,
-                "mptoken_issuance_history is unavailable until the MPT transaction-history "
-                "backfill "
-                "completes on this node. Run: ./clio_server --migrate "
-                "MPTTransactionHistoryMigrator "
-                "CONFIG"
+                "mptoken_issuance_history is not available on this server because the required "
+                "transaction-history backfill has not completed."
             }};
         }
     }
