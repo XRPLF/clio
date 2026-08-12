@@ -5,6 +5,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/MPTokenIssuanceHistory.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
@@ -51,6 +52,12 @@ struct RPCMPTokenIssuanceHistoryHandlerTest : HandlerBaseTest {
             .WillByDefault(Return(std::optional<std::string>{kMigratedStatus}));
     }
 };
+
+/**
+ * @brief Enables handler log capture below the test runner's default fatal severity.
+ */
+struct RPCMPTokenIssuanceHistoryHandlerLogTest : RPCMPTokenIssuanceHistoryHandlerTest,
+                                                 LoggerFixture {};
 
 struct MPTokenIssuanceHistoryParamTestCaseBundle {
     std::string testName;
@@ -2120,4 +2127,50 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, MptIssuanceIDIsNormalizedInOutput)
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("mpt_issuance_id").as_string(), kMptId);
     });
+}
+
+TEST_F(RPCMPTokenIssuanceHistoryHandlerLogTest, LogsFetchDurationAndSkippedIndexEntry)
+{
+    auto transactions = std::vector<TransactionAndMetadata>{};
+
+    auto trans1 = TransactionAndMetadata();
+    xrpl::STObject const obj1 = createPaymentTransactionObject(kAccount, kAccount2, 1, 1, 32);
+    trans1.transaction = obj1.getSerializer().peekData();
+    trans1.ledgerSequence = kMinSeq + 1;
+    xrpl::STObject const meta1 = createPaymentTransactionMetaObject(kAccount, kAccount2, 22, 23);
+    trans1.metadata = meta1.getSerializer().peekData();
+    trans1.date = 1;
+    transactions.push_back(trans1);
+
+    auto emptyTrans = TransactionAndMetadata();
+    emptyTrans.ledgerSequence = kMinSeq + 2;
+    emptyTrans.date = 2;
+    transactions.push_back(emptyTrans);
+
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = std::nullopt};
+    EXPECT_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillOnce(Return(transCursor));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{MPTokenIssuanceHistoryHandler{backend_}};
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"mpt_issuance_id": "{}"}})JSON", kMptId));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
+    });
+
+    auto const logs = getLoggerString();
+    EXPECT_THAT(
+        logs, ContainsRegex(R"(inf:RPC - db fetch took [0-9]+ milliseconds - num blobs = 2)")
+    );
+    EXPECT_THAT(
+        logs,
+        HasSubstr(
+            fmt::format(
+                "war:RPC - Skipping index entry with no matching transaction record; "
+                "mpt_issuance_id = {}",
+                kMptId
+            )
+        )
+    );
 }
