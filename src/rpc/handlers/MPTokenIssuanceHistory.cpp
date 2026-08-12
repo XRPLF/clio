@@ -155,7 +155,10 @@ MPTokenIssuanceHistoryHandler::fetchTransactions(
     // tx_type is applied post-fetch, as account_tx does.
     if (input.account.has_value()) {
         auto const account = accountFromStringStrict(*input.account);
-        ASSERT(account.has_value(), "Account must be decodable after spec validation");
+        if (not account.has_value()) {
+            ASSERT(false, "Account must be decodable after spec validation");
+            std::unreachable();
+        }
         return sharedPtrBackend_->fetchAccountMPTokenIssuanceTransactions(
             mptIssuanceID, *account, limit, input.forward, startCursor, ctx.yield
         );
