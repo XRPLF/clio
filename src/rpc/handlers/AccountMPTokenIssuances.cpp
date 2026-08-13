@@ -57,22 +57,25 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
     setFlag(issuance.mptCanClawback, xrpl::lsfMPTCanClawback);
     setFlag(issuance.mptCanHoldConfidentialBalance, xrpl::lsfMPTCanHoldConfidentialBalance);
 
-    if (sle.isFieldPresent(xrpl::sfMutableFlags)) {
-        auto const mutableFlags = sle.getFieldU32(xrpl::sfMutableFlags);
+    if (sle.isFieldPresent(xrpl::sfImmutableFlags)) {
+        auto const immutableFlags = sle.getFieldU32(xrpl::sfImmutableFlags);
 
-        auto const setMutableFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
-            if ((mutableFlags & mask) != 0u)
+        auto const setImmutableFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
+            if ((immutableFlags & mask) != 0u)
                 field = true;
         };
 
-        setMutableFlag(issuance.mptCanMutateCanLock, xrpl::lsmfMPTCanEnableCanLock);
-        setMutableFlag(issuance.mptCanMutateRequireAuth, xrpl::lsmfMPTCanEnableRequireAuth);
-        setMutableFlag(issuance.mptCanMutateCanEscrow, xrpl::lsmfMPTCanEnableCanEscrow);
-        setMutableFlag(issuance.mptCanMutateCanTrade, xrpl::lsmfMPTCanEnableCanTrade);
-        setMutableFlag(issuance.mptCanMutateCanTransfer, xrpl::lsmfMPTCanEnableCanTransfer);
-        setMutableFlag(issuance.mptCanMutateCanClawback, xrpl::lsmfMPTCanEnableCanClawback);
-        setMutableFlag(issuance.mptCanMutateMetadata, xrpl::lsmfMPTCanMutateMetadata);
-        setMutableFlag(issuance.mptCanMutateTransferFee, xrpl::lsmfMPTCanMutateTransferFee);
+        setImmutableFlag(issuance.mptImmutableCanLock, xrpl::lsifMPTCanLock);
+        setImmutableFlag(issuance.mptImmutableRequireAuth, xrpl::lsifMPTRequireAuth);
+        setImmutableFlag(issuance.mptImmutableCanEscrow, xrpl::lsifMPTCanEscrow);
+        setImmutableFlag(issuance.mptImmutableCanTrade, xrpl::lsifMPTCanTrade);
+        setImmutableFlag(issuance.mptImmutableCanTransfer, xrpl::lsifMPTCanTransfer);
+        setImmutableFlag(issuance.mptImmutableCanClawback, xrpl::lsifMPTCanClawback);
+        setImmutableFlag(
+            issuance.mptImmutableCanHoldConfidentialBalance, xrpl::lsifMPTCanHoldConfidentialBalance
+        );
+        setImmutableFlag(issuance.mptImmutableMetadata, xrpl::lsifMPTMetadata);
+        setImmutableFlag(issuance.mptImmutableTransferFee, xrpl::lsifMPTTransferFee);
     }
 
     if (sle.isFieldPresent(xrpl::sfTransferFee))
@@ -277,14 +280,18 @@ tag_invoke(
     setIfPresent("mpt_can_transfer", issuance.mptCanTransfer);
     setIfPresent("mpt_can_clawback", issuance.mptCanClawback);
 
-    setIfPresent("mpt_can_mutate_can_lock", issuance.mptCanMutateCanLock);
-    setIfPresent("mpt_can_mutate_require_auth", issuance.mptCanMutateRequireAuth);
-    setIfPresent("mpt_can_mutate_can_escrow", issuance.mptCanMutateCanEscrow);
-    setIfPresent("mpt_can_mutate_can_trade", issuance.mptCanMutateCanTrade);
-    setIfPresent("mpt_can_mutate_can_transfer", issuance.mptCanMutateCanTransfer);
-    setIfPresent("mpt_can_mutate_can_clawback", issuance.mptCanMutateCanClawback);
-    setIfPresent("mpt_can_mutate_metadata", issuance.mptCanMutateMetadata);
-    setIfPresent("mpt_can_mutate_transfer_fee", issuance.mptCanMutateTransferFee);
+    setIfPresent("mpt_immutable_can_lock", issuance.mptImmutableCanLock);
+    setIfPresent("mpt_immutable_require_auth", issuance.mptImmutableRequireAuth);
+    setIfPresent("mpt_immutable_can_escrow", issuance.mptImmutableCanEscrow);
+    setIfPresent("mpt_immutable_can_trade", issuance.mptImmutableCanTrade);
+    setIfPresent("mpt_immutable_can_transfer", issuance.mptImmutableCanTransfer);
+    setIfPresent("mpt_immutable_can_clawback", issuance.mptImmutableCanClawback);
+    setIfPresent(
+        "mpt_immutable_can_hold_confidential_balance",
+        issuance.mptImmutableCanHoldConfidentialBalance
+    );
+    setIfPresent("mpt_immutable_metadata", issuance.mptImmutableMetadata);
+    setIfPresent("mpt_immutable_transfer_fee", issuance.mptImmutableTransferFee);
 
     setIfPresent("mpt_can_hold_confidential_balance", issuance.mptCanHoldConfidentialBalance);
     setUint64IfPresent(
