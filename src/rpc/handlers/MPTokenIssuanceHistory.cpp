@@ -1,7 +1,6 @@
 #include "rpc/handlers/MPTokenIssuanceHistory.hpp"
 
 #include "data/Types.hpp"
-#include "migration/MigratiorStatus.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -31,6 +30,18 @@
 #include <utility>
 
 namespace rpc {
+
+namespace {
+
+/**
+ * @brief The migrator status that reports a completed backfill.
+ *
+ * This is a literal to keep migration headers out of RPC; it must match the string form of
+ * `migration::MigratorStatus::Status::Migrated`.
+ */
+constexpr auto kMigratedStatus = "Migrated";
+
+}  // namespace
 
 MPTokenIssuanceHistoryHandler::Result
 MPTokenIssuanceHistoryHandler::process(
@@ -70,9 +81,7 @@ MPTokenIssuanceHistoryHandler::verifyHistoryAvailable(Context const& ctx) const
         return {};
 
     auto const statusString = sharedPtrBackend_->fetchMigratorStatus(kMigratorName, ctx.yield);
-    if (statusString.has_value() and
-        migration::MigratorStatus::fromString(*statusString) ==
-            migration::MigratorStatus::Status::Migrated) {
+    if (statusString.has_value() and *statusString == kMigratedStatus) {
         migrated_->store(true, std::memory_order_relaxed);
         return {};
     }

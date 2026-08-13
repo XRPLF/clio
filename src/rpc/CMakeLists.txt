@@ -59,4 +59,4 @@ target_sources(
         handlers/VaultInfo.cpp
 )
 
-target_link_libraries(clio_rpc PUBLIC clio_util clio_data clio_migration)
+target_link_libraries(clio_rpc PUBLIC clio_util clio_data)
