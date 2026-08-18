@@ -15,6 +15,7 @@ target_sources(
         data/LedgerCacheLoadingStateTests.cpp
         data/LedgerCacheSaverTests.cpp
         data/cassandra/AsyncExecutorTests.cpp
+        data/cassandra/ErrorTests.cpp
         data/cassandra/ExecutionStrategyTests.cpp
         data/cassandra/LedgerHeaderCacheTests.cpp
         data/cassandra/RetryPolicyTests.cpp
@@ -127,6 +128,7 @@ target_sources(
         rpc/handlers/LedgerRangeTests.cpp
         rpc/handlers/LedgerTests.cpp
         rpc/handlers/MPTHoldersTests.cpp
+        rpc/handlers/MPTokenIssuanceHistoryTests.cpp
         rpc/handlers/NFTBuyOffersTests.cpp
         rpc/handlers/NFTHistoryTests.cpp
         rpc/handlers/NFTInfoTests.cpp
@@ -181,6 +183,7 @@ target_sources(
         util/ChannelTests.cpp
         util/CoroutineTest.cpp
         util/MoveTrackerTests.cpp
+        util/MPTIssuanceUtilsTests.cpp
         util/ObservableValueTest.cpp
         util/ObservableValueAtomicTest.cpp
         util/RandomTests.cpp

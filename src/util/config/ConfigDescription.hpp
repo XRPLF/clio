@@ -182,8 +182,14 @@ This document provides a list of all available Clio configuration properties in 
                     "established."},
         KV{.key = "database.cassandra.request_timeout",
            .value = "The maximum amount of time in seconds that the system waits for a request to "
-                    "be fetched from the "
-                    "database."},
+                    "be fetched from the database. Should be set higher than the server side read "
+                    "timeout. If omitted, no request timeout is applied."},
+        KV{.key = "database.cassandra.initial_request_retry_delay",
+           .value = "How long in seconds to wait before the first retry of a database request "
+                    "that failed with a transient error."},
+        KV{.key = "database.cassandra.max_request_retry_delay",
+           .value = "Upper bound in seconds for the exponential backoff between retries of a "
+                    "database request."},
         KV{.key = "database.cassandra.username",
            .value = "The username used for authenticating with the database."},
         KV{.key = "database.cassandra.password",

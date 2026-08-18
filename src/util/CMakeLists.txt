@@ -35,6 +35,7 @@ target_sources(
         TimeUtils.cpp
         TxUtils.cpp
         LedgerUtils.cpp
+        MPTIssuanceUtils.cpp
         config/Array.cpp
         config/ArrayView.cpp
         config/ConfigConstraints.cpp

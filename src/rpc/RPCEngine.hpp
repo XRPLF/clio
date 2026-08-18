@@ -178,8 +178,8 @@ public:
             }
 
             return Result{std::move(v)};
-        } catch (data::DatabaseTimeout const& t) {
-            LOG(log_.error()) << "Database timeout";
+        } catch (data::DatabaseError const& t) {
+            LOG(log_.error()) << "Database error: " << t.what();
             notifyTooBusy();
 
             return Result{Status{RippledError::RpcTooBusy}};
@@ -361,8 +361,8 @@ private:
             }
 
             return Result{std::move(v)};
-        } catch (data::DatabaseTimeout const& t) {
-            LOG(log_.error()) << "Database timeout";
+        } catch (data::DatabaseError const& t) {
+            LOG(log_.error()) << "Database error: " << t.what();
             notifyTooBusy();
 
             return Result{Status{RippledError::RpcTooBusy}};

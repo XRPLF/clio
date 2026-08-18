@@ -3,6 +3,7 @@
 
 #include "data/DBHelpers.hpp"
 
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/TxMeta.h>
 

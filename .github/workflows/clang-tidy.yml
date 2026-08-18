@@ -17,7 +17,7 @@ on:
       - "tests/**"
       - "benchmarks/**"
 
-      - .clang_tidy
+      - .clang-tidy
 
 concurrency:
   # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
