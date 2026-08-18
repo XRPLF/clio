@@ -33,7 +33,7 @@ constexpr auto kHoldeR2Account = "rEiNkzogdHEzUxPfsri5XSMqtXUixf2Yx";
 constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr auto kMptId = "000004C463C52827307480341125DA0577DEFC38405B0E3E";
 
-std::string const kMptOuT1 =
+std::string const kMptOut1 =
     R"JSON({
         "account": "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN",
         "flags": 0,
@@ -41,7 +41,7 @@ std::string const kMptOuT1 =
         "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A"
     })JSON";
 
-std::string const kMptOuT2 =
+std::string const kMptOut2 =
     R"JSON({
         "account": "rEiNkzogdHEzUxPfsri5XSMqtXUixf2Yx",
         "flags": 0,
@@ -389,7 +389,7 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
             "validated": true
         }})JSON",
         kMptId,
-        kMptOuT1
+        kMptOut1
     );
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
@@ -580,7 +580,7 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
         }})JSON",
         kMptId,
         specificLedger,
-        kMptOuT1
+        kMptOut1
     );
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, specificLedger);
@@ -636,7 +636,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
             "marker": "{}"
         }})JSON",
         kMptId,
-        kMptOuT2,
+        kMptOut2,
         xrpl::strHex(getAccountIdWithString(kHoldeR1Account))
     );
 
@@ -689,8 +689,8 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
             "validated": true
         }})JSON",
         kMptId,
-        kMptOuT1,
-        kMptOuT2
+        kMptOut1,
+        kMptOut2
     );
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
@@ -858,8 +858,8 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilter)
             "validated": true
         }})JSON",
         kMptId,
-        kMptOuT1,
-        kMptOuT2
+        kMptOut1,
+        kMptOut2
     );
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
@@ -912,7 +912,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterMissingHolderOmitted)
             "validated": true
         }})JSON",
         kMptId,
-        kMptOuT1
+        kMptOut1
     );
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
@@ -1183,7 +1183,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterSpecificLedger)
         }})JSON",
         kMptId,
         specificLedger,
-        kMptOuT1
+        kMptOut1
     );
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, specificLedger);
@@ -1233,8 +1233,8 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterDuplicates)
             "validated": true
         }})JSON",
         kMptId,
-        kMptOuT1,
-        kMptOuT1
+        kMptOut1,
+        kMptOut1
     );
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
@@ -1283,7 +1283,7 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
             "validated": true
         }})JSON",
         kMptId,
-        kMptOuT1
+        kMptOut1
     );
 
     auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);

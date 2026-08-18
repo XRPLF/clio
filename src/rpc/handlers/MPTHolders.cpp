@@ -5,6 +5,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/AccountUtils.hpp"
 #include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
 
@@ -138,8 +139,10 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
         std::vector<xrpl::uint256> keys;
         keys.reserve(input.accounts->size());
         for (auto const& account : *input.accounts) {
-            auto const accountID = accountFromStringStrict(account);
-            ASSERT(accountID.has_value(), "Account must be valid after spec validation");
+            auto const accountID = util::parseBase58Wrapper<xrpl::AccountID>(account);
+            if (!accountID) {
+                return Error{Status{RippledError::RpcInvalidParams, "accountsMalformed"}};
+            }
             // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
             keys.push_back(xrpl::keylet::mptoken(mptID, *accountID).key);
         }
