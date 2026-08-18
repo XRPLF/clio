@@ -13,6 +13,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
@@ -197,10 +198,10 @@ tag_invoke(boost::json::value_to_tag<MPTHoldersHandler::Input>, boost::json::val
     auto const& jsonObject = jv.as_object();
     MPTHoldersHandler::Input input;
 
-    input.mptID = jsonObject.at(JS(mpt_issuance_id)).as_string().c_str();
+    input.mptID = boost::json::value_to<std::string>(jsonObject.at(JS(mpt_issuance_id)));
 
     if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
         auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
@@ -212,12 +213,12 @@ tag_invoke(boost::json::value_to_tag<MPTHoldersHandler::Input>, boost::json::val
         input.limit = util::integralValueAs<uint32_t>(jsonObject.at(JS(limit)));
 
     if (jsonObject.contains(JS(marker)))
-        input.marker = jsonObject.at(JS(marker)).as_string().c_str();
+        input.marker = boost::json::value_to<std::string>(jsonObject.at(JS(marker)));
 
     if (jsonObject.contains(JS(accounts))) {
         auto& accounts = input.accounts.emplace();
         for (auto const& account : jsonObject.at(JS(accounts)).as_array())
-            accounts.emplace_back(account.as_string().c_str());
+            accounts.emplace_back(boost::json::value_to<std::string>(account));
     }
 
     return input;
