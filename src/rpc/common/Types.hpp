@@ -190,7 +190,17 @@ struct DelegateFilter {
                     * e.g., Account C in "A sends payment to B on behalf of C." */
     };
 
-    Role delegateType = Role::Actor;
+    /**
+     * @brief Construct a delegate filter
+     * @param role The delegate type to filter by
+     * @param counterParty The optional counterparty to further narrow the filter by
+     */
+    explicit DelegateFilter(Role role, std::optional<std::string> counterParty = std::nullopt)
+        : delegateType(role), counterParty(std::move(counterParty))
+    {
+    }
+
+    Role delegateType;
     std::optional<std::string> counterParty;
 };
 

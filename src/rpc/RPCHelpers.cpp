@@ -1693,9 +1693,7 @@ parseDelegateFilter(boost::json::object const& delegateObject)
         counterParty = counterpartyVal.as_string();
     }
 
-    return DelegateFilter{
-        .delegateType = *delegateTypeOpt, .counterParty = std::move(counterParty)
-    };
+    return DelegateFilter{*delegateTypeOpt, std::move(counterParty)};
 }
 
 }  // namespace rpc
