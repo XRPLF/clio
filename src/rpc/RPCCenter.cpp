@@ -35,6 +35,7 @@ handledRpcs()
         "ledger_index",
         "ledger_range",
         "mpt_holders",
+        "mptoken_issuance_history",
         "nfts_by_issuer",
         "nft_history",
         "nft_buy_offers",
