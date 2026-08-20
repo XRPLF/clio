@@ -44,7 +44,6 @@ target_sources(
         handlers/LedgerIndex.cpp
         handlers/LedgerRange.cpp
         handlers/MPTHolders.cpp
-        handlers/MPTokenIssuanceHistory.cpp
         handlers/NFTsByIssuer.cpp
         handlers/NFTBuyOffers.cpp
         handlers/NFTHistory.cpp
