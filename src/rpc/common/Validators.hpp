@@ -590,7 +590,8 @@ struct CustomValidators final {
     /**
      * @brief Provides a validator for validating credential_type.
      *
-     * Used by AuthorizeCredentialValidator in deposit_preauth.
+     * Used by AuthorizeCredentialValidator in deposit_preauth and by the credential
+     * object lookup in ledger_entry.
      */
     static CustomValidator credentialTypeValidator;
 };

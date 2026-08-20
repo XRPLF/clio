@@ -363,7 +363,7 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
             }
 
             // don't want to change issuer error message to be about credentials
-            if (!issuerValidator.verify(credObj, "issuer")) {
+            if (!accountBase58Validator.verify(credObj, "issuer")) {
                 return Error{
                     Status{ClioError::RpcMalformedAuthorizedCredentials, "issuer NotString"}
                 };
