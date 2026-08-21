@@ -660,16 +660,14 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
 
     // delegate agent + counter_party is valid
     {
-        auto const json = boost::json::parse(
-                              fmt::format(
-                                  R"JSON({{
-                                      "delegate_filter": "actor",
-                                      "counter_party": "{}"
-                                  }})JSON",
-                                  kAccount2
-                              )
-        )
-                              .as_object();
+        auto const jsonStr = fmt::format(
+            R"JSON({{
+                "delegate_filter": "actor",
+                "counter_party": "{}"
+            }})JSON",
+            kAccount2
+        );
+        auto const json = boost::json::parse(jsonStr).as_object();
 
         auto const result = parseDelegateFilter(json);
         ASSERT_TRUE(result.has_value());
@@ -685,15 +683,13 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
 {
     // Missing required "delegate_filter" key
     {
-        auto const json = boost::json::parse(
-                              fmt::format(
-                                  R"JSON({{
-                                      "counter_party": "{}"
-                                  }})JSON",
-                                  kAccount2
-                              )
-        )
-                              .as_object();
+        auto const jsonStr = fmt::format(
+            R"JSON({{
+                "counter_party": "{}"
+            }})JSON",
+            kAccount2
+        );
+        auto const json = boost::json::parse(jsonStr).as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
     }
 

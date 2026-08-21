@@ -387,7 +387,7 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
 
 CustomValidator CustomValidators::delegateValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        if (!value.is_object())
+        if (not value.is_object())
             return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotObject"}};
 
         auto const& delegate = value.as_object();

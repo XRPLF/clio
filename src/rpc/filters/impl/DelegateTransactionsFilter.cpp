@@ -2,6 +2,7 @@
 
 #include "data/Types.hpp"
 #include "rpc/common/Types.hpp"
+#include "rpc/filters/TransactionFilter.hpp"
 
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/SField.h>
@@ -23,7 +24,7 @@ DelegateTransactionFilter::DelegateTransactionFilter(
         counterparty_ = xrpl::parseBase58<xrpl::AccountID>(*delegateFilter_.counterParty);
 }
 
-std::optional<xrpl::AccountID>
+std::optional<TransactionFilter::CheckResult>
 DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta) const
 {
     xrpl::SerialIter sit{txnPlusMeta.transaction.data(), txnPlusMeta.transaction.size()};
@@ -42,18 +43,18 @@ DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta
         return std::nullopt;
 
     switch (delegateFilter_.delegateType) {
-        case rpc::DelegateFilter::Role::Authorizer:
+        case DelegateFilter::Role::Authorizer:
             // The queried account is the actor (signer) and the user wants to find the
             // authorizer (owner) it acted for.
             if (*txDelegate == queriedAccount_ && (!counterparty_ || *counterparty_ == txAccount))
-                return txAccount;
+                return CheckResult{txAccount, DelegateFilter::Role::Authorizer};
             break;
 
-        case rpc::DelegateFilter::Role::Actor:
+        case DelegateFilter::Role::Actor:
             // The queried account is the authorizer (owner) and the user wants to find the
             // actor (signer) that acted on its behalf.
             if (txAccount == queriedAccount_ && (!counterparty_ || *counterparty_ == *txDelegate))
-                return txDelegate;
+                return CheckResult{*txDelegate, DelegateFilter::Role::Actor};
             break;
     }
 

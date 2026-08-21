@@ -6,6 +6,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Types.hpp"
+#include "rpc/filters/TransactionFilter.hpp"
 #include "rpc/filters/impl/DelegateTransactionsFilter.hpp"
 #include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
@@ -156,10 +157,10 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
             continue;
         }
 
-        std::optional<xrpl::AccountID> relevantAccount;
+        std::optional<rpc::TransactionFilter::CheckResult> filterResult;
         if (txFilter) {
-            relevantAccount = txFilter->check(txnPlusMeta);
-            if (not relevantAccount.has_value())
+            filterResult = txFilter->check(txnPlusMeta);
+            if (not filterResult.has_value())
                 continue;
         }
 
@@ -222,13 +223,11 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                     }
                 }
 
-                if (relevantAccount) {
-                    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                    if (input.delegateFilter->delegateType ==
-                        rpc::DelegateFilter::Role::Authorizer) {
-                        obj[JS(authorizer)] = xrpl::to_string(*relevantAccount);
+                if (filterResult) {
+                    if (filterResult->role == rpc::DelegateFilter::Role::Authorizer) {
+                        obj[JS(authorizer)] = xrpl::to_string(filterResult->account);
                     } else {
-                        obj[JS(actor)] = xrpl::to_string(*relevantAccount);
+                        obj[JS(actor)] = xrpl::to_string(filterResult->account);
                     }
                 }
 

@@ -65,7 +65,7 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_MatchesWhenUserIsSigner)
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(*result, kAccountOwner);
+    EXPECT_EQ(result->account, kAccountOwner);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_FailsWhenUserIsNotSigner)
@@ -89,7 +89,7 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Match)
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(*result, kAccountOwner);
+    EXPECT_EQ(result->account, kAccountOwner);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Mismatch)
@@ -115,7 +115,7 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_MatchesWhenUserIsOwner)
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(*result, kAccountDelegator);
+    EXPECT_EQ(result->account, kAccountDelegator);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleActor_FailsWhenUserIsNotOwner)
@@ -139,7 +139,7 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Match)
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(*result, kAccountDelegator);
+    EXPECT_EQ(result->account, kAccountDelegator);
 }
 
 TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Mismatch)
