@@ -30,6 +30,7 @@
 #include "rpc/handlers/LedgerIndex.hpp"
 #include "rpc/handlers/LedgerRange.hpp"
 #include "rpc/handlers/MPTHolders.hpp"
+#include "rpc/handlers/MPTokenIssuanceHistory.hpp"
 #include "rpc/handlers/NFTBuyOffers.hpp"
 #include "rpc/handlers/NFTHistory.hpp"
 #include "rpc/handlers/NFTInfo.hpp"
@@ -91,6 +92,8 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"ledger_range", {.handler = LedgerRangeHandler{backend}}},
           {"mpt_holders",
            {.handler = MPTHoldersHandler{backend}, .isClioOnly = true}},  // clio only
+          {"mptoken_issuance_history",
+           {.handler = MPTokenIssuanceHistoryHandler{backend}, .isClioOnly = true}},  // clio only
           {"nfts_by_issuer",
            {.handler = NFTsByIssuerHandler{backend}, .isClioOnly = true}},  // clio only
           {"nft_history",
