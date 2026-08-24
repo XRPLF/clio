@@ -24,7 +24,9 @@
 #include <xrpl/protocol/STIssue.h>
 #include <xrpl/protocol/STNumber.h>
 #include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/STVector256.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/UintTypes.h>
@@ -1891,6 +1893,30 @@ createVault(
     vault.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltVAULT);
 
     return vault;
+}
+
+xrpl::Blob
+createDelegateBlob(std::string_view owner, std::string_view delegate)
+{
+    xrpl::STObject obj(xrpl::sfTransaction);
+    obj.setFieldU16(xrpl::sfTransactionType, xrpl::ttPAYMENT);
+
+    if (auto const acc = xrpl::parseBase58<xrpl::AccountID>(std::string(owner))) {
+        obj.setAccountID(xrpl::sfAccount, *acc);
+        obj.setAccountID(xrpl::sfDestination, *acc);
+    }
+    if (auto const acc = xrpl::parseBase58<xrpl::AccountID>(std::string(delegate)))
+        obj.setAccountID(xrpl::sfDelegate, *acc);
+
+    obj.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(100));
+    obj.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10));
+    obj.setFieldU32(xrpl::sfSequence, 1);
+    obj.setFieldVL(xrpl::sfSigningPubKey, xrpl::Slice(nullptr, 0));
+
+    xrpl::STTx const tx(std::move(obj));
+    xrpl::Serializer s;
+    tx.add(s);
+    return s.getData();
 }
 
 xrpl::STObject

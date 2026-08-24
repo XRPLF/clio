@@ -598,6 +598,9 @@ createVault(
     uint32_t previousTxSeq
 );
 
+[[nodiscard]] xrpl::Blob
+createDelegateBlob(std::string_view owner, std::string_view delegate);
+
 [[nodiscard]] xrpl::STObject
 createLoanBroker(
     std::string_view owner,

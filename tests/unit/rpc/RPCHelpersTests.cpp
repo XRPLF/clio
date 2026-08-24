@@ -530,10 +530,13 @@ TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV2)
 
 TEST_F(RPCHelpersTest, ParseIssue)
 {
-    constexpr auto kJson = R"JSON({
-        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-        "currency": "JPY"
-    })JSON";
+    auto const kJson = fmt::format(
+        R"JSON({{
+            "issuer": "{}",
+            "currency": "JPY"
+        }})JSON",
+        kAccount2
+    );
     auto issue = parseIssue(boost::json::parse(kJson).as_object());
     EXPECT_TRUE(issue.account == getAccountIdWithString(kAccount2));
 
@@ -557,8 +560,7 @@ TEST_F(RPCHelpersTest, ParseIssue)
 
     EXPECT_THROW(
         parseIssue(
-            boost::json::parse(R"JSON({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})JSON")
-                .as_object()
+            boost::json::parse(fmt::format(R"JSON({{"issuer": "{}"}})JSON", kAccount2)).as_object()
         ),
         std::runtime_error
     );
@@ -830,6 +832,110 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_TrustLineIsFrozenAndCheckFreez
             *backend_, kLedgerSeqObject, issuerKey, {xrpl::lsfHighDeepFreeze}, yield
         ));
     });
+}
+
+TEST_F(RPCHelpersTest, ParseDelegateType)
+{
+    auto result = parseDelegateType(boost::json::value("authorizer"));
+    ASSERT_TRUE(result.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(*result, DelegateFilter::Role::Authorizer);
+
+    result = parseDelegateType(boost::json::value("actor"));
+    ASSERT_TRUE(result.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(*result, DelegateFilter::Role::Actor);
+
+    // invalid types
+    result = parseDelegateType(boost::json::value("invalid_type"));
+    EXPECT_FALSE(result.has_value());
+
+    result = parseDelegateType(boost::json::value(123));
+    EXPECT_FALSE(result.has_value());
+
+    result = parseDelegateType(boost::json::value(true));
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
+{
+    // only delegate agent is valid
+    {
+        auto const json = boost::json::parse(R"JSON({
+            "delegate_filter": "authorizer"
+        })JSON")
+                              .as_object();
+
+        auto const result = parseDelegateFilter(json);
+        ASSERT_TRUE(result.has_value());
+        // NOLINTBEGIN(bugprone-unchecked-optional-access)
+        EXPECT_EQ(result->delegateType, DelegateFilter::Role::Authorizer);
+        EXPECT_FALSE(result->counterParty.has_value());
+        // NOLINTEND(bugprone-unchecked-optional-access)
+    }
+
+    // delegate agent + counter_party is valid
+    {
+        auto const jsonStr = fmt::format(
+            R"JSON({{
+                "delegate_filter": "actor",
+                "counter_party": "{}"
+            }})JSON",
+            kAccount2
+        );
+        auto const json = boost::json::parse(jsonStr).as_object();
+
+        auto const result = parseDelegateFilter(json);
+        ASSERT_TRUE(result.has_value());
+        // NOLINTBEGIN(bugprone-unchecked-optional-access)
+        EXPECT_EQ(result->delegateType, DelegateFilter::Role::Actor);
+        ASSERT_TRUE(result->counterParty.has_value());
+        EXPECT_EQ(*result->counterParty, kAccount2);
+        // NOLINTEND(bugprone-unchecked-optional-access)
+    }
+}
+
+TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
+{
+    // Missing required "delegate_filter" key
+    {
+        auto const jsonStr = fmt::format(
+            R"JSON({{
+                "counter_party": "{}"
+            }})JSON",
+            kAccount2
+        );
+        auto const json = boost::json::parse(jsonStr).as_object();
+        EXPECT_FALSE(parseDelegateFilter(json).has_value());
+    }
+
+    // "delegate_filter" is not a string (it's an integer)
+    {
+        auto const json = boost::json::parse(R"JSON({
+            "delegate_filter": 123
+        })JSON")
+                              .as_object();
+        EXPECT_FALSE(parseDelegateFilter(json).has_value());
+    }
+
+    // "delegate_filter" is a string but invalid value
+    {
+        auto const json = boost::json::parse(R"JSON({
+            "delegate_filter": "random_string"
+        })JSON")
+                              .as_object();
+        EXPECT_FALSE(parseDelegateFilter(json).has_value());
+    }
+
+    // "counter_party" exists but is not a string (it's a number)
+    {
+        auto const json = boost::json::parse(R"JSON({
+            "delegate_filter": "authorizer",
+            "counter_party": 9999
+        })JSON")
+                              .as_object();
+        EXPECT_FALSE(parseDelegateFilter(json).has_value());
+    }
 }
 
 namespace {

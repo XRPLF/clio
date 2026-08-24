@@ -1741,4 +1741,47 @@ toJsonWithBinaryTx(data::TransactionAndMetadata const& txnPlusMeta, std::uint32_
     return obj;
 }
 
+std::optional<DelegateFilter::Role>
+parseDelegateType(boost::json::value const& delegateType)
+{
+    if (not delegateType.is_string())
+        return {};
+
+    auto const& type = delegateType.as_string();
+
+    if (type == JS(authorizer))
+        return DelegateFilter::Role::Authorizer;
+    if (type == JS(actor))
+        return DelegateFilter::Role::Actor;
+
+    return {};
+}
+
+std::optional<DelegateFilter>
+parseDelegateFilter(boost::json::object const& delegateObject)
+{
+    if (!delegateObject.contains(JS(delegate_filter)))
+        return {};
+
+    auto const& filterVal = delegateObject.at(JS(delegate_filter));
+    if (!filterVal.is_string())
+        return {};
+
+    auto const delegateTypeOpt = parseDelegateType(filterVal.as_string());
+    if (!delegateTypeOpt.has_value())
+        return {};
+
+    std::optional<std::string> counterParty;
+    if (delegateObject.contains(JS(counter_party))) {
+        auto const& counterpartyVal = delegateObject.at(JS(counter_party));
+
+        if (!counterpartyVal.is_string())
+            return {};
+
+        counterParty = counterpartyVal.as_string();
+    }
+
+    return DelegateFilter{*delegateTypeOpt, std::move(counterParty)};
+}
+
 }  // namespace rpc

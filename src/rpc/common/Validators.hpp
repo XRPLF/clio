@@ -608,6 +608,13 @@ struct CustomValidators final {
      * object lookup in ledger_entry.
      */
     static CustomValidator credentialTypeValidator;
+
+    /**
+     * @brief Provides a validator for validating filtering by delegation.
+     *
+     * Used by account_tx if user wants to filter by delegation.
+     */
+    static CustomValidator delegateValidator;
 };
 
 /**

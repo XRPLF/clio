@@ -85,6 +85,7 @@ public:
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
         std::optional<std::string> transactionTypeInLowercase;
+        std::optional<DelegateFilter> delegateFilter;
         std::optional<std::string> mptIssuanceId;
     };
 
@@ -142,6 +143,7 @@ public:
                     typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()
                 ),
             },
+            {JS(delegate), validation::CustomValidators::delegateValidator},
             {JS(mpt_issuance_id), validation::CustomValidators::uint192HexStringValidator},
         };
 

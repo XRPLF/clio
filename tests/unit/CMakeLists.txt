@@ -102,6 +102,7 @@ target_sources(
         rpc/common/SpecsTests.cpp
         rpc/common/TypesTests.cpp
         rpc/common/impl/HandlerProviderTests.cpp
+        rpc/filters/impl/DelegateTransactionsFilterTests.cpp
         rpc/handlers/AccountChannelsTests.cpp
         rpc/handlers/AccountCurrenciesTests.cpp
         rpc/handlers/AccountInfoTests.cpp

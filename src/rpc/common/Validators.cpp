@@ -419,4 +419,34 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
         return MaybeError{};
     }};
 
+CustomValidator CustomValidators::delegateValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (not value.is_object())
+            return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotObject"}};
+
+        auto const& delegate = value.as_object();
+        if (!delegate.contains(JS(delegate_filter))) {
+            return Error{Status{
+                RippledError::RpcInvalidParams, "Field 'delegate_filter' is required but missing."
+            }};
+        }
+
+        if (!parseDelegateType(delegate.at(JS(delegate_filter))).has_value()) {
+            return Error{Status{
+                RippledError::RpcInvalidParams,
+                "Field 'delegate_filter' value must be 'actor' or 'authorizer'."
+            }};
+        }
+
+        if (delegate.contains(JS(counter_party)) &&
+            !accountValidator.verify(delegate, JS(counter_party))) {
+            return Error{Status{
+                RippledError::RpcActMalformed,
+                "Field 'counter_party' value must be a valid account."
+            }};
+        }
+
+        return MaybeError{};
+    }};
+
 }  // namespace rpc::validation
