@@ -249,7 +249,7 @@ CustomValidator CustomValidators::bookTakerValidator =
             };
         }
 
-        // Wrong type -> invalidParams (rippled's validateTakerJSON), checked here before the
+        // Wrong type -> invalidParams (xrpld's validateTakerJSON), checked here before the
         // per-field validators so they can own bad *values* -> dst/srcAmtMalformed.
         if ((hasCurrency && !obj.at(JS(currency)).is_string()) ||
             (hasMptId && !obj.at(JS(mpt_issuance_id)).is_string())) {
