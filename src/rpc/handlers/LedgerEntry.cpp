@@ -13,6 +13,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
@@ -32,6 +33,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -422,20 +424,23 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         return xrpl::keylet::oracle(*account, documentId).key;
     };
 
-    auto const parseCredentialFromJson = [](boost::json::value const& json) {
+    auto const parseCredentialFromJson =
+        [](boost::json::value const& json) -> std::optional<xrpl::uint256> {
         auto const subject = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(json.at(JS(subject)))
         );
         auto const issuer = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(json.at(JS(issuer)))
         );
-        auto const credType =
+        auto const credTypeOpt =
             xrpl::strUnHex(boost::json::value_to<std::string>(json.at(JS(credential_type))));
 
-        return xrpl::keylet::credential(
-                   *subject, *issuer, xrpl::Slice(credType->data(), credType->size())
-        )
-            .key;
+        return credTypeOpt.transform([&](xrpl::Blob const& credType) -> xrpl::uint256 {
+            return xrpl::keylet::credential(
+                       *subject, *issuer, xrpl::Slice(credType.data(), credType.size())
+            )
+                .key;
+        });
     };
 
     auto const indexFieldType =

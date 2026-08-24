@@ -1,5 +1,7 @@
 #include "util/Retry.hpp"
 
+#include "util/Assert.hpp"
+
 #include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -8,6 +10,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <exception>
 #include <memory>
 #include <utility>
 
@@ -95,6 +98,14 @@ ExponentialBackoffStrategy::nextDelay() const
 void
 Retry::wait(boost::asio::yield_context yield)
 {
+    // Suspending a coroutine while an exception is being handled corrupts the caught-exception
+    // state, which is per-thread rather than per-coroutine. Copy whatever is needed out of the
+    // handler and let it exit before waiting.
+    ASSERT(
+        std::current_exception() == nullptr,
+        "Retry::wait must not be called while an exception is being handled"
+    );
+
     *canceled_ = false;
     timer_.expires_after(strategy_->getDelay());
     strategy_->increaseDelay();

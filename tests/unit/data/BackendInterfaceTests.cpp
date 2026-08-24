@@ -264,6 +264,40 @@ TEST_F(BackendInterfaceRetryCoroTest, RetryOnTimeoutCoroDoesNotSwallowOtherExcep
     });
 }
 
+// An exception left in flight across a suspension point is visible to whatever else runs on that
+// thread meanwhile, and is corrupted when the handlers unwind out of order or on a different thread
+// of the pool. We prevent this.
+TEST_F(BackendInterfaceRetryCoroTest, RetryOnTimeoutCoroDoesNotWaitInsideCatchHandler)
+{
+    std::optional<bool> exceptionInFlightDuringWait;
+
+    runSpawn([&exceptionInFlightDuringWait, this](auto yield) {
+        // Runs on this thread while the retry below is suspended on its timer.
+        boost::asio::post(ctx_, [&exceptionInFlightDuringWait]() {
+            exceptionInFlightDuringWait = std::current_exception() != nullptr;
+        });
+
+        std::size_t calls = 0;
+        retryOnTimeout(
+            [&calls]() -> int {
+                if (++calls < 2)
+                    throw DatabaseError{};
+                return 0;
+            },
+            yield,
+            util::Retry::Delays{
+                .initial = std::chrono::milliseconds{1}, .max = std::chrono::milliseconds{1}
+            }
+        );
+    });
+
+    ASSERT_TRUE(exceptionInFlightDuringWait.has_value())
+        << "the posted handler was expected to run while the retry was waiting";
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_FALSE(*exceptionInFlightDuringWait)
+        << "retry.wait() must not be reached from inside a catch handler";
+}
+
 TEST_F(BackendInterfaceRetryCoroTest, RetryOnTimeoutCoroDoesNotBlockItsThread)
 {
     bool ran = false;
@@ -280,7 +314,7 @@ TEST_F(BackendInterfaceRetryCoroTest, RetryOnTimeoutCoroDoesNotBlockItsThread)
             },
             yield,
             util::Retry::Delays{
-                .initial = std::chrono::milliseconds{20}, .max = std::chrono::milliseconds{20}
+                .initial = std::chrono::milliseconds{1}, .max = std::chrono::milliseconds{1}
             }
         );
 

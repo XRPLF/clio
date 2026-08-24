@@ -103,16 +103,21 @@ retryOnTimeout(
     auto retry = util::makeRetryExponentialBackoff(delays, yield.get_executor());
 
     while (true) {
+        // Suspending a coroutine from inside a catch block is not safe so we copy out the failure.
+        std::string failure;
+
         try {
             return func();
         } catch (DatabaseError const& e) {
-            auto const delayMs =
-                std::chrono::duration_cast<std::chrono::milliseconds>(retry.delayValue()).count();
-            LOG(log.error()) << e.what() << " (attempt " << retry.attemptNumber() + 1
-                             << "). Retrying in " << delayMs << "ms ...";
-
-            retry.wait(yield);
+            failure = e.what();
         }
+
+        auto const delayMs =
+            std::chrono::duration_cast<std::chrono::milliseconds>(retry.delayValue()).count();
+        LOG(log.error()) << failure << " (attempt " << retry.attemptNumber() + 1
+                         << "). Retrying in " << delayMs << "ms ...";
+
+        retry.wait(yield);
     }
 }
 
