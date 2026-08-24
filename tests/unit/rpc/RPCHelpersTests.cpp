@@ -849,7 +849,7 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_IssuerReturnsAvailableCapacity)
 {
     auto const mptIssue = makeMptIssue();
     auto const issuer = mptIssue.getIssuer();
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
 
     // MaximumAmount = 1000, OutstandingAmount = 100 -> available = 900.
     auto const issuance = createMptIssuanceObject(
@@ -876,7 +876,7 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_IssuerNoIssuanceReturnsZero)
 {
     auto const mptIssue = makeMptIssue();
     auto const issuer = mptIssue.getIssuer();
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
 
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKey, kLedgerSeqObject, _))
         .WillByDefault(Return(std::optional<xrpl::Blob>{}));
@@ -893,7 +893,7 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_HolderReturnsBalance)
     auto const mptIssue = makeMptIssue();
     auto const holder = getAccountIdWithString(kAccount2);
     auto const tokenKey = xrpl::keylet::mptoken(mptIssue.getMptID(), holder).key;
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
 
     auto const token = createMpTokenObject(kAccount2, mptIssue.getMptID(), 7);
     auto const issuance = createMptIssuanceObject(kAccount, 2, std::nullopt, 0);
@@ -930,7 +930,7 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_HolderGloballyFrozenReturnsZero)
     auto const mptIssue = makeMptIssue();
     auto const holder = getAccountIdWithString(kAccount2);
     auto const tokenKey = xrpl::keylet::mptoken(mptIssue.getMptID(), holder).key;
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
 
     auto const token = createMpTokenObject(kAccount2, mptIssue.getMptID(), 7);
     // Issuance locked -> globally frozen.
@@ -962,7 +962,7 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_HolderIndividuallyFrozenReturnsZero)
     auto const mptIssue = makeMptIssue();
     auto const holder = getAccountIdWithString(kAccount2);
     auto const tokenKey = xrpl::keylet::mptoken(mptIssue.getMptID(), holder).key;
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
 
     // Token itself locked -> individually frozen.
     auto const token = createMpTokenObject(kAccount2, mptIssue.getMptID(), 7, xrpl::lsfMPTLocked);
@@ -987,7 +987,7 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_HolderUnauthorizedReturnsZero)
     auto const mptIssue = makeMptIssue();
     auto const holder = getAccountIdWithString(kAccount2);
     auto const tokenKey = xrpl::keylet::mptoken(mptIssue.getMptID(), holder).key;
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
 
     // Issuance requires auth; the holder's token is NOT authorized -> spendable balance is zero,
     // even though the freeze flags are clear. Mirrors rippled's ZeroIfUnauthorized.
@@ -1021,7 +1021,7 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_HolderAuthorizedReturnsBalance)
     auto const mptIssue = makeMptIssue();
     auto const holder = getAccountIdWithString(kAccount2);
     auto const tokenKey = xrpl::keylet::mptoken(mptIssue.getMptID(), holder).key;
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
 
     // Issuance requires auth and the holder IS authorized -> full balance.
     auto const token =
@@ -1047,7 +1047,7 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_IssuerOutstandingExceedsMaxReturnsZero)
 {
     auto const mptIssue = makeMptIssue();
     auto const issuer = mptIssue.getIssuer();
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
 
     // OutstandingAmount (500) > MaximumAmount (100) -> available must clamp to zero.
     auto const issuance = createMptIssuanceObject(
@@ -1074,7 +1074,7 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_IssuerDefaultMaxWhenFieldAbsent)
 {
     auto const mptIssue = makeMptIssue();
     auto const issuer = mptIssue.getIssuer();
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
 
     // maxAmount = nullopt -> sfMaximumAmount field is absent -> code uses xrpl::kMaxMpTokenAmount.
     // OutstandingAmount = 50 -> available = kMaxMpTokenAmount - 50.
@@ -1103,7 +1103,7 @@ TEST_F(RPCHelpersTest, AccountHoldsMPT_HolderMissingIssuanceReturnsBalance)
     auto const mptIssue = makeMptIssue();
     auto const holder = getAccountIdWithString(kAccount2);
     auto const tokenKey = xrpl::keylet::mptoken(mptIssue.getMptID(), holder).key;
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
 
     // Token exists with a balance, but the issuance object is missing.
     // Freeze and require-auth checks are skipped; the raw sfMPTAmount is returned.

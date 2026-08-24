@@ -1256,7 +1256,7 @@ accountHoldsMPT(
 
     if (account == mptIssue.getIssuer()) {
         // Issuer: available = MaximumAmount - OutstandingAmount
-        auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+        auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
         auto const issuanceBlob = backend.fetchLedgerObject(issuanceKey, sequence, yield);
         if (!issuanceBlob)
             return zero;
@@ -1280,7 +1280,7 @@ accountHoldsMPT(
     xrpl::SerialIter it{blob->data(), blob->size()};
     xrpl::SLE const sle{it, key};
 
-    auto const issuanceKey = xrpl::keylet::mptIssuance(mptIssue.getMptID()).key;
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
     auto const issuanceBlob = backend.fetchLedgerObject(issuanceKey, sequence, yield);
     std::optional<xrpl::SLE> issuanceSle;
     if (issuanceBlob) {

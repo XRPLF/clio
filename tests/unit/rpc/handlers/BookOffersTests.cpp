@@ -1959,7 +1959,7 @@ TEST_F(RPCBookOffersHandlerTest, MPTGetsFundedOffer)
     ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kMptBookDir}, seq, _))
         .WillByDefault(Return(std::optional<xrpl::uint256>{}));
 
-    auto const mptIssuanceKey = xrpl::keylet::mptIssuance(mptid).key;
+    auto const mptIssuanceKey = xrpl::keylet::mptokenIssuance(mptid).key;
     auto const mptokenKey = xrpl::keylet::mptoken(mptid, owner).key;
 
     // MPTIssuance object (no transfer fee, not locked) - used for global freeze + transfer rate.
@@ -2054,7 +2054,7 @@ TEST_F(RPCBookOffersHandlerTest, MPTGetsUnauthorizedOfferUnfunded)
     ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kMptBookDir}, seq, _))
         .WillByDefault(Return(std::optional<xrpl::uint256>{}));
 
-    auto const mptIssuanceKey = xrpl::keylet::mptIssuance(mptid).key;
+    auto const mptIssuanceKey = xrpl::keylet::mptokenIssuance(mptid).key;
     auto const mptokenKey = xrpl::keylet::mptoken(mptid, owner).key;
 
     // Issuance requires authorization; the owner's token holds 7 MPT but is NOT authorized.
