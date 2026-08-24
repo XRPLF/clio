@@ -578,13 +578,13 @@ transferRate(
 /**
  * @brief Get the amount that an account holds in MPT
  *
- * Mirrors `rippled`'s `accountHolds(MPTIssue)` as used by `getBookPage`. For the issuer the
+ * Mirrors `xrpld`'s `accountHolds(MPTIssue)` as used by `getBookPage`. For the issuer the
  * spendable amount is the issuance capacity (`MaximumAmount - OutstandingAmount`). For a holder it
  * is the token balance, returned as zero if the holder's token is unauthorized while the issuance
- * requires authorization (rippled's `AuthHandling::ZeroIfUnauthorized`), and, when @p zeroIfFrozen
+ * requires authorization (xrpld's `AuthHandling::ZeroIfUnauthorized`), and, when @p zeroIfFrozen
  * is set, zero if the issuance or the token is locked.
  *
- * @note rippled also zeroes the balance when the holder is a frozen vault pseudo-account
+ * @note xrpld also zeroes the balance when the holder is a frozen vault pseudo-account
  * (`isVaultPseudoAccountFrozen`) and supports an amendment-gated StrongAuth variant; neither is
  * modelled here.
  *
