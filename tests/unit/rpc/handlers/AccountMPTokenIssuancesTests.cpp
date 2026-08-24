@@ -2,6 +2,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
+#include "rpc/common/Validators.hpp"
 #include "rpc/handlers/AccountMPTokenIssuances.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/NameGenerator.hpp"
@@ -38,8 +39,8 @@ namespace {
 
 constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr auto kIssuanceIndeX1 = "A6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
-constexpr auto kIssuanceIndeX2 = "B6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
+constexpr auto kIssuanceIndex1 = "A6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr auto kIssuanceIndex2 = "B6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 
 // unique values for issuance1
 constexpr uint64_t kIssuancE1MaxAmount = 10000;
@@ -57,6 +58,12 @@ constexpr auto kIssuancE2MetadataHex = "746573742D6D657461";
 constexpr auto kIssuancE2DomainIdHex =
     "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
+[[nodiscard]] std::string
+expectedMptIssuanceId(std::uint32_t sequence)
+{
+    return xrpl::to_string(xrpl::makeMptID(sequence, getAccountIdWithString(kAccount)));
+}
+
 // define expected JSON for mpt issuances
 auto const kIssuanceOuT1 = fmt::format(
     R"JSON({{
@@ -71,7 +78,7 @@ auto const kIssuanceOuT1 = fmt::format(
         "mpt_require_auth": true,
         "mpt_can_transfer": true
     }})JSON",
-    kIssuanceIndeX1,
+    expectedMptIssuanceId(1),
     kAccount,
     kIssuancE1MaxAmount,
     kIssuancE1OutstandingAmount,
@@ -93,7 +100,7 @@ auto const kIssuanceOuT2 = fmt::format(
         "mpt_locked": true,
         "mpt_can_clawback": true
     }})JSON",
-    kIssuanceIndeX2,
+    expectedMptIssuanceId(2),
     kAccount,
     kIssuancE2MaxAmount,
     kIssuancE2OutstandingAmount,
@@ -379,7 +386,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
 
     // return two mptoken issuance objects
     xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
-        {xrpl::uint256{kIssuanceIndeX1}, xrpl::uint256{kIssuanceIndeX2}}, kIssuanceIndeX1
+        {xrpl::uint256{kIssuanceIndex1}, xrpl::uint256{kIssuanceIndex2}}, kIssuanceIndex1
     );
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -459,7 +466,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const indexes = std::vector<xrpl::uint256>(50, xrpl::uint256{kIssuanceIndeX1});
+    auto const indexes = std::vector<xrpl::uint256>(50, xrpl::uint256{kIssuanceIndex1});
     auto const bbs = [&]() {
         std::vector<Blob> v;
         v.reserve(50);
@@ -469,7 +476,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
         return v;
     }();
 
-    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kIssuanceIndeX1);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kIssuanceIndex1);
     ownerDir.setFieldU64(xrpl::sfIndexNext, 99);
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -556,7 +563,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const indexes = std::vector<xrpl::uint256>(10, xrpl::uint256{kIssuanceIndeX1});
+    auto const indexes = std::vector<xrpl::uint256>(10, xrpl::uint256{kIssuanceIndex1});
     auto const bbs = [&]() {
         std::vector<Blob> v;
         v.reserve(kLimit);
@@ -568,13 +575,13 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     // mock the first directory page
-    xrpl::STObject ownerDir1 = createOwnerDirLedgerObject(indexes, kIssuanceIndeX1);
+    xrpl::STObject ownerDir1 = createOwnerDirLedgerObject(indexes, kIssuanceIndex1);
     ownerDir1.setFieldU64(xrpl::sfIndexNext, kNextPage);
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillByDefault(Return(ownerDir1.getSerializer().peekData()));
 
     // mock the second directory page
-    xrpl::STObject ownerDir2 = createOwnerDirLedgerObject(indexes, kIssuanceIndeX2);
+    xrpl::STObject ownerDir2 = createOwnerDirLedgerObject(indexes, kIssuanceIndex2);
     ownerDir2.setFieldU64(xrpl::sfIndexNext, 0);
     ON_CALL(*backend_, doFetchLedgerObject(ownerDir2Kk, _, _))
         .WillByDefault(Return(ownerDir2.getSerializer().peekData()));
@@ -596,7 +603,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
         auto const& resultJson = output.result->as_object();
         EXPECT_EQ(
             boost::json::value_to<std::string>(resultJson.at("marker")),
-            fmt::format("{},{}", kIssuanceIndeX1, kNextPage)
+            fmt::format("{},{}", kIssuanceIndex1, kNextPage)
         );
         EXPECT_EQ(resultJson.at("mpt_issuances").as_array().size(), kLimit);
     });
@@ -617,7 +624,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const indexes = std::vector<xrpl::uint256>(kLimit, xrpl::uint256{kIssuanceIndeX1});
+    auto const indexes = std::vector<xrpl::uint256>(kLimit, xrpl::uint256{kIssuanceIndex1});
     auto const bbs = [&]() {
         std::vector<Blob> v;
         v.reserve(kLimit);
@@ -627,7 +634,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
         return v;
     }();
 
-    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kIssuanceIndeX1);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kIssuanceIndex1);
     ownerDir.setFieldU64(xrpl::sfIndexNext, 0);
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -644,7 +651,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
                 }})JSON",
                 kAccount,
                 kLimit,
-                kIssuanceIndeX1,
+                kIssuanceIndex1,
                 kNextPage
             )
         );
@@ -670,7 +677,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
-        {xrpl::uint256{kIssuanceIndeX1}, xrpl::uint256{kIssuanceIndeX2}}, kIssuanceIndeX1
+        {xrpl::uint256{kIssuanceIndex1}, xrpl::uint256{kIssuanceIndex2}}, kIssuanceIndex1
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
@@ -758,7 +765,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
-        {xrpl::uint256{kIssuanceIndeX1}, xrpl::uint256{kIssuanceIndeX2}}, kIssuanceIndeX1
+        {xrpl::uint256{kIssuanceIndex1}, xrpl::uint256{kIssuanceIndex2}}, kIssuanceIndex1
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
@@ -845,7 +852,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    xrpl::STObject const ownerDir = createOwnerDirLedgerObject({}, kIssuanceIndeX1);
+    xrpl::STObject const ownerDir = createOwnerDirLedgerObject({}, kIssuanceIndex1);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
@@ -913,7 +920,7 @@ TEST_P(AccountMPTokenIssuancesAmountSerializationTest, SerializedAsStrings)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir =
-        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndeX1}}, kIssuanceIndeX1);
+        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndex1}}, kIssuanceIndex1);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
@@ -956,15 +963,13 @@ TEST_P(AccountMPTokenIssuancesAmountSerializationTest, SerializedAsStrings)
     });
 }
 
-TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
+TEST_F(RPCAccountMPTokenIssuancesHandlerTest, ImmutableFlags)
 {
-    uint32_t const mutableFlags1 = xrpl::lsmfMPTCanEnableCanLock |
-        xrpl::lsmfMPTCanEnableRequireAuth | xrpl::lsmfMPTCanEnableCanEscrow |
-        xrpl::lsmfMPTCanEnableCanTrade;
+    uint32_t const immutableFlags1 = xrpl::lsifMPTCanLock | xrpl::lsifMPTRequireAuth |
+        xrpl::lsifMPTCanEscrow | xrpl::lsifMPTCanTrade;
 
-    uint32_t const mutableFlags2 = xrpl::lsmfMPTCanEnableCanTransfer |
-        xrpl::lsmfMPTCanEnableCanClawback | xrpl::lsmfMPTCanMutateMetadata |
-        xrpl::lsmfMPTCanMutateTransferFee;
+    uint32_t const immutableFlags2 = xrpl::lsifMPTCanTransfer | xrpl::lsifMPTCanClawback |
+        xrpl::lsifMPTMetadata | xrpl::lsifMPTTransferFee;
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -976,7 +981,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
-        {xrpl::uint256{kIssuanceIndeX1}, xrpl::uint256{kIssuanceIndeX2}}, kIssuanceIndeX1
+        {xrpl::uint256{kIssuanceIndex1}, xrpl::uint256{kIssuanceIndex2}}, kIssuanceIndex1
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
@@ -993,7 +998,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
             std::nullopt,
             std::nullopt,
             std::nullopt,
-            mutableFlags1
+            immutableFlags1
         )
             .getSerializer()
             .peekData(),
@@ -1009,7 +1014,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
             std::nullopt,
             std::nullopt,
             std::nullopt,
-            mutableFlags2
+            immutableFlags2
         )
             .getSerializer()
             .peekData()
@@ -1042,10 +1047,10 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
                         "outstanding_amount": "{}",
                         "transfer_fee": {},
                         "mpt_can_transfer": true,
-                        "mpt_can_mutate_can_lock": true,
-                        "mpt_can_mutate_require_auth": true,
-                        "mpt_can_mutate_can_escrow": true,
-                        "mpt_can_mutate_can_trade": true
+                        "mpt_immutable_can_lock": true,
+                        "mpt_immutable_require_auth": true,
+                        "mpt_immutable_can_escrow": true,
+                        "mpt_immutable_can_trade": true
                     }},
                     {{
                         "mpt_issuance_id": "{}",
@@ -1055,20 +1060,20 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
                         "transfer_fee": {},
                         "mptoken_metadata": "{}",
                         "mpt_can_transfer": true,
-                        "mpt_can_mutate_can_transfer": true,
-                        "mpt_can_mutate_can_clawback": true,
-                        "mpt_can_mutate_metadata": true,
-                        "mpt_can_mutate_transfer_fee": true
+                        "mpt_immutable_can_transfer": true,
+                        "mpt_immutable_can_clawback": true,
+                        "mpt_immutable_metadata": true,
+                        "mpt_immutable_transfer_fee": true
                     }}
                 ]
             }})JSON",
             kAccount,
             kLedgerHash,
-            kIssuanceIndeX1,
+            expectedMptIssuanceId(3),
             kAccount,
             kIssuancE1OutstandingAmount,
             kIssuancE1TransferFee,
-            kIssuanceIndeX2,
+            expectedMptIssuanceId(5),
             kAccount,
             kIssuancE2OutstandingAmount,
             kIssuancE2TransferFee,
@@ -1098,7 +1103,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, ConfidentialFields)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir =
-        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndeX1}}, kIssuanceIndeX1);
+        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndex1}}, kIssuanceIndex1);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
@@ -1153,7 +1158,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, ConfidentialFields)
             }})JSON",
             kAccount,
             kLedgerHash,
-            kIssuanceIndeX1,
+            expectedMptIssuanceId(1),
             kAccount,
             kIssuancE1OutstandingAmount,
             kConfidentialOutstandingAmount,
@@ -1168,14 +1173,62 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, ConfidentialFields)
     });
 }
 
+TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MPTokenIssuanceIdIsDerivedIdNotLedgerKey)
+{
+    constexpr std::uint32_t kSequence = 7;
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
+        .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    xrpl::STObject const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndex1}}, kIssuanceIndex1);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
+
+    auto const bbs =
+        std::vector<Blob>{createMptIssuanceObject(kAccount, kSequence).getSerializer().peekData()};
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
+
+    runSpawn([this](auto yield) {
+        auto const input =
+            boost::json::parse(fmt::format(R"JSON({{"account": "{}"}})JSON", kAccount));
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+
+        auto const& issuances = output.result->as_object().at("mpt_issuances").as_array();
+        ASSERT_EQ(issuances.size(), 1);
+
+        auto const& issuance = issuances[0].as_object();
+        ASSERT_TRUE(issuance.at("mpt_issuance_id").is_string());
+        auto const mptIssuanceId = issuance.at("mpt_issuance_id").as_string();
+
+        EXPECT_EQ(mptIssuanceId.size(), 48);
+        EXPECT_EQ(mptIssuanceId, expectedMptIssuanceId(kSequence));
+        EXPECT_NE(mptIssuanceId, kIssuanceIndex1);
+
+        auto const asOuterObject = boost::json::value{{"mpt_issuance_id", mptIssuanceId}};
+        auto const validated = validation::CustomValidators::uint192HexStringValidator.verify(
+            asOuterObject, "mpt_issuance_id"
+        );
+        EXPECT_TRUE(validated.has_value());
+    });
+}
+
 struct SingleFlagTest {
     std::string testName;
     uint32_t flag;
     std::string expectedJsonKey;
 };
 
-struct AccountMPTokenIssuancesImmutableFlagsTest : RPCAccountMPTokenIssuancesHandlerTest,
-                                                   WithParamInterface<SingleFlagTest> {};
+struct AccountMPTokenIssuancesLedgerFlagsTest : RPCAccountMPTokenIssuancesHandlerTest,
+                                                WithParamInterface<SingleFlagTest> {};
 
 static auto
 generateSingleFlagTests()
@@ -1200,13 +1253,13 @@ generateSingleFlagTests()
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    RPCAccountMPTokenIssuancesImmutableFlagsGroup,
-    AccountMPTokenIssuancesImmutableFlagsTest,
+    RPCAccountMPTokenIssuancesLedgerFlagsGroup,
+    AccountMPTokenIssuancesLedgerFlagsTest,
     ValuesIn(generateSingleFlagTests()),
     tests::util::kNameGenerator
 );
 
-TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
+TEST_P(AccountMPTokenIssuancesLedgerFlagsTest, SingleFlag)
 {
     auto const testParams = GetParam();
 
@@ -1220,7 +1273,7 @@ TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir =
-        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndeX1}}, kIssuanceIndeX1);
+        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndex1}}, kIssuanceIndex1);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
@@ -1254,54 +1307,57 @@ TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
     });
 }
 
-struct SingleMutableFlagTest {
+struct SingleImmutableFlagTest {
     std::string testName;
-    uint32_t mutableFlag;
+    uint32_t immutableFlag;
     std::string expectedJsonKey;
 };
 
-struct AccountMPTokenIssuancesMutableFlagsTest : RPCAccountMPTokenIssuancesHandlerTest,
-                                                 WithParamInterface<SingleMutableFlagTest> {};
+struct AccountMPTokenIssuancesImmutableFlagsTest : RPCAccountMPTokenIssuancesHandlerTest,
+                                                   WithParamInterface<SingleImmutableFlagTest> {};
 
 static auto
-generateSingleMutableFlagTests()
+generateSingleImmutableFlagTests()
 {
-    return std::vector<SingleMutableFlagTest>{
-        {.testName = "CanMutateCanLock",
-         .mutableFlag = xrpl::lsmfMPTCanEnableCanLock,
-         .expectedJsonKey = "mpt_can_mutate_can_lock"},
-        {.testName = "CanMutateRequireAuth",
-         .mutableFlag = xrpl::lsmfMPTCanEnableRequireAuth,
-         .expectedJsonKey = "mpt_can_mutate_require_auth"},
-        {.testName = "CanMutateCanEscrow",
-         .mutableFlag = xrpl::lsmfMPTCanEnableCanEscrow,
-         .expectedJsonKey = "mpt_can_mutate_can_escrow"},
-        {.testName = "CanMutateCanTrade",
-         .mutableFlag = xrpl::lsmfMPTCanEnableCanTrade,
-         .expectedJsonKey = "mpt_can_mutate_can_trade"},
-        {.testName = "CanMutateCanTransfer",
-         .mutableFlag = xrpl::lsmfMPTCanEnableCanTransfer,
-         .expectedJsonKey = "mpt_can_mutate_can_transfer"},
-        {.testName = "CanMutateCanClawback",
-         .mutableFlag = xrpl::lsmfMPTCanEnableCanClawback,
-         .expectedJsonKey = "mpt_can_mutate_can_clawback"},
-        {.testName = "CanMutateMetadata",
-         .mutableFlag = xrpl::lsmfMPTCanMutateMetadata,
-         .expectedJsonKey = "mpt_can_mutate_metadata"},
-        {.testName = "CanMutateTransferFee",
-         .mutableFlag = xrpl::lsmfMPTCanMutateTransferFee,
-         .expectedJsonKey = "mpt_can_mutate_transfer_fee"},
+    return std::vector<SingleImmutableFlagTest>{
+        {.testName = "ImmutableCanLock",
+         .immutableFlag = xrpl::lsifMPTCanLock,
+         .expectedJsonKey = "mpt_immutable_can_lock"},
+        {.testName = "ImmutableRequireAuth",
+         .immutableFlag = xrpl::lsifMPTRequireAuth,
+         .expectedJsonKey = "mpt_immutable_require_auth"},
+        {.testName = "ImmutableCanEscrow",
+         .immutableFlag = xrpl::lsifMPTCanEscrow,
+         .expectedJsonKey = "mpt_immutable_can_escrow"},
+        {.testName = "ImmutableCanTrade",
+         .immutableFlag = xrpl::lsifMPTCanTrade,
+         .expectedJsonKey = "mpt_immutable_can_trade"},
+        {.testName = "ImmutableCanTransfer",
+         .immutableFlag = xrpl::lsifMPTCanTransfer,
+         .expectedJsonKey = "mpt_immutable_can_transfer"},
+        {.testName = "ImmutableCanClawback",
+         .immutableFlag = xrpl::lsifMPTCanClawback,
+         .expectedJsonKey = "mpt_immutable_can_clawback"},
+        {.testName = "ImmutableCanHoldConfidentialBalance",
+         .immutableFlag = xrpl::lsifMPTCanHoldConfidentialBalance,
+         .expectedJsonKey = "mpt_immutable_can_hold_confidential_balance"},
+        {.testName = "ImmutableMetadata",
+         .immutableFlag = xrpl::lsifMPTMetadata,
+         .expectedJsonKey = "mpt_immutable_metadata"},
+        {.testName = "ImmutableTransferFee",
+         .immutableFlag = xrpl::lsifMPTTransferFee,
+         .expectedJsonKey = "mpt_immutable_transfer_fee"},
     };
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    RPCAccountMPTokenIssuancesMutableFlagsGroup,
-    AccountMPTokenIssuancesMutableFlagsTest,
-    ValuesIn(generateSingleMutableFlagTests()),
+    RPCAccountMPTokenIssuancesImmutableFlagsGroup,
+    AccountMPTokenIssuancesImmutableFlagsTest,
+    ValuesIn(generateSingleImmutableFlagTests()),
     tests::util::kNameGenerator
 );
 
-TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
+TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleImmutableFlag)
 {
     auto const testParams = GetParam();
 
@@ -1315,7 +1371,7 @@ TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     xrpl::STObject const ownerDir =
-        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndeX1}}, kIssuanceIndeX1);
+        createOwnerDirLedgerObject({xrpl::uint256{kIssuanceIndex1}}, kIssuanceIndex1);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
@@ -1330,7 +1386,7 @@ TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
                                            std::nullopt,
                                            std::nullopt,
                                            std::nullopt,
-                                           testParams.mutableFlag
+                                           testParams.immutableFlag
     )
                                            .getSerializer()
                                            .peekData()};

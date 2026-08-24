@@ -262,7 +262,7 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
     EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
     EXPECT_CALL(*handlerProvider, getHandler(method))
         .WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
-    EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).WillOnce(Throw(data::DatabaseTimeout{}));
+    EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).WillOnce(Throw(data::DatabaseError{}));
     EXPECT_CALL(*handlerProvider, contains(method)).WillOnce(Return(true));
     EXPECT_CALL(*mockCountersPtr_, onTooBusy());
 

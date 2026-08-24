@@ -13,6 +13,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/STObject.h>
 
 #include <cstdint>
@@ -35,6 +36,8 @@ constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25
 constexpr auto kNftId = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
 constexpr auto kNftID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
 constexpr auto kNftID3 = "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
+constexpr auto kMptIssuanceId = "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9";
+constexpr auto kMptIssuanceId2 = "000000024B4E9C06F24296074F7BC48F92A97916C6DC5EA9";
 constexpr auto kIndex = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 
 }  // namespace
@@ -391,6 +394,24 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "Invalid field 'tx_type'."
+            },
+            AccountTxParamTestCaseBundle{
+                .testName = "MPTIssuanceIdMalformed",
+                .testJson = R"JSON({
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "mpt_issuance_id": "xxx"
+                })JSON",
+                .expectedError = "invalidParams",
+                .expectedErrorMessage = "mpt_issuance_idMalformed"
+            },
+            AccountTxParamTestCaseBundle{
+                .testName = "MPTIssuanceIdNotString",
+                .testJson = R"JSON({
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "mpt_issuance_id": 12
+                })JSON",
+                .expectedError = "invalidParams",
+                .expectedErrorMessage = "mpt_issuance_idNotString"
             }
         };
     };
@@ -1741,6 +1762,288 @@ TEST_F(RPCAccountTxHandlerTest, MPTTxs_API_v2)
             )
         );
         auto const output = handler.process(kInput, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, boost::json::parse(out));
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, MPTIssuanceIdFilterMatch)
+{
+    auto const out = fmt::format(
+        R"JSON({{
+            "account": "{}",
+            "ledger_index_min": 10,
+            "ledger_index_max": 30,
+            "transactions": [
+                {{
+                    "meta": {{
+                        "AffectedNodes": [
+                            {{
+                                "CreatedNode": {{
+                                    "LedgerEntryType": "MPTokenIssuance",
+                                    "LedgerIndex": "0000000000000000000000000000000000000000000000000000000000000000",
+                                    "NewFields": {{
+                                        "Flags": 0,
+                                        "Issuer": "{}",
+                                        "LedgerEntryType": "MPTokenIssuance",
+                                        "MPTokenMetadata": "746573742D6D657461",
+                                        "MaximumAmount": "0",
+                                        "OutstandingAmount": "0",
+                                        "OwnerNode": "0",
+                                        "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                                        "PreviousTxnLgrSeq": 0,
+                                        "Sequence": 1
+                                    }}
+                                }}
+                            }}
+                        ],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "mpt_issuance_id": "{}"
+                    }},
+                    "hash": "A52221F4003C281D3C83F501F418B55A1F9DC1C6A129EF13E1A8F0E5C008DAE3",
+                    "ledger_index": 11,
+                    "ledger_hash": "{}",
+                    "close_time_iso": "2000-01-01T00:00:00Z",
+                    "tx_json": {{
+                        "Account": "{}",
+                        "Fee": "50",
+                        "Sequence": 1,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "MPTokenIssuanceCreate",
+                        "ledger_index": 11,
+                        "ctid": "C000000B00000000",
+                        "date": 1
+                    }},
+                    "validated": true
+                }}
+            ],
+            "validated": true
+        }})JSON",
+        kAccount,
+        kAccount,
+        kMptIssuanceId,
+        kLedgerHash,
+        kAccount
+    );
+
+    auto mptTx = createMPTIssuanceCreateTxWithMetadata(kAccount, 50, 1);
+    mptTx.ledgerSequence = kMinSeq + 1;
+    mptTx.date = 1;
+
+    auto transactions = std::vector<TransactionAndMetadata>{std::move(mptTx)};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = std::move(transactions), .cursor = std::nullopt};
+
+    EXPECT_CALL(*backend_, fetchAccountTransactions).WillOnce(Return(transCursor));
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMinSeq + 1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMinSeq + 1, _)).WillOnce(Return(ledgerHeader));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "mpt_issuance_id": "{}"
+                }})JSON",
+                kAccount,
+                kMinSeq,
+                kMaxSeq,
+                kMptIssuanceId
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, boost::json::parse(out));
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, MPTIssuanceIdFilterNoMatch)
+{
+    auto const out = fmt::format(
+        R"JSON({{
+            "account": "{}",
+            "ledger_index_min": 10,
+            "ledger_index_max": 30,
+            "transactions": [],
+            "validated": true
+        }})JSON",
+        kAccount
+    );
+
+    auto mptTx = createMPTIssuanceCreateTxWithMetadata(kAccount, 50, 1);
+    mptTx.ledgerSequence = kMinSeq + 1;
+    mptTx.date = 1;
+
+    auto transactions = std::vector<TransactionAndMetadata>{std::move(mptTx)};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = std::move(transactions), .cursor = std::nullopt};
+
+    EXPECT_CALL(*backend_, fetchAccountTransactions).WillOnce(Return(transCursor));
+    // the tx is filtered out before the per-tx ledger_hash/close_time_iso enrichment step, so this
+    // must never be called
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "mpt_issuance_id": "{}"
+                }})JSON",
+                kAccount,
+                kMinSeq,
+                kMaxSeq,
+                kMptIssuanceId2
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, boost::json::parse(out));
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, MPTIssuanceIdFilterWithMatchingTxType)
+{
+    auto mptTx = createMPTIssuanceCreateTxWithMetadata(kAccount, 50, 1);
+    mptTx.ledgerSequence = kMinSeq + 1;
+    mptTx.date = 1;
+
+    auto transactions = std::vector<TransactionAndMetadata>{std::move(mptTx)};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = std::move(transactions), .cursor = std::nullopt};
+
+    EXPECT_CALL(*backend_, fetchAccountTransactions).WillOnce(Return(transCursor));
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMinSeq + 1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMinSeq + 1, _)).WillOnce(Return(ledgerHeader));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "mpt_issuance_id": "{}",
+                    "tx_type": "MPTokenIssuanceCreate"
+                }})JSON",
+                kAccount,
+                kMinSeq,
+                kMaxSeq,
+                kMptIssuanceId
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->as_object().at("transactions").as_array().size(), 1);
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, MPTIssuanceIdFilterWithMismatchingTxType)
+{
+    auto mptTx = createMPTIssuanceCreateTxWithMetadata(kAccount, 50, 1);
+    mptTx.ledgerSequence = kMinSeq + 1;
+    mptTx.date = 1;
+
+    auto transactions = std::vector<TransactionAndMetadata>{std::move(mptTx)};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = std::move(transactions), .cursor = std::nullopt};
+
+    EXPECT_CALL(*backend_, fetchAccountTransactions).WillOnce(Return(transCursor));
+    // tx_type mismatch causes the transaction to be skipped before the ledger_hash enrichment step
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "mpt_issuance_id": "{}",
+                    "tx_type": "Payment"
+                }})JSON",
+                kAccount,
+                kMinSeq,
+                kMaxSeq,
+                kMptIssuanceId
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->as_object().at("transactions").as_array().size(), 0);
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, MPTIssuanceIdFilterBinary)
+{
+    auto mptTx = createMPTIssuanceCreateTxWithMetadata(kAccount, 50, 1);
+    mptTx.ledgerSequence = kMinSeq + 1;
+    mptTx.date = 1;
+
+    auto const expectedMetaBlob = xrpl::strHex(mptTx.metadata);
+    auto const expectedTxBlob = xrpl::strHex(mptTx.transaction);
+
+    // non-matching transactions (no mpt_issuance_id reference) mixed in alongside the matching one,
+    // to prove the binary path actually filters rather than just passing everything through
+    auto transactions = genTransactions(kMinSeq + 2, kMinSeq + 3);
+    transactions.push_back(std::move(mptTx));
+    auto const transCursor =
+        TransactionsAndCursor{.txns = std::move(transactions), .cursor = std::nullopt};
+
+    EXPECT_CALL(*backend_, fetchAccountTransactions).WillOnce(Return(transCursor));
+    // the binary path never deserializes the tx to JSON, so no ledger_hash enrichment happens
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
+
+    auto const out = fmt::format(
+        R"JSON({{
+            "account": "{}",
+            "ledger_index_min": 10,
+            "ledger_index_max": 30,
+            "transactions": [
+                {{
+                    "meta_blob": "{}",
+                    "tx_blob": "{}",
+                    "ledger_index": {},
+                    "validated": true
+                }}
+            ],
+            "validated": true
+        }})JSON",
+        kAccount,
+        expectedMetaBlob,
+        expectedTxBlob,
+        kMinSeq + 1
+    );
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "mpt_issuance_id": "{}",
+                    "binary": true
+                }})JSON",
+                kAccount,
+                kMinSeq,
+                kMaxSeq,
+                kMptIssuanceId
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, boost::json::parse(out));
     });

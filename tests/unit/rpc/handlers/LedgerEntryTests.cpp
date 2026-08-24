@@ -348,6 +348,27 @@ generateTestValuesForParametersTest()
         },
 
         ParamTestCaseBundle{
+            .testName = "DepositPreauthAuthorizeCredentialsHexIssuer",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "issuer": "0000000000000000000000000000000000000002",
+                            "credential_type": "{}"
+                        }}
+                        ]
+                    }}
+                }})JSON",
+                kAccount,
+                kCredentialType
+            ),
+            .expectedError = "malformedAuthorizedCredentials",
+            .expectedErrorMessage = "issuer NotString"
+        },
+
+        ParamTestCaseBundle{
             .testName = "DepositPreauthAuthorizeCredentialsIncorrectCredentialType",
             .testJson = fmt::format(
                 R"JSON({{

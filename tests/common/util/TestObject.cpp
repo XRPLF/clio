@@ -1493,7 +1493,7 @@ createMptIssuanceObject(
     std::optional<std::uint64_t> maxAmount,
     std::optional<std::uint64_t> lockedAmount,
     std::optional<std::string_view> domainId,
-    std::optional<std::uint32_t> mutableFlags,
+    std::optional<std::uint32_t> immutableFlags,
     std::optional<std::string_view> issuerEncryptionKey,
     std::optional<std::string_view> auditorEncryptionKey,
     std::optional<std::uint64_t> confidentialOutstandingAmount
@@ -1523,8 +1523,8 @@ createMptIssuanceObject(
     }
     if (domainId.has_value())
         mptIssuance.setFieldH256(xrpl::sfDomainID, xrpl::uint256{*domainId});
-    if (mutableFlags.has_value())
-        mptIssuance.setFieldU32(xrpl::sfMutableFlags, *mutableFlags);
+    if (immutableFlags.has_value())
+        mptIssuance.setFieldU32(xrpl::sfImmutableFlags, *immutableFlags);
     if (issuerEncryptionKey.has_value()) {
         xrpl::Slice const slice(issuerEncryptionKey->data(), issuerEncryptionKey->size());
         mptIssuance.setFieldVL(xrpl::sfIssuerEncryptionKey, slice);
