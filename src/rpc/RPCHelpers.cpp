@@ -1337,9 +1337,9 @@ postProcessOrderBook(
 
             if (book.out.getIssuer() == uOfferOwnerID) {
                 // If an offer is selling the issuer's own asset, it is treated as fully funded.
-                // This mirrors rippled's getBookPage for both IOU and MPT.
+                // This mirrors xrpld's getBookPage for both IOU and MPT.
                 //
-                // NOTE: rippled has a separate fix (issuerFundsToSelfIssue) that bounds an MPT
+                // NOTE: xrpld has a separate fix (issuerFundsToSelfIssue) that bounds an MPT
                 // issuer's self-issued offers by the remaining issuance capacity
                 // (MaximumAmount - OutstandingAmount). It is not part of the getBookPage logic
                 // mirrored here; port it if/when clio mirrors that updated getBookPage.
