@@ -33,6 +33,10 @@
 #include <thread>
 #include <utility>
 
+namespace {
+constexpr size_t kMaxSendingQueueSize = 1500;
+}  // namespace
+
 using namespace web::ng::impl;
 using namespace web::ng;
 using namespace util;
@@ -50,6 +54,7 @@ struct WebWsConnectionTests : SyncAsioContextTest {
             std::move(ip),
             boost::beast::flat_buffer{},
             tagDecoratorFactory_,
+            kMaxSendingQueueSize,
         };
 
         auto expectedTrue = httpConnection.isUpgradeRequested(yield);
@@ -58,7 +63,8 @@ struct WebWsConnectionTests : SyncAsioContextTest {
             ASSERT_TRUE(expectedTrue.value()) << "Expected upgrade request";
         }();
 
-        auto expectedWsConnection = httpConnection.upgrade(tagDecoratorFactory_, yield);
+        auto expectedWsConnection =
+            httpConnection.upgrade(tagDecoratorFactory_, kMaxSendingQueueSize, yield);
         [&]() {
             ASSERT_TRUE(expectedWsConnection.has_value()) << expectedWsConnection.error().message();
         }();

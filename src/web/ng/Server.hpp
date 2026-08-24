@@ -59,6 +59,7 @@ private:
     std::optional<boost::asio::ssl::context> sslContext_;
 
     util::TagDecoratorFactory tagDecoratorFactory_;
+    size_t maxSubscriptionSendQueueSize_;
 
     impl::ConnectionHandler connectionHandler_;
     boost::asio::ip::tcp::endpoint endpoint_;
@@ -90,7 +91,7 @@ public:
         std::optional<size_t> parallelRequestLimit,
         util::TagDecoratorFactory tagDecoratorFactory,
         ProxyIpResolver proxyIpResolver,
-        std::optional<size_t> maxSubscriptionSendQueueSize,
+        size_t maxSubscriptionSendQueueSize,
         Hooks hooks
     );
 
