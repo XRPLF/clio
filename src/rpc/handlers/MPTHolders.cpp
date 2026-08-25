@@ -141,9 +141,9 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
         keys.reserve(input.accounts->size());
         for (auto const& account : *input.accounts) {
             auto const accountID = util::parseBase58Wrapper<xrpl::AccountID>(account);
-            if (!accountID) {
+            if (not accountID)
                 return Error{Status{RippledError::RpcInvalidParams, "accountsMalformed"}};
-            }
+
             // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
             keys.push_back(xrpl::keylet::mptoken(mptID, *accountID).key);
         }
