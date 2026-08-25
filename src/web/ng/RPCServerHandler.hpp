@@ -13,6 +13,7 @@
 #include "util/Profiler.hpp"
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
+#include "web/LoadWarning.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/ng/Connection.hpp"
@@ -182,7 +183,13 @@ public:
 
         // NOLINTBEGIN(bugprone-unchecked-optional-access)
         if (not dosguard_.get().add(connectionMetadata.ip(), response->message().size())) {
-            response->setMessage(makeLoadWarning(*response));
+            if (auto const warned = withLoadWarning(response->message()); warned.has_value()) {
+                response->setMessage(*warned);
+            } else {
+                LOG(log_.debug()) << connectionMetadata.tag()
+                                  << "Rate limit reached but the response body is not a JSON "
+                                     "object; sending it without a load warning";
+            }
         }
 
         return *std::move(response);
@@ -355,22 +362,6 @@ private:
             }
         }
         return web::ng::Response{boost::beast::http::status::service_unavailable, error, request};
-    }
-
-    static boost::json::object
-    makeLoadWarning(Response const& response)
-    {
-        auto jsonResponse = boost::json::parse(response.message()).as_object();
-        jsonResponse["warning"] = "load";
-        if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
-            jsonResponse["warnings"].as_array().push_back(
-                rpc::makeWarning(rpc::WarningCode::WarnRpcRateLimit)
-            );
-        } else {
-            jsonResponse["warnings"] =
-                boost::json::array{rpc::makeWarning(rpc::WarningCode::WarnRpcRateLimit)};
-        }
-        return jsonResponse;
     }
 
     [[nodiscard]] bool

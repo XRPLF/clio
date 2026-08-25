@@ -6,6 +6,8 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Types.hpp"
+#include "rpc/filters/TransactionFilter.hpp"
+#include "rpc/filters/impl/DelegateTransactionsFilter.hpp"
 #include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/MPTIssuanceUtils.hpp"
@@ -113,8 +115,17 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         }
     }
 
-    auto const limit = input.limit.value_or(kLimitDefault);
     auto const accountID = accountFromStringStrict(input.account);
+
+    std::optional<rpc::DelegateTransactionFilter> txFilter;
+    if (input.delegateFilter) {
+        txFilter.emplace(
+            *input.delegateFilter,
+            *accountID  // NOLINT(bugprone-unchecked-optional-access)
+        );
+    }
+
+    auto const limit = input.limit.value_or(kLimitDefault);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
         return sharedPtrBackend_->fetchAccountTransactions(
             *accountID, limit, input.forward, cursor, ctx.yield
@@ -144,6 +155,13 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward) {
             LOG(log_.debug()) << "Skipping over transactions from incomplete ledger";
             continue;
+        }
+
+        std::optional<rpc::TransactionFilter::CheckResult> filterResult;
+        if (txFilter) {
+            filterResult = txFilter->check(txnPlusMeta);
+            if (not filterResult.has_value())
+                continue;
         }
 
         boost::json::object obj;
@@ -204,6 +222,15 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                         obj[JS(close_time_iso)] = xrpl::toStringIso(ledgerHeader->closeTime);
                     }
                 }
+
+                if (filterResult) {
+                    if (filterResult->role == rpc::DelegateFilter::Role::Authorizer) {
+                        obj[JS(authorizer)] = xrpl::to_string(filterResult->account);
+                    } else {
+                        obj[JS(actor)] = xrpl::to_string(filterResult->account);
+                    }
+                }
+
                 obj[JS(validated)] = true;
                 response.transactions.push_back(std::move(obj));
                 continue;
@@ -311,6 +338,9 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
         input.transactionTypeInLowercase =
             boost::json::value_to<std::string>(jsonObject.at("tx_type"));
     }
+
+    if (jsonObject.contains(JS(delegate)))
+        input.delegateFilter = parseDelegateFilter(jsonObject.at(JS(delegate)).as_object());
 
     if (jsonObject.contains(JS(mpt_issuance_id))) {
         input.mptIssuanceId =

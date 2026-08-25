@@ -15,7 +15,9 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Asset.h>
 #include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
@@ -23,6 +25,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace rpc {
 
@@ -62,11 +65,8 @@ public:
         std::optional<uint32_t> ledgerIndex;
         uint32_t limit = kLimitDefault;
         std::optional<xrpl::AccountID> taker;
-        xrpl::Currency paysCurrency;
-        xrpl::Currency getsCurrency;
-        // accountID will be filled by input converter, if no issuer is given, will use XRP issuer
-        xrpl::AccountID paysID = xrpl::xrpAccount();
-        xrpl::AccountID getsID = xrpl::xrpAccount();
+        xrpl::Asset paysAsset = xrpl::xrpIssue();
+        xrpl::Asset getsAsset = xrpl::xrpIssue();
         std::optional<std::string> domain;
     };
 
@@ -99,11 +99,16 @@ public:
             {JS(taker_gets),
              validation::Required{},
              validation::Type<boost::json::object>{},
+             validation::CustomValidators::bookTakerValidator,
              meta::Section{
                  {JS(currency),
-                  validation::Required{},
                   meta::WithCustomError{
                       validation::CustomValidators::currencyValidator,
+                      Status(RippledError::RpcDstAmtMalformed)
+                  }},
+                 {JS(mpt_issuance_id),
+                  meta::WithCustomError{
+                      validation::CustomValidators::uint192HexStringValidator,
                       Status(RippledError::RpcDstAmtMalformed)
                   }},
                  {JS(issuer),
@@ -115,11 +120,16 @@ public:
             {JS(taker_pays),
              validation::Required{},
              validation::Type<boost::json::object>{},
+             validation::CustomValidators::bookTakerValidator,
              meta::Section{
                  {JS(currency),
-                  validation::Required{},
                   meta::WithCustomError{
                       validation::CustomValidators::currencyValidator,
+                      Status(RippledError::RpcSrcCurMalformed)
+                  }},
+                 {JS(mpt_issuance_id),
+                  meta::WithCustomError{
+                      validation::CustomValidators::uint192HexStringValidator,
                       Status(RippledError::RpcSrcCurMalformed)
                   }},
                  {JS(issuer),

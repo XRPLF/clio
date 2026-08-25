@@ -1,6 +1,7 @@
 #include "rpc/common/Validators.hpp"
 
 #include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
@@ -17,6 +18,7 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <charconv>
 #include <cstdint>
@@ -226,6 +228,40 @@ CustomValidator CustomValidators::issuerValidator =
         return MaybeError{};
     }};
 
+CustomValidator CustomValidators::bookTakerValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_object())
+            return {};  // type is validated separately by Type<object>
+
+        auto const& obj = value.as_object();
+        bool const hasCurrency = obj.contains("currency");
+        bool const hasMptId = obj.contains("mpt_issuance_id");
+
+        if (!hasCurrency && !hasMptId) {
+            return Error{Status{
+                RippledError::RpcInvalidParams, fmt::format("Missing field '{}.currency'.", key)
+            }};
+        }
+
+        if (hasMptId && (hasCurrency || obj.contains("issuer"))) {
+            return Error{
+                Status{RippledError::RpcInvalidParams, fmt::format("Invalid field '{}'.", key)}
+            };
+        }
+
+        // Wrong type -> invalidParams (xrpld's validateTakerJSON), checked here before the
+        // per-field validators so they can own bad *values* -> dst/srcAmtMalformed.
+        if ((hasCurrency && !obj.at(JS(currency)).is_string()) ||
+            (hasMptId && !obj.at(JS(mpt_issuance_id)).is_string())) {
+            return Error{Status{
+                RippledError::RpcInvalidParams,
+                fmt::format("Invalid field '{}.currency', not string.", key)
+            }};
+        }
+
+        return MaybeError{};
+    }};
+
 CustomValidator CustomValidators::subscribeStreamValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_array())
@@ -363,7 +399,7 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
             }
 
             // don't want to change issuer error message to be about credentials
-            if (!issuerValidator.verify(credObj, "issuer")) {
+            if (!accountBase58Validator.verify(credObj, "issuer")) {
                 return Error{
                     Status{ClioError::RpcMalformedAuthorizedCredentials, "issuer NotString"}
                 };
@@ -378,6 +414,36 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
 
             if (auto const err = credentialTypeValidator.verify(credObj, "credential_type"); !err)
                 return err;
+        }
+
+        return MaybeError{};
+    }};
+
+CustomValidator CustomValidators::delegateValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (not value.is_object())
+            return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotObject"}};
+
+        auto const& delegate = value.as_object();
+        if (!delegate.contains(JS(delegate_filter))) {
+            return Error{Status{
+                RippledError::RpcInvalidParams, "Field 'delegate_filter' is required but missing."
+            }};
+        }
+
+        if (!parseDelegateType(delegate.at(JS(delegate_filter))).has_value()) {
+            return Error{Status{
+                RippledError::RpcInvalidParams,
+                "Field 'delegate_filter' value must be 'actor' or 'authorizer'."
+            }};
+        }
+
+        if (delegate.contains(JS(counter_party)) &&
+            !accountValidator.verify(delegate, JS(counter_party))) {
+            return Error{Status{
+                RippledError::RpcActMalformed,
+                "Field 'counter_party' value must be a valid account."
+            }};
         }
 
         return MaybeError{};

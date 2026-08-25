@@ -10,16 +10,14 @@
 #include "web/ng/SubscriptionContext.hpp"
 #include "web/ng/impl/MockWsConnection.hpp"
 
-#include <boost/asio/post.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/system/errc.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <cstddef>
 #include <memory>
-#include <optional>
 #include <string>
 
 using namespace web::ng;
@@ -27,14 +25,9 @@ using namespace util::config;
 
 struct NgSubscriptionContextTests : SyncAsioContextTest {
     SubscriptionContext
-    makeSubscriptionContext(
-        boost::asio::yield_context yield,
-        std::optional<size_t> maxSendQueueSize = std::nullopt
-    )
+    makeSubscriptionContext(boost::asio::yield_context yield)
     {
-        return SubscriptionContext{
-            tagFactory_, connection_, maxSendQueueSize, yield, errorHandler_.AsStdFunction()
-        };
+        return SubscriptionContext{tagFactory_, connection_, yield, errorHandler_.AsStdFunction()};
     }
 
 protected:
@@ -124,26 +117,15 @@ TEST_F(NgSubscriptionContextTests, SendFailed)
 TEST_F(NgSubscriptionContextTests, SendTooManySubscriptions)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto subscriptionContext = makeSubscriptionContext(yield, 1);
+        auto subscriptionContext = makeSubscriptionContext(yield);
         auto const message = std::make_shared<std::string>("message1");
 
-        EXPECT_CALL(connection_, sendShared)
-            .WillOnce(
-                [&message](
-                    std::shared_ptr<std::string> sendingMessage,
-                    boost::asio::yield_context innerYield
-                ) -> std::expected<void, web::ng::Error> {
-                    boost::asio::post(
-                        innerYield
-                    );  // simulate send is slow by switching to another coroutine
-                    EXPECT_EQ(sendingMessage, message);
-                    return {};
-                }
-            );
+        EXPECT_CALL(connection_, sendShared).WillOnce([](auto&&, auto&&) {
+            return std::unexpected{boost::system::error_code{boost::asio::error::timed_out}};
+        });
+        EXPECT_CALL(errorHandler_, Call).WillOnce(testing::Return(true));
         EXPECT_CALL(connection_, close);
 
-        subscriptionContext.send(message);
-        subscriptionContext.send(message);
         subscriptionContext.send(message);
         subscriptionContext.disconnect(yield);
     });

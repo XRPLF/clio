@@ -26,6 +26,7 @@
 #include <boost/beast/websocket.hpp>
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
@@ -43,6 +44,7 @@ public:
     virtual std::expected<ConnectionPtr, Error>
     upgrade(
         util::TagDecoratorFactory const& tagDecoratorFactory,
+        size_t maxSendingQueueSize,
         boost::asio::yield_context yield
     ) = 0;
 
@@ -71,15 +73,19 @@ public:
         boost::asio::ip::tcp::socket socket,
         std::string ip,
         boost::beast::flat_buffer buffer,
-        util::TagDecoratorFactory const& tagDecoratorFactory
+        util::TagDecoratorFactory const& tagDecoratorFactory,
+        size_t maxSendingQueueSize
     )
         requires IsTcpStream<StreamType>
         : UpgradableConnection(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_{std::move(socket)}
-        , sendingQueue_([this](MessageType const& message, auto&& yield) {
-            boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
-            boost::beast::http::async_write(stream_, message, yield);
-        })
+        , sendingQueue_(
+              [this](MessageType const& message, auto&& yield) {
+                  boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
+                  boost::beast::http::async_write(stream_, message, yield);
+              },
+              maxSendingQueueSize
+          )
     {
     }
 
@@ -88,15 +94,19 @@ public:
         std::string ip,
         boost::beast::flat_buffer buffer,
         boost::asio::ssl::context& sslCtx,
-        util::TagDecoratorFactory const& tagDecoratorFactory
+        util::TagDecoratorFactory const& tagDecoratorFactory,
+        size_t maxSendingQueueSize
     )
         requires IsSslTcpStream<StreamType>
         : UpgradableConnection(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_{std::move(socket), sslCtx}
-        , sendingQueue_([this](MessageType const& message, auto&& yield) {
-            boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
-            boost::beast::http::async_write(stream_, message, yield);
-        })
+        , sendingQueue_(
+              [this](MessageType const& message, auto&& yield) {
+                  boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
+                  boost::beast::http::async_write(stream_, message, yield);
+              },
+              maxSendingQueueSize
+          )
     {
     }
 
@@ -202,6 +212,7 @@ public:
     std::expected<ConnectionPtr, Error>
     upgrade(
         util::TagDecoratorFactory const& tagDecoratorFactory,
+        size_t maxSendingQueueSize,
         boost::asio::yield_context yield
     ) override
     {
@@ -213,6 +224,7 @@ public:
             std::move(buffer_),
             std::move(*request_),  // NOLINT(bugprone-unchecked-optional-access)
             tagDecoratorFactory,
+            maxSendingQueueSize,
             yield
         );
     }

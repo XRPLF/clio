@@ -18,9 +18,13 @@
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Asset.h>
 #include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/MPTIssue.h>
+#include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/UintTypes.h>
 
@@ -148,7 +152,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'currency' missing"
+            .expectedErrorMessage = "Missing field 'taker_pays.currency'."
         },
         ParameterTestBundle{
             .testName = "TakerGetsMissingCurrency",
@@ -159,7 +163,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'currency' missing"
+            .expectedErrorMessage = "Missing field 'taker_gets.currency'."
         },
         ParameterTestBundle{
             .testName = "TakerGetsWrongCurrency",
@@ -190,6 +194,8 @@ generateParameterBookOffersTestBundles()
             .expectedErrorMessage = "Source currency is malformed."
         },
         ParameterTestBundle{
+            // A present-but-non-string currency is reported by validateTakerJSON as an
+            // expectedFieldError ('<field>.currency', not string) before the per-field validators.
             .testName = "TakerGetsCurrencyNotString",
             .testJson = R"JSON({
                 "taker_gets": {
@@ -200,8 +206,8 @@ generateParameterBookOffersTestBundles()
                     "currency": "XRP"
                 }
             })JSON",
-            .expectedError = "dstAmtMalformed",
-            .expectedErrorMessage = "Destination amount/currency/issuer is malformed."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'taker_gets.currency', not string."
         },
         ParameterTestBundle{
             .testName = "TakerPaysCurrencyNotString",
@@ -214,8 +220,8 @@ generateParameterBookOffersTestBundles()
                     "currency": "XRP"
                 }
             })JSON",
-            .expectedError = "srcCurMalformed",
-            .expectedErrorMessage = "Source currency is malformed."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'taker_pays.currency', not string."
         },
         ParameterTestBundle{
             .testName = "TakerGetsWrongIssuer",
@@ -482,7 +488,132 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "badMarket"
+            .expectedErrorMessage = "No such market."
+        },
+        ParameterTestBundle{
+            .testName = "TakerGetsMptIdAndCurrency",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "currency": "USD",
+                    "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405DBADD"
+                },
+                "taker_pays": {
+                    "currency": "XRP"
+                }
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'taker_gets'."
+        },
+        ParameterTestBundle{
+            .testName = "TakerPaysMptIdAndCurrency",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "currency": "XRP"
+                },
+                "taker_pays": {
+                    "currency": "USD",
+                    "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405DBADD"
+                }
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'taker_pays'."
+        },
+        ParameterTestBundle{
+            .testName = "TakerGetsMptIdAndIssuer",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405DBADD",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                },
+                "taker_pays": {
+                    "currency": "XRP"
+                }
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'taker_gets'."
+        },
+        ParameterTestBundle{
+            .testName = "TakerPaysMptIdAndIssuer",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "currency": "XRP"
+                },
+                "taker_pays": {
+                    "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405DBADD",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                }
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'taker_pays'."
+        },
+        ParameterTestBundle{
+            .testName = "TakerGetsMalformedMptId",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "mpt_issuance_id": "NOTAHEX"
+                },
+                "taker_pays": {
+                    "currency": "XRP"
+                }
+            })JSON",
+            .expectedError = "dstAmtMalformed",
+            .expectedErrorMessage = "Destination amount/currency/issuer is malformed."
+        },
+        ParameterTestBundle{
+            .testName = "TakerPaysMalformedMptId",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "currency": "XRP"
+                },
+                "taker_pays": {
+                    "mpt_issuance_id": "NOTAHEX"
+                }
+            })JSON",
+            .expectedError = "srcCurMalformed",
+            .expectedErrorMessage = "Source currency is malformed."
+        },
+        ParameterTestBundle{
+            .testName = "MPTBadMarket",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405DBADD"
+                },
+                "taker_pays": {
+                    "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405DBADD"
+                }
+            })JSON",
+            .expectedError = "badMarket",
+            .expectedErrorMessage = "No such market."
+        },
+        // The "account one" issuer (rrrrrrrrrrrrrrrrrrrrBZbvji == xrpl::noAccount()) is rejected,
+        // mirroring rippled's parseTakerIssuerJSON "bad issuer account one" check.
+        ParameterTestBundle{
+            .testName = "TakerGetsIssuerAccountOne",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "currency": "USD",
+                    "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji"
+                },
+                "taker_pays": {
+                    "currency": "XRP"
+                }
+            })JSON",
+            .expectedError = "dstIsrMalformed",
+            .expectedErrorMessage = "Destination issuer is malformed."
+        },
+        ParameterTestBundle{
+            .testName = "TakerPaysIssuerAccountOne",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "currency": "XRP"
+                },
+                "taker_pays": {
+                    "currency": "USD",
+                    "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji"
+                }
+            })JSON",
+            .expectedError = "srcIsrMalformed",
+            .expectedErrorMessage = "Source issuer is malformed."
         }
     };
 }
@@ -1720,5 +1851,258 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
             output.result.value().as_object().at("offers").as_array().size(),
             BookOffersHandler::kLimitMax
         );
+    });
+}
+
+// Standalone MPT test: verifies book_offers handler works with MPT taker_gets and empty book
+TEST_F(RPCBookOffersHandlerTest, MPTGetsEmptyBook)
+{
+    constexpr auto kMptIssuanceId = "000004C463C52827307480341125DA0577DEFC38405DBADD";
+    auto const seq = 300;
+
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, seq);
+    ON_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
+
+    // Compute MPT book base
+    xrpl::MPTID mptid;
+    [[maybe_unused]] auto const parsed = mptid.parseHex(kMptIssuanceId);
+    xrpl::MPTIssue const mptIssue{mptid};
+    xrpl::Asset const mptAsset{mptIssue};
+    xrpl::Asset const xrpAsset{xrpl::xrpIssue()};
+    auto const mptBook = rpc::parseBook(xrpAsset, mptAsset, std::nullopt).value();
+    auto const mptBookBase = getBookBase(mptBook);
+
+    // Return nullopt from successor → empty book
+    EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(1);
+    ON_CALL(*backend_, doFetchSuccessorKey(mptBookBase, seq, _))
+        .WillByDefault(Return(std::optional<xrpl::uint256>{}));
+
+    // Global-freeze and transfer-rate both look up the issuer's account (book.out.getIssuer()),
+    // matching rippled's getBookPage; the two lookups hit the same issuer-account key. The XRP
+    // side (taker_pays) returns immediately without a backend call.
+    auto const mptIssuerAccountKey = xrpl::keylet::account(mptIssue.getIssuer()).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    ON_CALL(*backend_, doFetchLedgerObject(mptIssuerAccountKey, seq, _))
+        .WillByDefault(Return(std::optional<xrpl::Blob>{}));
+
+    // No offers in the book → doFetchLedgerObjects is NOT called
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(0);
+
+    auto const kInput = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "taker_gets": {{
+                    "mpt_issuance_id": "{}"
+                }},
+                "taker_pays": {{
+                    "currency": "XRP"
+                }}
+            }})JSON",
+            kMptIssuanceId
+        )
+    );
+
+    auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const output = handler.process(kInput, Context{.yield = yield});
+        ASSERT_TRUE(output);
+        auto const& result = output.result.value().as_object();
+        EXPECT_EQ(result.at("ledger_hash").as_string(), kLedgerHash);
+        EXPECT_EQ(result.at("ledger_index").to_number<uint32_t>(), static_cast<uint32_t>(seq));
+        EXPECT_TRUE(result.at("offers").as_array().empty());
+    });
+}
+
+// Standalone MPT test: an offer selling MPT (taker_gets) for XRP (taker_pays) where the
+// offer owner holds an MPToken balance. Exercises the MPT funding path in postProcessOrderBook:
+// accountHoldsMPT reads the owner's sfMPTAmount and the multiply uses saTakerPays.asset().
+// Global-freeze and transfer-rate follow rippled and look up the issuer's account (absent here,
+// so no freeze and a parity rate).
+TEST_F(RPCBookOffersHandlerTest, MPTGetsFundedOffer)
+{
+    constexpr auto kMptIssuanceId = "000004C463C52827307480341125DA0577DEFC38405DBADD";
+    constexpr auto kMptBookDir = "0000000000000000000000000000000000000000000000005C09B7E04C9A0000";
+    auto const seq = 300;
+    auto const owner = getAccountIdWithString(kAccount2);
+
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, seq);
+    ON_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
+
+    xrpl::MPTID mptid;
+    [[maybe_unused]] auto const parsed = mptid.parseHex(kMptIssuanceId);
+    xrpl::MPTIssue const mptIssue{mptid};
+    xrpl::Asset const mptAsset{mptIssue};
+    xrpl::Asset const xrpAsset{xrpl::xrpIssue()};
+    auto const mptBook = rpc::parseBook(xrpAsset, mptAsset, std::nullopt).value();
+    auto const mptBookBase = getBookBase(mptBook);
+
+    // Build an offer: TakerGets = 10 MPT, TakerPays = 20 XRP, owned by kAccount2.
+    xrpl::STObject offer(xrpl::sfLedgerEntry);
+    offer.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltOFFER);
+    offer.setAccountID(xrpl::sfAccount, owner);
+    offer.setFieldU32(xrpl::sfSequence, 0);
+    offer.setFieldU32(xrpl::sfFlags, 0);
+    offer.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(mptIssue, 10));
+    offer.setFieldAmount(xrpl::sfTakerPays, xrpl::STAmount(20));
+    offer.setFieldH256(xrpl::sfBookDirectory, xrpl::uint256{kMptBookDir});
+    offer.setFieldU64(xrpl::sfBookNode, 0);
+    offer.setFieldU64(xrpl::sfOwnerNode, 0);
+    offer.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    offer.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
+
+    // Successor walk yields the book dir, then ends.
+    EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(2);
+    ON_CALL(*backend_, doFetchSuccessorKey(mptBookBase, seq, _))
+        .WillByDefault(Return(xrpl::uint256{kMptBookDir}));
+    ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kMptBookDir}, seq, _))
+        .WillByDefault(Return(std::optional<xrpl::uint256>{}));
+
+    auto const mptIssuanceKey = xrpl::keylet::mptokenIssuance(mptid).key;
+    auto const mptokenKey = xrpl::keylet::mptoken(mptid, owner).key;
+
+    // MPTIssuance object (no transfer fee, not locked) - used for global freeze + transfer rate.
+    auto const mptIssuanceObject = createMptIssuanceObject(kAccount, 2).getSerializer().peekData();
+    // Owner holds 7 MPT (less than the 10 the offer sells -> partially funded).
+    auto const mptokenObject = createMpTokenObject(kAccount2, mptid, 7).getSerializer().peekData();
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(testing::AtLeast(1));
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kMptBookDir}, seq, _))
+        .WillByDefault(Return(
+            createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1).getSerializer().peekData()
+        ));
+    ON_CALL(*backend_, doFetchLedgerObject(mptIssuanceKey, seq, _))
+        .WillByDefault(Return(mptIssuanceObject));
+    ON_CALL(*backend_, doFetchLedgerObject(mptokenKey, seq, _))
+        .WillByDefault(Return(mptokenObject));
+
+    std::vector<Blob> const bbs{offer.getSerializer().peekData()};
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+
+    auto const kInput = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "taker_gets": {{
+                    "mpt_issuance_id": "{}"
+                }},
+                "taker_pays": {{
+                    "currency": "XRP"
+                }}
+            }})JSON",
+            kMptIssuanceId
+        )
+    );
+
+    auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const output = handler.process(kInput, Context{.yield = yield});
+        ASSERT_TRUE(output);
+        auto const& result = output.result.value().as_object();
+        auto const& offers = result.at("offers").as_array();
+        ASSERT_EQ(offers.size(), 1u);
+        auto const& offerJson = offers.at(0).as_object();
+        // Owner holds 7 MPT -> owner_funds reflects the MPToken balance.
+        EXPECT_EQ(offerJson.at("owner_funds").as_string(), "7");
+        // Offer sells 10 MPT but owner only has 7 -> taker_gets_funded is capped at 7.
+        ASSERT_TRUE(offerJson.contains("taker_gets_funded"));
+        EXPECT_EQ(offerJson.at("taker_gets_funded").as_object().at("value").as_string(), "7");
+    });
+}
+
+// Standalone MPT test: an offer selling MPT whose issuance requires authorization, owned by a
+// holder whose MPToken is NOT authorized. Mirrors rippled's getBookPage, which calls accountHolds
+// with AuthHandling::ZeroIfUnauthorized: the unauthorized holder is treated as unfunded even though
+// they carry a positive MPToken balance.
+TEST_F(RPCBookOffersHandlerTest, MPTGetsUnauthorizedOfferUnfunded)
+{
+    constexpr auto kMptIssuanceId = "000004C463C52827307480341125DA0577DEFC38405DBADD";
+    constexpr auto kMptBookDir = "0000000000000000000000000000000000000000000000005C09B7E04C9A0000";
+    auto const seq = 300;
+    auto const owner = getAccountIdWithString(kAccount2);
+
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, seq);
+    ON_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
+
+    xrpl::MPTID mptid;
+    [[maybe_unused]] auto const parsed = mptid.parseHex(kMptIssuanceId);
+    xrpl::MPTIssue const mptIssue{mptid};
+    xrpl::Asset const mptAsset{mptIssue};
+    xrpl::Asset const xrpAsset{xrpl::xrpIssue()};
+    auto const mptBook = rpc::parseBook(xrpAsset, mptAsset, std::nullopt).value();
+    auto const mptBookBase = getBookBase(mptBook);
+
+    // Offer: TakerGets = 10 MPT, TakerPays = 20 XRP, owned by kAccount2.
+    xrpl::STObject offer(xrpl::sfLedgerEntry);
+    offer.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltOFFER);
+    offer.setAccountID(xrpl::sfAccount, owner);
+    offer.setFieldU32(xrpl::sfSequence, 0);
+    offer.setFieldU32(xrpl::sfFlags, 0);
+    offer.setFieldAmount(xrpl::sfTakerGets, xrpl::STAmount(mptIssue, 10));
+    offer.setFieldAmount(xrpl::sfTakerPays, xrpl::STAmount(20));
+    offer.setFieldH256(xrpl::sfBookDirectory, xrpl::uint256{kMptBookDir});
+    offer.setFieldU64(xrpl::sfBookNode, 0);
+    offer.setFieldU64(xrpl::sfOwnerNode, 0);
+    offer.setFieldH256(xrpl::sfPreviousTxnID, xrpl::uint256{});
+    offer.setFieldU32(xrpl::sfPreviousTxnLgrSeq, 0);
+
+    EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(2);
+    ON_CALL(*backend_, doFetchSuccessorKey(mptBookBase, seq, _))
+        .WillByDefault(Return(xrpl::uint256{kMptBookDir}));
+    ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kMptBookDir}, seq, _))
+        .WillByDefault(Return(std::optional<xrpl::uint256>{}));
+
+    auto const mptIssuanceKey = xrpl::keylet::mptokenIssuance(mptid).key;
+    auto const mptokenKey = xrpl::keylet::mptoken(mptid, owner).key;
+
+    // Issuance requires authorization; the owner's token holds 7 MPT but is NOT authorized.
+    auto const mptIssuanceObject =
+        createMptIssuanceObject(kAccount, 2, std::nullopt, xrpl::lsfMPTRequireAuth)
+            .getSerializer()
+            .peekData();
+    auto const mptokenObject = createMpTokenObject(kAccount2, mptid, 7).getSerializer().peekData();
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(testing::AtLeast(1));
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kMptBookDir}, seq, _))
+        .WillByDefault(Return(
+            createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1).getSerializer().peekData()
+        ));
+    ON_CALL(*backend_, doFetchLedgerObject(mptIssuanceKey, seq, _))
+        .WillByDefault(Return(mptIssuanceObject));
+    ON_CALL(*backend_, doFetchLedgerObject(mptokenKey, seq, _))
+        .WillByDefault(Return(mptokenObject));
+
+    std::vector<Blob> const bbs{offer.getSerializer().peekData()};
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+
+    auto const kInput = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "taker_gets": {{
+                    "mpt_issuance_id": "{}"
+                }},
+                "taker_pays": {{
+                    "currency": "XRP"
+                }}
+            }})JSON",
+            kMptIssuanceId
+        )
+    );
+
+    auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const output = handler.process(kInput, Context{.yield = yield});
+        ASSERT_TRUE(output);
+        auto const& result = output.result.value().as_object();
+        auto const& offers = result.at("offers").as_array();
+        ASSERT_EQ(offers.size(), 1u);
+        auto const& offerJson = offers.at(0).as_object();
+        // Unauthorized holder -> treated as unfunded.
+        EXPECT_EQ(offerJson.at("owner_funds").as_string(), "0");
+        ASSERT_TRUE(offerJson.contains("taker_gets_funded"));
+        EXPECT_EQ(offerJson.at("taker_gets_funded").as_object().at("value").as_string(), "0");
     });
 }

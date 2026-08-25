@@ -11,6 +11,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
@@ -38,10 +39,12 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
 {
     MPTokenIssuanceResponse issuance;
 
-    issuance.mpTokenIssuanceId = xrpl::strHex(sle.key());
-    issuance.issuer = xrpl::to_string(account);
-    issuance.sequence = sle.getFieldU32(xrpl::sfSequence);
+    auto const sequence = sle.getFieldU32(xrpl::sfSequence);
     auto const flags = sle.getFieldU32(xrpl::sfFlags);
+
+    issuance.mpTokenIssuanceId = xrpl::to_string(xrpl::makeMptID(sequence, account));
+    issuance.issuer = xrpl::to_string(account);
+    issuance.sequence = sequence;
 
     auto const setFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
         if ((flags & mask) != 0u)

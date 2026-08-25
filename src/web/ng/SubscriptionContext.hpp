@@ -12,11 +12,9 @@
 #include <boost/signals2/variadic_signal.hpp>
 
 #include <atomic>
-#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <string>
 
 namespace web::ng {
@@ -36,7 +34,6 @@ public:
 
 private:
     std::reference_wrapper<impl::WsConnectionBase> connection_;
-    std::optional<size_t> maxSendQueueSize_;
     util::CoroutineGroup tasksGroup_;
     boost::asio::yield_context yield_;
     ErrorHandler errorHandler_;
@@ -59,15 +56,12 @@ public:
      *
      * @param factory The tag decorator factory to use to init taggable.
      * @param connection The connection for which the context is created.
-     * @param maxSendQueueSize The maximum size of the send queue. If the queue is full, the
-     * connection will be closed.
      * @param yield The yield context to spawn sending coroutines.
      * @param errorHandler The error handler.
      */
     SubscriptionContext(
         util::TagDecoratorFactory const& factory,
         impl::WsConnectionBase& connection,
-        std::optional<size_t> maxSendQueueSize,
         boost::asio::yield_context yield,
         ErrorHandler errorHandler
     );

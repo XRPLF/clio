@@ -46,7 +46,6 @@ private:
     std::optional<size_t> maxParallelRequests_;
 
     std::reference_wrapper<util::TagDecoratorFactory> tagFactory_;
-    std::optional<size_t> maxSubscriptionSendQueueSize_;
 
     ProxyIpResolver proxyIpResolver_;
 
@@ -73,7 +72,6 @@ public:
         ProcessingPolicy processingPolicy,
         std::optional<size_t> maxParallelRequests,
         util::TagDecoratorFactory& tagFactory,
-        std::optional<size_t> maxSubscriptionSendQueueSize,
         ProxyIpResolver proxyIpResolver,
         OnDisconnectHook onDisconnectHook,
         OnIpChangeHook onIpChangeHook

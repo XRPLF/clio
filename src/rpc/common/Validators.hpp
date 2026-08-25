@@ -581,6 +581,20 @@ struct CustomValidators final {
     static CustomValidator currencyIssueValidator;
 
     /**
+     * @brief Validates a book taker object (`taker_gets`/`taker_pays`).
+     *
+     * The object must specify an asset as either a `currency` (optionally with an `issuer`) or an
+     * `mpt_issuance_id`, but not both, and `mpt_issuance_id` must not be combined with `issuer`.
+     * Mirrors `xrpld`'s `validateTakerJSON`: a missing asset yields `Missing field
+     * '<field>.currency'.`, conflicting fields yield `Invalid field '<field>'.`, and a present but
+     * non-string `currency`/`mpt_issuance_id` yields `Invalid field '<field>.currency', not
+     * string.` (all `invalidParams`). The field name is taken from the validated key.
+     *
+     * Used by book_offers.
+     */
+    static CustomValidator bookTakerValidator;
+
+    /**
      * @brief Provides a validator for validating authorized_credentials json array.
      *
      * Used by deposit_preauth.
@@ -590,9 +604,17 @@ struct CustomValidators final {
     /**
      * @brief Provides a validator for validating credential_type.
      *
-     * Used by AuthorizeCredentialValidator in deposit_preauth.
+     * Used by AuthorizeCredentialValidator in deposit_preauth and by the credential
+     * object lookup in ledger_entry.
      */
     static CustomValidator credentialTypeValidator;
+
+    /**
+     * @brief Provides a validator for validating filtering by delegation.
+     *
+     * Used by account_tx if user wants to filter by delegation.
+     */
+    static CustomValidator delegateValidator;
 };
 
 /**

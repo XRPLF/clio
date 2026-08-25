@@ -197,6 +197,52 @@ TEST_F(NgRpcServerHandlerTest, JsonParseFailed)
     });
 }
 
+TEST_F(NgRpcServerHandlerTest, JsonParseFailedAndDosguardLimitReached)
+{
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const request = makeHttpRequest("not a json");
+
+        EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
+        EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
+            EXPECT_CALL(*rpcEngine_, notifyBadSyntax);
+            fn(yield);
+            return true;
+        });
+        EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(false));
+
+        auto response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
+        auto const responseHttp = std::move(response).intoHttpResponse();
+
+        EXPECT_EQ(responseHttp.result(), http::status::bad_request);
+        EXPECT_EQ(responseHttp.body(), "Unable to parse JSON from the request");
+    });
+}
+
+TEST_F(NgRpcServerHandlerTest, WsJsonParseFailedAndDosguardLimitReached)
+{
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const request = makeWsRequest("not a json");
+
+        EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
+        EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
+            EXPECT_CALL(*rpcEngine_, notifyBadSyntax);
+            fn(yield);
+            return true;
+        });
+        EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(false));
+
+        auto const response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
+        auto const responseJson = boost::json::parse(response.message()).as_object();
+
+        EXPECT_EQ(responseJson.at("error").as_string(), "badSyntax");
+        EXPECT_EQ(responseJson.at("warning").as_string(), "load");
+        EXPECT_EQ(
+            responseJson.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
+            static_cast<int64_t>(rpc::WarningCode::WarnRpcRateLimit)
+        );
+    });
+}
+
 TEST_F(NgRpcServerHandlerTest, DosguardRejectedParsedRequest)
 {
     runSpawn([&](boost::asio::yield_context yield) {

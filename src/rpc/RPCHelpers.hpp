@@ -9,7 +9,6 @@
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
-#include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/Taggable.hpp"
@@ -27,6 +26,7 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/json/json_value.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Asset.h>
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/Fees.h>
 #include <xrpl/protocol/Indexes.h>
@@ -576,6 +576,37 @@ transferRate(
 );
 
 /**
+ * @brief Get the amount that an account holds in MPT
+ *
+ * Mirrors `xrpld`'s `accountHolds(MPTIssue)` as used by `getBookPage`. For the issuer the
+ * spendable amount is the issuance capacity (`MaximumAmount - OutstandingAmount`). For a holder it
+ * is the token balance, returned as zero if the holder's token is unauthorized while the issuance
+ * requires authorization (xrpld's `AuthHandling::ZeroIfUnauthorized`), and, when @p zeroIfFrozen
+ * is set, zero if the issuance or the token is locked.
+ *
+ * @note xrpld also zeroes the balance when the holder is a frozen vault pseudo-account
+ * (`isVaultPseudoAccountFrozen`) and supports an amendment-gated StrongAuth variant; neither is
+ * modelled here.
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence
+ * @param account The account
+ * @param mptIssue The MPT issue
+ * @param zeroIfFrozen Whether to return zero if frozen
+ * @param yield The coroutine context
+ * @return The amount account holds
+ */
+xrpl::STAmount
+accountHoldsMPT(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    xrpl::AccountID const& account,
+    xrpl::MPTIssue const& mptIssue,
+    bool zeroIfFrozen,
+    boost::asio::yield_context yield
+);
+
+/**
  * @brief Get the XRP liquidity
  *
  * @param backend The backend to use
@@ -631,6 +662,21 @@ parseBook(
     xrpl::AccountID payIssuer,
     xrpl::Currency gets,
     xrpl::AccountID getIssuer,
+    std::optional<std::string> const& domain
+);
+
+/**
+ * @brief Parse the book from assets (supports both IOU and MPT)
+ *
+ * @param pays The asset to pay
+ * @param gets The asset to get
+ * @param domain The domain
+ * @return The book or an error status
+ */
+std::expected<xrpl::Book, Status>
+parseBook(
+    xrpl::Asset const& pays,
+    xrpl::Asset const& gets,
     std::optional<std::string> const& domain
 );
 
@@ -852,5 +898,23 @@ getDeliveredAmount(
     std::uint32_t ledgerSequence,
     uint32_t date
 );
+
+/**
+ * @brief Parse the delegate type from a JSON value
+ *
+ * @param delegateType The JSON value containing the delegate type string
+ * @return The parsed delegate type or std::nullopt if the input is invalid or not a string
+ */
+std::optional<DelegateFilter::Role>
+parseDelegateType(boost::json::value const& delegateType);
+
+/**
+ * @brief Parse a delegate filter object from JSON
+ *
+ * @param delegateObject The JSON object containing the delegate filter input from user
+ * @return The constructed DelegateFilter or std::nullopt if parsing fails
+ */
+std::optional<DelegateFilter>
+parseDelegateFilter(boost::json::object const& delegateObject);
 
 }  // namespace rpc

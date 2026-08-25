@@ -114,6 +114,7 @@ makeConnection(
     std::string ip,
     util::TagDecoratorFactory& tagDecoratorFactory,
     Server::OnConnectCheck onConnectCheck,
+    size_t maxSendingQueueSize,
     boost::asio::yield_context yield
 )
 {
@@ -130,7 +131,8 @@ makeConnection(
             std::move(ip),
             std::move(sslDetectionResult.buffer),
             *sslContext,
-            tagDecoratorFactory
+            tagDecoratorFactory,
+            maxSendingQueueSize
         );
         sslConnection->setTimeout(std::chrono::seconds{10});
         auto const expectedSuccess = sslConnection->sslHandshake(yield);
@@ -146,7 +148,8 @@ makeConnection(
             std::move(sslDetectionResult.socket),
             std::move(ip),
             std::move(sslDetectionResult.buffer),
-            tagDecoratorFactory
+            tagDecoratorFactory,
+            maxSendingQueueSize
         );
     }
 
@@ -163,6 +166,7 @@ std::expected<ConnectionPtr, std::string>
 tryUpgradeConnection(
     impl::UpgradableConnectionPtr connection,
     util::TagDecoratorFactory& tagDecoratorFactory,
+    size_t maxSendingQueueSize,
     boost::asio::yield_context yield
 )
 {
@@ -174,7 +178,8 @@ tryUpgradeConnection(
     }
 
     if (*expectedIsUpgrade) {
-        auto expectedUpgradedConnection = connection->upgrade(tagDecoratorFactory, yield);
+        auto expectedUpgradedConnection =
+            connection->upgrade(tagDecoratorFactory, maxSendingQueueSize, yield);
         if (expectedUpgradedConnection.has_value())
             return std::move(expectedUpgradedConnection).value();
 
@@ -196,13 +201,14 @@ Server::Server(
     std::optional<size_t> parallelRequestLimit,
     util::TagDecoratorFactory tagDecoratorFactory,
     ProxyIpResolver proxyIpResolver,
-    std::optional<size_t> maxSubscriptionSendQueueSize,
+    size_t maxSubscriptionSendQueueSize,
     Hooks hooks
 )
     : ctx_{ctx}
     , sslContext_{std::move(sslContext)}
     , tagDecoratorFactory_{tagDecoratorFactory}
-    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize, std::move(proxyIpResolver), std::move(hooks.onDisconnectHook), std::move(hooks.onIpChangeHook)}
+    , maxSubscriptionSendQueueSize_{maxSubscriptionSendQueueSize}
+    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, std::move(proxyIpResolver), std::move(hooks.onDisconnectHook), std::move(hooks.onIpChangeHook)}
     , endpoint_{std::move(endpoint)}
     , onConnectCheck_{std::move(hooks.onConnectCheck)}
 {
@@ -296,6 +302,7 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         std::move(ip).value(),
         tagDecoratorFactory_,
         onConnectCheck_,
+        maxSubscriptionSendQueueSize_,
         yield
     );
     if (not connectionExpected.has_value()) {
@@ -318,8 +325,12 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         return;
     }
 
-    auto connection =
-        tryUpgradeConnection(std::move(connectionExpected).value(), tagDecoratorFactory_, yield);
+    auto connection = tryUpgradeConnection(
+        std::move(connectionExpected).value(),
+        tagDecoratorFactory_,
+        maxSubscriptionSendQueueSize_,
+        yield
+    );
     if (not connection.has_value()) {
         LOG(log_.info()) << connection.error();
         return;

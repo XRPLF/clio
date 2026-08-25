@@ -56,7 +56,6 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
               policy,
               maxParallelConnections,
               tagFactory,
-              std::nullopt,
               proxyIpResolver,
               onDisconnectMock.AsStdFunction(),
               onIpChangeMock.AsStdFunction()

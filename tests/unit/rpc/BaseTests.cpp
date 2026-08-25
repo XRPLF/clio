@@ -714,6 +714,92 @@ TEST_F(RPCBaseTest, IssuerValidator)
     ASSERT_FALSE(err);
 }
 
+TEST_F(RPCBaseTest, BookTakerValidator)
+{
+    auto const spec = RpcSpec{{"taker_gets", CustomValidators::bookTakerValidator}};
+
+    // An asset specified by currency, optionally with an issuer, is valid.
+    auto passingInput = boost::json::parse(R"JSON({ "taker_gets": { "currency": "XRP" }})JSON");
+    EXPECT_TRUE(spec.process(passingInput));
+
+    passingInput = boost::json::parse(
+        R"JSON({ "taker_gets": { "currency": "USD", "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" }})JSON"
+    );
+    EXPECT_TRUE(spec.process(passingInput));
+
+    // An asset specified by mpt_issuance_id alone is valid.
+    passingInput = boost::json::parse(
+        R"JSON({ "taker_gets": { "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405DBADD" }})JSON"
+    );
+    EXPECT_TRUE(spec.process(passingInput));
+
+    // Non-object values are deferred to the type validator; the field being absent is deferred to
+    // the required validator. Both pass here.
+    passingInput = boost::json::parse(R"JSON({ "taker_gets": "not_an_object" })JSON");
+    EXPECT_TRUE(spec.process(passingInput));
+
+    passingInput = boost::json::parse(R"JSON({ })JSON");
+    EXPECT_TRUE(spec.process(passingInput));
+
+    // Neither currency nor mpt_issuance_id -> invalidParams, reporting the currency field.
+    auto failingInput = boost::json::parse(R"JSON({ "taker_gets": { }})JSON");
+    auto err = spec.process(failingInput);
+    ASSERT_FALSE(err);
+    EXPECT_TRUE(err.error().code == CombinedError{RippledError::RpcInvalidParams});
+    EXPECT_EQ(err.error().message, "Missing field 'taker_gets.currency'.");
+
+    // currency and mpt_issuance_id are mutually exclusive.
+    failingInput = boost::json::parse(
+        R"JSON({ "taker_gets": { "currency": "USD", "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405DBADD" }})JSON"
+    );
+    err = spec.process(failingInput);
+    ASSERT_FALSE(err);
+    EXPECT_TRUE(err.error().code == CombinedError{RippledError::RpcInvalidParams});
+    EXPECT_EQ(err.error().message, "Invalid field 'taker_gets'.");
+
+    // mpt_issuance_id must not be combined with an issuer.
+    failingInput = boost::json::parse(
+        R"JSON({ "taker_gets": { "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405DBADD", "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" }})JSON"
+    );
+    err = spec.process(failingInput);
+    ASSERT_FALSE(err);
+    EXPECT_TRUE(err.error().code == CombinedError{RippledError::RpcInvalidParams});
+    EXPECT_EQ(err.error().message, "Invalid field 'taker_gets'.");
+
+    // A present-but-non-string currency -> expectedFieldError against '<key>.currency'.
+    failingInput = boost::json::parse(R"JSON({ "taker_gets": { "currency": 123 }})JSON");
+    err = spec.process(failingInput);
+    ASSERT_FALSE(err);
+    EXPECT_TRUE(err.error().code == CombinedError{RippledError::RpcInvalidParams});
+    EXPECT_EQ(err.error().message, "Invalid field 'taker_gets.currency', not string.");
+
+    // A present-but-non-string mpt_issuance_id is reported the same way (against '.currency',
+    // matching xrpld's validateTakerJSON).
+    failingInput = boost::json::parse(R"JSON({ "taker_gets": { "mpt_issuance_id": 123 }})JSON");
+    err = spec.process(failingInput);
+    ASSERT_FALSE(err);
+    EXPECT_TRUE(err.error().code == CombinedError{RippledError::RpcInvalidParams});
+    EXPECT_EQ(err.error().message, "Invalid field 'taker_gets.currency', not string.");
+}
+
+TEST_F(RPCBaseTest, BookTakerValidatorUsesFieldKey)
+{
+    // The error messages must reflect the validated field's key (taker_pays vs taker_gets).
+    auto const spec = RpcSpec{{"taker_pays", CustomValidators::bookTakerValidator}};
+
+    auto failingInput = boost::json::parse(R"JSON({ "taker_pays": { }})JSON");
+    auto err = spec.process(failingInput);
+    ASSERT_FALSE(err);
+    EXPECT_EQ(err.error().message, "Missing field 'taker_pays.currency'.");
+
+    failingInput = boost::json::parse(
+        R"JSON({ "taker_pays": { "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405DBADD", "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" }})JSON"
+    );
+    err = spec.process(failingInput);
+    ASSERT_FALSE(err);
+    EXPECT_EQ(err.error().message, "Invalid field 'taker_pays'.");
+}
+
 TEST_F(RPCBaseTest, SubscribeStreamValidator)
 {
     auto const spec = RpcSpec{{"streams", CustomValidators::subscribeStreamValidator}};
