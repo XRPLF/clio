@@ -861,10 +861,10 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
 {
     // only delegate agent is valid
     {
-        auto const json = boost::json::parse(R"JSON({
+        auto const jsonStr = R"JSON({
             "delegate_filter": "authorizer"
-        })JSON")
-                              .as_object();
+        })JSON";
+        auto const json = boost::json::parse(jsonStr).as_object();
 
         auto const result = parseDelegateFilter(json);
         ASSERT_TRUE(result.has_value());
@@ -911,29 +911,29 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
 
     // "delegate_filter" is not a string (it's an integer)
     {
-        auto const json = boost::json::parse(R"JSON({
+        auto const jsonStr = R"JSON({
             "delegate_filter": 123
-        })JSON")
-                              .as_object();
+        })JSON";
+        auto const json = boost::json::parse(jsonStr).as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
     }
 
     // "delegate_filter" is a string but invalid value
     {
-        auto const json = boost::json::parse(R"JSON({
+        auto const jsonStr = R"JSON({
             "delegate_filter": "random_string"
-        })JSON")
-                              .as_object();
+        })JSON";
+        auto const json = boost::json::parse(jsonStr).as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
     }
 
     // "counter_party" exists but is not a string (it's a number)
     {
-        auto const json = boost::json::parse(R"JSON({
+        auto const jsonStr = R"JSON({
             "delegate_filter": "authorizer",
             "counter_party": 9999
-        })JSON")
-                              .as_object();
+        })JSON";
+        auto const json = boost::json::parse(jsonStr).as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
     }
 }
