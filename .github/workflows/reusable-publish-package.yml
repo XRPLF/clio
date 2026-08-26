@@ -28,9 +28,8 @@ jobs:
   publish:
     name: Publish debian package
     runs-on: heavy
-    # Ships `publish_pkg.py`; bump with the tag in rippled's `linux.json`.
     container:
-      image: ghcr.io/xrplf/xrpld/packaging-debian:sha-45e4b88
+      image: ghcr.io/xrplf/xrpld/packaging-debian:sha-b6a8995
 
     permissions:
       contents: read
