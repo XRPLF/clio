@@ -20,8 +20,11 @@ jobs:
     outputs:
       channel: ${{ steps.release_info.outputs.channel }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - id: release_info
-        uses: XRPLF/actions/release-info@7f956517847fb9e0b56070f72e1280f4e7404a09
+        uses: XRPLF/actions/release-info@7cc0e4a8d9d0b838f92c48d312856b190341bbba
 
   build-and-test:
     name: Build and Test
