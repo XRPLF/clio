@@ -53,7 +53,7 @@ jobs:
           CHANNEL: ${{ inputs.channel }}
           NEXUS_USERNAME: ${{ secrets.nexus_username }}
           NEXUS_PASSWORD: ${{ secrets.nexus_password }}
-          DRY_RUN_OPTION: ${{ (github.repository == 'XRPLF/clio' && github.event_name != 'pull_request') && '' || '--dry-run' }}
+          DRY_RUN_OPTION: ${{ (github.event_name == 'pull_request' || github.repository != 'XRPLF/clio') && '--dry-run' || '' }}
         run: |
           publish_pkg.py \
               --channel "${CHANNEL}" \
