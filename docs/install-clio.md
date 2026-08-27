@@ -14,7 +14,7 @@ sudo apt -y install clio
 
 The package installs `/opt/clio/bin/clio_server` (symlinked into `/usr/bin`), a config at `/opt/clio/etc/config.json`, a log directory at `/var/log/clio`, and a systemd unit, all owned by the `clio` system user it creates.
 
-The unit is not enabled, as Clio needs a configured database and `xrpld` node before it can start. Edit the config — see [How to configure Clio and rippled](./configure-clio.md) — then:
+The unit is not enabled, as Clio needs a configured database and `xrpld` node before it can start. Edit the config — see [How to configure Clio and xrpld](./configure-clio.md) — then:
 
 ```bash
 sudo systemctl enable --now clio
