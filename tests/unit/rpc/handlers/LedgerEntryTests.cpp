@@ -2026,6 +2026,38 @@ generateTestValuesForParametersTest()
             .expectedErrorMessage = "Malformed request."
         },
         ParamTestCaseBundle{
+            .testName = "CredentialCredentialTypeNotHex",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "credential": {{
+                        "subject": "{}",
+                        "issuer": "{}",
+                        "credential_type": "hello world"
+                    }}
+                }})JSON",
+                kAccount,
+                kAccount2
+            ),
+            .expectedError = "malformedAuthorizedCredentials",
+            .expectedErrorMessage = "credential_type NotHexString"
+        },
+        ParamTestCaseBundle{
+            .testName = "CredentialCredentialTypeEmpty",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "credential": {{
+                        "subject": "{}",
+                        "issuer": "{}",
+                        "credential_type": ""
+                    }}
+                }})JSON",
+                kAccount,
+                kAccount2
+            ),
+            .expectedError = "malformedAuthorizedCredentials",
+            .expectedErrorMessage = "credential_type is empty"
+        },
+        ParamTestCaseBundle{
             .testName = "InvalidMPTokenAccount",
             .testJson = fmt::format(
                 R"JSON({{
