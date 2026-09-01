@@ -100,14 +100,14 @@ repos:
         files: \.(h|hpp)$
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: f4d7745e17a28aad7eed2f4874ca8d1568c11c4c # frozen: v22.1.8
+    rev: 34b241d706d24e4ccb69e38f9f0fa190b5f486ec # frozen: v23.1.0
     hooks:
       - id: clang-format
         args: [--style=file]
         types: [c++]
 
   - repo: https://github.com/BlankSpruce/gersemi-pre-commit
-    rev: b9d6d13dc9b753c5ff24ed5f8470671189c3fcf0 # frozen: 0.28.0
+    rev: c1c636fef559eeef0dae280afcd44420f6126e63 # frozen: 0.28.1
     hooks:
       - id: gersemi
 

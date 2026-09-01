@@ -156,7 +156,7 @@ tag_invoke(
                 {"disallowIncomingCheck", xrpl::lsfDisallowIncomingCheck},
                 {"disallowIncomingPayChan", xrpl::lsfDisallowIncomingPayChan},
                 {"disallowIncomingTrustline", xrpl::lsfDisallowIncomingTrustline},
-            };
+        };
         lsFlags.insert(lsFlags.end(), disallowIncomingFlags.begin(), disallowIncomingFlags.end());
     }
 
