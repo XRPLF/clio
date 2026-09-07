@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
+#include <concepts>
 #include <cstddef>
 #include <string_view>
 #include <type_traits>
@@ -13,6 +15,14 @@ namespace util {
  */
 template <typename T>
 concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_const_v<T>;
+
+/**
+ * @brief Specifies a clock that reports the current time as a system clock time point
+ */
+template <typename T>
+concept SomeSystemClock = requires {
+    { T::now() } -> std::same_as<std::chrono::system_clock::time_point>;
+};
 
 /**
  * @brief Checks that the list of given values contains no duplicates

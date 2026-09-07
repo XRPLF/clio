@@ -10,6 +10,7 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
+#include "util/Concepts.hpp"
 #include "util/build/Build.hpp"
 
 #include <boost/json/conversion.hpp>
@@ -42,8 +43,9 @@ namespace rpc {
  * @brief Contains common functionality for handling the `server_info` command
  *
  * @tparam CountersType The type of the counters
+ * @tparam ClockType Clock used for the output time and the ledger age
  */
-template <typename CountersType>
+template <typename CountersType, util::SomeSystemClock ClockType = std::chrono::system_clock>
 class BaseServerInfoHandler {
     static constexpr auto kBackendCountersKey = "backend_counters";
 
@@ -100,7 +102,7 @@ public:
         std::optional<AdminSection> adminSection = std::nullopt;
         std::string completeLedgers;
         uint32_t loadFactor = 1u;
-        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+        std::chrono::time_point<std::chrono::system_clock> time = ClockType::now();
         std::chrono::seconds uptime = {};
         std::string clioVersion = util::build::getClioVersionString();
         std::string xrplVersion = xrpl::BuildInfo::getVersionString();
@@ -189,8 +191,7 @@ public:
             return Error{Status{RippledError::RpcInternal}};
 
         auto output = Output{};
-        auto const sinceEpoch =
-            duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+        auto const sinceEpoch = duration_cast<seconds>(output.info.time.time_since_epoch()).count();
         auto const age = static_cast<int32_t>(sinceEpoch) -
             static_cast<int32_t>(lgrInfo->closeTime.time_since_epoch().count()) -
             static_cast<int32_t>(kRippleEpochStart);
