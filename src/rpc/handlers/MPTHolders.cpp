@@ -25,6 +25,7 @@
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/jss.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -46,9 +47,8 @@ namespace {
 boost::json::object
 mpTokenToJson(xrpl::uint192 const& mptID, data::Blob const& mpt)
 {
-    xrpl::STLedgerEntry const sle{
-        xrpl::SerialIter{mpt.data(), mpt.size()}, keylet::mptokenIssuance(mptID).key
-    };
+    xrpl::STLedgerEntry const sle{xrpl::SerialIter{mpt.data(), mpt.size()}, xrpl::uint256{}};
+    auto const mptokenKey = keylet::mptoken(mptID, sle[xrpl::sfAccount]).key;
     boost::json::object mptJson;
 
     mptJson[JS(account)] = toBase58(sle[xrpl::sfAccount]);
@@ -56,8 +56,7 @@ mpTokenToJson(xrpl::uint192 const& mptID, data::Blob const& mpt)
     mptJson[JS(mpt_amount)] = toBoostJson(
         xrpl::STUInt64{xrpl::sfMPTAmount, sle[xrpl::sfMPTAmount]}.getJson(JsonOptions::Values::None)
     );
-    mptJson[JS(mptoken_index)] =
-        xrpl::to_string(xrpl::keylet::mptoken(mptID, sle[xrpl::sfAccount]).key);
+    mptJson[JS(mptoken_index)] = xrpl::to_string(mptokenKey);
 
     if (sle.isFieldPresent(xrpl::sfLockedAmount)) {
         mptJson["locked_amount"] = toBoostJson(
@@ -105,6 +104,8 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
 {
     if (input.accounts && input.marker)
         return Error{Status{RippledError::RpcInvalidParams, "accountsWithMarker"}};
+    if (input.accounts && input.limit)
+        return Error{Status{RippledError::RpcInvalidParams, "accountsWithLimit"}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "MPTHolder's ledger range must be available");
@@ -134,18 +135,15 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
     output.limit = limit;
     output.ledgerIndex = lgrInfo.seq;
 
-    // Account-list filter: bounded lookup by key, so non-holders are dropped and no
-    // paging marker is produced.
+    // Account-list filter: bounded lookup by key. Duplicates are dropped in first-seen
+    // order, non-holders are omitted, and no paging marker is produced.
     if (input.accounts) {
         std::vector<xrpl::uint256> keys;
         keys.reserve(input.accounts->size());
-        for (auto const& account : *input.accounts) {
-            auto const accountID = util::parseBase58Wrapper<xrpl::AccountID>(account);
-            if (not accountID)
-                return Error{Status{RippledError::RpcInvalidParams, "accountsMalformed"}};
-
-            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            keys.push_back(xrpl::keylet::mptoken(mptID, *accountID).key);
+        for (auto const& accountID : *input.accounts) {
+            auto const key = xrpl::keylet::mptoken(mptID, accountID).key;
+            if (std::ranges::find(keys, key) == keys.end())
+                keys.push_back(key);
         }
 
         auto const mptObjects = sharedPtrBackend_->fetchLedgerObjects(keys, lgrInfo.seq, ctx.yield);
@@ -216,9 +214,16 @@ tag_invoke(boost::json::value_to_tag<MPTHoldersHandler::Input>, boost::json::val
         input.marker = boost::json::value_to<std::string>(jsonObject.at(JS(marker)));
 
     if (jsonObject.contains(JS(accounts))) {
+        auto const& accountsJson = jsonObject.at(JS(accounts)).as_array();
         auto& accounts = input.accounts.emplace();
-        for (auto const& account : jsonObject.at(JS(accounts)).as_array())
-            accounts.emplace_back(boost::json::value_to<std::string>(account));
+        accounts.reserve(accountsJson.size());
+        for (auto const& account : accountsJson) {
+            // Spec already requires each entry to be a valid base58 account.
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+            accounts.push_back(*util::parseBase58Wrapper<xrpl::AccountID>(
+                boost::json::value_to<std::string>(account)
+            ));
+        }
     }
 
     return input;

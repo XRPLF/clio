@@ -27,8 +27,13 @@
 namespace rpc {
 
 /**
- * @brief The mpt_holders command asks the Clio server for all holders of a particular
+ * @brief The mpt_holders command asks the Clio server for holders of a particular
  * MPTokenIssuance.
+ *
+ * When `accounts` is provided, those accounts are looked up directly by
+ * `keylet::mptoken` instead of scanning the holder index. Duplicate accounts are
+ * collapsed in first-seen order and non-holders are omitted. This filtered mode is
+ * not paginated, so `marker` and `limit` are rejected.
  */
 class MPTHoldersHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
@@ -60,7 +65,7 @@ public:
         std::optional<uint32_t> ledgerIndex;
         std::optional<std::string> marker;
         std::optional<uint32_t> limit;
-        std::optional<std::vector<std::string>> accounts;
+        std::optional<std::vector<xrpl::AccountID>> accounts;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -102,13 +107,18 @@ public:
                 }
 
                 for (auto const& account : accounts) {
-                    if (!account.is_string() ||
-                        !util::parseBase58Wrapper<xrpl::AccountID>(
+                    if (!account.is_string()) {
+                        return Error{Status{
+                            RippledError::RpcInvalidParams, std::string{key} + "'sItemNotString"
+                        }};
+                    }
+
+                    if (!util::parseBase58Wrapper<xrpl::AccountID>(
                             boost::json::value_to<std::string>(account)
                         )) {
-                        return Error{
-                            Status{RippledError::RpcInvalidParams, std::string{key} + "Malformed"}
-                        };
+                        return Error{Status{
+                            RippledError::RpcInvalidParams, std::string{key} + "'sItemMalformed"
+                        }};
                     }
                 }
 
