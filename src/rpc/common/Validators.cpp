@@ -116,7 +116,8 @@ CustomValidator CustomValidators::ledgerTypeValidator =
             }};
         }
 
-        auto const type = spec::ledgerEntryTypeFromStr(boost::json::value_to<std::string>(value));
+        auto const type =
+            rpc::spec::ledgerEntryTypeFromStr(boost::json::value_to<std::string>(value));
         if (type == xrpl::ltANY) {
             return Error{
                 Status{RippledError::RpcInvalidParams, fmt::format("Invalid field '{}'.", key)}
@@ -176,7 +177,7 @@ CustomValidator CustomValidators::accountTypeValidator =
         }
 
         auto const type =
-            spec::accountOwnedLedgerTypeFromStr(boost::json::value_to<std::string>(value));
+            rpc::spec::accountOwnedLedgerTypeFromStr(boost::json::value_to<std::string>(value));
         if (type == xrpl::ltANY) {
             return Error{
                 Status{RippledError::RpcInvalidParams, fmt::format("Invalid field '{}'.", key)}

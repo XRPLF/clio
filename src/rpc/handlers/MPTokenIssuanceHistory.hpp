@@ -126,7 +126,7 @@ public:
     {
         // TODO: goes away when mptoken_issuance_history moves to the shared spec, where the
         // validator calls this internally.
-        auto const& typesKeysInLowercase = spec::txTypesInLowercase();
+        auto const& typesKeysInLowercase = rpc::spec::txTypesInLowercase();
         static auto const kRpcSpec = RpcSpec{
             {JS(mpt_issuance_id),
              validation::Required{},

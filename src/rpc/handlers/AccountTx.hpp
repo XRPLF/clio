@@ -116,7 +116,7 @@ public:
     {
         // TODO: goes away when account_tx moves to the shared spec, where the tx_type
         // validator calls this internally.
-        auto const& typesKeysInLowercase = spec::txTypesInLowercase();
+        auto const& typesKeysInLowercase = rpc::spec::txTypesInLowercase();
         static auto const kRpcSpecForV1 = RpcSpec{
             {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},

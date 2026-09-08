@@ -161,7 +161,7 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     }
 
     if (jsonObject.contains(JS(type))) {
-        input.type = spec::accountOwnedLedgerTypeFromStr(
+        input.type = rpc::spec::accountOwnedLedgerTypeFromStr(
             boost::json::value_to<std::string>(jv.at(JS(type)))
         );
     }
