@@ -70,9 +70,6 @@ TEST_F(RPCDefaultProcessorTest, InvalidInput)
     });
 }
 
-// Pin which path each fake takes. Without this, a change that made a typed handler also
-// satisfy SomeHandlerWithInput would silently reroute it through the legacy validators and
-// every test below would still pass.
 static_assert(SomeHandlerWithTypedInput<TypedHandlerFake>);
 static_assert(not SomeHandlerWithInput<TypedHandlerFake>);
 static_assert(SomeHandlerWithTypedInput<FailingTypedHandlerFake>);

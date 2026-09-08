@@ -29,11 +29,8 @@ struct DefaultProcessor final {
             "decided by the order of the branches below rather than by the handler"
         );
 
+        // New `rpc-spec`-based handler
         if constexpr (SomeHandlerWithTypedInput<HandlerType>) {
-            // The shared consteval spec validates and deserializes in a single pass, so there
-            // is no separate process() step here: RpcSpecView::process() is a no-op for a
-            // TypedSpec. check() still runs separately because warnings are collected against
-            // the request as sent, and must be forwarded even when parsing then fails.
             auto warnings = rpc::spec::toJsonArray(HandlerType::spec(ctx.apiVersion).check(value));
 
             auto input = HandlerType::parseInput(value, ctx.apiVersion);
@@ -46,7 +43,8 @@ struct DefaultProcessor final {
 
             return ReturnType{value_from(std::move(ret).value()), std::move(warnings)};
         } else if constexpr (SomeHandlerWithInput<HandlerType>) {
-            // first we run validation against specified API version
+            // Old spec-based handler: first we run validation against specified API version
+            // TODO: This will be eventually removed once fully migraded to new rpc-spec system.
 
             auto const spec = handler.spec(ctx.apiVersion);
             auto warnings = spec.check(value);

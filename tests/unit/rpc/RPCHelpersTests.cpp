@@ -2061,9 +2061,6 @@ INSTANTIATE_TEST_SUITE_P(
     tests::util::kNameGenerator
 );
 
-// getLedgerHeaderFromLedgerSpecifier — the strong-typed counterpart of
-// getLedgerHeaderFromHashOrSeq. The fixture's range is [10, 300], so kRangeMax below is 300.
-
 namespace {
 constexpr auto kSpecifierRangeMax = 300u;
 }  // namespace

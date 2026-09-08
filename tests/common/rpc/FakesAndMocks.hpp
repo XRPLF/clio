@@ -178,7 +178,6 @@ inline constexpr auto kInputSpec = rpc::spec::spec<TypedInput>(
 
 inline constexpr auto kSpec = rpc::spec::versioned<TypedInput>(kInputSpec);
 
-/** @brief ADL hook: resolve the versioned spec from the Input type. */
 [[nodiscard]] constexpr auto const&
 specFor(TypedInput const*) noexcept
 {
@@ -187,9 +186,6 @@ specFor(TypedInput const*) noexcept
 
 }  // namespace typed_fake
 
-// example handler validated by the shared consteval spec rather than by rpc::RpcSpec.
-// Note it declares no spec() and no Input of its own: both come from HandlerFor, and there
-// is no tag_invoke for TypedInput, which is what keeps it off the legacy path.
 class TypedHandlerFake : public rpc::spec::HandlerFor<typed_fake::TypedInput> {
 public:
     using Output = TestOutput;
