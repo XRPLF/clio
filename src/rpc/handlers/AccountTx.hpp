@@ -10,13 +10,13 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
-#include "util/TxUtils.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <rpcspec/TxTypes.hpp>
 #include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/jss.h>
@@ -114,7 +114,9 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        auto const& typesKeysInLowercase = util::getTxTypesInLowercase();
+        // TODO: goes away when account_tx moves to the shared spec, where the tx_type
+        // validator calls this internally.
+        auto const& typesKeysInLowercase = rpc::spec::txTypesInLowercase();
         static auto const kRpcSpecForV1 = RpcSpec{
             {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},

@@ -2,6 +2,7 @@
 #include "util/LedgerUtils.hpp"
 
 #include <gtest/gtest.h>
+#include <rpcspec/LedgerTypes.hpp>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/jss.h>
 
@@ -55,16 +56,16 @@ TEST(LedgerUtilsTests, LedgerObjectTypeList)
 
 TEST(LedgerUtilsTests, StrToType)
 {
-    EXPECT_EQ(util::LedgerTypes::getLedgerEntryTypeFromStr("mess"), xrpl::ltANY);
-    EXPECT_EQ(util::LedgerTypes::getLedgerEntryTypeFromStr("tomato"), xrpl::ltANY);
-    EXPECT_EQ(util::LedgerTypes::getLedgerEntryTypeFromStr("account"), xrpl::ltACCOUNT_ROOT);
-    EXPECT_EQ(util::LedgerTypes::getLedgerEntryTypeFromStr("AccoUnt"), xrpl::ltANY);
-    EXPECT_EQ(util::LedgerTypes::getLedgerEntryTypeFromStr("AccountRoot"), xrpl::ltACCOUNT_ROOT);
-    EXPECT_EQ(util::LedgerTypes::getLedgerEntryTypeFromStr("ACCOUNTRoot"), xrpl::ltACCOUNT_ROOT);
+    EXPECT_EQ(rpc::spec::ledgerEntryTypeFromStr("mess"), xrpl::ltANY);
+    EXPECT_EQ(rpc::spec::ledgerEntryTypeFromStr("tomato"), xrpl::ltANY);
+    EXPECT_EQ(rpc::spec::ledgerEntryTypeFromStr("account"), xrpl::ltACCOUNT_ROOT);
+    EXPECT_EQ(rpc::spec::ledgerEntryTypeFromStr("AccoUnt"), xrpl::ltANY);
+    EXPECT_EQ(rpc::spec::ledgerEntryTypeFromStr("AccountRoot"), xrpl::ltACCOUNT_ROOT);
+    EXPECT_EQ(rpc::spec::ledgerEntryTypeFromStr("ACCOUNTRoot"), xrpl::ltACCOUNT_ROOT);
 
     constexpr auto kTypes = util::LedgerTypes::getLedgerEntryTypeStrList();
     std::ranges::for_each(kTypes, [](auto const& typeStr) {
-        EXPECT_NE(util::LedgerTypes::getLedgerEntryTypeFromStr(typeStr), xrpl::ltANY);
+        EXPECT_NE(rpc::spec::ledgerEntryTypeFromStr(std::string{typeStr}), xrpl::ltANY);
     });
 }
 
@@ -193,7 +194,7 @@ class LedgerEntryTypeFromStrTest : public ::testing::TestWithParam<LedgerEntryTy
 TEST_P(LedgerEntryTypeFromStrTest, GetLedgerEntryTypeFromStr)
 {
     auto const& param = GetParam();
-    auto const result = util::LedgerTypes::getLedgerEntryTypeFromStr(param.input);
+    auto const result = rpc::spec::ledgerEntryTypeFromStr(param.input);
     EXPECT_EQ(result, param.expected) << param.input;
 }
 
@@ -217,7 +218,7 @@ class AccountOwnedLedgerTypeFromStrTest : public ::testing::TestWithParam<Ledger
 TEST_P(AccountOwnedLedgerTypeFromStrTest, GetAccountOwnedLedgerTypeFromStr)
 {
     auto const& param = GetParam();
-    auto const result = util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(param.input);
+    auto const result = rpc::spec::accountOwnedLedgerTypeFromStr(param.input);
     EXPECT_EQ(result, param.expected);
 }
 
