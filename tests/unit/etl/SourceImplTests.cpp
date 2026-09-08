@@ -112,7 +112,7 @@ protected:
             grpcSourceMock_,
             subscriptionSourceMock_,
             forwardingSourceMock_
-        };
+    };
 };
 
 TEST_F(SourceImplTest, run)
