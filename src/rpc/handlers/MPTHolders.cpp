@@ -38,7 +38,7 @@ namespace rpc {
 namespace {
 
 /**
- * @brief Serialize a single MPToken ledger object blob into the mpt_holders JSON shape.
+ * @brief Serialize a single MPToken ledger object blob into the mpt_holders JSON.
  *
  * @param mptID The MPTokenIssuance ID the holder belongs to.
  * @param mpt The serialized MPToken ledger object.
@@ -142,7 +142,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
         keys.reserve(input.accounts->size());
         for (auto const& accountID : *input.accounts) {
             auto const key = xrpl::keylet::mptoken(mptID, accountID).key;
-            if (std::ranges::find(keys, key) == keys.end())
+            if (not std::ranges::contains(keys, key))
                 keys.push_back(key);
         }
 

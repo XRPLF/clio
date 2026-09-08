@@ -109,7 +109,7 @@ public:
                 for (auto const& account : accounts) {
                     if (!account.is_string()) {
                         return Error{Status{
-                            RippledError::RpcInvalidParams, std::string{key} + "'sItemNotString"
+                            RippledError::RpcInvalidParams, std::string{key} + "ItemNotString"
                         }};
                     }
 
@@ -117,7 +117,7 @@ public:
                             boost::json::value_to<std::string>(account)
                         )) {
                         return Error{Status{
-                            RippledError::RpcInvalidParams, std::string{key} + "'sItemMalformed"
+                            RippledError::RpcInvalidParams, std::string{key} + "ItemMalformed"
                         }};
                     }
                 }
