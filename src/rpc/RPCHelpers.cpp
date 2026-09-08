@@ -569,9 +569,9 @@ getLedgerHeaderFromLedgerSpecifier(
     }
 
     if (resolved.isShortcut()) {
-        auto const shortcut = std::get<spec::LedgerShortcut>(resolved.value);
+        auto const shortcut = std::get<rpc::spec::LedgerShortcut>(resolved.value);
         ASSERT(
-            shortcut == spec::LedgerShortcut::Validated,
+            shortcut == rpc::spec::LedgerShortcut::Validated,
             "current/closed ledgers must be forwarded before dispatch"
         );
     }

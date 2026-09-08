@@ -34,7 +34,7 @@ struct DefaultProcessor final {
             // is no separate process() step here: RpcSpecView::process() is a no-op for a
             // TypedSpec. check() still runs separately because warnings are collected against
             // the request as sent, and must be forwarded even when parsing then fails.
-            auto warnings = spec::toJsonArray(HandlerType::spec(ctx.apiVersion).check(value));
+            auto warnings = rpc::spec::toJsonArray(HandlerType::spec(ctx.apiVersion).check(value));
 
             auto input = HandlerType::parseInput(value, ctx.apiVersion);
             if (not input)
