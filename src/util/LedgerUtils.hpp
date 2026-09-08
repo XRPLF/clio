@@ -13,6 +13,7 @@
 #include <array>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
 
@@ -32,9 +33,9 @@ public:
     static constexpr auto
     getLedgerEntryTypeStrList()
     {
-        std::array<char const*, std::size(kLedgerTypes)> res{};
+        std::array<std::string_view, std::size(kLedgerTypes)> res{};
         std::ranges::transform(kLedgerTypes, std::begin(res), [](auto const& item) {
-            return item.rpcName.data();
+            return item.rpcName;
         });
         return res;
     }

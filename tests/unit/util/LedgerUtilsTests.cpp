@@ -65,7 +65,7 @@ TEST(LedgerUtilsTests, StrToType)
 
     constexpr auto kTypes = util::LedgerTypes::getLedgerEntryTypeStrList();
     std::ranges::for_each(kTypes, [](auto const& typeStr) {
-        EXPECT_NE(rpc::spec::ledgerEntryTypeFromStr(typeStr), xrpl::ltANY);
+        EXPECT_NE(rpc::spec::ledgerEntryTypeFromStr(std::string{typeStr}), xrpl::ltANY);
     });
 }
 
