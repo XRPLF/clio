@@ -124,6 +124,8 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
+        // TODO: goes away when mptoken_issuance_history moves to the shared spec, where the
+        // validator calls this internally.
         auto const& typesKeysInLowercase = spec::txTypesInLowercase();
         static auto const kRpcSpec = RpcSpec{
             {JS(mpt_issuance_id),
