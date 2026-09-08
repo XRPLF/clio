@@ -91,7 +91,7 @@ template <typename T>
 concept SomeHandlerWithTypedInput = requires(uint32_t version, boost::json::value jv) {
     typename T::Input;
     { T::parseInput(jv, version) } -> std::same_as<std::expected<typename T::Input, Status>>;
-    { T::spec(version) } -> std::same_as<spec::RpcSpecView>;
+    { T::spec(version) } -> std::same_as<rpc::spec::RpcSpecView>;
 } and SomeContextProcessWithInput<T>;
 
 /**

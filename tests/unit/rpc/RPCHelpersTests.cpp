@@ -2061,9 +2061,6 @@ INSTANTIATE_TEST_SUITE_P(
     tests::util::kNameGenerator
 );
 
-// getLedgerHeaderFromLedgerSpecifier — the strong-typed counterpart of
-// getLedgerHeaderFromHashOrSeq. The fixture's range is [10, 300], so kRangeMax below is 300.
-
 namespace {
 constexpr auto kSpecifierRangeMax = 300u;
 }  // namespace
@@ -2075,7 +2072,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierByHash)
 
     runSpawn([&, this](auto yield) {
         auto const res = getLedgerHeaderFromLedgerSpecifier(
-            *backend_, yield, spec::LedgerSpecifier{xrpl::uint256{kIndex1}}, kSpecifierRangeMax
+            *backend_, yield, rpc::spec::LedgerSpecifier{xrpl::uint256{kIndex1}}, kSpecifierRangeMax
         );
         ASSERT_TRUE(res.has_value());
         EXPECT_EQ(res->seq, 30);
@@ -2089,7 +2086,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierByHashNotFound)
 
     runSpawn([&, this](auto yield) {
         auto const res = getLedgerHeaderFromLedgerSpecifier(
-            *backend_, yield, spec::LedgerSpecifier{xrpl::uint256{kIndex1}}, kSpecifierRangeMax
+            *backend_, yield, rpc::spec::LedgerSpecifier{xrpl::uint256{kIndex1}}, kSpecifierRangeMax
         );
         ASSERT_FALSE(res.has_value());
         EXPECT_EQ(res.error().message, "ledgerNotFound");
@@ -2104,7 +2101,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierByHashBeyondMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const res = getLedgerHeaderFromLedgerSpecifier(
-            *backend_, yield, spec::LedgerSpecifier{xrpl::uint256{kIndex1}}, kSpecifierRangeMax
+            *backend_, yield, rpc::spec::LedgerSpecifier{xrpl::uint256{kIndex1}}, kSpecifierRangeMax
         );
         ASSERT_FALSE(res.has_value());
         EXPECT_EQ(res.error().message, "ledgerNotFound");
@@ -2118,7 +2115,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierBySequence)
 
     runSpawn([&, this](auto yield) {
         auto const res = getLedgerHeaderFromLedgerSpecifier(
-            *backend_, yield, spec::LedgerSpecifier{uint32_t{30}}, kSpecifierRangeMax
+            *backend_, yield, rpc::spec::LedgerSpecifier{uint32_t{30}}, kSpecifierRangeMax
         );
         ASSERT_TRUE(res.has_value());
         EXPECT_EQ(res->seq, 30);
@@ -2133,7 +2130,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierBySequenceBeyondMaxSeqSkipsBacke
         auto const res = getLedgerHeaderFromLedgerSpecifier(
             *backend_,
             yield,
-            spec::LedgerSpecifier{uint32_t{kSpecifierRangeMax + 1}},
+            rpc::spec::LedgerSpecifier{uint32_t{kSpecifierRangeMax + 1}},
             kSpecifierRangeMax
         );
         ASSERT_FALSE(res.has_value());
@@ -2150,7 +2147,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierValidatedUsesMaxSeq)
         auto const res = getLedgerHeaderFromLedgerSpecifier(
             *backend_,
             yield,
-            spec::LedgerSpecifier{spec::LedgerShortcut::Validated},
+            rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Validated},
             kSpecifierRangeMax
         );
         ASSERT_TRUE(res.has_value());
@@ -2170,7 +2167,7 @@ TEST_F(RPCHelpersAssertTest, LedgerHeaderFromSpecifierCurrentAsserts)
                 [[maybe_unused]] auto const res = getLedgerHeaderFromLedgerSpecifier(
                     *backend_,
                     yield,
-                    spec::LedgerSpecifier{spec::LedgerShortcut::Current},
+                    rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Current},
                     kSpecifierRangeMax
                 );
             },
@@ -2189,7 +2186,7 @@ TEST_F(RPCHelpersAssertTest, LedgerHeaderFromSpecifierClosedAsserts)
                 [[maybe_unused]] auto const res = getLedgerHeaderFromLedgerSpecifier(
                     *backend_,
                     yield,
-                    spec::LedgerSpecifier{spec::LedgerShortcut::Closed},
+                    rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Closed},
                     kSpecifierRangeMax
                 );
             },
@@ -2207,7 +2204,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierUnspecifiedResolvesToMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const res = getLedgerHeaderFromLedgerSpecifier(
-            *backend_, yield, spec::LedgerSpecifier{}, kSpecifierRangeMax
+            *backend_, yield, rpc::spec::LedgerSpecifier{}, kSpecifierRangeMax
         );
         ASSERT_TRUE(res.has_value());
         EXPECT_EQ(res->seq, kSpecifierRangeMax);

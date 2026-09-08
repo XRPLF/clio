@@ -8,6 +8,6 @@ namespace rpc {
  * @brief A wrapper around bool that allows conversion from any JSON value.
  *
  */
-using JsonBool = spec::JsonBool;
+using JsonBool = rpc::spec::JsonBool;
 
 }  // namespace rpc
