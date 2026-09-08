@@ -2,7 +2,6 @@
 
 #include "data/DBHelpers.hpp"
 #include "rpc/AMMHelpers.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/MetaProcessors.hpp"
@@ -18,6 +17,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <date/date.h>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>

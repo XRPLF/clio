@@ -1,6 +1,5 @@
 #include "etl/impl/ForwardingSource.hpp"
 
-#include "rpc/Errors.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -10,6 +9,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include <fmt/format.h>
+#include <rpcspec/Errors.hpp>
 
 #include <chrono>
 #include <exception>
@@ -58,14 +58,14 @@ ForwardingSource::forwardToRippled(
     auto expectedConnection = connectionBuilder.connect(yield);
     if (not expectedConnection) {
         LOG(log_.debug()) << "Couldn't connect to rippled to forward request.";
-        return std::unexpected{rpc::ClioError::EtlConnectionError};
+        return std::unexpected{rpc::ClioError::RpcForwardingConnectionError};
     }
     auto& connection = expectedConnection.value();
 
     auto writeError = connection->write(boost::json::serialize(request), yield, forwardingTimeout_);
     if (writeError) {
         LOG(log_.debug()) << "Error sending request to rippled to forward request.";
-        return std::unexpected{rpc::ClioError::EtlRequestError};
+        return std::unexpected{rpc::ClioError::RpcForwardingRequestError};
     }
 
     auto response = connection->read(yield, forwardingTimeout_);
@@ -73,10 +73,10 @@ ForwardingSource::forwardToRippled(
         if (auto errorCode = response.error().errorCode();
             errorCode.has_value() and errorCode->value() == boost::system::errc::timed_out) {
             LOG(log_.debug()) << "Request to rippled timed out";
-            return std::unexpected{rpc::ClioError::EtlRequestTimeout};
+            return std::unexpected{rpc::ClioError::RpcForwardingTimeout};
         }
         LOG(log_.debug()) << "Error sending request to rippled to forward request.";
-        return std::unexpected{rpc::ClioError::EtlRequestError};
+        return std::unexpected{rpc::ClioError::RpcForwardingRequestError};
     }
 
     boost::json::value parsedResponse;
@@ -87,7 +87,7 @@ ForwardingSource::forwardToRippled(
     } catch (std::exception const& e) {
         LOG(log_.debug()) << "Error parsing response from rippled: " << e.what()
                           << ". Response: " << *response;
-        return std::unexpected{rpc::ClioError::EtlInvalidResponse};
+        return std::unexpected{rpc::ClioError::RpcForwardingInvalidResponse};
     }
 
     auto responseObject = parsedResponse.as_object();

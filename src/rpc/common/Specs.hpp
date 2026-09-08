@@ -54,7 +54,7 @@ struct FieldSpec final {
      * @brief Processes the passed JSON value using the stored processors.
      *
      * @param value The JSON value to validate and/or modify
-     * @return Nothing on success; @ref Status on error
+     * @return Nothing on success; Status on error
      */
     [[nodiscard]] MaybeError
     process(boost::json::value& value) const;
@@ -106,7 +106,7 @@ struct RpcSpec final {
      * @brief Processes the passed JSON value using the stored field specs.
      *
      * @param value The JSON value to validate and/or modify
-     * @return Nothing on success; @ref Status on error
+     * @return Nothing on success; Status on error
      */
     [[nodiscard]] MaybeError
     process(boost::json::value& value) const;

@@ -1,5 +1,4 @@
 #include "app/WebHandlers.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockLedgerCache.hpp"
@@ -24,6 +23,7 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <memory>
 #include <stdexcept>

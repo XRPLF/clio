@@ -1,4 +1,3 @@
-#include "rpc/Errors.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>

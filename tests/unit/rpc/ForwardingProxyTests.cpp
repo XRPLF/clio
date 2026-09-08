@@ -1,5 +1,4 @@
 #include "data/Types.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockCounters.hpp"
@@ -16,6 +15,7 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -338,7 +338,7 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
         *rawBalancerPtr,
         forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kClientIp), true, _)
     )
-        .WillOnce(Return(std::unexpected{rpc::ClioError::EtlInvalidResponse}));
+        .WillOnce(Return(std::unexpected{rpc::ClioError::RpcForwardingInvalidResponse}));
 
     EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
@@ -360,6 +360,6 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
         auto const res = proxy_.forward(ctx);
 
         EXPECT_FALSE(res.response.has_value());
-        EXPECT_EQ(res.response.error(), rpc::ClioError::EtlInvalidResponse);
+        EXPECT_EQ(res.response.error(), rpc::ClioError::RpcForwardingInvalidResponse);
     });
 }

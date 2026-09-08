@@ -1,8 +1,8 @@
-#include "rpc/Errors.hpp"
 #include "rpc/common/Checkers.hpp"
 
 #include <boost/json/value.hpp>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <string>
 

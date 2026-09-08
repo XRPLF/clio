@@ -2,7 +2,6 @@
 
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "feed/Types.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Checkers.hpp"
@@ -14,6 +13,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/jss.h>
 

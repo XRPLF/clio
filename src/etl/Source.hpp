@@ -4,7 +4,6 @@
 #include "etl/LoadBalancerInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "rpc/Errors.hpp"
 #include "util/config/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -13,6 +12,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <grpcpp/support/status.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
+#include <rpcspec/Errors.hpp>
 
 #include <chrono>
 #include <cstdint>
