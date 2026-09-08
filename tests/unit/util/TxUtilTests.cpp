@@ -1,7 +1,7 @@
 #include "util/JsonUtils.hpp"
-#include "util/TxUtils.hpp"
 
 #include <gtest/gtest.h>
+#include <rpcspec/TxTypes.hpp>
 #include <xrpl/protocol/TxFormats.h>
 
 #include <algorithm>
@@ -10,7 +10,7 @@
 
 TEST(TxUtilTests, txTypesInLowercase)
 {
-    auto const& types = util::getTxTypesInLowercase();
+    auto const& types = rpc::spec::txTypesInLowercase();
     ASSERT_TRUE(
         std::size_t(
             std::distance(

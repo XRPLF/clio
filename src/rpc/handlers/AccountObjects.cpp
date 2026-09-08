@@ -1,6 +1,5 @@
 #include "rpc/handlers/AccountObjects.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
@@ -12,6 +11,8 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
+#include <rpcspec/LedgerTypes.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -160,7 +161,7 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     }
 
     if (jsonObject.contains(JS(type))) {
-        input.type = util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(
+        input.type = rpc::spec::accountOwnedLedgerTypeFromStr(
             boost::json::value_to<std::string>(jv.at(JS(type)))
         );
     }

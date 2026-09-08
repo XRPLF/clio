@@ -1,0 +1,61 @@
+# See docs/install-clio.md, "Publishing".
+name: Reusable publish package
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        description: "Release channel to publish to, selecting the deb-<channel> repository"
+        required: true
+        type: string
+
+    secrets:
+      nexus_username:
+        description: Username of a Nexus account with write access to the repositories
+        required: false
+      nexus_password:
+        description: Password or token for that Nexus account
+        required: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PACKAGE_DIR: packages
+
+jobs:
+  publish:
+    name: Publish debian package
+    runs-on: heavy
+    container:
+      image: ghcr.io/xrplf/xrpld/packaging-debian:sha-b6a8995
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: ${{ env.PACKAGE_DIR }}
+          pattern: clio_deb_package_*
+
+      # dpkg-deb refuses to read a version CPack should not have produced.
+      - name: Verify packages
+        run: |
+          shopt -s globstar nullglob
+          for package in "${PACKAGE_DIR}"/**/*.deb; do
+              dpkg-deb --field "${package}" Package Version Architecture
+          done
+
+      - name: Publish packages
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          NEXUS_USERNAME: ${{ secrets.nexus_username }}
+          NEXUS_PASSWORD: ${{ secrets.nexus_password }}
+          DRY_RUN_OPTION: ${{ (github.event_name == 'pull_request' || github.repository != 'XRPLF/clio') && '--dry-run' || '' }}
+        run: |
+          publish_pkg.py \
+              --channel "${CHANNEL}" \
+              --package-dir "${PACKAGE_DIR}" \
+              ${DRY_RUN_OPTION}

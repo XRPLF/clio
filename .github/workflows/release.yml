@@ -14,6 +14,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  release-info:
+    name: Determine release info
+    runs-on: ubuntu-latest
+    outputs:
+      channel: ${{ steps.release_info.outputs.channel }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - id: release_info
+        uses: XRPLF/actions/release-info@7cc0e4a8d9d0b838f92c48d312856b190341bbba
+
   build-and-test:
     name: Build and Test
 
@@ -59,6 +71,16 @@ jobs:
       version: ${{ github.event_name == 'push' && github.ref_name || '' }}
       targets: package
       analyze_build_time: false
+
+  publish_package:
+    name: Publish debian package
+    needs: [release-info, package]
+    uses: ./.github/workflows/reusable-publish-package.yml
+    with:
+      channel: ${{ needs.release-info.outputs.channel }}
+    secrets:
+      nexus_username: ${{ secrets.NEXUS_REMOTE_USERNAME }}
+      nexus_password: ${{ secrets.NEXUS_REMOTE_PASSWORD }}
 
   release:
     needs: [build-and-test, package]

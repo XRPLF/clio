@@ -1,7 +1,7 @@
-#include "rpc/Errors.hpp"
 #include "web/LoadWarning.hpp"
 
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <cstdint>
 #include <string>

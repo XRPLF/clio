@@ -1,4 +1,3 @@
-#include "rpc/Errors.hpp"
 #include "rpc/common/APIVersion.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AsioContextTestFixture.hpp"
@@ -21,6 +20,7 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -122,7 +122,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPDefaultPath)
         "warnings": [
             {
                 "id": 2001,
-                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                "message": "This is a clio server. clio only serves validated data. If you want to talk to xrpld, include 'ledger_index':'current' in your request"
             }
         ]
     })JSON";
@@ -190,7 +190,7 @@ TEST_F(WebRPCServerHandlerTest, WsNormalPath)
         "warnings": [
             {
                 "id": 2001,
-                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                "message": "This is a clio server. clio only serves validated data. If you want to talk to xrpld, include 'ledger_index':'current' in your request"
             }
         ]
     })JSON";
@@ -265,7 +265,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedPath)
         "warnings": [
             {
                 "id": 2001,
-                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                "message": "This is a clio server. clio only serves validated data. If you want to talk to xrpld, include 'ledger_index':'current' in your request"
             }
         ]
     })JSON";
@@ -314,7 +314,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedErrorPath)
         "warnings": [
             {
                 "id": 2001,
-                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                "message": "This is a clio server. clio only serves validated data. If you want to talk to xrpld, include 'ledger_index':'current' in your request"
             }
         ]
     })JSON";
@@ -361,7 +361,7 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedPath)
         "warnings": [
             {
                 "id": 2001,
-                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                "message": "This is a clio server. clio only serves validated data. If you want to talk to xrpld, include 'ledger_index':'current' in your request"
             }
         ]
     })JSON";
@@ -412,7 +412,7 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedErrorPath)
         "warnings": [
             {
                 "id": 2001,
-                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                "message": "This is a clio server. clio only serves validated data. If you want to talk to xrpld, include 'ledger_index':'current' in your request"
             }
         ]
     })JSON";
@@ -453,7 +453,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPErrorPath)
         "warnings": [
             {
                 "id": 2001,
-                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                "message": "This is a clio server. clio only serves validated data. If you want to talk to xrpld, include 'ledger_index':'current' in your request"
             }
         ]
     })JSON";
@@ -510,7 +510,7 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
         "warnings": [
             {
                 "id": 2001,
-                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                "message": "This is a clio server. clio only serves validated data. If you want to talk to xrpld, include 'ledger_index':'current' in your request"
             }
         ]
     })JSON";
@@ -860,7 +860,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPOutDated)
         "warnings": [
             {
                 "id": 2001,
-                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                "message": "This is a clio server. clio only serves validated data. If you want to talk to xrpld, include 'ledger_index':'current' in your request"
             },
             {
                 "id": 2002,
@@ -903,7 +903,7 @@ TEST_F(WebRPCServerHandlerTest, WsOutdated)
         "warnings": [
             {
                 "id": 2001,
-                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                "message": "This is a clio server. clio only serves validated data. If you want to talk to xrpld, include 'ledger_index':'current' in your request"
             },
             {
                 "id": 2002,

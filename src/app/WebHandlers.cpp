@@ -14,6 +14,7 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/status.hpp>
+#include <rpcspec/Errors.hpp>
 
 #include <functional>
 #include <memory>

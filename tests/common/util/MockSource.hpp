@@ -5,7 +5,6 @@
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "rpc/Errors.hpp"
 #include "util/config/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -16,6 +15,7 @@
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
+#include <rpcspec/Errors.hpp>
 
 #include <algorithm>
 #include <chrono>

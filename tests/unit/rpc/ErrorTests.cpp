@@ -5,6 +5,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <cstdint>
 #include <sstream>
@@ -150,7 +151,7 @@ INSTANTIATE_TEST_SUITE_P(
             "Clio",
             WarningCode::WarnRpcClio,
             "This is a clio server. clio only serves validated data. If you want to talk to "
-            "rippled, include "
+            "xrpld, include "
             "'ledger_index':'current' in your request"
         },
         WarningCodeTestBundle{
@@ -234,7 +235,7 @@ INSTANTIATE_TEST_SUITE_P(
         },
         StatusStreamTestBundle{
             .testName = "StatusWithCodeAndExtraInfo",
-            .status = Status{ClioError::EtlConnectionError, boost::json::object{}},
+            .status = Status{ClioError::RpcForwardingConnectionError, boost::json::object{}},
             .expectedOutput = "Code: 7000, Message: Couldn't connect to rippled., Extra Info: {}"
         },
         StatusStreamTestBundle{
@@ -256,7 +257,7 @@ INSTANTIATE_TEST_SUITE_P(
             .testName = "StatusWithCodeErrorMessage",
             .status =
                 Status{
-                    ClioError::EtlInvalidResponse,
+                    ClioError::RpcForwardingInvalidResponse,
                     "invalidResponse",
                     "Rippled returned an invalid response."
                 },

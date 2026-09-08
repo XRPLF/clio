@@ -1,4 +1,3 @@
-#include "rpc/Errors.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
@@ -25,6 +24,7 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <algorithm>
 #include <cstdint>

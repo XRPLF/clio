@@ -2,7 +2,6 @@
 #include "etl/LoadBalancerInterface.hpp"
 #include "etl/Models.hpp"
 #include "etl/impl/SourceImpl.hpp"
-#include "rpc/Errors.hpp"
 #include "util/Spawn.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -13,6 +12,7 @@
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
+#include <rpcspec/Errors.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -112,7 +112,7 @@ protected:
             grpcSourceMock_,
             subscriptionSourceMock_,
             forwardingSourceMock_
-        };
+    };
 };
 
 TEST_F(SourceImplTest, run)

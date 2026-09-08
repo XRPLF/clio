@@ -1,7 +1,6 @@
 #include "rpc/handlers/LedgerEntry.hpp"
 
 #include "rpc/CredentialHelpers.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
@@ -13,6 +12,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>

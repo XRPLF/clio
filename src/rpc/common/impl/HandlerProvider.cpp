@@ -5,47 +5,8 @@
 #include "etl/ETLServiceInterface.hpp"
 #include "etl/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "rpc/Counters.hpp"
 #include "rpc/common/AnyHandler.hpp"
-#include "rpc/handlers/AMMInfo.hpp"
-#include "rpc/handlers/AccountChannels.hpp"
-#include "rpc/handlers/AccountCurrencies.hpp"
-#include "rpc/handlers/AccountInfo.hpp"
-#include "rpc/handlers/AccountLines.hpp"
-#include "rpc/handlers/AccountMPTokenIssuances.hpp"
-#include "rpc/handlers/AccountMPTokens.hpp"
-#include "rpc/handlers/AccountNFTs.hpp"
-#include "rpc/handlers/AccountObjects.hpp"
-#include "rpc/handlers/AccountOffers.hpp"
-#include "rpc/handlers/AccountTx.hpp"
-#include "rpc/handlers/BookChanges.hpp"
-#include "rpc/handlers/BookOffers.hpp"
-#include "rpc/handlers/DepositAuthorized.hpp"
-#include "rpc/handlers/Feature.hpp"
-#include "rpc/handlers/GatewayBalances.hpp"
-#include "rpc/handlers/GetAggregatePrice.hpp"
-#include "rpc/handlers/Ledger.hpp"
-#include "rpc/handlers/LedgerData.hpp"
-#include "rpc/handlers/LedgerEntry.hpp"
-#include "rpc/handlers/LedgerIndex.hpp"
-#include "rpc/handlers/LedgerRange.hpp"
-#include "rpc/handlers/MPTHolders.hpp"
-#include "rpc/handlers/MPTokenIssuanceHistory.hpp"
-#include "rpc/handlers/NFTBuyOffers.hpp"
-#include "rpc/handlers/NFTHistory.hpp"
-#include "rpc/handlers/NFTInfo.hpp"
-#include "rpc/handlers/NFTSellOffers.hpp"
-#include "rpc/handlers/NFTsByIssuer.hpp"
-#include "rpc/handlers/NoRippleCheck.hpp"
-#include "rpc/handlers/Ping.hpp"
-#include "rpc/handlers/Random.hpp"
-#include "rpc/handlers/ServerInfo.hpp"
-#include "rpc/handlers/Subscribe.hpp"
-#include "rpc/handlers/TransactionEntry.hpp"
-#include "rpc/handlers/Tx.hpp"
-#include "rpc/handlers/Unsubscribe.hpp"
-#include "rpc/handlers/VaultInfo.hpp"
-#include "rpc/handlers/VersionHandler.hpp"
+#include "rpc/common/impl/HandlerRegistry.hpp"
 #include "util/config/ConfigDefinition.hpp"
 
 #include <memory>
@@ -64,57 +25,29 @@ ProductionHandlerProvider::ProductionHandlerProvider(
     std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
     Counters const& counters
 )
-    : handlerMap_{
-          {"account_channels", {.handler = AccountChannelsHandler{backend}}},
-          {"account_currencies", {.handler = AccountCurrenciesHandler{backend}}},
-          {"account_info", {.handler = AccountInfoHandler{backend, amendmentCenter}}},
-          {"account_lines", {.handler = AccountLinesHandler{backend}}},
-          {"account_mptoken_issuances",
-           {.handler = AccountMPTokenIssuancesHandler{backend}, .isClioOnly = true}},  // clio only
-          {"account_mptokens",
-           {.handler = AccountMPTokensHandler{backend}, .isClioOnly = true}},  // clio only
-          {"account_nfts", {.handler = AccountNFTsHandler{backend}}},
-          {"account_objects", {.handler = AccountObjectsHandler{backend}}},
-          {"account_offers", {.handler = AccountOffersHandler{backend}}},
-          {"account_tx", {.handler = AccountTxHandler{backend, etl}}},
-          {"amm_info", {.handler = AMMInfoHandler{backend, amendmentCenter}}},
-          {"book_changes", {.handler = BookChangesHandler{backend}}},
-          {"book_offers", {.handler = BookOffersHandler{backend, amendmentCenter}}},
-          {"deposit_authorized", {.handler = DepositAuthorizedHandler{backend}}},
-          {"feature", {.handler = FeatureHandler{backend, amendmentCenter}}},
-          {"gateway_balances", {.handler = GatewayBalancesHandler{backend}}},
-          {"get_aggregate_price", {.handler = GetAggregatePriceHandler{backend}}},
-          {"ledger", {.handler = LedgerHandler{backend, amendmentCenter}}},
-          {"ledger_data", {.handler = LedgerDataHandler{backend}}},
-          {"ledger_entry", {.handler = LedgerEntryHandler{backend}}},
-          {"ledger_index",
-           {.handler = LedgerIndexHandler{backend}, .isClioOnly = true}},  // clio only
-          {"ledger_range", {.handler = LedgerRangeHandler{backend}}},
-          {"mpt_holders",
-           {.handler = MPTHoldersHandler{backend}, .isClioOnly = true}},  // clio only
-          {"mptoken_issuance_history",
-           {.handler = MPTokenIssuanceHistoryHandler{backend}, .isClioOnly = true}},  // clio only
-          {"nfts_by_issuer",
-           {.handler = NFTsByIssuerHandler{backend}, .isClioOnly = true}},  // clio only
-          {"nft_history",
-           {.handler = NFTHistoryHandler{backend}, .isClioOnly = true}},  // clio only
-          {"nft_buy_offers", {.handler = NFTBuyOffersHandler{backend}}},
-          {"nft_info", {.handler = NFTInfoHandler{backend}, .isClioOnly = true}},  // clio only
-          {"nft_sell_offers", {.handler = NFTSellOffersHandler{backend}}},
-          {"noripple_check", {.handler = NoRippleCheckHandler{backend}}},
-          {"ping", {.handler = PingHandler{}}},
-          {"random", {.handler = RandomHandler{}}},
-          {"server_info",
-           {.handler = ServerInfoHandler{backend, subscriptionManager, balancer, etl, counters}}},
-          {"transaction_entry", {.handler = TransactionEntryHandler{backend}}},
-          {"tx", {.handler = TxHandler{backend, etl}}},
-          {"subscribe",
-           {.handler = SubscribeHandler{backend, amendmentCenter, subscriptionManager}}},
-          {"unsubscribe", {.handler = UnsubscribeHandler{subscriptionManager}}},
-          {"vault_info", {.handler = VaultInfoHandler{backend}}},
-          {"version", {.handler = VersionHandler{config}}},
-      }
 {
+    HandlerDeps const deps{
+        .config = config,
+        .backend = backend,
+        .subscriptionManager = subscriptionManager,
+        .balancer = balancer,
+        .etl = etl,
+        .amendmentCenter = amendmentCenter,
+        .counters = counters
+    };
+
+    auto const registry = handlerRegistry();
+    handlerMap_.reserve(registry.size());
+
+    for (auto const& entry : registry) {
+        handlerMap_.emplace(
+            entry.name,
+            Handler{
+                .handler = entry.factory(deps),
+                .isClioOnly = entry.isClioOnly,
+            }
+        );
+    }
 }
 
 bool

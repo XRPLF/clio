@@ -1,6 +1,5 @@
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/FakesAndMocks.hpp"
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
@@ -29,6 +28,7 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <exception>
 #include <memory>

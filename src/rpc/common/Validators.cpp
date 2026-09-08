@@ -1,17 +1,17 @@
 #include "rpc/common/Validators.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
-#include "util/LedgerUtils.hpp"
 #include "util/TimeUtils.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <fmt/format.h>
+#include <rpcspec/Errors.hpp>
+#include <rpcspec/LedgerTypes.hpp>
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
@@ -117,7 +117,7 @@ CustomValidator CustomValidators::ledgerTypeValidator =
         }
 
         auto const type =
-            util::LedgerTypes::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(value));
+            rpc::spec::ledgerEntryTypeFromStr(boost::json::value_to<std::string>(value));
         if (type == xrpl::ltANY) {
             return Error{
                 Status{RippledError::RpcInvalidParams, fmt::format("Invalid field '{}'.", key)}
@@ -176,9 +176,8 @@ CustomValidator CustomValidators::accountTypeValidator =
             }};
         }
 
-        auto const type = util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(
-            boost::json::value_to<std::string>(value)
-        );
+        auto const type =
+            rpc::spec::accountOwnedLedgerTypeFromStr(boost::json::value_to<std::string>(value));
         if (type == xrpl::ltANY) {
             return Error{
                 Status{RippledError::RpcInvalidParams, fmt::format("Invalid field '{}'.", key)}

@@ -7,7 +7,6 @@
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "rpc/Errors.hpp"
 #include "util/Assert.hpp"
 #include "util/CoroutineGroup.hpp"
 #include "util/Profiler.hpp"
@@ -27,6 +26,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <fmt/format.h>
+#include <rpcspec/Errors.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -292,7 +292,7 @@ LoadBalancer::forwardToRippled(
     auto xUserValue = isAdmin ? kAdminForwardingXUserValue : kUserForwardingXUserValue;
 
     std::optional<boost::json::object> response;
-    rpc::ClioError error = rpc::ClioError::EtlConnectionError;
+    rpc::ClioError error = rpc::ClioError::RpcForwardingConnectionError;
     while (numAttempts < sources_.size()) {
         auto [res, duration] = util::timed([&]() {
             return sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield);

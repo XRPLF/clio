@@ -16,6 +16,7 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
@@ -2024,6 +2025,38 @@ generateTestValuesForParametersTest()
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
+        },
+        ParamTestCaseBundle{
+            .testName = "CredentialCredentialTypeNotHex",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "credential": {{
+                        "subject": "{}",
+                        "issuer": "{}",
+                        "credential_type": "hello world"
+                    }}
+                }})JSON",
+                kAccount,
+                kAccount2
+            ),
+            .expectedError = "malformedAuthorizedCredentials",
+            .expectedErrorMessage = "credential_type NotHexString"
+        },
+        ParamTestCaseBundle{
+            .testName = "CredentialCredentialTypeEmpty",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "credential": {{
+                        "subject": "{}",
+                        "issuer": "{}",
+                        "credential_type": ""
+                    }}
+                }})JSON",
+                kAccount,
+                kAccount2
+            ),
+            .expectedError = "malformedAuthorizedCredentials",
+            .expectedErrorMessage = "credential_type is empty"
         },
         ParamTestCaseBundle{
             .testName = "InvalidMPTokenAccount",

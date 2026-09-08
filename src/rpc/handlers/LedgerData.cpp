@@ -1,19 +1,19 @@
 #include "rpc/handlers/LedgerData.hpp"
 
 #include "data/Types.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
-#include "util/LedgerUtils.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
+#include <rpcspec/LedgerTypes.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -215,9 +215,8 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
     }
 
     if (jsonObject.contains(JS(type))) {
-        input.type = util::LedgerTypes::getLedgerEntryTypeFromStr(
-            boost::json::value_to<std::string>(jv.at(JS(type)))
-        );
+        input.type =
+            rpc::spec::ledgerEntryTypeFromStr(boost::json::value_to<std::string>(jv.at(JS(type))));
     }
 
     return input;

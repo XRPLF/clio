@@ -1,6 +1,5 @@
 #include "rpc/handlers/AccountOffers.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
@@ -11,6 +10,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>

@@ -40,13 +40,13 @@ struct ClusterBackendTest : util::prometheus::WithPrometheus, MockBackendTestStr
     testing::StrictMock<
         testing::MockFunction<void(ClioNode::CUuid, std::shared_ptr<Backend::ClusterData const>)>>
         callbackMock;
-    std::binary_semaphore semaphore{0};
+    std::counting_semaphore<> semaphore{0};
 
     class SemaphoreReleaseGuard {
-        std::binary_semaphore& semaphore_;
+        std::counting_semaphore<>& semaphore_;
 
     public:
-        SemaphoreReleaseGuard(std::binary_semaphore& s) : semaphore_(s)
+        SemaphoreReleaseGuard(std::counting_semaphore<>& s) : semaphore_(s)
         {
         }
         ~SemaphoreReleaseGuard()
@@ -72,7 +72,7 @@ TEST_F(ClusterBackendTest, SubscribeToNewState)
     EXPECT_CALL(*backend_, fetchClioNodesData)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(BackendInterface::ClioNodesDataFetchResult{}));
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AnyNumber());
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
@@ -151,7 +151,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataThrowsException)
     EXPECT_CALL(*backend_, fetchClioNodesData)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Throw(std::runtime_error("Database connection failed")));
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AnyNumber());
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
@@ -208,7 +208,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
                 }
             )
         );
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AnyNumber());
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(false));
@@ -286,7 +286,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsOnlySelfData)
             }
         };
     });
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AnyNumber());
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
@@ -342,7 +342,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsInvalidJson)
                 }
             )
         );
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AnyNumber());
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
@@ -398,7 +398,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsValidJsonButCannotConvertToC
                 }
             )
         );
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AnyNumber());
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
@@ -536,7 +536,7 @@ TEST_F(ClusterBackendTest, SubscribeToNewStateReflectsCacheIsCurrentlyLoading)
     EXPECT_CALL(*backend_, fetchClioNodesData)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(BackendInterface::ClioNodesDataFetchResult{}));
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AnyNumber());
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));

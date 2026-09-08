@@ -5,7 +5,6 @@
 #include "data/Types.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "feed/Types.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Checkers.hpp"
@@ -21,6 +20,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/beast/utility/Zero.h>
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/jss.h>

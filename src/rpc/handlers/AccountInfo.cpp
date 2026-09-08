@@ -1,7 +1,6 @@
 #include "rpc/handlers/AccountInfo.hpp"
 
 #include "data/AmendmentCenter.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/JsonBool.hpp"
@@ -14,6 +13,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/ledger/helpers/AccountRootHelpers.h>
 #include <xrpl/protocol/ErrorCodes.h>
@@ -156,7 +156,7 @@ tag_invoke(
                 {"disallowIncomingCheck", xrpl::lsfDisallowIncomingCheck},
                 {"disallowIncomingPayChan", xrpl::lsfDisallowIncomingPayChan},
                 {"disallowIncomingTrustline", xrpl::lsfDisallowIncomingTrustline},
-            };
+        };
         lsFlags.insert(lsFlags.end(), disallowIncomingFlags.begin(), disallowIncomingFlags.end());
     }
 
@@ -182,7 +182,7 @@ tag_invoke(
                 ASSERT(!name.empty(), "Field name is empty after stripping 'ID'");
             }
             // ValidPseudoAccounts invariant guarantees that only one field can be set
-            jv.as_object()[JS(pseudo_account)].as_object()[JS(type)] = name;
+            jv.as_object()[JS(pseudo_account)] = boost::json::object{{JS(type), name}};
             break;
         }
     }

@@ -33,8 +33,6 @@ target_sources(
         Taggable.cpp
         TerminationHandler.cpp
         TimeUtils.cpp
-        TxUtils.cpp
-        LedgerUtils.cpp
         MPTIssuanceUtils.cpp
         config/Array.cpp
         config/ArrayView.cpp
@@ -60,6 +58,7 @@ target_link_libraries(
         fmt::fmt
         openssl::openssl
         xrpl::libxrpl
+        rpcspec::rpcspec
         Threads::Threads
         clio_options
         clio_rpc_center

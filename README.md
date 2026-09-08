@@ -32,7 +32,8 @@ Below are some useful docs to learn more about Clio.
 
 **For Operators**:
 
-- [How to configure Clio and rippled](./docs/configure-clio.md)
+- [How to install Clio](./docs/install-clio.md)
+- [How to configure Clio and xrpld](./docs/configure-clio.md)
 - [How to run Clio](./docs/run-clio.md)
 - [Troubleshooting guide](./docs/trouble_shooting.md)
 
