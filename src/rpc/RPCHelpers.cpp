@@ -27,6 +27,7 @@
 #include <boost/lexical_cast/bad_lexical_cast.hpp>
 #include <fmt/format.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/Ledger.hpp>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
@@ -545,6 +546,47 @@ getLedgerHeaderFromHashOrSeq(
         return err;
 
     return *lgrInfo;
+}
+
+std::expected<xrpl::LedgerHeader, Status>
+getLedgerHeaderFromLedgerSpecifier(
+    BackendInterface const& backend,
+    boost::asio::yield_context yield,
+    rpc::spec::LedgerSpecifier const& ledger,
+    uint32_t maxSeq
+)
+{
+    auto const err = std::unexpected{Status{RippledError::RpcLgrNotFound, "ledgerNotFound"}};
+    auto const resolved = ledger.resolved();
+
+    if (resolved.isHash()) {
+        auto const maybeLgrInfo =
+            backend.fetchLedgerByHash(std::get<xrpl::uint256>(resolved.value), yield);
+        if (not maybeLgrInfo.has_value() or maybeLgrInfo->seq > maxSeq)
+            return err;
+
+        return *maybeLgrInfo;
+    }
+
+    if (resolved.isShortcut()) {
+        auto const shortcut = std::get<rpc::spec::LedgerShortcut>(resolved.value);
+        ASSERT(
+            shortcut == rpc::spec::LedgerShortcut::Validated,
+            "current/closed ledgers must be forwarded before dispatch"
+        );
+    }
+
+    auto const ledgerSequence = resolved.isSequence() ? std::get<uint32_t>(resolved.value) : maxSeq;
+
+    // return without hitting the db
+    if (ledgerSequence > maxSeq)
+        return err;
+
+    auto const maybeLgrInfo = backend.fetchLedgerBySequence(ledgerSequence, yield);
+    if (not maybeLgrInfo.has_value())
+        return err;
+
+    return *maybeLgrInfo;
 }
 
 std::vector<unsigned char>

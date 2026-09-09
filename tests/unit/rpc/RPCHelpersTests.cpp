@@ -7,6 +7,7 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockAmendmentCenter.hpp"
+#include "util/MockAssert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
@@ -26,6 +27,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/Ledger.hpp>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
@@ -2058,3 +2060,153 @@ INSTANTIATE_TEST_SUITE_P(
     ),
     tests::util::kNameGenerator
 );
+
+namespace {
+constexpr auto kSpecifierRangeMax = 300u;
+}  // namespace
+
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierByHash)
+{
+    auto const expected = createLedgerHeader(kIndex1, 30);
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kIndex1}, _)).WillOnce(Return(expected));
+
+    runSpawn([&, this](auto yield) {
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_, yield, rpc::spec::LedgerSpecifier{xrpl::uint256{kIndex1}}, kSpecifierRangeMax
+        );
+        ASSERT_TRUE(res.has_value());
+        EXPECT_EQ(res->seq, 30);
+    });
+}
+
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierByHashNotFound)
+{
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kIndex1}, _))
+        .WillOnce(Return(std::nullopt));
+
+    runSpawn([&, this](auto yield) {
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_, yield, rpc::spec::LedgerSpecifier{xrpl::uint256{kIndex1}}, kSpecifierRangeMax
+        );
+        ASSERT_FALSE(res.has_value());
+        EXPECT_EQ(res.error().message, "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierByHashBeyondMaxSeq)
+{
+    // present in the backend, but newer than the range the caller may serve
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kIndex1}, _))
+        .WillOnce(Return(createLedgerHeader(kIndex1, kSpecifierRangeMax + 1)));
+
+    runSpawn([&, this](auto yield) {
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_, yield, rpc::spec::LedgerSpecifier{xrpl::uint256{kIndex1}}, kSpecifierRangeMax
+        );
+        ASSERT_FALSE(res.has_value());
+        EXPECT_EQ(res.error().message, "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierBySequence)
+{
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(30, _))
+        .WillOnce(Return(createLedgerHeader(kIndex1, 30)));
+
+    runSpawn([&, this](auto yield) {
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_, yield, rpc::spec::LedgerSpecifier{uint32_t{30}}, kSpecifierRangeMax
+        );
+        ASSERT_TRUE(res.has_value());
+        EXPECT_EQ(res->seq, 30);
+    });
+}
+
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierBySequenceBeyondMaxSeqSkipsBackend)
+{
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
+
+    runSpawn([&, this](auto yield) {
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_,
+            yield,
+            rpc::spec::LedgerSpecifier{uint32_t{kSpecifierRangeMax + 1}},
+            kSpecifierRangeMax
+        );
+        ASSERT_FALSE(res.has_value());
+        EXPECT_EQ(res.error().message, "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierValidatedUsesMaxSeq)
+{
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kSpecifierRangeMax, _))
+        .WillOnce(Return(createLedgerHeader(kIndex1, kSpecifierRangeMax)));
+
+    runSpawn([&, this](auto yield) {
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_,
+            yield,
+            rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Validated},
+            kSpecifierRangeMax
+        );
+        ASSERT_TRUE(res.has_value());
+        EXPECT_EQ(res->seq, kSpecifierRangeMax);
+    });
+}
+
+struct RPCHelpersAssertTest : RPCHelpersTest, common::util::WithMockAssert {};
+
+TEST_F(RPCHelpersAssertTest, LedgerHeaderFromSpecifierCurrentAsserts)
+{
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
+
+    runSpawn([&, this](auto yield) {
+        EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
+            {
+                [[maybe_unused]] auto const res = getLedgerHeaderFromLedgerSpecifier(
+                    *backend_,
+                    yield,
+                    rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Current},
+                    kSpecifierRangeMax
+                );
+            },
+            "must be forwarded before dispatch"
+        );
+    });
+}
+
+TEST_F(RPCHelpersAssertTest, LedgerHeaderFromSpecifierClosedAsserts)
+{
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
+
+    runSpawn([&, this](auto yield) {
+        EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
+            {
+                [[maybe_unused]] auto const res = getLedgerHeaderFromLedgerSpecifier(
+                    *backend_,
+                    yield,
+                    rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Closed},
+                    kSpecifierRangeMax
+                );
+            },
+            "must be forwarded before dispatch"
+        );
+    });
+}
+
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierUnspecifiedResolvesToMaxSeq)
+{
+    // an unspecified ledger resolves via LedgerSpecifier::resolved(), which the spec library
+    // fixes to `validated` under RPCSPEC_IS_CLIO
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kSpecifierRangeMax, _))
+        .WillOnce(Return(createLedgerHeader(kIndex1, kSpecifierRangeMax)));
+
+    runSpawn([&, this](auto yield) {
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_, yield, rpc::spec::LedgerSpecifier{}, kSpecifierRangeMax
+        );
+        ASSERT_TRUE(res.has_value());
+        EXPECT_EQ(res->seq, kSpecifierRangeMax);
+    });
+}
