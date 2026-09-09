@@ -22,7 +22,7 @@ namespace rpc {
  * For more details see: https://xrpl.org/account_currencies.html
  */
 class AccountCurrenciesHandler
-    : public spec::HandlerFor<spec::handlers::account_currencies::Input> {
+    : public rpc::spec::HandlerFor<rpc::spec::handlers::account_currencies::Input> {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 

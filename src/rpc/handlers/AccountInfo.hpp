@@ -24,7 +24,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_info.html
  */
-class AccountInfoHandler : public spec::HandlerFor<spec::handlers::account_info::Input> {
+class AccountInfoHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::account_info::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
