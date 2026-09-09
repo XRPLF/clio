@@ -34,8 +34,6 @@ class ClioConan(ConanFile):
         "protobuf/*:with_zlib": True,
         "snappy/*:shared": False,
         "xrpl-rpc-spec/*:server": "clio",
-        # libxrpl's own benchmarks are not needed here, and its recipe does not
-        # declare the benchmark dependency in cpp_info, which Conan rejects.
         "xrpl/*:benchmark": False,
         "xrpl/*:rocksdb": True,  # TODO: revert to false when includes are fixed in libxrpl
         "xrpl/*:tests": False,
