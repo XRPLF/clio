@@ -38,12 +38,12 @@ struct DefaultProcessor final {
             auto input = HandlerType::parseInput(value, ctx.apiVersion);
             auto warnings = rpc::spec::toJsonArray(HandlerType::spec(ctx.apiVersion).check(value));
 
-            if (not input)
+            if (not input.has_value())
                 return ReturnType{Error{std::move(input).error()}, std::move(warnings)};
 
             auto ret = handler.process(*input, ctx);
 
-            if (not ret)
+            if (not ret.has_value())
                 return ReturnType{Error{std::move(ret).error()}, std::move(warnings)};
 
             return ReturnType{value_from(std::move(ret).value()), std::move(warnings)};
@@ -56,14 +56,14 @@ struct DefaultProcessor final {
             auto warnings = spec.check(value);
             auto input = value;  // copy here, spec require mutable data
 
-            if (auto const ret = spec.process(input); not ret)
+            if (auto const ret = spec.process(input); not ret.has_value())
                 return ReturnType{Error{ret.error()}, std::move(warnings)};  // forward Status
 
             auto const inData = value_to<typename HandlerType::Input>(input);
             auto ret = handler.process(inData, ctx);
 
             // real handler is given expected Input, not json
-            if (not ret)
+            if (not ret.has_value())
                 return ReturnType{Error{std::move(ret).error()}, std::move(warnings)};
 
             return ReturnType{value_from(std::move(ret).value()), std::move(warnings)};
@@ -72,7 +72,7 @@ struct DefaultProcessor final {
         if constexpr (SomeHandlerWithoutInput<HandlerType>) {
             // no input to pass, ignore the value
             auto const ret = handler.process(ctx);
-            if (not ret)
+            if (not ret.has_value())
                 return ReturnType{Error{ret.error()}};  // forward Status
 
             return ReturnType{value_from(ret.value())};
