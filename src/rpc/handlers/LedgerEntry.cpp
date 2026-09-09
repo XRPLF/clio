@@ -27,6 +27,7 @@
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STXChainBridge.h>
+#include <xrpl/protocol/SeqProxy.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
@@ -71,9 +72,13 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         );
 
         // NOLINTBEGIN(bugprone-unchecked-optional-access)
-        key =
-            xrpl::keylet::offer(*id, boost::json::value_to<std::uint32_t>(input.offer->at(JS(seq))))
-                .key;
+        key = xrpl::keylet::offer(
+                  *id,
+                  xrpl::SeqProxy::rawSequence(
+                      boost::json::value_to<std::uint32_t>(input.offer->at(JS(seq)))
+                  )
+        )
+                  .key;
         // NOLINTEND(bugprone-unchecked-optional-access)
     } else if (input.rippleStateAccount) {
         auto const id1 =
@@ -96,7 +101,12 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         );
         key =
             // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            xrpl::keylet::escrow(*id, util::integralValueAs<uint32_t>(input.escrow->at(JS(seq))))
+            xrpl::keylet::escrow(
+                *id,
+                xrpl::SeqProxy::rawSequence(
+                    util::integralValueAs<uint32_t>(input.escrow->at(JS(seq)))
+                )
+            )
                 .key;
     } else if (input.depositPreauth) {
         auto const owner = util::parseBase58Wrapper<xrpl::AccountID>(
@@ -137,10 +147,13 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             boost::json::value_to<std::string>(input.ticket->at(JS(account)))
         );
 
-        key = xrpl::getTicketIndex(
-            *id,  // NOLINT(bugprone-unchecked-optional-access)
-            util::integralValueAs<uint32_t>(input.ticket->at(JS(ticket_seq)))
-        );
+        key = xrpl::keylet::ticket(
+                  *id,  // NOLINT(bugprone-unchecked-optional-access)
+                  xrpl::SeqProxy::rawTicket(
+                      util::integralValueAs<uint32_t>(input.ticket->at(JS(ticket_seq)))
+                  )
+        )
+                  .key;
     } else if (input.amm) {
         auto const getIssuerFromJson = [](auto const& assetJson) {
             // the field check has been done in validator
@@ -204,27 +217,27 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         );
         auto const seq = util::integralValueAs<uint32_t>(input.permissionedDomain->at(JS(seq)));
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::permissionedDomain(*account, seq).key;
+        key = xrpl::keylet::permissionedDomain(*account, xrpl::SeqProxy::rawSequence(seq)).key;
     } else if (input.vault) {
         auto const account = xrpl::parseBase58<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.vault->at(JS(owner)))
         );
         auto const seq = util::integralValueAs<uint32_t>(input.vault->at(JS(seq)));
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::vault(*account, seq).key;
+        key = xrpl::keylet::vault(*account, xrpl::SeqProxy::rawSequence(seq)).key;
     } else if (input.loanBroker) {
         auto const account = xrpl::parseBase58<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.loanBroker->at(JS(owner)))
         );
         auto const seq = util::integralValueAs<uint32_t>(input.loanBroker->at(JS(seq)));
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::loanBroker(*account, seq).key;
+        key = xrpl::keylet::loanBroker(*account, xrpl::SeqProxy::rawSequence(seq)).key;
     } else if (input.loan) {
         auto const id = xrpl::uint256{
             boost::json::value_to<std::string>(input.loan->at(JS(loan_broker_id))).data()
         };
         auto const seq = util::integralValueAs<uint32_t>(input.loan->at(JS(loan_seq)));
-        key = xrpl::keylet::loan(id, seq).key;
+        key = xrpl::keylet::loan(id, xrpl::SeqProxy::rawSequence(seq)).key;
     } else if (input.delegate) {
         auto const account = xrpl::parseBase58<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.delegate->at(JS(account)))

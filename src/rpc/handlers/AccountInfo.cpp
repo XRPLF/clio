@@ -40,7 +40,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 
     if (!input.account && !input.ident) {
         return Error{
-            Status{RippledError::RpcInvalidParams, xrpl::RPC::missingFieldMessage(JS(account))}
+            Status{RippledError::RpcInvalidParams, xrpl::rpc::missingFieldMessage(JS(account))}
         };
     }
 
