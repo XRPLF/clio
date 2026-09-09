@@ -552,7 +552,7 @@ std::expected<xrpl::LedgerHeader, Status>
 getLedgerHeaderFromLedgerSpecifier(
     BackendInterface const& backend,
     boost::asio::yield_context yield,
-    spec::LedgerSpecifier const& ledger,
+    rpc::spec::LedgerSpecifier const& ledger,
     uint32_t maxSeq
 )
 {
