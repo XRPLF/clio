@@ -27,21 +27,29 @@ struct DefaultProcessor final {
             "handler satisfies both the legacy and the typed input path; dispatch would be "
             "decided by the order of the branches below rather than by the handler"
         );
+        static_assert(
+            SomeHandlerWithTypedInput<HandlerType> or SomeHandlerWithInput<HandlerType> or
+                SomeHandlerWithoutInput<HandlerType>,
+            "handler matches none of the branches below"
+        );
 
         // New `rpc-spec`-based handler
         if constexpr (SomeHandlerWithTypedInput<HandlerType>) {
+            auto input = HandlerType::parseInput(value, ctx.apiVersion);
             auto warnings = rpc::spec::toJsonArray(HandlerType::spec(ctx.apiVersion).check(value));
 
-            auto input = HandlerType::parseInput(value, ctx.apiVersion);
-            if (not input)
+            if (not input.has_value())
                 return ReturnType{Error{std::move(input).error()}, std::move(warnings)};
 
             auto ret = handler.process(*input, ctx);
-            if (not ret)
+
+            if (not ret.has_value())
                 return ReturnType{Error{std::move(ret).error()}, std::move(warnings)};
 
             return ReturnType{value_from(std::move(ret).value()), std::move(warnings)};
-        } else if constexpr (SomeHandlerWithInput<HandlerType>) {
+        }
+
+        if constexpr (SomeHandlerWithInput<HandlerType>) {
             // Old spec-based handler: first we run validation against specified API version
             // TODO: This will be eventually removed once fully migraded to new rpc-spec system.
             auto const spec = handler.spec(ctx.apiVersion);
