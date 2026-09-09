@@ -552,7 +552,7 @@ std::expected<xrpl::LedgerHeader, Status>
 getLedgerHeaderFromLedgerSpecifier(
     BackendInterface const& backend,
     boost::asio::yield_context yield,
-    spec::LedgerSpecifier const& ledger,
+    rpc::spec::LedgerSpecifier const& ledger,
     uint32_t maxSeq
 )
 {
@@ -560,12 +560,12 @@ getLedgerHeaderFromLedgerSpecifier(
     auto const resolved = ledger.resolved();
 
     if (resolved.isHash()) {
-        auto const lgrInfo =
+        auto const maybeLgrInfo =
             backend.fetchLedgerByHash(std::get<xrpl::uint256>(resolved.value), yield);
-        if (!lgrInfo || lgrInfo->seq > maxSeq)
+        if (not maybeLgrInfo.has_value() or maybeLgrInfo->seq > maxSeq)
             return err;
 
-        return *lgrInfo;
+        return *maybeLgrInfo;
     }
 
     if (resolved.isShortcut()) {
@@ -582,11 +582,11 @@ getLedgerHeaderFromLedgerSpecifier(
     if (ledgerSequence > maxSeq)
         return err;
 
-    auto const lgrInfo = backend.fetchLedgerBySequence(ledgerSequence, yield);
-    if (!lgrInfo)
+    auto const maybeLgrInfo = backend.fetchLedgerBySequence(ledgerSequence, yield);
+    if (not maybeLgrInfo.has_value())
         return err;
 
-    return *lgrInfo;
+    return *maybeLgrInfo;
 }
 
 std::vector<unsigned char>
