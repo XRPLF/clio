@@ -99,15 +99,14 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         auto const id = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.escrow->at(JS(owner)))
         );
-        key =
-            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            xrpl::keylet::escrow(
-                *id,
-                xrpl::SeqProxy::rawSequence(
-                    util::integralValueAs<uint32_t>(input.escrow->at(JS(seq)))
-                )
-            )
-                .key;
+        key = xrpl::keylet::escrow(
+                  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+                  *id,
+                  xrpl::SeqProxy::rawSequence(
+                      util::integralValueAs<uint32_t>(input.escrow->at(JS(seq)))
+                  )
+        )
+                  .key;
     } else if (input.depositPreauth) {
         auto const owner = util::parseBase58Wrapper<xrpl::AccountID>(
             boost::json::value_to<std::string>(input.depositPreauth->at(JS(owner)))

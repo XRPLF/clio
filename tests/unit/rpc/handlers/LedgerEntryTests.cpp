@@ -3323,13 +3323,12 @@ generateTestValuesForNormalPathTest()
                 kAccount,
                 kRangeMax
             ),
-            .expectedIndex =
-                // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            xrpl::keylet::vault(
-                *xrpl::parseBase58<xrpl::AccountID>(kAccount),
-                xrpl::SeqProxy::rawSequence(kRangeMax)
+            .expectedIndex = xrpl::keylet::vault(
+                                 // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+                                 *xrpl::parseBase58<xrpl::AccountID>(kAccount),
+                                 xrpl::SeqProxy::rawSequence(kRangeMax)
             )
-                .key,
+                                 .key,
             .mockedEntity = createVault(
                 kAccount,
                 kAccount,
@@ -3556,12 +3555,12 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
         0
     );
 
-    auto const vaultKey =
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        xrpl::keylet::vault(
-            *xrpl::parseBase58<xrpl::AccountID>(kAccount), xrpl::SeqProxy::rawSequence(kRangeMax)
-        )
-            .key;
+    auto const vaultKey = xrpl::keylet::vault(
+                              // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+                              *xrpl::parseBase58<xrpl::AccountID>(kAccount),
+                              xrpl::SeqProxy::rawSequence(kRangeMax)
+    )
+                              .key;
 
     xrpl::STLedgerEntry const sle{
         xrpl::SerialIter{

@@ -15,7 +15,6 @@
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/format.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -415,7 +414,7 @@ toJson(xrpl::SLE const& sle)
             std::string md5 = strHex(hash);
             boost::algorithm::to_lower(md5);
             value.as_object()["urlgravatar"] =
-                str(boost::format("http://www.gravatar.com/avatar/%s") % md5);
+                fmt::format("http://www.gravatar.com/avatar/{}", md5);
         }
     }
     return value.as_object();
