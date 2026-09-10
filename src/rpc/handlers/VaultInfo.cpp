@@ -18,6 +18,7 @@
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STBase.h>
 #include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/SeqProxy.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
 
@@ -96,7 +97,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
                     return std::unexpected{Status{RippledError::RpcEntryNotFound}};
             }
 
-            return xrpl::keylet::vault(*accountID, *input.tnxSequence);
+            return xrpl::keylet::vault(*accountID, xrpl::SeqProxy::rawSequence(*input.tnxSequence));
         }
         xrpl::uint256 nodeIndex;
         if (nodeIndex.parseHex(*input.vaultID))

@@ -147,6 +147,10 @@ struct Amendments {
     REGISTER(Sponsor);
     REGISTER(fixCleanup3_3_0);
 
+    // These amendments are added because of libxrpl 3.4.0, but they are not necessarily supported
+    // in Clio yet
+    REGISTER(fixCleanup3_4_0);
+
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);
     REGISTER(NonFungibleTokensV1);

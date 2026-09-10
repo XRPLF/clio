@@ -18,7 +18,7 @@ class ClioConan(ConanFile):
         "libbacktrace/cci.20210118",
         "spdlog/1.17.0",
         "xrpl-rpc-spec/0.1.9",
-        "xrpl/3.3.0",
+        "xrpl/3.4.0-rc1",
     ]
 
     default_options = {
@@ -34,6 +34,7 @@ class ClioConan(ConanFile):
         "protobuf/*:with_zlib": True,
         "snappy/*:shared": False,
         "xrpl-rpc-spec/*:server": "clio",
+        "xrpl/*:benchmark": False,
         "xrpl/*:rocksdb": True,  # TODO: revert to false when includes are fixed in libxrpl
         "xrpl/*:tests": False,
     }

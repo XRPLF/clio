@@ -16,6 +16,7 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SeqProxy.h>
 
 #include <cstdint>
 #include <optional>
@@ -456,7 +457,7 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
     auto const accountRoot = createAccountRootObject(kAccount, 0, kSeq, 200, 2, kIndex1, 2);
     auto const account = getAccountIdWithString(kAccount);
     auto const accountKeylet = xrpl::keylet::account(account).key;
-    auto const vaultKeylet = xrpl::keylet::vault(account, kSeq).key;
+    auto const vaultKeylet = xrpl::keylet::vault(account, xrpl::SeqProxy::rawSequence(kSeq)).key;
     auto const mptIssuance = xrpl::keylet::mptokenIssuance(mptSharesID).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKeylet, kSeq, _))
