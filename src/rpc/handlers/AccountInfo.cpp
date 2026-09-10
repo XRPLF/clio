@@ -11,9 +11,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/HandlerFor.hpp>
-#include <rpcspec/HandlerForDefs.hpp>              // IWYU pragma: keep
-#include <rpcspec/handlers/account_info/Spec.hpp>  // IWYU pragma: keep
 #include <rpcspec/handlers/account_info/Types.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/ledger/helpers/AccountRootHelpers.h>
@@ -32,8 +29,6 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-
-template struct rpc::spec::HandlerFor<rpc::spec::handlers::account_info::Input>;
 
 namespace rpc {
 AccountInfoHandler::Result

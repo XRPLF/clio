@@ -8,9 +8,6 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/HandlerFor.hpp>
-#include <rpcspec/HandlerForDefs.hpp>                    // IWYU pragma: keep
-#include <rpcspec/handlers/account_currencies/Spec.hpp>  // IWYU pragma: keep
 #include <rpcspec/handlers/account_currencies/Types.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
@@ -25,8 +22,6 @@
 #include <cstdint>
 #include <limits>
 #include <string>
-
-template struct rpc::spec::HandlerFor<rpc::spec::handlers::account_currencies::Input>;
 
 namespace rpc {
 AccountCurrenciesHandler::Result

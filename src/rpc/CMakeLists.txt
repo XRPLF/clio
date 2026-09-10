@@ -61,4 +61,7 @@ target_sources(
         handlers/VaultInfo.cpp
 )
 
+rpcspec_generate_instantiations(OUT_VAR rpcspec_instantiations)
+target_sources(clio_rpc PRIVATE ${rpcspec_instantiations})
+
 target_link_libraries(clio_rpc PUBLIC clio_util clio_data rpcspec::rpcspec)
