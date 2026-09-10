@@ -47,7 +47,7 @@ jobs:
         os: [heavy]
         compiler: [gcc, clang]
         build_type: [Release, Debug]
-        container: ['{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }']
+        container: ['{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }']
 
         include:
           - os: macos-26-apple-clang-21
@@ -73,7 +73,7 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
+      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
       compiler: gcc
       build_type: Debug
       download_ccache: true
@@ -90,7 +90,7 @@ jobs:
     needs: build-and-test
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
