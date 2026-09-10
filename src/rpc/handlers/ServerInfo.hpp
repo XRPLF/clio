@@ -103,7 +103,7 @@ public:
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::chrono::seconds uptime = {};
         std::string clioVersion = util::build::getClioVersionString();
-        std::string xrplVersion = xrpl::BuildInfo::getVersionString();
+        std::string xrplVersion = xrpl::build_info::getVersionString();
         std::optional<boost::json::object> rippledInfo = std::nullopt;
         ValidatedLedgerSection validatedLedger = {};
         CacheSection cache = {};

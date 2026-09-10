@@ -28,7 +28,7 @@ namespace rpc {
  * @brief Stream a Status in human readable form.
  *
  * Declared in rpcspec but implemented here: rendering a code needs Clio's
- * getErrorInfo table and xrpl::RPC::getErrorInfo.
+ * getErrorInfo table and xrpl::rpc::getErrorInfo.
  *
  * @param stream The stream to write to
  * @param status The status to write
@@ -46,7 +46,7 @@ operator<<(std::ostream& stream, Status const& status)
                 if (!status.message.empty()) {
                     stream << ", Message: " << status.message;
                 } else {
-                    stream << ", Message: " << xrpl::RPC::getErrorInfo(err).message;
+                    stream << ", Message: " << xrpl::rpc::getErrorInfo(err).message;
                 }
             },
             [&stream, &status](ClioError err) {
@@ -176,7 +176,7 @@ makeError(
 )
 {
     boost::json::object json;
-    auto const& info = xrpl::RPC::getErrorInfo(err);
+    auto const& info = xrpl::rpc::getErrorInfo(err);
 
     json["error"] = customError.value_or(info.token.cStr()).data();
     json["error_code"] = static_cast<uint32_t>(err);

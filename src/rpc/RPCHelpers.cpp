@@ -15,7 +15,6 @@
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/format/free_funcs.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -45,7 +44,8 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/MPTIssue.h>
-#include <xrpl/protocol/NFTSyntheticSerializer.h>
+#include <xrpl/protocol/NFTokenID.h>
+#include <xrpl/protocol/NFTokenOfferID.h>
 #include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/PublicKey.h>
 #include <xrpl/protocol/Rate.h>
@@ -248,7 +248,8 @@ toExpandedJson(
 
     if (nftEnabled == NFTokenjson::ENABLE) {
         json::Value nftJson;
-        xrpl::RPC::insertNFTSyntheticInJson(nftJson, txn, *meta);
+        xrpl::insertNFTokenID(nftJson[xrpl::jss::meta], txn, *meta);
+        xrpl::insertNFTokenOfferID(nftJson[xrpl::jss::meta], txn, *meta);
         // if there is no nft fields, the nftJson will be {"meta":null}
         auto const nftBoostJson = toBoostJson(nftJson).as_object();
         if (nftBoostJson.contains(JS(meta)) and nftBoostJson.at(JS(meta)).is_object()) {
@@ -413,7 +414,7 @@ toJson(xrpl::SLE const& sle)
             std::string md5 = strHex(hash);
             boost::algorithm::to_lower(md5);
             value.as_object()["urlgravatar"] =
-                str(boost::format("http://www.gravatar.com/avatar/%s") % md5);
+                fmt::format("http://www.gravatar.com/avatar/{}", md5);
         }
     }
     return value.as_object();
