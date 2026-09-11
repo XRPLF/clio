@@ -1,6 +1,6 @@
 services:
   clio_develop:
-    image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
+    image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
     volumes:
       - clio_develop_conan_data:/root/.conan2/p
       - clio_develop_ccache:/root/.ccache
