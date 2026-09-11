@@ -8,7 +8,6 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/handlers/account_currencies/Types.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Issue.h>

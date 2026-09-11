@@ -11,7 +11,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/handlers/account_info/Types.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/ledger/helpers/AccountRootHelpers.h>
 #include <xrpl/protocol/ErrorCodes.h>
