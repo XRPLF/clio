@@ -3,16 +3,11 @@
 #include "data/Types.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "rpc/common/MetaProcessors.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
@@ -21,7 +16,6 @@
 #include <xrpl/protocol/jss.h>
 
 #include <algorithm>
-#include <cstdint>
 #include <iterator>
 #include <map>
 #include <ranges>
@@ -40,11 +34,10 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "Feature's ledger range must be available");
 
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -99,25 +92,6 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
     };
 }
 
-RpcSpecConstRef
-FeatureHandler::spec([[maybe_unused]] uint32_t apiVersion)
-{
-    static RpcSpec const kRpcSpec = {
-        {JS(feature), validation::Type<std::string>{}},
-        {JS(vetoed),
-         meta::WithCustomError{
-             validation::NotSupported{},
-             Status(
-                 RippledError::RpcNoPermission,
-                 "The admin portion of feature API is not available through Clio."
-             )
-         }},
-        {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-        {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-    };
-    return kRpcSpec;
-}
-
 void
 tag_invoke(
     boost::json::value_from_tag,
@@ -155,27 +129,6 @@ tag_invoke(
         {JS(enabled), feature.enabled},
         {JS(supported), feature.supported},
     };
-}
-
-FeatureHandler::Input
-tag_invoke(boost::json::value_to_tag<FeatureHandler::Input>, boost::json::value const& jv)
-{
-    auto input = FeatureHandler::Input{};
-    auto const jsonObject = jv.as_object();
-
-    if (jsonObject.contains(JS(feature)))
-        input.feature = jv.at(JS(feature)).as_string();
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    return input;
 }
 
 }  // namespace rpc

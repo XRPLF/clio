@@ -2,7 +2,6 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/AnyHandler.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Ledger.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
@@ -16,6 +15,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/RpcSpecView.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -119,21 +120,21 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed",
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not hex string.",
         },
         {
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString",
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not hex string.",
         },
         {
             .testName = "LedgerIndexNotInt",
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed",
+            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number.",
         },
         {
             .testName = "TransactionsNotBool",
@@ -1393,7 +1394,7 @@ struct RPCLedgerHandlerSpecCheckTestBundle {
 
 struct RPCLedgerHandlerSpecCheckTest
     : ::testing::TestWithParam<RPCLedgerHandlerSpecCheckTestBundle> {
-    RpcSpec spec = LedgerHandler::spec(2);
+    rpc::spec::RpcSpecView spec = LedgerHandler::spec(2);
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1439,7 +1440,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(RPCLedgerHandlerSpecCheckTest, CheckSpec)
 {
-    auto const warnings = spec.check(GetParam().json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(GetParam().json));
     ASSERT_EQ(warnings.size(), GetParam().expectedWarning.size());
     for (auto const& warn : warnings) {
         ASSERT_TRUE(warn.is_object());

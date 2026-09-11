@@ -4,18 +4,13 @@
 #include "rpc/AMMHelpers.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "rpc/common/MetaProcessors.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <date/date.h>
 #include <rpcspec/Errors.hpp>
 #include <xrpl/basics/base_uint.h>
@@ -34,10 +29,7 @@
 #include <xrpl/protocol/jss.h>
 
 #include <chrono>
-#include <cstdint>
-#include <stdexcept>
 #include <string>
-#include <string_view>
 #include <utility>
 
 namespace {
@@ -80,11 +72,10 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AMMInfo's ledger range must be available");
 
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -228,67 +219,6 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
     return response;
 }
 
-RpcSpecConstRef
-AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
-{
-    static auto const kStringIssueValidator = validation::CustomValidator{
-        [](boost::json::value const& value, std::string_view key) -> MaybeError {
-            if (not value.is_string()) {
-                return Error{
-                    Status{RippledError::RpcInvalidParams, std::string(key) + "NotString"}
-                };
-            }
-
-            try {
-                xrpl::issueFromJson(boost::json::value_to<std::string>(value));
-            } catch (std::runtime_error const&) {
-                return Error{Status{RippledError::RpcIssueMalformed}};
-            }
-
-            return MaybeError{};
-        }
-    };
-
-    static auto const kRpcSpec = RpcSpec{
-        {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-        {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-        {JS(asset),
-         meta::WithCustomError{
-             validation::Type<std::string, boost::json::object>{},
-             Status(RippledError::RpcIssueMalformed)
-         },
-         meta::IfType<std::string>{kStringIssueValidator},
-         meta::IfType<boost::json::object>{
-             meta::WithCustomError{
-                 validation::CustomValidators::currencyIssueValidator,
-                 Status(RippledError::RpcIssueMalformed)
-             },
-         }},
-        {JS(asset2),
-         meta::WithCustomError{
-             validation::Type<std::string, boost::json::object>{},
-             Status(RippledError::RpcIssueMalformed)
-         },
-         meta::IfType<std::string>{kStringIssueValidator},
-         meta::IfType<boost::json::object>{
-             meta::WithCustomError{
-                 validation::CustomValidators::currencyIssueValidator,
-                 Status(RippledError::RpcIssueMalformed)
-             },
-         }},
-        {JS(amm_account),
-         meta::WithCustomError{
-             validation::CustomValidators::accountValidator, Status(RippledError::RpcActMalformed)
-         }},
-        {JS(account),
-         meta::WithCustomError{
-             validation::CustomValidators::accountValidator, Status(RippledError::RpcActMalformed)
-         }},
-    };
-
-    return kRpcSpec;
-}
-
 void
 tag_invoke(
     boost::json::value_from_tag,
@@ -322,41 +252,6 @@ tag_invoke(
         {JS(ledger_hash), output.ledgerHash},
         {JS(validated), output.validated},
     };
-}
-
-AMMInfoHandler::Input
-tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value const& jv)
-{
-    auto input = AMMInfoHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    if (jsonObject.contains(JS(asset)))
-        input.issue1 = parseIssue(jsonObject.at(JS(asset)).as_object());
-
-    if (jsonObject.contains(JS(asset2)))
-        input.issue2 = parseIssue(jsonObject.at(JS(asset2)).as_object());
-
-    if (jsonObject.contains(JS(account))) {
-        input.accountID =
-            accountFromStringStrict(boost::json::value_to<std::string>(jsonObject.at(JS(account))));
-    }
-
-    if (jsonObject.contains(JS(amm_account))) {
-        input.ammAccount = accountFromStringStrict(
-            boost::json::value_to<std::string>(jsonObject.at(JS(amm_account)))
-        );
-    }
-
-    return input;
 }
 
 }  // namespace rpc
