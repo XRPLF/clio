@@ -53,16 +53,16 @@ jobs:
           - os: heavy
             compiler: gcc
             build_type: Release
-            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
           - os: heavy
             compiler: gcc
             build_type: Debug
-            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
           - os: heavy
             compiler: gcc
             sanitizers: undefinedbehavior
             build_type: Release
-            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
 
     uses: ./.github/workflows/reusable-build-test.yml
     with:
@@ -85,7 +85,7 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
+      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
       compiler: gcc
       build_type: Release
       download_ccache: false
@@ -107,7 +107,7 @@ jobs:
         include:
           - os: heavy
             compiler: clang
-            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
           - os: macos-26-apple-clang-21
             compiler: apple-clang
             container: ""
