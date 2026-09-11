@@ -168,8 +168,7 @@ AccountInfoHandler::Input
 createInput<AccountInfoHandler>()
 {
     AccountInfoHandler::Input input{};
-    input.account = kAccount;
-    input.ident = "asdf";
+    input.account = getAccountIdWithString(kAccount);
     return input;
 }
 

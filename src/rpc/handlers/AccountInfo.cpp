@@ -3,16 +3,13 @@
 #include "data/AmendmentCenter.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/ledger/helpers/AccountRootHelpers.h>
@@ -46,11 +43,10 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountInfo's ledger range must be available");
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -58,10 +54,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const accountStr = input.account.value_or(input.ident.value_or(""));
-    auto const accountID = accountFromStringStrict(accountStr);
-    auto const accountKeylet =
-        xrpl::keylet::account(*accountID);  // NOLINT(bugprone-unchecked-optional-access)
+    auto const accountID = input.account ? *input.account : *input.ident;
+    auto const accountKeylet = xrpl::keylet::account(accountID);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
@@ -99,8 +93,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     if (input.signerLists) {
         // We put the SignerList in an array because of an anticipated
         // future when we support multiple signer lists on one account.
-        auto const signersKey =
-            xrpl::keylet::signerList(*accountID);  // NOLINT(bugprone-unchecked-optional-access)
+        auto const signersKey = xrpl::keylet::signerList(accountID);
 
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
@@ -201,33 +194,6 @@ tag_invoke(
             jv.as_object()[JS(signer_lists)] = signers;
         }
     }
-}
-
-AccountInfoHandler::Input
-tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::value const& jv)
-{
-    auto input = AccountInfoHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    if (jsonObject.contains(JS(ident)))
-        input.ident = boost::json::value_to<std::string>(jsonObject.at(JS(ident)));
-
-    if (jsonObject.contains(JS(account)))
-        input.account = boost::json::value_to<std::string>(jsonObject.at(JS(account)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    if (jsonObject.contains(JS(signer_lists)))
-        input.signerLists = boost::json::value_to<JsonBool>(jsonObject.at(JS(signer_lists)));
-
-    return input;
 }
 
 }  // namespace rpc

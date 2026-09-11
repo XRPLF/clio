@@ -12,6 +12,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerHeader.h>
@@ -149,6 +150,87 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, LedgerHashMalformed)
+{
+    static auto const kInput = boost::json::parse(
+        fmt::format(R"JSON({{ "account": "{}", "ledger_hash": "1" }})JSON", kAccount)
+    );
+    auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(
+            err.at("error_message").as_string(), "Invalid field 'ledger_hash', not hex string."
+        );
+    });
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, LedgerIndexMalformed)
+{
+    static auto const kInput = boost::json::parse(
+        fmt::format(R"JSON({{ "account": "{}", "ledger_index": "a" }})JSON", kAccount)
+    );
+    auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(
+            err.at("error_message").as_string(),
+            "Invalid field 'ledger_index', not string or number."
+        );
+    });
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, LedgerIndexEmptyStringMalformed)
+{
+    static auto const kInput = boost::json::parse(
+        fmt::format(R"JSON({{ "account": "{}", "ledger_index": "" }})JSON", kAccount)
+    );
+    auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_FALSE(output);
+        EXPECT_EQ(rpc::makeError(output.result.error()).at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, LedgerIndexOutOfRangeMalformed)
+{
+    static auto const kInput = boost::json::parse(
+        fmt::format(R"JSON({{ "account": "{}", "ledger_index": 4294967296 }})JSON", kAccount)
+    );
+    auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_FALSE(output);
+        EXPECT_EQ(rpc::makeError(output.result.error()).at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCAccountCurrenciesHandlerTest, ValidLedgerHashWithMalformedLedgerIndex)
+{
+    static auto const kInput = boost::json::parse(
+        fmt::format(
+            R"JSON({{ "account": "{}", "ledger_hash": "{}", "ledger_index": "a" }})JSON",
+            kAccount,
+            kLedgerHash
+        )
+    );
+    auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_FALSE(output);
+        EXPECT_EQ(
+            rpc::makeError(output.result.error()).at("error_message").as_string(),
+            "Invalid field 'ledger_index', not string or number."
+        );
     });
 }
 
@@ -318,7 +400,7 @@ TEST(RPCAccountCurrenciesHandlerSpecTest, DeprecatedFields)
         {"strict", true}
     };
     auto const spec = AccountCurrenciesHandler::spec(2);
-    auto const warnings = spec.check(json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(json));
     ASSERT_EQ(warnings.size(), 1);
     ASSERT_TRUE(warnings[0].is_object());
     auto const& warning = warnings[0].as_object();
