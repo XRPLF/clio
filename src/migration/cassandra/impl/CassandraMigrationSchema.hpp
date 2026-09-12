@@ -36,6 +36,7 @@ public:
      *
      * @param handler The database handler
      * @param tableName The name of the table
+     * @param selectColumns Explicit columns to select, in TableDesc::Row order
      * @param key The partition key of the table
      * @return The prepared statement
      */
@@ -43,16 +44,18 @@ public:
     getPreparedFullScanStatement(
         data::cassandra::Handle const& handler,
         std::string const& tableName,
+        std::string const& selectColumns,
         std::string const& key
     )
     {
         return handler.prepare(
             fmt::format(
                 R"(
-            SELECT *
+            SELECT {}
               FROM {}
              WHERE TOKEN({}) >= ? AND TOKEN({}) <= ?
             )",
+                selectColumns,
                 data::cassandra::qualifiedTableName<SettingsProviderType>(
                     settingsProvider_.get(), tableName
                 ),

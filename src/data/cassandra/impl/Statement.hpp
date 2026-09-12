@@ -3,6 +3,7 @@
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/Collection.hpp"
 #include "data/cassandra/impl/ManagedObject.hpp"
+#include "data/cassandra/impl/Result.hpp"
 #include "data/cassandra/impl/Tuple.hpp"
 #include "util/UnsupportedType.hpp"
 
@@ -63,6 +64,32 @@ public:
     {
         std::size_t idx = 0;  // NOLINT(misc-const-correctness)
         (this->bindAt<Args>(idx++, std::forward<Args>(args)), ...);
+    }
+
+    /**
+     * @brief Set the Cassandra driver page size for this statement.
+     *
+     * @param pageSize Number of rows per driver page
+     */
+    void
+    setPagingSize(std::int32_t const pageSize) const
+    {
+        auto const rc = cass_statement_set_paging_size(*this, pageSize);
+        if (rc != CASS_OK)
+            throw std::logic_error(fmt::format("[Set paging size]: {}", cass_error_desc(rc)));
+    }
+
+    /**
+     * @brief Continue this statement from the paging state in a previous result.
+     *
+     * @param result Previous page result
+     */
+    void
+    setPagingState(Result const& result) const
+    {
+        auto const rc = cass_statement_set_paging_state(*this, result);
+        if (rc != CASS_OK)
+            throw std::logic_error(fmt::format("[Set paging state]: {}", cass_error_desc(rc)));
     }
 
     /**
