@@ -21,7 +21,7 @@ jobs:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@7bf7ceca5932114abdd0d43493c3c30c5a654e13
+        uses: XRPLF/actions/prepare-runner@b3e255d74d785d053e4903da8ac90983cd7d9e82
         with:
           enable_ccache: false
 
@@ -76,7 +76,7 @@ jobs:
     needs: build
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
 
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1

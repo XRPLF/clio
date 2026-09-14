@@ -1,25 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Install our Conan configuration, profiles and the xrplf remote into CONAN_HOME.
+# Safe to re-run; never deletes the Conan home.
 
-set -ex
+set -euo pipefail
 
-CURRENT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROFILES_SRC_DIR="$CURRENT_DIR/profiles"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+CONAN_DIR="$(conan config home)"
 
-CONAN_DIR="${CONAN_HOME:-$HOME/.conan2}"
-PROFILES_DIR="$CONAN_DIR/profiles"
+echo "Installing Conan configuration into ${CONAN_DIR}"
+conan config install "${SCRIPT_DIR}/global.conf"
+conan config install "${SCRIPT_DIR}/profiles" -tf "${CONAN_DIR}/profiles"
+# This script manages these files, so make them read-only - Conan does not
+# preserve the source mode. Only the files: the directories must stay writable
+# for `conan config install` to replace them.
+chmod a-w "${CONAN_DIR}/global.conf"
+find "${CONAN_DIR}/profiles" -type f -exec chmod a-w {} +
 
-rm -rf "$CONAN_DIR"
-
+echo "Adding the xrplf Conan remote"
+# --index 0: our patched recipes must win over Conan Center.
 conan remote add --index 0 --force xrplf https://conan.xrplf.org/repository/conan/
-
-cp "$CURRENT_DIR/global.conf" "$CONAN_DIR/global.conf"
-
-mkdir -p "$PROFILES_DIR"
-
-# The compiler is selected via the `CC`/`CXX` environment variables (see
-# `.github/actions/set-compiler-env`) and the sanitizers via the `SANITIZERS`
-# environment variable. Builds always use the `ci` profile, which includes
-# `sanitizers` and `default`.
-cp "$PROFILES_SRC_DIR/default" "$PROFILES_DIR/default"
-cp "$PROFILES_SRC_DIR/ci" "$PROFILES_DIR/ci"
-cp "$PROFILES_SRC_DIR/sanitizers" "$PROFILES_DIR/sanitizers"

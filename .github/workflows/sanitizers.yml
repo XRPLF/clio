@@ -42,7 +42,7 @@ jobs:
     uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b" }'
+      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
       download_ccache: false
       upload_ccache: false
       compiler: ${{ matrix.compiler }}

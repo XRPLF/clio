@@ -46,7 +46,7 @@ jobs:
   release:
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
     env:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ github.token }}
@@ -60,7 +60,7 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@7bf7ceca5932114abdd0d43493c3c30c5a654e13
+        uses: XRPLF/actions/prepare-runner@b3e255d74d785d053e4903da8ac90983cd7d9e82
         with:
           enable_ccache: false
 
