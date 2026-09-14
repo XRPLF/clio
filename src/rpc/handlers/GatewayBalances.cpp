@@ -4,13 +4,11 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/beast/utility/Zero.h>
@@ -25,9 +23,7 @@
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
-#include <algorithm>
 #include <cstdint>
-#include <iterator>
 #include <limits>
 #include <map>
 #include <stdexcept>
@@ -47,11 +43,10 @@ GatewayBalancesHandler::process(
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "GatewayBalances' ledger range must be available");
 
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -60,12 +55,9 @@ GatewayBalancesHandler::process(
 
     // check account
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const accountID = accountFromStringStrict(input.account);
+    auto const& accountID = input.account;
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        xrpl::keylet::account(*accountID).key,
-        lgrInfo.seq,
-        ctx.yield
+        xrpl::keylet::account(accountID).key, lgrInfo.seq, ctx.yield
     );
 
     if (!accountLedgerObject)
@@ -158,7 +150,7 @@ GatewayBalancesHandler::process(
     // traverse all owned nodes, limit->max, marker->empty
     auto const ret = traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
+        accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},
@@ -169,7 +161,7 @@ GatewayBalancesHandler::process(
     if (!ret.has_value())
         return Error{ret.error()};
 
-    output.accountID = input.account;
+    output.accountID = xrpl::to_string(accountID);
     output.ledgerHash = xrpl::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
 
@@ -239,45 +231,6 @@ tag_invoke(
         obj["overflow"] = true;
 
     jv = std::move(obj);
-}
-
-GatewayBalancesHandler::Input
-tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json::value const& jv)
-{
-    auto input = GatewayBalancesHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    input.account = boost::json::value_to<std::string>(jv.at(JS(account)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    if (jsonObject.contains(JS(hotwallet))) {
-        if (jsonObject.at(JS(hotwallet)).is_string()) {
-            input.hotWallets.insert(
-                // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                *accountFromStringStrict(boost::json::value_to<std::string>(jv.at(JS(hotwallet))))
-            );
-        } else {
-            auto const& hotWallets = jv.at(JS(hotwallet)).as_array();
-            std::ranges::transform(
-                hotWallets,
-
-                std::inserter(input.hotWallets, input.hotWallets.begin()),
-                [](auto const& hotWallet) {
-                    return *accountFromStringStrict(boost::json::value_to<std::string>(hotWallet));
-                }
-            );
-        }
-    }
-
-    return input;
 }
 
 }  // namespace rpc

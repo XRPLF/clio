@@ -114,7 +114,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
         },
         ParameterTestBundle{
             .testName = "LedgerHashInvalid",
@@ -126,7 +126,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not hex string."
         },
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
@@ -138,7 +138,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not hex string."
         },
         ParameterTestBundle{
             .testName = "WalletsNotStringOrArrayV1",

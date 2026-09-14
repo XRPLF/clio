@@ -2,20 +2,16 @@
 
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/Checkers.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <xrpl/protocol/jss.h>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/ledger/Types.hpp>
 
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 
@@ -26,7 +22,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/ledger.html
  */
-class LedgerHandler {
+class LedgerHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::ledger::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
@@ -40,31 +36,6 @@ public:
         // TODO: use better type
         boost::json::object header;
         bool validated = true;
-    };
-
-    /**
-     * @brief A struct to hold the input data for the command
-     *
-     * Clio does not support:
-     * - queue
-     *
-     * And the following are deprecated altogether:
-     * - full
-     * - accounts
-     * - ledger
-     * - type
-     *
-     * Clio will throw an error when `queue`, `full` or `accounts` is set to `true`.
-     * @see https://github.com/XRPLF/clio/issues/603 and https://github.com/XRPLF/clio/issues/1537
-     */
-    struct Input {
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        bool binary = false;
-        bool expand = false;
-        bool ownerFunds = false;
-        bool transactions = false;
-        bool diff = false;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -82,35 +53,6 @@ public:
         : sharedPtrBackend_(std::move(sharedPtrBackend))
         , amendmentCenter_(std::move(amendmentCenter))
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const kRpcSpec = RpcSpec{
-            {JS(full), validation::Type<bool>{}, validation::NotSupported{true}},
-            {JS(full), check::Deprecated{}},
-            {JS(accounts), validation::Type<bool>{}, validation::NotSupported{true}},
-            {JS(accounts), check::Deprecated{}},
-            {JS(owner_funds), validation::Type<bool>{}},
-            {JS(queue), validation::Type<bool>{}, validation::NotSupported{true}},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(transactions), validation::Type<bool>{}},
-            {JS(expand), validation::Type<bool>{}},
-            {JS(binary), validation::Type<bool>{}},
-            {"diff", validation::Type<bool>{}},
-            {JS(ledger), check::Deprecated{}},
-            {JS(type), check::Deprecated{}},
-        };
-
-        return kRpcSpec;
     }
 
     /**
@@ -132,14 +74,5 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 }  // namespace rpc
