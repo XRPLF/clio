@@ -41,13 +41,7 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
     if (!input.date)
         return fillOutputByIndex(maxIndex);
 
-    auto const convertISOTimeStrToTicks = [](std::string const& isoTimeStr) {
-        auto const systemTime = util::systemTpFromUtcStr(isoTimeStr, kDateFormat);
-        // systemTime must be valid after validation passed
-        return systemTime->time_since_epoch().count();
-    };
-
-    auto const ticks = convertISOTimeStrToTicks(*input.date);
+    auto const ticks = input.date->time_since_epoch().count();
 
     auto const earlierThan = [&](std::uint32_t ledgerIndex) {
         auto const header = sharedPtrBackend_->fetchLedgerBySequence(ledgerIndex, ctx.yield);
@@ -73,17 +67,6 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
     }
 
     return fillOutputByIndex(maxIndex);
-}
-
-LedgerIndexHandler::Input
-tag_invoke(boost::json::value_to_tag<LedgerIndexHandler::Input>, boost::json::value const& jv)
-{
-    auto input = LedgerIndexHandler::Input{};
-
-    if (jv.as_object().contains(JS(date)))
-        input.date = jv.at(JS(date)).as_string();
-
-    return input;
 }
 
 void
