@@ -1,26 +1,20 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/Errors.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/Checkers.hpp"
-#include "rpc/common/MetaProcessors.hpp"
-#include "rpc/common/Modifiers.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/account_lines/Types.hpp>
 #include <xrpl/protocol/AccountID.h>
-#include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/STLedgerEntry.h>
-#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace rpc {
@@ -31,14 +25,15 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_lines.html
  */
-class AccountLinesHandler {
+class AccountLinesHandler
+    : public rpc::spec::HandlerFor<rpc::spec::handlers::account_lines::Input> {
     // dependencies
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
 public:
-    static constexpr auto kLimitMin = 10;
-    static constexpr auto kLimitMax = 400;
-    static constexpr auto kLimitDefault = 200;
+    static constexpr auto kLimitMin = rpc::spec::handlers::account_lines::kLimitMin;
+    static constexpr auto kLimitMax = rpc::spec::handlers::account_lines::kLimitMax;
+    static constexpr auto kLimitDefault = rpc::spec::handlers::account_lines::kLimitDefault;
 
     /**
      * @brief A struct to hold data for one line response
@@ -74,20 +69,6 @@ public:
         uint32_t limit{};
     };
 
-    /**
-     * @brief A struct to hold the input data for the command
-     */
-    struct Input {
-        std::string account;
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        std::optional<std::string> peer;
-        bool ignoreDefault = false;  // TODO: document
-                                     // https://github.com/XRPLF/xrpl-dev-portal/issues/1839
-        uint32_t limit = kLimitDefault;
-        std::optional<std::string> marker;
-    };
-
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -98,42 +79,6 @@ public:
     AccountLinesHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
         : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const kRpcSpec = RpcSpec{
-            {JS(account),
-             validation::Required{},
-             meta::WithCustomError{
-                 validation::CustomValidators::accountValidator,
-                 Status(RippledError::RpcActMalformed)
-             }},
-            {JS(peer),
-             meta::WithCustomError{
-                 validation::CustomValidators::accountValidator,
-                 Status(RippledError::RpcActMalformed)
-             }},
-            {JS(ignore_default), validation::Type<bool>{}},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(marker), validation::CustomValidators::accountMarkerValidator},
-            {JS(ledger), check::Deprecated{}},
-            {"peer_index", check::Deprecated{}},
-        };
-
-        return kRpcSpec;
     }
 
     /**
@@ -164,15 +109,6 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 
     /**
      * @brief Convert the LineResponse to a JSON object

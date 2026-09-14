@@ -4,11 +4,9 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
@@ -35,11 +33,10 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountNFT's ledger range must be available");
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -47,27 +44,22 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const accountID = accountFromStringStrict(input.account);
+    auto const& accountID = input.account;
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        xrpl::keylet::account(*accountID).key,
-        lgrInfo.seq,
-        ctx.yield
+        xrpl::keylet::account(accountID).key, lgrInfo.seq, ctx.yield
     );
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::RpcActNotFound}};
 
     auto response = Output{};
-    response.account = input.account;
+    response.account = xrpl::to_string(accountID);
     response.limit = input.limit;
     response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
     // if a marker was passed, start at the page specified in marker. Else, start at the max page
-    auto const pageKey = input.marker ? xrpl::uint256{input.marker->c_str()}
-                                      // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                                      : xrpl::keylet::nftokenPageMax(*accountID).key;
+    auto const pageKey = input.marker ? *input.marker : xrpl::keylet::nftokenPageMax(accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
     if (!blob) {
@@ -150,32 +142,6 @@ tag_invoke(
 
     if (output.marker)
         jv.as_object()[JS(marker)] = *output.marker;
-}
-
-AccountNFTsHandler::Input
-tag_invoke(boost::json::value_to_tag<AccountNFTsHandler::Input>, boost::json::value const& jv)
-{
-    auto input = AccountNFTsHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    input.account = boost::json::value_to<std::string>(jsonObject.at(JS(account)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    if (jsonObject.contains(JS(limit)))
-        input.limit = util::integralValueAs<uint32_t>(jsonObject.at(JS(limit)));
-
-    if (jsonObject.contains(JS(marker)))
-        input.marker = boost::json::value_to<std::string>(jsonObject.at(JS(marker)));
-
-    return input;
 }
 
 }  // namespace rpc

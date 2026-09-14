@@ -126,7 +126,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not hex string."
+            .expectedErrorMessage = "Invalid field 'ledger_hash'."
         },
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
@@ -138,7 +138,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not hex string."
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
         },
         ParameterTestBundle{
             .testName = "WalletsNotStringOrArrayV1",

@@ -13,6 +13,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
@@ -83,21 +84,21 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed",
+            .expectedErrorMessage = "Invalid field 'ledger_hash'.",
         },
         {
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString",
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not string.",
         },
         {
             .testName = "LedgerIndexNotInt",
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed",
+            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number.",
         },
         {
             .testName = "LimitNotInt",
@@ -130,7 +131,7 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Malformed cursor.",
+            .expectedErrorMessage = "Invalid field 'marker'.",
         },
     };
 }
@@ -532,7 +533,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
     offer.setFieldU32(xrpl::sfExpiration, 123);
 
     bbs.reserve(AccountOffersHandler::kLimitMin + 1);
-    for (auto i = 0; i < AccountOffersHandler::kLimitMin + 1; i++)
+    for (auto i = 0u; i < AccountOffersHandler::kLimitMin + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -590,7 +591,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
     );
     offer.setFieldU32(xrpl::sfExpiration, 123);
     bbs.reserve(AccountOffersHandler::kLimitMax + 1);
-    for (auto i = 0; i < AccountOffersHandler::kLimitMax + 1; i++)
+    for (auto i = 0u; i < AccountOffersHandler::kLimitMax + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -626,7 +627,7 @@ TEST(RPCAccountOffersHandlerSpecTest, DeprecatedFields)
         {"strict", true},
     };
     auto const spec = AccountOffersHandler::spec(2);
-    auto const warnings = spec.check(json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(json));
     ASSERT_EQ(warnings.size(), 1);
     ASSERT_TRUE(warnings[0].is_object());
     auto const& warning = warnings[0].as_object();

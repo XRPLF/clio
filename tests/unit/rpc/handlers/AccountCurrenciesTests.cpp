@@ -164,9 +164,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerHashMalformed)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(
-            err.at("error_message").as_string(), "Invalid field 'ledger_hash', not hex string."
-        );
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'ledger_hash'.");
     });
 }
 
