@@ -1,24 +1,22 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/Modifiers.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/nft_offers_common/Types.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Keylet.h>
 #include <xrpl/protocol/STLedgerEntry.h>
-#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace rpc {
@@ -26,13 +24,14 @@ namespace rpc {
 /**
  * @brief Contains common functionality for handling the `nft_offers` command
  */
-class NFTOffersHandlerBase {
+class NFTOffersHandlerBase
+    : public rpc::spec::HandlerFor<rpc::spec::handlers::nft_offers_common::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static constexpr auto kLimitMin = 50;
-    static constexpr auto kLimitMax = 500;
-    static constexpr auto kLimitDefault = 250;
+    static constexpr auto kLimitMin = rpc::spec::handlers::nft_offers_common::kLimitMin;
+    static constexpr auto kLimitMax = rpc::spec::handlers::nft_offers_common::kLimitMax;
+    static constexpr auto kLimitDefault = rpc::spec::handlers::nft_offers_common::kLimitDefault;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -47,17 +46,6 @@ public:
         std::optional<std::string> marker;
     };
 
-    /**
-     * @brief A struct to hold the input data for the command
-     */
-    struct Input {
-        std::string nftID;
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = kLimitDefault;
-        std::optional<std::string> marker;
-    };
-
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -68,31 +56,6 @@ public:
     NFTOffersHandlerBase(std::shared_ptr<BackendInterface> sharedPtrBackend)
         : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const kRpcSpec = RpcSpec{
-            {JS(nft_id),
-             validation::Required{},
-             validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
-            {JS(marker), validation::CustomValidators::uint256HexStringValidator},
-        };
-
-        return kRpcSpec;
     }
 
 protected:

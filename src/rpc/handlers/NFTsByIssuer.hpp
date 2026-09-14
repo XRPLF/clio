@@ -1,34 +1,33 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/Modifiers.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <xrpl/protocol/jss.h>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/nfts_by_issuer/Types.hpp>
 
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace rpc {
 
 /**
  * @brief Handler for the `nfts_by_issuer` command
  */
-class NFTsByIssuerHandler {
+class NFTsByIssuerHandler
+    : public rpc::spec::HandlerFor<rpc::spec::handlers::nfts_by_issuer::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static constexpr auto kLimitMin = 1;
-    static constexpr auto kLimitMax = 100;
-    static constexpr auto kLimitDefault = 50;
+    static constexpr auto kLimitMin = rpc::spec::handlers::nfts_by_issuer::kLimitMin;
+    static constexpr auto kLimitMax = rpc::spec::handlers::nfts_by_issuer::kLimitMax;
+    static constexpr auto kLimitDefault = rpc::spec::handlers::nfts_by_issuer::kLimitDefault;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -43,18 +42,6 @@ public:
         std::optional<std::string> marker;
     };
 
-    /**
-     * @brief A struct to hold the input data for the command
-     */
-    struct Input {
-        std::string issuer;
-        std::optional<uint32_t> nftTaxon;
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        std::optional<std::string> marker;
-        std::optional<uint32_t> limit;
-    };
-
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -65,30 +52,6 @@ public:
     NFTsByIssuerHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
         : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const kRpcSpec = RpcSpec{
-            {JS(issuer), validation::Required{}, validation::CustomValidators::accountValidator},
-            {JS(nft_taxon), validation::Type<uint32_t>{}},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
-            {JS(marker), validation::CustomValidators::uint256HexStringValidator},
-        };
-
-        return kRpcSpec;
     }
 
     /**
@@ -110,14 +73,5 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 }  // namespace rpc

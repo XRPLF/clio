@@ -62,13 +62,13 @@ generateTestValuesForParametersTest()
             .testName = "LedgerHashInvalid",
             .testJson = R"JSON({"ledger_hash": "1"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not hex string."
+            .expectedErrorMessage = "Invalid field 'ledger_hash'."
         },
         BookChangesParamTestCaseBundle{
             .testName = "LedgerHashNotString",
             .testJson = R"JSON({"ledger_hash": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not hex string."
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
         },
         BookChangesParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",

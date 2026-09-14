@@ -120,14 +120,14 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not hex string.",
+            .expectedErrorMessage = "Invalid field 'ledger_hash'.",
         },
         {
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not hex string.",
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not string.",
         },
         {
             .testName = "LedgerIndexNotInt",

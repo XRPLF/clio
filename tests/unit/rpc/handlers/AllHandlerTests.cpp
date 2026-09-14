@@ -45,6 +45,7 @@
 
 #include <boost/asio/spawn.hpp>
 #include <gtest/gtest.h>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/UintTypes.h>
@@ -215,7 +216,7 @@ NFTBuyOffersHandler::Input
 createInput<NFTBuyOffersHandler>()
 {
     NFTBuyOffersHandler::Input input{};
-    input.nftID = kNftId;
+    input.nftID = xrpl::uint256{kNftId};
     return input;
 }
 
@@ -224,7 +225,7 @@ NFTInfoHandler::Input
 createInput<NFTInfoHandler>()
 {
     NFTInfoHandler::Input input{};
-    input.nftID = kNftId;
+    input.nftID = xrpl::uint256{kNftId};
     return input;
 }
 
@@ -233,7 +234,7 @@ NFTSellOffersHandler::Input
 createInput<NFTSellOffersHandler>()
 {
     NFTSellOffersHandler::Input input{};
-    input.nftID = kNftId;
+    input.nftID = xrpl::uint256{kNftId};
     return input;
 }
 

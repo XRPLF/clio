@@ -123,7 +123,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonHexLedgerHash)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'ledger_hash'.");
     });
 }
 
@@ -145,7 +145,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonStringLedgerHash)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'ledger_hash', not string.");
     });
 }
 
@@ -167,7 +167,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidLedgerIndexString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
+        EXPECT_EQ(
+            err.at("error_message").as_string(),
+            "Invalid field 'ledger_index', not string or number."
+        );
     });
 }
 
@@ -183,7 +186,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDInvalidFormat)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "nft_idMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'nft_id'.");
     });
 }
 
@@ -200,7 +203,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDNotString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "nft_idNotString");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'nft_id'.");
     });
 }
 
@@ -360,7 +363,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, MarkerNotString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "markerNotString");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'marker'.");
     });
 }
 
@@ -384,7 +387,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "markerMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'marker'.");
     });
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{backend_}};
@@ -688,7 +691,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
     std::vector<Blob> bbs;
     auto const offer = createNftSellOffer(kNftId, kAccount);
     bbs.reserve(NFTSellOffersHandler::kLimitMin + 1);
-    for (auto i = 0; i < NFTSellOffersHandler::kLimitMin + 1; i++)
+    for (auto i = 0u; i < NFTSellOffersHandler::kLimitMin + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
@@ -733,7 +736,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
     std::vector<Blob> bbs;
     auto const offer = createNftSellOffer(kNftId, kAccount);
     bbs.reserve(NFTSellOffersHandler::kLimitMax + 1);
-    for (auto i = 0; i < NFTSellOffersHandler::kLimitMax + 1; i++)
+    for (auto i = 0u; i < NFTSellOffersHandler::kLimitMax + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
