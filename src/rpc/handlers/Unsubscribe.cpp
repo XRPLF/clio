@@ -8,7 +8,6 @@
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>
 
-#include <cstddef>
 #include <expected>
 #include <memory>
 #include <vector>

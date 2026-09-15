@@ -21,7 +21,6 @@
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/jss.h>
 
-#include <cstddef>
 #include <expected>
 #include <memory>
 #include <optional>
