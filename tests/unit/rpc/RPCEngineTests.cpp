@@ -220,12 +220,12 @@ TEST_P(RPCEngineFlowParameterTest, Test)
         } else {
             if (testBundle.handlerReturnError) {
                 EXPECT_CALL(*handlerProvider, getHandler)
-                    .WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
+                    .WillOnce(Return(AnyHandler{tests::common::FailingTypedHandlerFake{}}));
                 EXPECT_CALL(*mockCountersPtr_, rpcErrored(testBundle.method));
                 EXPECT_CALL(*handlerProvider, contains(testBundle.method)).WillOnce(Return(true));
             } else {
                 EXPECT_CALL(*handlerProvider, getHandler(testBundle.method))
-                    .WillOnce(Return(AnyHandler{tests::common::HandlerFake{}}));
+                    .WillOnce(Return(AnyHandler{tests::common::TypedHandlerFake{}}));
             }
         }
     }
@@ -261,7 +261,7 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
     );
     EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
     EXPECT_CALL(*handlerProvider, getHandler(method))
-        .WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
+        .WillOnce(Return(AnyHandler{tests::common::FailingTypedHandlerFake{}}));
     EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).WillOnce(Throw(data::DatabaseError{}));
     EXPECT_CALL(*handlerProvider, contains(method)).WillOnce(Return(true));
     EXPECT_CALL(*mockCountersPtr_, onTooBusy());
@@ -293,7 +293,7 @@ TEST_F(RPCEngineTest, ThrowException)
     );
     EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
     EXPECT_CALL(*handlerProvider, getHandler(method))
-        .WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
+        .WillOnce(Return(AnyHandler{tests::common::FailingTypedHandlerFake{}}));
     EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).WillOnce(Throw(std::exception{}));
     EXPECT_CALL(*handlerProvider, contains(method)).WillOnce(Return(true));
     EXPECT_CALL(*mockCountersPtr_, onInternalError());
@@ -486,7 +486,7 @@ TEST_F(RPCEngineTest, NonBareRequestBypassesCache)
     EXPECT_CALL(*backend_, isTooBusy).Times(callTime).WillRepeatedly(Return(false));
     EXPECT_CALL(*handlerProvider, getHandler)
         .Times(callTime)
-        .WillRepeatedly(Return(AnyHandler{tests::common::HandlerFake{}}));
+        .WillRepeatedly(Return(AnyHandler{tests::common::TypedHandlerFake{}}));
 
     while (callTime-- != 0) {
         runSpawn([&](auto yield) {
@@ -538,7 +538,7 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
     EXPECT_CALL(*backend_, isTooBusy).Times(callTime).WillRepeatedly(Return(false));
     EXPECT_CALL(*handlerProvider, getHandler)
         .Times(callTime)
-        .WillRepeatedly(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
+        .WillRepeatedly(Return(AnyHandler{tests::common::FailingTypedHandlerFake{}}));
     EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).Times(callTime);
     EXPECT_CALL(*handlerProvider, isClioOnly).Times(callTime).WillRepeatedly(Return(false));
     EXPECT_CALL(*handlerProvider, contains).Times(callTime).WillRepeatedly(Return(true));
