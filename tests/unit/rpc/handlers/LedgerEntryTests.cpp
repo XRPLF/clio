@@ -17,6 +17,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
@@ -128,7 +129,7 @@ generateTestValuesForParametersTest()
                 "ledger_index": "wrong"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
         },
 
         ParamTestCaseBundle{
@@ -837,7 +838,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "dir_rootMalformed"
+            .expectedErrorMessage = "Invalid field 'dir_root'."
         },
 
         ParamTestCaseBundle{
@@ -848,7 +849,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "dir_rootNotString"
+            .expectedErrorMessage = "Invalid field 'dir_root'."
         },
 
         ParamTestCaseBundle{
@@ -3730,6 +3731,57 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
     });
 }
 
+// Each variant field's hex-key arm sets its own expectedType, so a wrong constant there would
+// silently accept the wrong object type. credential / xchain_owned_claim_id /
+// xchain_owned_create_account_claim_id had no hex-key coverage at all.
+struct LedgerEntryHexKeyTypeTestBundle {
+    std::string testName;
+    std::string field;
+};
+
+struct LedgerEntryHexKeyTypeTest : public RPCLedgerEntryTest,
+                                   public WithParamInterface<LedgerEntryHexKeyTypeTestBundle> {};
+
+TEST_P(LedgerEntryHexKeyTypeTest, WrongLedgerTypeForHexKey)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kRangeMax);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _))
+        .WillRepeatedly(Return(ledgerHeader));
+
+    // a valid, deserializable object of a type that none of these fields expect
+    auto const ledgerEntry =
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 200, 300, kIndex1, 400);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kIndex1}, kRangeMax, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"{}": "{}"}})JSON", GetParam().field, kIndex1));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "unexpectedLedgerType");
+    });
+}
+
+INSTANTIATE_TEST_CASE_P(
+    RPCLedgerEntryHexKeyTypeGroup,
+    LedgerEntryHexKeyTypeTest,
+    ValuesIn({
+        LedgerEntryHexKeyTypeTestBundle{.testName = "Credential", .field = "credential"},
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "XChainOwnedClaimId",
+            .field = "xchain_owned_claim_id"
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "XChainOwnedCreateAccountClaimId",
+            .field = "xchain_owned_create_account_claim_id"
+        },
+    }),
+    tests::util::kNameGenerator
+);
+
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _))
@@ -3835,7 +3887,7 @@ TEST(RPCLedgerEntrySpecTest, DeprecatedFields)
 {
     boost::json::value const json{{"ledger", 2}};
     auto const spec = LedgerEntryHandler::spec(2);
-    auto const warnings = spec.check(json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(json));
     ASSERT_EQ(warnings.size(), 1);
     ASSERT_TRUE(warnings[0].is_object());
     auto const& warning = warnings[0].as_object();

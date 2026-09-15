@@ -207,7 +207,7 @@ LedgerEntryHandler::Input
 createInput<LedgerEntryHandler>()
 {
     LedgerEntryHandler::Input input{};
-    input.index = kIndex1;
+    input.index = xrpl::uint256{kIndex1};
     return input;
 }
 
