@@ -76,7 +76,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonHexLedgerHash)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'ledger_hash'.");
     });
 }
 
@@ -98,7 +98,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonStringLedgerHash)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'ledger_hash', not string.");
     });
 }
 
@@ -120,7 +120,10 @@ TEST_F(RPCMPTHoldersHandlerTest, InvalidLedgerIndexString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
+        EXPECT_EQ(
+            err.at("error_message").as_string(),
+            "Invalid field 'ledger_index', not string or number."
+        );
     });
 }
 
@@ -136,7 +139,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDInvalidFormat)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "mpt_issuance_idMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'mpt_issuance_id'.");
     });
 }
 
@@ -167,7 +170,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDNotString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "mpt_issuance_idNotString");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'mpt_issuance_id'.");
     });
 }
 
@@ -189,7 +192,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerInvalidFormat)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "markerMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'marker'.");
     });
 }
 
@@ -211,7 +214,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerNotString)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "markerNotString");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'marker'.");
     });
 }
 

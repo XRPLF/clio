@@ -384,7 +384,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_index": "xxx"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
         },
         ParameterTestBundle{
             .testName = "LedgerHashInvalid",
@@ -399,7 +399,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_hash": "xxx"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "Invalid field 'ledger_hash'."
         },
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
@@ -414,7 +414,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_hash": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
         },
         ParameterTestBundle{
             .testName = "GetsPaysXRPWithIssuer",

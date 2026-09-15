@@ -103,17 +103,17 @@ generateTestValuesForInvalidParamsTest()
          .testJson =
              fmt::format(R"JSON({{ "account": "{}", "ledger_hash": "xxx" }})JSON", kAccount),
          .expectedError = "invalidParams",
-         .expectedErrorMessage = "ledger_hashMalformed"},
+         .expectedErrorMessage = "Invalid field 'ledger_hash'."},
         {.testName = "NonStringLedgerHash",
          .testJson = fmt::format(R"JSON({{ "account": "{}", "ledger_hash": 123 }})JSON", kAccount),
          .expectedError = "invalidParams",
-         .expectedErrorMessage = "ledger_hashNotString"},
+         .expectedErrorMessage = "Invalid field 'ledger_hash', not string."},
         {.testName = "InvalidLedgerIndexString",
          .testJson = fmt::format(
              R"JSON({{ "account": "{}", "ledger_index": "notvalidated" }})JSON", kAccount
          ),
          .expectedError = "invalidParams",
-         .expectedErrorMessage = "ledgerIndexMalformed"},
+         .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."},
         {.testName = "MarkerNotString",
          .testJson = fmt::format(R"JSON({{ "account": "{}", "marker": 9 }})JSON", kAccount),
          .expectedError = "invalidParams",
@@ -122,7 +122,7 @@ generateTestValuesForInvalidParamsTest()
          .testJson =
              fmt::format(R"JSON({{ "account": "{}", "marker": "123invalid" }})JSON", kAccount),
          .expectedError = "invalidParams",
-         .expectedErrorMessage = "Malformed cursor."},
+         .expectedErrorMessage = "Invalid field 'marker'."},
         {.testName = "AccountMissing",
          .testJson = R"JSON({ "limit": 10 })JSON",
          .expectedError = "invalidParams",

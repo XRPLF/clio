@@ -3,15 +3,10 @@
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "etl/ETLServiceInterface.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "rpc/common/JsonBool.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/conversion.hpp>
@@ -19,10 +14,11 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <fmt/format.h>
-#include <xrpl/basics/base_uint.h>
+#include <rpcspec/Errors.hpp>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/tx/Types.hpp>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
-#include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/jss.h>
 
@@ -39,7 +35,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/tx.html
  */
-class TxHandler {
+class TxHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::tx::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<etl::ETLServiceInterface const> etl_;
 
@@ -68,17 +64,6 @@ public:
         bool validated = true;
     };
 
-    /**
-     * @brief A struct to hold the input data for the command
-     */
-    struct Input {
-        std::optional<std::string> transaction;
-        std::optional<std::string> ctid;
-        bool binary = false;
-        std::optional<uint32_t> minLedger;
-        std::optional<uint32_t> maxLedger;
-    };
-
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -93,28 +78,6 @@ public:
     )
         : sharedPtrBackend_(std::move(sharedPtrBackend)), etl_(etl)
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec(uint32_t apiVersion)
-    {
-        static RpcSpec const kRpcSpecForV1 = {
-            {JS(transaction), validation::CustomValidators::uint256HexStringValidator},
-            {JS(min_ledger), validation::Type<uint32_t>{}},
-            {JS(max_ledger), validation::Type<uint32_t>{}},
-            {JS(ctid), validation::Type<std::string>{}},
-        };
-
-        static auto const kRpcSpec =
-            RpcSpec{kRpcSpecForV1, {{JS(binary), validation::Type<bool>{}}}};
-
-        return apiVersion == 1 ? kRpcSpecForV1 : kRpcSpec;
     }
 
     /**
@@ -170,9 +133,7 @@ public:
 
             dbResponse = fetchTxViaCtid(lgrSeq, txnIdx, ctx.yield);
         } else {
-            dbResponse = sharedPtrBackend_->fetchTransaction(
-                xrpl::uint256{input.transaction->c_str()}, ctx.yield
-            );
+            dbResponse = sharedPtrBackend_->fetchTransaction(*input.transaction, ctx.yield);
         }
 
         auto output = TxHandler::Output{.apiVersion = ctx.apiVersion};
@@ -311,32 +272,6 @@ private:
             obj[JS(ctid)] = *output.ctid;
 
         jv = std::move(obj);
-    }
-
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv)
-    {
-        auto input = TxHandler::Input{};
-        auto const& jsonObject = jv.as_object();
-
-        if (jsonObject.contains(JS(transaction)))
-            input.transaction = boost::json::value_to<std::string>(jv.at(JS(transaction)));
-
-        if (jsonObject.contains(JS(ctid))) {
-            input.ctid = boost::json::value_to<std::string>(jv.at(JS(ctid)));
-            input.ctid = util::toUpper(*input.ctid);
-        }
-
-        if (jsonObject.contains(JS(binary)))
-            input.binary = boost::json::value_to<JsonBool>(jsonObject.at(JS(binary)));
-
-        if (jsonObject.contains(JS(min_ledger)))
-            input.minLedger = util::integralValueAs<uint32_t>(jv.at(JS(min_ledger)));
-
-        if (jsonObject.contains(JS(max_ledger)))
-            input.maxLedger = util::integralValueAs<uint32_t>(jv.at(JS(max_ledger)));
-
-        return input;
     }
 };
 

@@ -196,8 +196,8 @@ BookOffersHandler::Input
 createInput<BookOffersHandler>()
 {
     BookOffersHandler::Input input{};
-    input.paysAsset = xrpl::xrpIssue();
-    input.getsAsset = xrpl::Issue{xrpl::Currency(kCurrency), getAccountIdWithString(kAccount)};
+    input.takerPays = xrpl::xrpIssue();
+    input.takerGets = xrpl::Issue{xrpl::Currency(kCurrency), getAccountIdWithString(kAccount)};
 
     return input;
 }
