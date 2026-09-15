@@ -5,6 +5,7 @@
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
 
+#include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <rpcspec/Errors.hpp>
@@ -16,14 +17,13 @@
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
-#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STXChainBridge.h>
 #include <xrpl/protocol/SeqProxy.h>
 #include <xrpl/protocol/Serializer.h>
-#include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <expected>
@@ -96,10 +96,11 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             expectedType = xrpl::ltDIR_NODE;
         } else {
             auto const& dirEntry = std::get<DirectoryEntry>(*input.directory);
-            if (dirEntry.dirRoot.has_value() && dirEntry.owner.has_value())
+            if (dirEntry.dirRoot.has_value() && dirEntry.owner.has_value()) {
                 return Error{
                     Status{RippledError::RpcInvalidParams, "mayNotSpecifyBothDirRootAndOwner"}
                 };
+            }
             if (not dirEntry.dirRoot.has_value() and not dirEntry.owner.has_value())
                 return Error{Status{RippledError::RpcInvalidParams, "missingOwnerOrDirRoot"}};
 
@@ -159,6 +160,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
                 for (auto const& cred : *preauthEntry.authorizedCredentials) {
                     auto const decoded = xrpl::strUnHex(cred.credentialType);
                     ASSERT(decoded.has_value(), "credential_type is hex-validated by the spec");
+                    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
                     buffers.push_back(*decoded);
                     authCreds.emplace(
                         cred.issuer, xrpl::Slice(buffers.back().data(), buffers.back().size())
@@ -239,10 +241,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             auto const& entry = std::get<CredentialEntry>(*input.credential);
             auto const credType = xrpl::strUnHex(entry.credentialType);
             ASSERT(credType.has_value(), "credential_type is not a hex");
-            key = xrpl::keylet::credential(
-                      entry.subject, entry.issuer, xrpl::Slice(credType->data(), credType->size())
-            )
-                      .key;
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+            auto const credSlice = xrpl::Slice(credType->data(), credType->size());
+            key = xrpl::keylet::credential(entry.subject, entry.issuer, credSlice).key;
         }
     } else if (input.mptoken.has_value()) {
         if (auto const* hash = std::get_if<xrpl::uint256>(&*input.mptoken)) {
