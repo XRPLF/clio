@@ -4,7 +4,6 @@
 #include "data/BackendInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "feed/Types.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -12,16 +11,13 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
-#include <xrpl/beast/utility/Zero.h>
-#include <xrpl/protocol/Book.h>
-#include <xrpl/protocol/ErrorCodes.h>
-#include <xrpl/protocol/jss.h>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/subscribe/Types.hpp>
+#include <xrpl/protocol/AccountID.h>
 
-#include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
-#include <string>
 #include <vector>
 
 namespace rpc {
@@ -33,7 +29,7 @@ namespace rpc {
  * For more details see: https://xrpl.org/subscribe.html
  */
 
-class SubscribeHandler {
+class SubscribeHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::subscribe::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
@@ -59,22 +55,12 @@ public:
     /**
      * @brief A struct to hold the data for one order book
      */
-    struct OrderBook {
-        xrpl::Book book;
-        std::optional<std::string> taker;
-        bool snapshot = false;
-        bool both = false;
-    };
+    using OrderBook = rpc::spec::handlers::subscribe::OrderBook;
 
     /**
-     * @brief A struct to hold the input data for the command
+     * @brief A subscribable stream type.
      */
-    struct Input {
-        std::optional<std::vector<std::string>> accounts;
-        std::optional<std::vector<std::string>> streams;
-        std::optional<std::vector<std::string>> accountsProposed;
-        std::optional<std::vector<OrderBook>> books;
-    };
+    using StreamType = rpc::spec::handlers::subscribe::StreamType;
 
     using Result = HandlerReturnType<Output>;
 
@@ -92,15 +78,6 @@ public:
     );
 
     /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion);
-
-    /**
      * @brief Process the Subscribe command
      *
      * @param input The input data for the command
@@ -114,19 +91,19 @@ private:
     [[nodiscard]] boost::json::object
     subscribeToStreams(
         boost::asio::yield_context yield,
-        std::vector<std::string> const& streams,
+        std::vector<StreamType> const& streams,
         feed::SubscriberSharedPtr const& session
     ) const;
 
     void
     subscribeToAccounts(
-        std::vector<std::string> const& accounts,
+        std::vector<xrpl::AccountID> const& accounts,
         feed::SubscriberSharedPtr const& session
     ) const;
 
     void
     subscribeToAccountsProposed(
-        std::vector<std::string> const& accounts,
+        std::vector<xrpl::AccountID> const& accounts,
         feed::SubscriberSharedPtr const& session
     ) const;
 
@@ -146,15 +123,6 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert json value to input
-     *
-     * @param jv The json value to convert from
-     * @return The input to convert to
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
 }  // namespace rpc

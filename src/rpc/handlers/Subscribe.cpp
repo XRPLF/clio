@@ -7,11 +7,7 @@
 #include "feed/Types.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "rpc/common/Checkers.hpp"
-#include "rpc/common/MetaProcessors.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 #include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -19,17 +15,16 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
-#include <rpcspec/Errors.hpp>
+#include <rpcspec/handlers/subscribe/Types.hpp>
 #include <xrpl/beast/utility/Zero.h>
+#include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/jss.h>
 
-#include <cstdint>
+#include <cstddef>
+#include <expected>
 #include <memory>
 #include <optional>
-#include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -44,62 +39,6 @@ SubscribeHandler::SubscribeHandler(
     , amendmentCenter_(amendmentCenter)
     , subscriptions_(subscriptions)
 {
-}
-
-RpcSpecConstRef
-SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
-{
-    static auto const kBooksValidator = validation::CustomValidator{
-        [](boost::json::value const& value, std::string_view key) -> MaybeError {
-            if (!value.is_array()) {
-                return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotArray"}};
-            }
-
-            for (auto const& book : value.as_array()) {
-                if (!book.is_object()) {
-                    return Error{
-                        Status{RippledError::RpcInvalidParams, std::string(key) + "ItemNotObject"}
-                    };
-                }
-
-                if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
-                    return Error{Status{RippledError::RpcInvalidParams, "bothNotBool"}};
-
-                if (book.as_object().contains("snapshot") &&
-                    !book.as_object().at("snapshot").is_bool())
-                    return Error{Status{RippledError::RpcInvalidParams, "snapshotNotBool"}};
-
-                if (book.as_object().contains("taker")) {
-                    if (auto err =
-                            meta::WithCustomError(
-                                validation::CustomValidators::accountValidator,
-                                Status{RippledError::RpcBadIssuer, "Issuer account malformed."}
-                            )
-                                .verify(book.as_object(), "taker");
-                        !err)
-                        return err;
-                }
-
-                auto const parsedBook = parseBook(book.as_object());
-                if (!parsedBook)
-                    return Error(parsedBook.error());
-            }
-
-            return MaybeError{};
-        }
-    };
-
-    static auto const kRpcSpec = RpcSpec{
-        {JS(streams), validation::CustomValidators::subscribeStreamValidator},
-        {JS(accounts), validation::CustomValidators::subscribeAccountsValidator},
-        {JS(accounts_proposed), validation::CustomValidators::subscribeAccountsValidator},
-        {JS(books), kBooksValidator},
-        {"user", check::Deprecated{}},
-        {JS(password), check::Deprecated{}},
-        {JS(rt_accounts), check::Deprecated{}}
-    };
-
-    return kRpcSpec;
 }
 
 SubscribeHandler::Result
@@ -131,25 +70,37 @@ SubscribeHandler::process(Input const& input, Context const& ctx) const
 boost::json::object
 SubscribeHandler::subscribeToStreams(
     boost::asio::yield_context yield,
-    std::vector<std::string> const& streams,
+    std::vector<StreamType> const& streams,
     feed::SubscriberSharedPtr const& session
 ) const
 {
     auto response = boost::json::object{};
 
     for (auto const& stream : streams) {
-        if (stream == "ledger") {
-            response = subscriptions_->subLedger(yield, session);
-        } else if (stream == "transactions") {
-            subscriptions_->subTransactions(session);
-        } else if (stream == "transactions_proposed") {
-            subscriptions_->subProposedTransactions(session);
-        } else if (stream == "validations") {
-            subscriptions_->subValidation(session);
-        } else if (stream == "manifests") {
-            subscriptions_->subManifest(session);
-        } else if (stream == "book_changes") {
-            subscriptions_->subBookChanges(session);
+        switch (stream) {
+            case StreamType::Ledger:
+                response = subscriptions_->subLedger(yield, session);
+                break;
+            case StreamType::Transactions:
+                subscriptions_->subTransactions(session);
+                break;
+            case StreamType::TransactionsProposed:
+                subscriptions_->subProposedTransactions(session);
+                break;
+            case StreamType::Validations:
+                subscriptions_->subValidation(session);
+                break;
+            case StreamType::Manifests:
+                subscriptions_->subManifest(session);
+                break;
+            case StreamType::BookChanges:
+                subscriptions_->subBookChanges(session);
+                break;
+            case StreamType::Server:
+            case StreamType::PeerStatus:
+            case StreamType::Consensus:
+                // Not served by Clio.
+                break;
         }
     }
 
@@ -158,28 +109,22 @@ SubscribeHandler::subscribeToStreams(
 
 void
 SubscribeHandler::subscribeToAccountsProposed(
-    std::vector<std::string> const& accounts,
+    std::vector<xrpl::AccountID> const& accounts,
     feed::SubscriberSharedPtr const& session
 ) const
 {
-    for (auto const& account : accounts) {
-        auto const accountID = accountFromStringStrict(account);
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        subscriptions_->subProposedAccount(*accountID, session);
-    }
+    for (auto const& account : accounts)
+        subscriptions_->subProposedAccount(account, session);
 }
 
 void
 SubscribeHandler::subscribeToAccounts(
-    std::vector<std::string> const& accounts,
+    std::vector<xrpl::AccountID> const& accounts,
     feed::SubscriberSharedPtr const& session
 ) const
 {
-    for (auto const& account : accounts) {
-        auto const accountID = accountFromStringStrict(account);
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        subscriptions_->subAccount(*accountID, session);
-    }
+    for (auto const& account : accounts)
+        subscriptions_->subAccount(account, session);
 }
 
 void
@@ -261,56 +206,6 @@ tag_invoke(
         jv.as_object().emplace(JS(asks), *(output.asks));
     if (output.bids)
         jv.as_object().emplace(JS(bids), *(output.bids));
-}
-
-SubscribeHandler::Input
-tag_invoke(boost::json::value_to_tag<SubscribeHandler::Input>, boost::json::value const& jv)
-{
-    auto input = SubscribeHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    if (auto const& streams = jsonObject.find(JS(streams)); streams != jsonObject.end()) {
-        input.streams = std::vector<std::string>();
-        for (auto const& stream : streams->value().as_array())
-            input.streams->push_back(boost::json::value_to<std::string>(stream));
-    }
-
-    if (auto const& accounts = jsonObject.find(JS(accounts)); accounts != jsonObject.end()) {
-        input.accounts = std::vector<std::string>();
-        for (auto const& account : accounts->value().as_array())
-            input.accounts->push_back(boost::json::value_to<std::string>(account));
-    }
-
-    if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed));
-        accountsProposed != jsonObject.end()) {
-        input.accountsProposed = std::vector<std::string>();
-        for (auto const& account : accountsProposed->value().as_array())
-            input.accountsProposed->push_back(boost::json::value_to<std::string>(account));
-    }
-
-    if (auto const& books = jsonObject.find(JS(books)); books != jsonObject.end()) {
-        input.books = std::vector<SubscribeHandler::OrderBook>();
-        for (auto const& book : books->value().as_array()) {
-            auto internalBook = SubscribeHandler::OrderBook{};
-            auto const& bookObject = book.as_object();
-
-            if (auto const taker = bookObject.find(JS(taker)); taker != bookObject.end())
-                internalBook.taker = boost::json::value_to<std::string>(taker->value());
-
-            if (auto const both = bookObject.find(JS(both)); both != bookObject.end())
-                internalBook.both = both->value().as_bool();
-
-            if (auto const snapshot = bookObject.find(JS(snapshot)); snapshot != bookObject.end())
-                internalBook.snapshot = snapshot->value().as_bool();
-
-            auto const parsedBookMaybe = parseBook(book.as_object());
-            ASSERT(parsedBookMaybe.has_value(), "Book parsing failed");
-            internalBook.book = *parsedBookMaybe;
-            input.books->push_back(internalBook);
-        }
-    }
-
-    return input;
 }
 
 }  // namespace rpc

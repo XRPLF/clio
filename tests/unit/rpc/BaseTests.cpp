@@ -695,25 +695,6 @@ TEST_F(RPCBaseTest, CurrencyValidator)
     ASSERT_EQ(err.error().message, "malformedCurrency");
 }
 
-TEST_F(RPCBaseTest, IssuerValidator)
-{
-    auto const spec = RpcSpec{{"issuer", CustomValidators::issuerValidator}};
-    auto passingInput =
-        boost::json::parse(R"JSON({ "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})JSON");
-    ASSERT_TRUE(spec.process(passingInput));
-
-    auto failingInput = boost::json::parse(R"JSON({ "issuer": 256})JSON");
-    auto err = spec.process(failingInput);
-    ASSERT_FALSE(err);
-    ASSERT_EQ(err.error().message, "issuerNotString");
-
-    failingInput = boost::json::parse(
-        fmt::format(R"JSON({{ "issuer": "{}"}})JSON", toBase58(xrpl::noAccount()))
-    );
-    err = spec.process(failingInput);
-    ASSERT_FALSE(err);
-}
-
 TEST_F(RPCBaseTest, BookTakerValidator)
 {
     auto const spec = RpcSpec{{"taker_gets", CustomValidators::bookTakerValidator}};
@@ -798,37 +779,6 @@ TEST_F(RPCBaseTest, BookTakerValidatorUsesFieldKey)
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
     EXPECT_EQ(err.error().message, "Invalid field 'taker_pays'.");
-}
-
-TEST_F(RPCBaseTest, SubscribeStreamValidator)
-{
-    auto const spec = RpcSpec{{"streams", CustomValidators::subscribeStreamValidator}};
-    auto passingInput = boost::json::parse(
-        R"JSON({
-            "streams": [
-                "ledger",
-                "transactions_proposed",
-                "validations",
-                "transactions",
-                "manifests",
-                "transactions",
-                "book_changes"
-            ]
-        })JSON"
-    );
-    ASSERT_TRUE(spec.process(passingInput));
-
-    auto failingInput = boost::json::parse(R"JSON({ "streams": 256})JSON");
-    auto err = spec.process(failingInput);
-    ASSERT_FALSE(err);
-
-    failingInput = boost::json::parse(R"JSON({ "streams": ["test"]})JSON");
-    err = spec.process(failingInput);
-    ASSERT_FALSE(err);
-
-    failingInput = boost::json::parse(R"JSON({ "streams": [123]})JSON");
-    err = spec.process(failingInput);
-    ASSERT_FALSE(err);
 }
 
 TEST_F(RPCBaseTest, SubscribeAccountsValidator)

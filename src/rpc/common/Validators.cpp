@@ -26,7 +26,6 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <unordered_set>
 
 namespace rpc::validation {
 
@@ -184,30 +183,6 @@ CustomValidator CustomValidators::currencyValidator =
         return MaybeError{};
     }};
 
-CustomValidator CustomValidators::issuerValidator =
-    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        if (!value.is_string())
-            return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotString"}};
-
-        xrpl::AccountID issuer;
-
-        // TODO: need to align with the error
-        if (!xrpl::toIssuer(issuer, boost::json::value_to<std::string>(value))) {
-            return Error{Status{
-                RippledError::RpcInvalidParams, fmt::format("Invalid field '{}', bad issuer.", key)
-            }};
-        }
-
-        if (issuer == xrpl::noAccount()) {
-            return Error{Status{
-                RippledError::RpcInvalidParams,
-                fmt::format("Invalid field '{}', bad issuer account one.", key)
-            }};
-        }
-
-        return MaybeError{};
-    }};
-
 CustomValidator CustomValidators::bookTakerValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_object())
@@ -237,37 +212,6 @@ CustomValidator CustomValidators::bookTakerValidator =
                 RippledError::RpcInvalidParams,
                 fmt::format("Invalid field '{}.currency', not string.", key)
             }};
-        }
-
-        return MaybeError{};
-    }};
-
-CustomValidator CustomValidators::subscribeStreamValidator =
-    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        if (!value.is_array())
-            return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotArray"}};
-
-        static std::unordered_set<std::string> const kValidStreams = {
-            "ledger",
-            "transactions",
-            "transactions_proposed",
-            "book_changes",
-            "manifests",
-            "validations"
-        };
-
-        static std::unordered_set<std::string> const kNotSupportStreams = {
-            "peer_status", "consensus", "server"
-        };
-        for (auto const& v : value.as_array()) {
-            if (!v.is_string())
-                return Error{Status{RippledError::RpcInvalidParams, "streamNotString"}};
-
-            if (kNotSupportStreams.contains(boost::json::value_to<std::string>(v)))
-                return Error{Status{RippledError::RpcNotSupported}};
-
-            if (not kValidStreams.contains(boost::json::value_to<std::string>(v)))
-                return Error{Status{RippledError::RpcStreamMalformed}};
         }
 
         return MaybeError{};
