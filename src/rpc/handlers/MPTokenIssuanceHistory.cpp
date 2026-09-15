@@ -15,6 +15,7 @@
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/handlers/mptoken_issuance_history/Types.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
@@ -56,7 +57,7 @@ MPTokenIssuanceHistoryHandler::process(
     if (not range.has_value())
         return Error{range.error()};
 
-    auto const mptIssuanceID = xrpl::uint192{input.mptIssuanceID.c_str()};
+    auto const& mptIssuanceID = input.mptIssuanceId;
 
     auto const [page, timeDiff] =
         util::timed([&] { return fetchTransactions(input, ctx, mptIssuanceID, *range); });
@@ -120,13 +121,13 @@ MPTokenIssuanceHistoryHandler::resolveSequenceRange(Input const& input, Context 
     if (resolved.min > resolved.max)
         return Error{Status{RippledError::RpcLgrIdxsInvalid}};
 
-    if (input.ledgerHash.has_value() || input.ledgerIndex.has_value()) {
+    if (not input.ledger.isUnspecified()) {
         // rippled does not have this check
         if (input.ledgerIndexMax.has_value() || input.ledgerIndexMin.has_value())
             return Error{Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
 
-        auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, dbMaxSeq
+        auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
+            *sharedPtrBackend_, ctx.yield, input.ledger, dbMaxSeq
         );
 
         if (not expectedLgrInfo.has_value())
@@ -163,13 +164,8 @@ MPTokenIssuanceHistoryHandler::fetchTransactions(
 
     // tx_type is applied post-fetch, as account_tx does.
     if (input.account.has_value()) {
-        auto const account = accountFromStringStrict(*input.account);
-        if (not account.has_value()) {
-            ASSERT(false, "Account must be decodable after spec validation");
-            std::unreachable();
-        }
         return sharedPtrBackend_->fetchAccountMPTokenIssuanceTransactions(
-            mptIssuanceID, *account, limit, input.forward, startCursor, ctx.yield
+            mptIssuanceID, *input.account, limit, input.forward, startCursor, ctx.yield
         );
     }
 
@@ -199,7 +195,7 @@ MPTokenIssuanceHistoryHandler::processTransactionsPage(
         if (txnPlusMeta.transaction.empty() || txnPlusMeta.metadata.empty()) {
             LOG(log_.warn()) << "Skipping index entry with no matching transaction record; "
                                 "mpt_issuance_id = "
-                             << input.mptIssuanceID;
+                             << xrpl::to_string(input.mptIssuanceId);
             continue;
         }
 
@@ -304,12 +300,12 @@ tag_invoke(
         jv.as_object()[JS(limit)] = *(output.limit);
 }
 
+}  // namespace rpc
+
+namespace rpc::spec::handlers::mptoken_issuance_history {
+
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    MPTokenIssuanceHistoryHandler::Marker const& marker
-)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker)
 {
     jv = {
         {JS(ledger), marker.ledger},
@@ -317,62 +313,4 @@ tag_invoke(
     };
 }
 
-MPTokenIssuanceHistoryHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<MPTokenIssuanceHistoryHandler::Input>,
-    boost::json::value const& jv
-)
-{
-    auto const& jsonObject = jv.as_object();
-    auto input = MPTokenIssuanceHistoryHandler::Input{};
-
-    input.mptIssuanceID = boost::json::value_to<std::string>(jsonObject.at(JS(mpt_issuance_id)));
-
-    if (jsonObject.contains(JS(account)))
-        input.account = boost::json::value_to<std::string>(jsonObject.at(JS(account)));
-
-    if (jsonObject.contains("tx_type")) {
-        input.transactionTypeInLowercase =
-            boost::json::value_to<std::string>(jsonObject.at("tx_type"));
-    }
-
-    if (jsonObject.contains(JS(ledger_index_min)) &&
-        util::integralValueAs<int32_t>(jsonObject.at(JS(ledger_index_min))) != -1)
-        input.ledgerIndexMin = util::integralValueAs<uint32_t>(jsonObject.at(JS(ledger_index_min)));
-
-    if (jsonObject.contains(JS(ledger_index_max)) &&
-        util::integralValueAs<int32_t>(jsonObject.at(JS(ledger_index_max))) != -1)
-        input.ledgerIndexMax = util::integralValueAs<uint32_t>(jsonObject.at(JS(ledger_index_max)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    if (jsonObject.contains(JS(binary)))
-        input.binary = jsonObject.at(JS(binary)).as_bool();
-
-    if (jsonObject.contains(JS(forward)))
-        input.forward = jsonObject.at(JS(forward)).as_bool();
-
-    if (jsonObject.contains(JS(limit)))
-        input.limit = util::integralValueAs<uint32_t>(jsonObject.at(JS(limit)));
-
-    if (jsonObject.contains(JS(marker))) {
-        input.marker = MPTokenIssuanceHistoryHandler::Marker{
-            .ledger = util::integralValueAs<uint32_t>(
-                jsonObject.at(JS(marker)).as_object().at(JS(ledger))
-            ),
-            .seq =
-                util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)).as_object().at(JS(seq)))
-        };
-    }
-
-    return input;
-}
-
-}  // namespace rpc
+}  // namespace rpc::spec::handlers::mptoken_issuance_history

@@ -2,23 +2,16 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
-#include "rpc/Errors.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/MetaProcessors.hpp"
-#include "rpc/common/Modifiers.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/TxTypes.hpp>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/mptoken_issuance_history/Types.hpp>
 #include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/ErrorCodes.h>
-#include <xrpl/protocol/jss.h>
 
 #include <atomic>
 #include <cstdint>
@@ -37,7 +30,8 @@ namespace rpc {
  * @note This is a Clio-only method. Requests fail with `notReady` until the issuance-history
  * backfill reports `Migrated`, so partial history is never served.
  */
-class MPTokenIssuanceHistoryHandler {
+class MPTokenIssuanceHistoryHandler
+    : public rpc::spec::HandlerFor<rpc::spec::handlers::mptoken_issuance_history::Input> {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
@@ -49,9 +43,10 @@ class MPTokenIssuanceHistoryHandler {
     std::shared_ptr<std::atomic_bool> migrated_ = std::make_shared<std::atomic_bool>(false);
 
 public:
-    static constexpr auto kLimitMin = 1;
-    static constexpr auto kLimitMax = 100;
-    static constexpr auto kLimitDefault = 50;
+    static constexpr auto kLimitMin = rpc::spec::handlers::mptoken_issuance_history::kLimitMin;
+    static constexpr auto kLimitMax = rpc::spec::handlers::mptoken_issuance_history::kLimitMax;
+    static constexpr auto kLimitDefault =
+        rpc::spec::handlers::mptoken_issuance_history::kLimitDefault;
 
     /**
      * @brief The name used to query the issuance-history migrator's status.
@@ -63,10 +58,7 @@ public:
     /**
      * @brief A struct to hold the marker data.
      */
-    struct Marker {
-        uint32_t ledger;
-        uint32_t seq;
-    };
+    using Marker = rpc::spec::handlers::mptoken_issuance_history::Marker;
 
     /**
      * @brief A struct to hold the output data of the command.
@@ -83,26 +75,6 @@ public:
         bool validated = true;
     };
 
-    /**
-     * @brief A struct to hold the input data for the command.
-     *
-     * @note When no ledger selector is provided, the request uses the backend's full available
-     * ledger range.
-     */
-    struct Input {
-        std::string mptIssuanceID;
-        std::optional<std::string> account;
-        std::optional<std::string> transactionTypeInLowercase;
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        std::optional<int32_t> ledgerIndexMin;
-        std::optional<int32_t> ledgerIndexMax;
-        bool binary = false;
-        bool forward = false;
-        std::optional<uint32_t> limit;
-        std::optional<Marker> marker;
-    };
-
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -113,55 +85,6 @@ public:
     explicit MPTokenIssuanceHistoryHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
         : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command.
-     *
-     * @param apiVersion The api version to return the spec for.
-     * @return The spec for the given apiVersion.
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        // TODO: goes away when mptoken_issuance_history moves to the shared spec, where the
-        // validator calls this internally.
-        auto const& typesKeysInLowercase = rpc::spec::txTypesInLowercase();
-        static auto const kRpcSpec = RpcSpec{
-            {JS(mpt_issuance_id),
-             validation::Required{},
-             validation::CustomValidators::uint192HexStringValidator},
-            {JS(account), validation::CustomValidators::accountValidator},
-            {
-                "tx_type",
-                validation::Type<std::string>{},
-                modifiers::ToLower{},
-                validation::OneOf<std::string>(
-                    typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()
-                ),
-            },
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(ledger_index_min), validation::Type<int32_t>{}},
-            {JS(ledger_index_max), validation::Type<int32_t>{}},
-            {JS(binary), validation::Type<bool>{}},
-            {JS(forward), validation::Type<bool>{}},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
-            {JS(marker),
-             meta::WithCustomError{
-                 validation::Type<boost::json::object>{},
-                 Status{RippledError::RpcInvalidParams, "invalidMarker"}
-             },
-             meta::Section{
-                 {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
-                 {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
-             }},
-        };
-
-        return kRpcSpec;
     }
 
     /**
@@ -295,24 +218,13 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type.
-     *
-     * @param jv The JSON object to convert.
-     * @return Input parsed from the JSON object.
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
-
-    /**
-     * @brief Convert the Marker to a JSON object.
-     *
-     * @param [out] jv The JSON object to convert to.
-     * @param marker The marker to convert.
-     */
-    friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
 };
 
 }  // namespace rpc
+
+namespace rpc::spec::handlers::mptoken_issuance_history {
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
+
+}  // namespace rpc::spec::handlers::mptoken_issuance_history

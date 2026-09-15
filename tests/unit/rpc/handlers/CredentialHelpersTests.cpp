@@ -101,7 +101,7 @@ class CredentialHelperTest : public util::prometheus::WithPrometheus,
 
 TEST_F(CredentialHelperTest, GetInvalidCredentialArray)
 {
-    boost::json::array credentialsArray = {kCredentialId};
+    std::vector<xrpl::uint256> const credentialsArray{xrpl::uint256{kCredentialId}};
     auto const info = createLedgerHeader(kIndex1, 30);
 
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
@@ -128,7 +128,7 @@ TEST_F(CredentialHelperTest, GetValidCredentialArray)
         .WillByDefault(Return(credLedgerObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
-    boost::json::array credentialsArray = {kCredentialId};
+    std::vector<xrpl::uint256> const credentialsArray{xrpl::uint256{kCredentialId}};
 
     xrpl::STArray expectedAuthCreds;
     xrpl::STObject credential(xrpl::sfCredential);

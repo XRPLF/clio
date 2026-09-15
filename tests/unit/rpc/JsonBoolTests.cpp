@@ -1,9 +1,9 @@
-#include "rpc/common/JsonBool.hpp"
 #include "util/NameGenerator.hpp"
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
+#include <rpcspec/JsonBool.hpp>
 
 #include <string>
 #include <vector>
@@ -78,5 +78,5 @@ TEST_P(JsonBoolTests, Parse)
     auto const testBundle = GetParam();
     auto const jv = boost::json::parse(testBundle.json).as_object();
     ASSERT_TRUE(jv.contains("test_bool"));
-    EXPECT_EQ(testBundle.expectedBool, value_to<JsonBool>(jv.at("test_bool")).value);
+    EXPECT_EQ(testBundle.expectedBool, value_to<rpc::spec::JsonBool>(jv.at("test_bool")).value);
 }

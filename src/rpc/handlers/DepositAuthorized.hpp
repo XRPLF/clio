@@ -1,21 +1,23 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/deposit_authorized/Types.hpp>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/STArray.h>
-#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace rpc {
 
@@ -28,7 +30,8 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/deposit_authorized.html
  */
-class DepositAuthorizedHandler {
+class DepositAuthorizedHandler
+    : public rpc::spec::HandlerFor<rpc::spec::handlers::deposit_authorized::Input> {
     // dependencies
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
@@ -43,21 +46,10 @@ public:
         std::string destinationAccount;
         std::string ledgerHash;
         uint32_t ledgerIndex{};
-        std::optional<boost::json::array> credentials;
+        std::optional<std::vector<xrpl::uint256>> credentials;
 
         // validated should be sent via framework
         bool validated = true;
-    };
-
-    /**
-     * @brief A struct to hold the input data for the command
-     */
-    struct Input {
-        std::string sourceAccount;
-        std::string destinationAccount;
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        std::optional<boost::json::array> credentials;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -70,30 +62,6 @@ public:
     DepositAuthorizedHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
         : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const kRpcSpec = RpcSpec{
-            {JS(source_account),
-             validation::Required{},
-             validation::CustomValidators::accountValidator},
-            {JS(destination_account),
-             validation::Required{},
-             validation::CustomValidators::accountValidator},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(credentials), validation::Type<boost::json::array>{}, validation::Hex256ItemType()}
-        };
-
-        return kRpcSpec;
     }
 
     /**
@@ -115,14 +83,6 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
+
 }  // namespace rpc

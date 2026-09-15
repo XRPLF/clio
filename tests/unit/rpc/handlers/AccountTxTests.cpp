@@ -119,21 +119,21 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "ledgerIndexMalformed"
+                .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
             },
             AccountTxParamTestCaseBundle{
                 .testName = "ledger_hashInvalid",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "ledger_hashMalformed"
+                .expectedErrorMessage = "Invalid field 'ledger_hash'."
             },
             AccountTxParamTestCaseBundle{
                 .testName = "ledger_hashNotString",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "ledger_hashNotString"
+                .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
             },
             AccountTxParamTestCaseBundle{
                 .testName = "limitNotInt",
@@ -453,7 +453,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "mpt_issuance_id": "xxx"
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "mpt_issuance_idMalformed"
+                .expectedErrorMessage = "Invalid field 'mpt_issuance_id'."
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MPTIssuanceIdNotString",
@@ -462,7 +462,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "mpt_issuance_id": 12
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "mpt_issuance_idNotString"
+                .expectedErrorMessage = "Invalid field 'mpt_issuance_id'."
             }
         };
     };

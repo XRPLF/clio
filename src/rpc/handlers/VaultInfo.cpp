@@ -5,13 +5,11 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <rpcspec/Errors.hpp>
-#include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Keylet.h>
 #include <xrpl/protocol/LedgerHeader.h>
@@ -22,10 +20,9 @@
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
 
-#include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
-#include <string>
 #include <utility>
 
 namespace rpc {
@@ -46,7 +43,7 @@ validate(VaultInfoHandler::Input const& input)
     bool const hasOwner = input.owner.has_value();
     bool const hasSeq = input.tnxSequence.has_value();
 
-    // Only valid combinations: (vaultID) or (owner + ledgerIndex)
+    // Only valid combinations: (vaultID) or (owner + seq)
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return (hasVaultId && !hasOwner && !hasSeq) || (!hasVaultId && hasOwner && hasSeq);
 }
@@ -68,11 +65,10 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "VaultInfo's ledger range must be available");
 
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        std::nullopt,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -84,12 +80,11 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
     // Extract the vault keylet based on input
     auto const vaultKeylet = [&]() -> std::expected<xrpl::Keylet, Status> {
         if (input.owner && input.tnxSequence) {
-            auto const accountStr = *input.owner;
-            auto const accountID = accountFromStringStrict(accountStr);
+            auto const& accountID = *input.owner;
 
             // checks that account exists
             {
-                auto const accountKeylet = xrpl::keylet::account(*accountID);
+                auto const accountKeylet = xrpl::keylet::account(accountID);
                 auto const accountLedgerObject =
                     sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
@@ -97,13 +92,10 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
                     return std::unexpected{Status{RippledError::RpcEntryNotFound}};
             }
 
-            return xrpl::keylet::vault(*accountID, xrpl::SeqProxy::rawSequence(*input.tnxSequence));
+            return xrpl::keylet::vault(accountID, xrpl::SeqProxy::rawSequence(*input.tnxSequence));
         }
-        xrpl::uint256 nodeIndex;
-        if (nodeIndex.parseHex(*input.vaultID))
-            return xrpl::keylet::vault(nodeIndex);
 
-        return std::unexpected{Status{RippledError::RpcEntryNotFound}};
+        return xrpl::keylet::vault(*input.vaultID);
     }();
 
     if (not vaultKeylet.has_value())
@@ -155,30 +147,6 @@ tag_invoke(
         {JS(validated), output.validated},
         {JS(vault), output.vault}
     };
-}
-
-VaultInfoHandler::Input
-tag_invoke(boost::json::value_to_tag<VaultInfoHandler::Input>, boost::json::value const& jv)
-{
-    auto input = VaultInfoHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    if (jsonObject.contains(JS(owner)))
-        input.owner = jsonObject.at(JS(owner)).as_string();
-
-    if (jsonObject.contains(JS(seq)))
-        input.tnxSequence = util::integralValueAs<uint32_t>(jsonObject.at(JS(seq)));
-
-    if (jsonObject.contains(JS(vault_id)))
-        input.vaultID = jsonObject.at(JS(vault_id)).as_string();
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    return input;
 }
 
 }  // namespace rpc

@@ -36,7 +36,7 @@ protected:
 
 TEST_F(DelegateTransactionFilterTest, ReturnsFalseIfNoDelegateField)
 {
-    DelegateFilter const filterParams{DelegateFilter::Role::Authorizer};
+    DelegateFilter const filterParams{DelegateFilter::Role::Authorizer, std::nullopt};
     DelegateTransactionFilter const filter(filterParams, kAccountOwner);
 
     // Create standard tx (no delegate field) using standard TestObject helper
@@ -57,7 +57,7 @@ TEST_F(DelegateTransactionFilterTest, ReturnsFalseIfNoDelegateField)
 
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_MatchesWhenUserIsSigner)
 {
-    DelegateFilter const filterParams{DelegateFilter::Role::Authorizer};
+    DelegateFilter const filterParams{DelegateFilter::Role::Authorizer, std::nullopt};
     DelegateTransactionFilter const filter(filterParams, kAccountDelegator);
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
@@ -70,7 +70,7 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_MatchesWhenUserIsSigner)
 
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_FailsWhenUserIsNotSigner)
 {
-    DelegateFilter const filterParams{DelegateFilter::Role::Authorizer};
+    DelegateFilter const filterParams{DelegateFilter::Role::Authorizer, std::nullopt};
     DelegateTransactionFilter const filter(filterParams, kAccountDestination);
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
@@ -107,7 +107,7 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Mismatch)
 
 TEST_F(DelegateTransactionFilterTest, RoleActor_MatchesWhenUserIsOwner)
 {
-    DelegateFilter const filterParams{DelegateFilter::Role::Actor};
+    DelegateFilter const filterParams{DelegateFilter::Role::Actor, std::nullopt};
     DelegateTransactionFilter const filter(filterParams, kAccountOwner);
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
@@ -120,7 +120,7 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_MatchesWhenUserIsOwner)
 
 TEST_F(DelegateTransactionFilterTest, RoleActor_FailsWhenUserIsNotOwner)
 {
-    DelegateFilter const filterParams{DelegateFilter::Role::Actor};
+    DelegateFilter const filterParams{DelegateFilter::Role::Actor, std::nullopt};
     DelegateTransactionFilter const filter(filterParams, kAccountDestination);
 
     auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));

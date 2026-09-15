@@ -3,7 +3,6 @@
 #include "data/Types.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/filters/TransactionFilter.hpp"
 #include "rpc/filters/impl/DelegateTransactionsFilter.hpp"
@@ -19,7 +18,7 @@
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
-#include <xrpl/basics/base_uint.h>
+#include <rpcspec/handlers/account_tx/Types.hpp>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
@@ -45,26 +44,26 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     auto [minIndex, maxIndex] = *range;  // NOLINT(bugprone-unchecked-optional-access)
 
     if (input.ledgerIndexMin) {
+        // NOLINTBEGIN(bugprone-unchecked-optional-access)
         if (ctx.apiVersion > 1u &&
-            (input.ledgerIndexMin >
-                 range->maxSequence ||  // NOLINT(bugprone-unchecked-optional-access)
-             input.ledgerIndexMin <
-                 range->minSequence)) {  // NOLINT(bugprone-unchecked-optional-access)
+            (input.ledgerIndexMin > range->maxSequence ||
+             input.ledgerIndexMin < range->minSequence)) {
             return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
         }
+        // NOLINTEND(bugprone-unchecked-optional-access)
 
         if (static_cast<std::uint32_t>(*input.ledgerIndexMin) > minIndex)
             minIndex = *input.ledgerIndexMin;
     }
 
     if (input.ledgerIndexMax) {
+        // NOLINTBEGIN(bugprone-unchecked-optional-access)
         if (ctx.apiVersion > 1u &&
-            (input.ledgerIndexMax >
-                 range->maxSequence ||  // NOLINT(bugprone-unchecked-optional-access)
-             input.ledgerIndexMax <
-                 range->minSequence)) {  // NOLINT(bugprone-unchecked-optional-access)
+            (input.ledgerIndexMax > range->maxSequence ||
+             input.ledgerIndexMax < range->minSequence)) {
             return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
         }
+        // NOLINTEND(bugprone-unchecked-optional-access)
 
         if (static_cast<std::uint32_t>(*input.ledgerIndexMax) < maxIndex)
             maxIndex = *input.ledgerIndexMax;
@@ -77,7 +76,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         return Error{Status{RippledError::RpcInvalidLgrRange}};
     }
 
-    if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger) {
+    if (not input.ledger.isUnspecified()) {
         if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin)) {
             return Error{Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
         }
@@ -85,11 +84,10 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         if (!input.ledgerIndexMax && !input.ledgerIndexMin) {
             // mimic rippled, when both range and index specified, respect the range.
             // take ledger from ledgerHash or ledgerIndex only when range is not specified
-            auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+            auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
                 *sharedPtrBackend_,
                 ctx.yield,
-                input.ledgerHash,
-                input.ledgerIndex,
+                input.ledger,
                 range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
             );
 
@@ -115,20 +113,15 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         }
     }
 
-    auto const accountID = accountFromStringStrict(input.account);
-
     std::optional<rpc::DelegateTransactionFilter> txFilter;
     if (input.delegateFilter) {
-        txFilter.emplace(
-            *input.delegateFilter,
-            *accountID  // NOLINT(bugprone-unchecked-optional-access)
-        );
+        txFilter.emplace(*input.delegateFilter, input.account);
     }
 
     auto const limit = input.limit.value_or(kLimitDefault);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
         return sharedPtrBackend_->fetchAccountTransactions(
-            *accountID, limit, input.forward, cursor, ctx.yield
+            input.account, limit, input.forward, cursor, ctx.yield
         );
     });
 
@@ -140,10 +133,6 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
     if (retCursor)
         response.marker = {.ledger = retCursor->ledgerSequence, .seq = retCursor->transactionIndex};
-
-    std::optional<xrpl::uint192> mptIssuanceFilter;
-    if (input.mptIssuanceId)
-        mptIssuanceFilter = xrpl::uint192{input.mptIssuanceId->c_str()};
 
     for (auto const& txnPlusMeta : blobs) {
         // over the range
@@ -167,10 +156,10 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         boost::json::object obj;
 
         // Skip all Txns where the specified filter mpt_id doesn't match the query
-        if (mptIssuanceFilter) {
+        if (input.mptIssuanceId) {
             auto const [sttx, txMeta] =
                 deserializeTxPlusMeta(txnPlusMeta, txnPlusMeta.ledgerSequence);
-            if (!util::referencesMptIssuance(*txMeta, *sttx, *mptIssuanceFilter))
+            if (!util::referencesMptIssuance(*txMeta, *sttx, *input.mptIssuanceId))
                 continue;
         }
 
@@ -244,7 +233,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     }
 
     response.limit = input.limit;
-    response.account = xrpl::to_string(*accountID);  // NOLINT(bugprone-unchecked-optional-access)
+    response.account = xrpl::to_string(input.account);
     response.ledgerIndexMin = minIndex;
     response.ledgerIndexMax = maxIndex;
 
@@ -273,12 +262,12 @@ tag_invoke(
         jv.as_object()[JS(limit)] = *(output.limit);
 }
 
+}  // namespace rpc
+
+namespace rpc::spec::handlers::account_tx {
+
 void
-tag_invoke(
-    boost::json::value_from_tag,
-    boost::json::value& jv,
-    AccountTxHandler::Marker const& marker
-)
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker)
 {
     jv = {
         {JS(ledger), marker.ledger},
@@ -286,68 +275,4 @@ tag_invoke(
     };
 }
 
-AccountTxHandler::Input
-tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::value const& jv)
-{
-    auto input = AccountTxHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    input.account = boost::json::value_to<std::string>(jsonObject.at(JS(account)));
-
-    if (jsonObject.contains(JS(ledger_index_min)) &&
-        util::integralValueAs<int32_t>(jsonObject.at(JS(ledger_index_min))) != -1)
-        input.ledgerIndexMin = util::integralValueAs<int32_t>(jsonObject.at(JS(ledger_index_min)));
-
-    if (jsonObject.contains(JS(ledger_index_max)) &&
-        util::integralValueAs<int32_t>(jsonObject.at(JS(ledger_index_max))) != -1)
-        input.ledgerIndexMax = util::integralValueAs<int32_t>(jsonObject.at(JS(ledger_index_max)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value()) {
-            input.ledgerIndex = *expectedLedgerIndex;
-        } else {
-            // could not get the latest validated ledger seq here, using this flag to indicate that
-            input.usingValidatedLedger = true;
-        }
-    }
-
-    if (jsonObject.contains(JS(binary)))
-        input.binary = boost::json::value_to<JsonBool>(jsonObject.at(JS(binary)));
-
-    if (jsonObject.contains(JS(forward)))
-        input.forward = boost::json::value_to<JsonBool>(jsonObject.at(JS(forward)));
-
-    if (jsonObject.contains(JS(limit)))
-        input.limit = util::integralValueAs<uint32_t>(jsonObject.at(JS(limit)));
-
-    if (jsonObject.contains(JS(marker))) {
-        input.marker = AccountTxHandler::Marker{
-            .ledger = util::integralValueAs<uint32_t>(
-                jsonObject.at(JS(marker)).as_object().at(JS(ledger))
-            ),
-            .seq =
-                util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)).as_object().at(JS(seq)))
-        };
-    }
-
-    if (jsonObject.contains("tx_type")) {
-        input.transactionTypeInLowercase =
-            boost::json::value_to<std::string>(jsonObject.at("tx_type"));
-    }
-
-    if (jsonObject.contains(JS(delegate)))
-        input.delegateFilter = parseDelegateFilter(jsonObject.at(JS(delegate)).as_object());
-
-    if (jsonObject.contains(JS(mpt_issuance_id))) {
-        input.mptIssuanceId =
-            boost::json::value_to<std::string>(jsonObject.at(JS(mpt_issuance_id)));
-    }
-
-    return input;
-}
-
-}  // namespace rpc
+}  // namespace rpc::spec::handlers::account_tx

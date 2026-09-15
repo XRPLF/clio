@@ -3,6 +3,7 @@
 #include "data/Types.hpp"
 #include "rpc/common/Types.hpp"
 
+#include <rpcspec/handlers/account_tx/Types.hpp>
 #include <xrpl/protocol/AccountID.h>
 
 #include <optional>
@@ -10,8 +11,14 @@
 namespace rpc {
 
 /**
+ * @brief The delegate filter used to narrow account_tx by delegation.
+ */
+using DelegateFilter = rpc::spec::handlers::account_tx::DelegateFilter;
+
+/**
  * @brief Interface for filtering transactions.
  */
+// TODO: consider moving to rpc-spec later on
 class TransactionFilter {
 public:
     /**
