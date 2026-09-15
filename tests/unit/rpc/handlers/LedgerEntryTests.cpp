@@ -3732,8 +3732,7 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 }
 
 // Each variant field's hex-key arm sets its own expectedType, so a wrong constant there would
-// silently accept the wrong object type. credential / xchain_owned_claim_id /
-// xchain_owned_create_account_claim_id had no hex-key coverage at all.
+// silently accept the wrong object type.
 struct LedgerEntryHexKeyTypeTestBundle {
     std::string testName;
     std::string field;
