@@ -95,19 +95,19 @@ generateTestValuesForParametersTest()
             .testName = "ledger_indexInvalid",
             .testJson = R"JSON({"ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "ledger_hashInvalid",
             .testJson = R"JSON({"ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "Invalid field 'ledger_hash'."
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "ledger_hashNotString",
             .testJson = R"JSON({"ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "no_oracles",

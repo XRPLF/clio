@@ -2,30 +2,22 @@
 
 #include "data/BackendInterface.hpp"
 #include "etl/ETLServiceInterface.hpp"
-#include "rpc/Errors.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/JsonBool.hpp"
-#include "rpc/common/MetaProcessors.hpp"
-#include "rpc/common/Modifiers.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/TxTypes.hpp>
-#include <xrpl/protocol/ErrorCodes.h>
-#include <xrpl/protocol/TxFormats.h>
-#include <xrpl/protocol/jss.h>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/account_tx/Types.hpp>
 
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_set>
+#include <utility>
 
 namespace rpc {
 
@@ -35,23 +27,17 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_tx.html
  */
-class AccountTxHandler {
+class AccountTxHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::account_tx::Input> {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<etl::ETLServiceInterface const> etl_;
 
 public:
-    static constexpr auto kLimitMin = 1;
-    static constexpr auto kLimitMax = 1000;
-    static constexpr auto kLimitDefault = 200;
+    static constexpr auto kLimitMin = rpc::spec::handlers::account_tx::kLimitMin;
+    static constexpr auto kLimitMax = rpc::spec::handlers::account_tx::kLimitMax;
+    static constexpr auto kLimitDefault = rpc::spec::handlers::account_tx::kLimitDefault;
 
-    /**
-     * @brief A struct to hold the marker data
-     */
-    struct Marker {
-        uint32_t ledger;
-        uint32_t seq;
-    };
+    using Marker = rpc::spec::handlers::account_tx::Marker;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -68,27 +54,6 @@ public:
         bool validated = true;
     };
 
-    /**
-     * @brief A struct to hold the input data for the command
-     */
-    struct Input {
-        std::string account;
-        // You must use at least one of the following fields in your request:
-        // ledger_index, ledger_hash, ledger_index_min, or ledger_index_max.
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        std::optional<int32_t> ledgerIndexMin;
-        std::optional<int32_t> ledgerIndexMax;
-        bool usingValidatedLedger = false;
-        JsonBool binary{false};
-        JsonBool forward{false};
-        std::optional<uint32_t> limit;
-        std::optional<Marker> marker;
-        std::optional<std::string> transactionTypeInLowercase;
-        std::optional<DelegateFilter> delegateFilter;
-        std::optional<std::string> mptIssuanceId;
-    };
-
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -103,61 +68,6 @@ public:
     )
         : sharedPtrBackend_(std::move(sharedPtrBackend)), etl_{etl}
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        // TODO: goes away when account_tx moves to the shared spec, where the tx_type
-        // validator calls this internally.
-        auto const& typesKeysInLowercase = rpc::spec::txTypesInLowercase();
-        static auto const kRpcSpecForV1 = RpcSpec{
-            {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(ledger_index_min), validation::Type<int32_t>{}},
-            {JS(ledger_index_max), validation::Type<int32_t>{}},
-            {JS(ctid), validation::Type<std::string>{}},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
-            {JS(marker),
-             meta::WithCustomError{
-                 validation::Type<boost::json::object>{},
-                 Status{RippledError::RpcInvalidParams, "invalidMarker"},
-             },
-             meta::Section{
-                 {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
-                 {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
-             }},
-            {
-                "tx_type",
-                validation::Type<std::string>{},
-                modifiers::ToLower{},
-                validation::OneOf<std::string>(
-                    typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()
-                ),
-            },
-            {JS(delegate), validation::CustomValidators::delegateValidator},
-            {JS(mpt_issuance_id), validation::CustomValidators::uint192HexStringValidator},
-        };
-
-        static auto const kRpcSpec = RpcSpec{
-            kRpcSpecForV1,
-            {
-                {JS(binary), validation::Type<bool>{}},
-                {JS(forward), validation::Type<bool>{}},
-            }
-        };
-
-        return apiVersion == 1 ? kRpcSpecForV1 : kRpcSpec;
     }
 
     /**
@@ -179,23 +89,13 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
-
-    /**
-     * @brief Convert the Marker to a JSON object
-     *
-     * @param [out] jv The JSON object to convert to
-     * @param marker The marker to convert
-     */
-    friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
 };
+
 }  // namespace rpc
+
+namespace rpc::spec::handlers::account_tx {
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
+
+}  // namespace rpc::spec::handlers::account_tx

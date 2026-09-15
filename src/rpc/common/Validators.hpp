@@ -489,14 +489,6 @@ struct CustomValidators final {
     static CustomValidator ledgerIndexValidator;
 
     /**
-     * @brief Provides a validator for ledger type.
-     *
-     * A type accepts canonical names of ledger entry types (case insensitive) or short names.
-     * Used by ledger_data.
-     */
-    static CustomValidator ledgerTypeValidator;
-
-    /**
      * @brief Provides a commonly used validator for accounts.
      *
      * Account must be a string and the converted public key is valid.
@@ -608,13 +600,6 @@ struct CustomValidators final {
      * object lookup in ledger_entry.
      */
     static CustomValidator credentialTypeValidator;
-
-    /**
-     * @brief Provides a validator for validating filtering by delegation.
-     *
-     * Used by account_tx if user wants to filter by delegation.
-     */
-    static CustomValidator delegateValidator;
 };
 
 /**
