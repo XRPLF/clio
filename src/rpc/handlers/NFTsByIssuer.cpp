@@ -1,17 +1,14 @@
 #include "rpc/handlers/NFTsByIssuer.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
-#include <xrpl/basics/base_uint.h>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
@@ -19,7 +16,6 @@
 #include <xrpl/protocol/jss.h>
 #include <xrpl/protocol/nft.h>
 
-#include <cstdint>
 #include <optional>
 #include <string>
 
@@ -33,11 +29,10 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "NFTsByIssuer's ledger range must be available");
 
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
     if (not expectedLgrInfo.has_value())
@@ -45,36 +40,25 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
 
     auto const& lgrInfo = *expectedLgrInfo;
 
-    auto const limit = input.limit.value_or(NFTsByIssuerHandler::kLimitDefault);
+    auto const limit = input.limit;
 
-    auto const issuer = accountFromStringStrict(input.issuer);
+    auto const& issuer = input.issuer;
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        xrpl::keylet::account(*issuer).key,
-        lgrInfo.seq,
-        ctx.yield
+        xrpl::keylet::account(issuer).key, lgrInfo.seq, ctx.yield
     );
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::RpcActNotFound}};
 
-    std::optional<uint256> cursor;
-    if (input.marker)
-        cursor = uint256{input.marker->c_str()};
+    auto const cursor = input.marker;
 
     auto const dbResponse = sharedPtrBackend_->fetchNFTsByIssuer(
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        *issuer,
-        input.nftTaxon,
-        lgrInfo.seq,
-        limit,
-        cursor,
-        ctx.yield
+        issuer, input.nftTaxon, lgrInfo.seq, limit, cursor, ctx.yield
     );
 
     auto output = NFTsByIssuerHandler::Output{};
 
-    output.issuer = toBase58(*issuer);  // NOLINT(bugprone-unchecked-optional-access)
+    output.issuer = toBase58(issuer);
     output.limit = limit;
     output.ledgerIndex = lgrInfo.seq;
     output.nftTaxon = input.nftTaxon;
@@ -125,32 +109,4 @@ tag_invoke(
         jv.as_object()[JS(nft_taxon)] = *(output.nftTaxon);
 }
 
-NFTsByIssuerHandler::Input
-tag_invoke(boost::json::value_to_tag<NFTsByIssuerHandler::Input>, boost::json::value const& jv)
-{
-    auto const& jsonObject = jv.as_object();
-    NFTsByIssuerHandler::Input input;
-
-    input.issuer = boost::json::value_to<std::string>(jsonObject.at(JS(issuer)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    if (jsonObject.contains(JS(limit)))
-        input.limit = util::integralValueAs<uint32_t>(jsonObject.at(JS(limit)));
-
-    if (jsonObject.contains(JS(nft_taxon)))
-        input.nftTaxon = util::integralValueAs<uint32_t>(jsonObject.at(JS(nft_taxon)));
-
-    if (jsonObject.contains(JS(marker)))
-        input.marker = boost::json::value_to<std::string>(jsonObject.at(JS(marker)));
-
-    return input;
-}
 }  // namespace rpc

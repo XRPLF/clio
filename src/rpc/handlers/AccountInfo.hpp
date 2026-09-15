@@ -2,17 +2,13 @@
 
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/Checkers.hpp"
-#include "rpc/common/JsonBool.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/account_info/Types.hpp>
 #include <xrpl/protocol/STLedgerEntry.h>
-#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
@@ -28,7 +24,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_info.html
  */
-class AccountInfoHandler {
+class AccountInfoHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::account_info::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
@@ -49,20 +45,6 @@ public:
         bool validated = true;
     };
 
-    /**
-     * @brief A struct to hold the input data for the command
-     *
-     * `queue` is not available in Reporting mode
-     * `ident` is deprecated, keep it for now, in line with rippled
-     */
-    struct Input {
-        std::optional<std::string> account;
-        std::optional<std::string> ident;
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        JsonBool signerLists{false};
-    };
-
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -77,31 +59,6 @@ public:
     )
         : sharedPtrBackend_(std::move(sharedPtrBackend)), amendmentCenter_{amendmentCenter}
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const kRpcSpecV1 = RpcSpec{
-            {JS(account), validation::CustomValidators::accountValidator},
-            {JS(ident), validation::CustomValidators::accountValidator},
-            {JS(ident), check::Deprecated{}},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(ledger), check::Deprecated{}},
-            {JS(strict), check::Deprecated{}}
-        };
-
-        static auto const kRpcSpec =
-            RpcSpec{kRpcSpecV1, {{JS(signer_lists), validation::Type<bool>{}}}};
-
-        return apiVersion == 1 ? kRpcSpecV1 : kRpcSpec;
     }
 
     /**
@@ -123,15 +80,6 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
 }  // namespace rpc

@@ -24,6 +24,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -75,7 +76,6 @@ ConnectionHandler::ConnectionHandler(
     ProcessingPolicy processingPolicy,
     std::optional<size_t> maxParallelRequests,
     util::TagDecoratorFactory& tagFactory,
-    std::optional<size_t> maxSubscriptionSendQueueSize,
     ProxyIpResolver proxyIpResolver,
     OnDisconnectHook onDisconnectHook,
     OnIpChangeHook onIpChangeHook
@@ -83,7 +83,6 @@ ConnectionHandler::ConnectionHandler(
     : processingPolicy_{processingPolicy}
     , maxParallelRequests_{maxParallelRequests}
     , tagFactory_{tagFactory}
-    , maxSubscriptionSendQueueSize_{maxSubscriptionSendQueueSize}
     , proxyIpResolver_(std::move(proxyIpResolver))
     , onDisconnectHook_{std::move(onDisconnectHook)}
     , onIpChangeHook_(std::move(onIpChangeHook))
@@ -136,11 +135,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
         auto* ptr = dynamic_cast<impl::WsConnectionBase*>(connectionPtr.get());
         ASSERT(ptr != nullptr, "Casted not websocket connection");
         subscriptionContext = std::make_shared<SubscriptionContext>(
-            tagFactory_,
-            *ptr,
-            maxSubscriptionSendQueueSize_,
-            yield,
-            [this](Error const& e, Connection const& c) { return handleError(e, c); }
+            tagFactory_, *ptr, yield, std::bind_front(&ConnectionHandler::handleError, this)
         );
         LOG(log_.trace()) << connectionRef.tag()
                           << "Created SubscriptionContext for the connection";

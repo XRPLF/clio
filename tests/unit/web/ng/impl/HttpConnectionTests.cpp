@@ -29,6 +29,10 @@
 #include <string>
 #include <utility>
 
+namespace {
+constexpr size_t kMaxSendingQueueSize = 1500;
+}  // namespace
+
 using namespace web::ng::impl;
 using namespace web::ng;
 using namespace util::config;
@@ -45,7 +49,8 @@ struct HttpConnectionTests : SyncAsioContextTest {
             std::move(expectedSocket).value(),
             std::move(ip),
             boost::beast::flat_buffer{},
-            tagDecoratorFactory_
+            tagDecoratorFactory_,
+            kMaxSendingQueueSize
         );
         connection->setTimeout(std::chrono::milliseconds{100});
         return connection;
@@ -388,7 +393,8 @@ TEST_F(HttpConnectionTests, Upgrade)
         [&]() { ASSERT_TRUE(expectedResult.has_value()) << expectedResult.error().message(); }();
         [&]() { ASSERT_TRUE(expectedResult.value()); }();
 
-        auto expectedWsConnection = connection->upgrade(tagDecoratorFactory_, yield);
+        auto expectedWsConnection =
+            connection->upgrade(tagDecoratorFactory_, kMaxSendingQueueSize, yield);
         [&]() {
             ASSERT_TRUE(expectedWsConnection.has_value()) << expectedWsConnection.error().message();
         }();

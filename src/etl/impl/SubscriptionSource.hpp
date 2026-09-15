@@ -75,7 +75,7 @@ private:
     util::StopHelper stopHelper_;
 
     static constexpr std::chrono::seconds kWsTimeout{30};
-    static constexpr std::chrono::seconds kRetryMaxDelay{30};
+    static constexpr std::chrono::seconds kMaxRetryDelay{30};
     static constexpr std::chrono::seconds kRetryDelay{1};
 
 public:

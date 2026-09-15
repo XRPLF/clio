@@ -14,6 +14,7 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <optional>
 
@@ -52,7 +53,9 @@ struct MockHttpConnectionImpl : web::ng::impl::UpgradableConnection {
     MOCK_METHOD(
         UpgradeReturnType,
         upgrade,
-        (util::TagDecoratorFactory const& tagDecoratorFactory, boost::asio::yield_context yield),
+        (util::TagDecoratorFactory const& tagDecoratorFactory,
+         size_t maxSendingQueueSize,
+         boost::asio::yield_context yield),
         (override)
     );
 };

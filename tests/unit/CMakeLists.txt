@@ -15,6 +15,7 @@ target_sources(
         data/LedgerCacheLoadingStateTests.cpp
         data/LedgerCacheSaverTests.cpp
         data/cassandra/AsyncExecutorTests.cpp
+        data/cassandra/ErrorTests.cpp
         data/cassandra/ExecutionStrategyTests.cpp
         data/cassandra/LedgerHeaderCacheTests.cpp
         data/cassandra/RetryPolicyTests.cpp
@@ -103,6 +104,7 @@ target_sources(
         rpc/common/SpecsTests.cpp
         rpc/common/TypesTests.cpp
         rpc/common/impl/HandlerProviderTests.cpp
+        rpc/filters/impl/DelegateTransactionsFilterTests.cpp
         rpc/handlers/AccountChannelsTests.cpp
         rpc/handlers/AccountCurrenciesTests.cpp
         rpc/handlers/AccountInfoTests.cpp
@@ -129,6 +131,7 @@ target_sources(
         rpc/handlers/LedgerRangeTests.cpp
         rpc/handlers/LedgerTests.cpp
         rpc/handlers/MPTHoldersTests.cpp
+        rpc/handlers/MPTokenIssuanceHistoryTests.cpp
         rpc/handlers/NFTBuyOffersTests.cpp
         rpc/handlers/NFTHistoryTests.cpp
         rpc/handlers/NFTInfoTests.cpp
@@ -183,6 +186,7 @@ target_sources(
         util/ChannelTests.cpp
         util/CoroutineTest.cpp
         util/MoveTrackerTests.cpp
+        util/MPTIssuanceUtilsTests.cpp
         util/ObservableValueTest.cpp
         util/ObservableValueAtomicTest.cpp
         util/RandomTests.cpp
@@ -204,6 +208,7 @@ target_sources(
         web/dosguard/WeightsTests.cpp
         web/dosguard/WhitelistHandlerTests.cpp
         web/impl/ErrorHandlingTests.cpp
+        web/LoadWarningTests.cpp
         web/ng/ResponseTests.cpp
         web/ng/RequestTests.cpp
         web/ng/RPCServerHandlerTests.cpp
@@ -212,6 +217,7 @@ target_sources(
         web/ng/impl/ConnectionHandlerTests.cpp
         web/ng/impl/ErrorHandlingTests.cpp
         web/ng/impl/HttpConnectionTests.cpp
+        web/ng/impl/SendingQueueTests.cpp
         web/ng/impl/ServerSslContextTests.cpp
         web/ng/impl/WsConnectionTests.cpp
         web/ProxyIpResolverTests.cpp

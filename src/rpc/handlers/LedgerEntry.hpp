@@ -380,6 +380,7 @@ public:
                      meta::WithCustomError{
                          validation::Type<std::string>{}, Status(ClioError::RpcMalformedRequest)
                      },
+                     validation::CustomValidators::credentialTypeValidator,
                  },
              }}},
             {JS(mpt_issuance),

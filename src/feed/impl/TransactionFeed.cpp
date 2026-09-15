@@ -21,7 +21,8 @@
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/NFTSyntheticSerializer.h>
+#include <xrpl/protocol/NFTokenID.h>
+#include <xrpl/protocol/NFTokenOfferID.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/TER.h>
@@ -214,7 +215,8 @@ TransactionFeed::pub(
         rpc::insertMPTIssuanceID(txnPubobj, tx, metaPubobj, meta);
 
         json::Value nftJson;
-        xrpl::RPC::insertNFTSyntheticInJson(nftJson, tx, *meta);
+        xrpl::insertNFTokenID(nftJson[xrpl::jss::meta], tx, *meta);
+        xrpl::insertNFTokenOfferID(nftJson[xrpl::jss::meta], tx, *meta);
         auto const nftBoostJson = rpc::toBoostJson(nftJson).as_object();
         if (nftBoostJson.contains(JS(meta)) && nftBoostJson.at(JS(meta)).is_object()) {
             auto& metaObjInPub = pubObj.at(JS(meta)).as_object();

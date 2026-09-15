@@ -14,6 +14,8 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -105,21 +107,21 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": "1"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "Invalid field 'ledger_hash'."
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
             .testJson =
                 R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index": "a"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
         },
     };
 }
@@ -425,6 +427,80 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
             R"JSON({{
                 "account": "{}",
                 "signer_lists": true
+            }})JSON",
+            kAccount
+        )
+    );
+    auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{.yield = yield, .apiVersion = 2});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, boost::json::parse(expectedOutput));
+    });
+}
+
+TEST_F(RPCAccountInfoHandlerTest, PseudoAccountReportsType)
+{
+    auto const expectedOutput = fmt::format(
+        R"JSON({{
+            "account_data": {{
+                "Account": "{}",
+                "AMMID": "{}",
+                "Balance": "200",
+                "Flags": 0,
+                "LedgerEntryType": "AccountRoot",
+                "OwnerCount": 2,
+                "PreviousTxnID": "{}",
+                "PreviousTxnLgrSeq": 2,
+                "Sequence": 2,
+                "TransferRate": 0,
+                "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
+            }},
+            "account_flags": {{
+                "defaultRipple": false,
+                "depositAuth": false,
+                "disableMasterKey": false,
+                "disallowIncomingXRP": false,
+                "globalFreeze": false,
+                "noFreeze": false,
+                "passwordSpent": false,
+                "requireAuthorization": false,
+                "requireDestinationTag": false
+            }},
+            "pseudo_account": {{
+                "type": "AMM"
+            }},
+            "ledger_hash": "{}",
+            "ledger_index": 30,
+            "validated": true
+        }})JSON",
+        kAccount,
+        kIndex1,
+        kIndex1,
+        kLedgerHash
+    );
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const accountRoot =
+        createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2, 0, xrpl::uint256{kIndex1});
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _))
+        .WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _))
+        .WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _))
+        .WillOnce(Return(false));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
+
+    static auto const kInput = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "account": "{}"
             }})JSON",
             kAccount
         )
@@ -877,7 +953,7 @@ TEST(RPCAccountInfoHandlerSpecTest, DeprecatedFields)
         {"strict", true}
     };
     auto const spec = AccountInfoHandler::spec(2);
-    auto const warnings = spec.check(json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(json));
     ASSERT_EQ(warnings.size(), 1);
     auto const& warning = warnings[0];
     ASSERT_TRUE(warning.is_object());

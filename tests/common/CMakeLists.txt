@@ -3,6 +3,7 @@ add_library(clio_testing_common)
 target_sources(
     clio_testing_common
     PRIVATE
+        rpc/FakesAndMocks.cpp
         util/AssignRandomPort.cpp
         util/BinaryTestObject.cpp
         util/CallWithTimeout.cpp

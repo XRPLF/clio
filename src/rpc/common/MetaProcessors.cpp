@@ -1,9 +1,9 @@
 #include "rpc/common/MetaProcessors.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
+#include <rpcspec/Errors.hpp>
 
 #include <string_view>
 

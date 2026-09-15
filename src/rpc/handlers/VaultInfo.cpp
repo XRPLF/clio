@@ -1,7 +1,6 @@
 #include "rpc/handlers/VaultInfo.hpp"
 
 #include "data/BackendInterface.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
@@ -11,6 +10,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Keylet.h>
@@ -18,6 +18,7 @@
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STBase.h>
 #include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/SeqProxy.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
 
@@ -96,7 +97,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
                     return std::unexpected{Status{RippledError::RpcEntryNotFound}};
             }
 
-            return xrpl::keylet::vault(*accountID, *input.tnxSequence);
+            return xrpl::keylet::vault(*accountID, xrpl::SeqProxy::rawSequence(*input.tnxSequence));
         }
         xrpl::uint256 nodeIndex;
         if (nodeIndex.parseHex(*input.vaultID))

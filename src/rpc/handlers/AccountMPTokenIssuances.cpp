@@ -1,16 +1,15 @@
 #include "rpc/handlers/AccountMPTokenIssuances.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
@@ -38,10 +37,12 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
 {
     MPTokenIssuanceResponse issuance;
 
-    issuance.mpTokenIssuanceId = xrpl::strHex(sle.key());
-    issuance.issuer = xrpl::to_string(account);
-    issuance.sequence = sle.getFieldU32(xrpl::sfSequence);
+    auto const sequence = sle.getFieldU32(xrpl::sfSequence);
     auto const flags = sle.getFieldU32(xrpl::sfFlags);
+
+    issuance.mpTokenIssuanceId = xrpl::to_string(xrpl::makeMptID(sequence, account));
+    issuance.issuer = xrpl::to_string(account);
+    issuance.sequence = sequence;
 
     auto const setFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
         if ((flags & mask) != 0u)
@@ -57,22 +58,25 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
     setFlag(issuance.mptCanClawback, xrpl::lsfMPTCanClawback);
     setFlag(issuance.mptCanHoldConfidentialBalance, xrpl::lsfMPTCanHoldConfidentialBalance);
 
-    if (sle.isFieldPresent(xrpl::sfMutableFlags)) {
-        auto const mutableFlags = sle.getFieldU32(xrpl::sfMutableFlags);
+    if (sle.isFieldPresent(xrpl::sfImmutableFlags)) {
+        auto const immutableFlags = sle.getFieldU32(xrpl::sfImmutableFlags);
 
-        auto const setMutableFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
-            if ((mutableFlags & mask) != 0u)
+        auto const setImmutableFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
+            if ((immutableFlags & mask) != 0u)
                 field = true;
         };
 
-        setMutableFlag(issuance.mptCanMutateCanLock, xrpl::lsmfMPTCanEnableCanLock);
-        setMutableFlag(issuance.mptCanMutateRequireAuth, xrpl::lsmfMPTCanEnableRequireAuth);
-        setMutableFlag(issuance.mptCanMutateCanEscrow, xrpl::lsmfMPTCanEnableCanEscrow);
-        setMutableFlag(issuance.mptCanMutateCanTrade, xrpl::lsmfMPTCanEnableCanTrade);
-        setMutableFlag(issuance.mptCanMutateCanTransfer, xrpl::lsmfMPTCanEnableCanTransfer);
-        setMutableFlag(issuance.mptCanMutateCanClawback, xrpl::lsmfMPTCanEnableCanClawback);
-        setMutableFlag(issuance.mptCanMutateMetadata, xrpl::lsmfMPTCanMutateMetadata);
-        setMutableFlag(issuance.mptCanMutateTransferFee, xrpl::lsmfMPTCanMutateTransferFee);
+        setImmutableFlag(issuance.mptImmutableCanLock, xrpl::lsifMPTCanLock);
+        setImmutableFlag(issuance.mptImmutableRequireAuth, xrpl::lsifMPTRequireAuth);
+        setImmutableFlag(issuance.mptImmutableCanEscrow, xrpl::lsifMPTCanEscrow);
+        setImmutableFlag(issuance.mptImmutableCanTrade, xrpl::lsifMPTCanTrade);
+        setImmutableFlag(issuance.mptImmutableCanTransfer, xrpl::lsifMPTCanTransfer);
+        setImmutableFlag(issuance.mptImmutableCanClawback, xrpl::lsifMPTCanClawback);
+        setImmutableFlag(
+            issuance.mptImmutableCanHoldConfidentialBalance, xrpl::lsifMPTCanHoldConfidentialBalance
+        );
+        setImmutableFlag(issuance.mptImmutableMetadata, xrpl::lsifMPTMetadata);
+        setImmutableFlag(issuance.mptImmutableTransferFee, xrpl::lsifMPTTransferFee);
     }
 
     if (sle.isFieldPresent(xrpl::sfTransferFee))
@@ -118,11 +122,10 @@ AccountMPTokenIssuancesHandler::process(
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountMPTokenIssuances' ledger range must be available");
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -130,12 +133,9 @@ AccountMPTokenIssuancesHandler::process(
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const accountID = accountFromStringStrict(input.account);
+    auto const& accountID = input.account;
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        xrpl::keylet::account(*accountID).key,
-        lgrInfo.seq,
-        ctx.yield
+        xrpl::keylet::account(accountID).key, lgrInfo.seq, ctx.yield
     );
 
     if (not accountLedgerObject.has_value())
@@ -146,13 +146,13 @@ AccountMPTokenIssuancesHandler::process(
 
     auto const addToResponse = [&](xrpl::SLE const& sle) {
         if (sle.getType() == xrpl::ltMPTOKEN_ISSUANCE) {
-            addMPTokenIssuance(response.issuances, sle, *accountID);
+            addMPTokenIssuance(response.issuances, sle, accountID);
         }
     };
 
     auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
+        accountID,
         lgrInfo.seq,
         input.limit,
         input.marker,
@@ -165,7 +165,7 @@ AccountMPTokenIssuancesHandler::process(
 
     auto const nextMarker = *expectedNext;
 
-    response.account = input.account;
+    response.account = xrpl::to_string(accountID);
     response.limit = input.limit;
 
     response.ledgerHash = xrpl::strHex(lgrInfo.hash);
@@ -175,35 +175,6 @@ AccountMPTokenIssuancesHandler::process(
         response.marker = nextMarker.toString();
 
     return response;
-}
-
-AccountMPTokenIssuancesHandler::Input
-tag_invoke(
-    boost::json::value_to_tag<AccountMPTokenIssuancesHandler::Input>,
-    boost::json::value const& jv
-)
-{
-    auto input = AccountMPTokenIssuancesHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    input.account = boost::json::value_to<std::string>(jv.at(JS(account)));
-
-    if (jsonObject.contains(JS(limit)))
-        input.limit = util::integralValueAs<uint32_t>(jv.at(JS(limit)));
-
-    if (jsonObject.contains(JS(marker)))
-        input.marker = boost::json::value_to<std::string>(jv.at(JS(marker)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    return input;
 }
 
 void
@@ -277,14 +248,18 @@ tag_invoke(
     setIfPresent("mpt_can_transfer", issuance.mptCanTransfer);
     setIfPresent("mpt_can_clawback", issuance.mptCanClawback);
 
-    setIfPresent("mpt_can_mutate_can_lock", issuance.mptCanMutateCanLock);
-    setIfPresent("mpt_can_mutate_require_auth", issuance.mptCanMutateRequireAuth);
-    setIfPresent("mpt_can_mutate_can_escrow", issuance.mptCanMutateCanEscrow);
-    setIfPresent("mpt_can_mutate_can_trade", issuance.mptCanMutateCanTrade);
-    setIfPresent("mpt_can_mutate_can_transfer", issuance.mptCanMutateCanTransfer);
-    setIfPresent("mpt_can_mutate_can_clawback", issuance.mptCanMutateCanClawback);
-    setIfPresent("mpt_can_mutate_metadata", issuance.mptCanMutateMetadata);
-    setIfPresent("mpt_can_mutate_transfer_fee", issuance.mptCanMutateTransferFee);
+    setIfPresent("mpt_immutable_can_lock", issuance.mptImmutableCanLock);
+    setIfPresent("mpt_immutable_require_auth", issuance.mptImmutableRequireAuth);
+    setIfPresent("mpt_immutable_can_escrow", issuance.mptImmutableCanEscrow);
+    setIfPresent("mpt_immutable_can_trade", issuance.mptImmutableCanTrade);
+    setIfPresent("mpt_immutable_can_transfer", issuance.mptImmutableCanTransfer);
+    setIfPresent("mpt_immutable_can_clawback", issuance.mptImmutableCanClawback);
+    setIfPresent(
+        "mpt_immutable_can_hold_confidential_balance",
+        issuance.mptImmutableCanHoldConfidentialBalance
+    );
+    setIfPresent("mpt_immutable_metadata", issuance.mptImmutableMetadata);
+    setIfPresent("mpt_immutable_transfer_fee", issuance.mptImmutableTransferFee);
 
     setIfPresent("mpt_can_hold_confidential_balance", issuance.mptCanHoldConfidentialBalance);
     setUint64IfPresent(

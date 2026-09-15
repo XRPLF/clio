@@ -9,4 +9,4 @@ target_sources(
         impl/SingleFeedBase.cpp
 )
 
-target_link_libraries(clio_feed PRIVATE clio_util)
+target_link_libraries(clio_feed PRIVATE clio_util rpcspec::rpcspec)

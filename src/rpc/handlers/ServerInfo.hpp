@@ -5,9 +5,7 @@
 #include "etl/ETLServiceInterface.hpp"
 #include "etl/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
 #include "util/build/Build.hpp"
@@ -16,10 +14,12 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <fmt/format.h>
+#include <rpcspec/Errors.hpp>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/server_info/Types.hpp>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/BuildInfo.h>
-#include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/Fees.h>
 #include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/jss.h>
@@ -31,6 +31,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace rpc {
 class Counters;
@@ -44,7 +45,8 @@ namespace rpc {
  * @tparam CountersType The type of the counters
  */
 template <typename CountersType>
-class BaseServerInfoHandler {
+class BaseServerInfoHandler
+    : public rpc::spec::HandlerFor<rpc::spec::handlers::server_info::Input> {
     static constexpr auto kBackendCountersKey = "backend_counters";
 
     std::shared_ptr<BackendInterface> backend_;
@@ -54,13 +56,6 @@ class BaseServerInfoHandler {
     std::reference_wrapper<CountersType const> counters_;
 
 public:
-    /**
-     * @brief A struct to hold the input data for the command
-     */
-    struct Input {
-        bool backendCounters = false;
-    };
-
     /**
      * @brief A struct to hold the admin section of the output
      */
@@ -103,7 +98,7 @@ public:
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::chrono::seconds uptime = {};
         std::string clioVersion = util::build::getClioVersionString();
-        std::string xrplVersion = xrpl::BuildInfo::getVersionString();
+        std::string xrplVersion = xrpl::build_info::getVersionString();
         std::optional<boost::json::object> rippledInfo = std::nullopt;
         ValidatedLedgerSection validatedLedger = {};
         CacheSection cache = {};
@@ -145,19 +140,6 @@ public:
         , etl_(std::move(etl))
         , counters_(std::cref(counters))
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static RpcSpec const kRpcSpec = {};
-        return kRpcSpec;
     }
 
     /**
@@ -254,12 +236,10 @@ private:
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, InfoSection const& info)
     {
         using boost::json::value_from;
-        using xrpl::to_string;
-
         jv = {
             {JS(complete_ledgers), info.completeLedgers},
             {JS(load_factor), info.loadFactor},
-            {JS(time), to_string(std::chrono::floor<std::chrono::microseconds>(info.time))},
+            {JS(time), xrpl::to_string(std::chrono::floor<std::chrono::microseconds>(info.time))},
             {JS(uptime), info.uptime.count()},
             {"clio_version", info.clioVersion},
             {"libxrpl_version", info.xrplVersion},
@@ -327,17 +307,6 @@ private:
             {"object_hit_rate", cache.objectHitRate},
             {"successor_hit_rate", cache.successorHitRate},
         };
-    }
-
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv)
-    {
-        auto input = BaseServerInfoHandler::Input{};
-        auto const jsonObject = jv.as_object();
-        if (jsonObject.contains(kBackendCountersKey) &&
-            jsonObject.at(kBackendCountersKey).is_bool())
-            input.backendCounters = jv.at(kBackendCountersKey).as_bool();
-        return input;
     }
 };
 

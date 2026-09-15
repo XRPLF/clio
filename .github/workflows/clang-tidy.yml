@@ -17,7 +17,7 @@ on:
       - "tests/**"
       - "benchmarks/**"
 
-      - .clang_tidy
+      - .clang-tidy
 
 concurrency:
   # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
@@ -44,7 +44,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     permissions:
       contents: read
-    uses: XRPLF/actions/.github/workflows/determine-tidy-files.yml@d041ac9f1fa9f07a4ba335eb4c1c82233fb3fef6
+    uses: XRPLF/actions/.github/workflows/determine-tidy-files.yml@70145243b905dc3e040a61d39c00e178cfb96f71
 
   run-clang-tidy:
     name: Run clang tidy
@@ -52,7 +52,7 @@ jobs:
     if: ${{ needs.determine-files.outputs.cpp_changed_files != '' || needs.determine-files.outputs.need_full_run == 'true' }}
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-cb2642b
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
 
     permissions:
       contents: write
@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@e4b6449d55a61c002d7c3fdfa6c20f721ede0606
+        uses: XRPLF/actions/prepare-runner@b3e255d74d785d053e4903da8ac90983cd7d9e82
         with:
           enable_ccache: false
 

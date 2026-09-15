@@ -12,6 +12,7 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/base_uint.h>
 
 #include <algorithm>
@@ -147,6 +148,37 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "excessiveLgrRange");
         EXPECT_EQ(err.at("error_message").as_string(), "Ledger range exceeds 1000.");
+    });
+}
+
+// `transaction` is validated by rpc-spec's uint256 converter, which reports one
+// format-agnostic message for both a non-string and an unparsable hash.
+TEST_F(RPCTxTest, TransactionNotString)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
+        auto const req = boost::json::parse(R"JSON({"command": "tx", "transaction": 123})JSON");
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'transaction'.");
+    });
+}
+
+TEST_F(RPCTxTest, TransactionMalformed)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
+        auto const req =
+            boost::json::parse(R"JSON({"command": "tx", "transaction": "nothex"})JSON");
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'transaction'.");
     });
 }
 

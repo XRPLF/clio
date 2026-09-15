@@ -1,16 +1,14 @@
 #include "rpc/handlers/AccountOffers.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
-#include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
@@ -22,7 +20,6 @@
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
-#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -52,11 +49,10 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountOffer's ledger range must be available");
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -64,19 +60,16 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const accountID = accountFromStringStrict(input.account);
+    auto const& accountID = input.account;
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        xrpl::keylet::account(*accountID).key,
-        lgrInfo.seq,
-        ctx.yield
+        xrpl::keylet::account(accountID).key, lgrInfo.seq, ctx.yield
     );
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::RpcActNotFound}};
 
     Output response;
-    response.account = xrpl::to_string(*accountID);  // NOLINT(bugprone-unchecked-optional-access)
+    response.account = xrpl::to_string(accountID);
     response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
@@ -89,7 +82,7 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
 
     auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
+        accountID,
         lgrInfo.seq,
         input.limit,
         input.marker,
@@ -159,32 +152,6 @@ tag_invoke(
 
     convertAmount(JS(taker_pays), offer.takerPays);
     convertAmount(JS(taker_gets), offer.takerGets);
-}
-
-AccountOffersHandler::Input
-tag_invoke(boost::json::value_to_tag<AccountOffersHandler::Input>, boost::json::value const& jv)
-{
-    auto input = AccountOffersHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    input.account = boost::json::value_to<std::string>(jsonObject.at(JS(account)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    if (jsonObject.contains(JS(limit)))
-        input.limit = util::integralValueAs<uint32_t>(jsonObject.at(JS(limit)));
-
-    if (jsonObject.contains(JS(marker)))
-        input.marker = boost::json::value_to<std::string>(jsonObject.at(JS(marker)));
-
-    return input;
 }
 
 }  // namespace rpc

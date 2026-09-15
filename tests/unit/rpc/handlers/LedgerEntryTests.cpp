@@ -16,6 +16,7 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
@@ -28,6 +29,7 @@
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STXChainBridge.h>
+#include <xrpl/protocol/SeqProxy.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/UintTypes.h>
 
@@ -335,6 +337,27 @@ generateTestValuesForParametersTest()
                         "authorized_credentials": [
                         {{
                             "issuer": 123,
+                            "credential_type": "{}"
+                        }}
+                        ]
+                    }}
+                }})JSON",
+                kAccount,
+                kCredentialType
+            ),
+            .expectedError = "malformedAuthorizedCredentials",
+            .expectedErrorMessage = "issuer NotString"
+        },
+
+        ParamTestCaseBundle{
+            .testName = "DepositPreauthAuthorizeCredentialsHexIssuer",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "issuer": "0000000000000000000000000000000000000002",
                             "credential_type": "{}"
                         }}
                         ]
@@ -2005,6 +2028,38 @@ generateTestValuesForParametersTest()
             .expectedErrorMessage = "Malformed request."
         },
         ParamTestCaseBundle{
+            .testName = "CredentialCredentialTypeNotHex",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "credential": {{
+                        "subject": "{}",
+                        "issuer": "{}",
+                        "credential_type": "hello world"
+                    }}
+                }})JSON",
+                kAccount,
+                kAccount2
+            ),
+            .expectedError = "malformedAuthorizedCredentials",
+            .expectedErrorMessage = "credential_type NotHexString"
+        },
+        ParamTestCaseBundle{
+            .testName = "CredentialCredentialTypeEmpty",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "credential": {{
+                        "subject": "{}",
+                        "issuer": "{}",
+                        "credential_type": ""
+                    }}
+                }})JSON",
+                kAccount,
+                kAccount2
+            ),
+            .expectedError = "malformedAuthorizedCredentials",
+            .expectedErrorMessage = "credential_type is empty"
+        },
+        ParamTestCaseBundle{
             .testName = "InvalidMPTokenAccount",
             .testJson = fmt::format(
                 R"JSON({{
@@ -2762,7 +2817,7 @@ generateTestValuesForNormalPathTest()
                 }})JSON",
                 kAccount
             ),
-            .expectedIndex = xrpl::keylet::escrow(account1, 1).key,
+            .expectedIndex = xrpl::keylet::escrow(account1, xrpl::SeqProxy::rawSequence(1)).key,
             .mockedEntity = createEscrowLedgerObject(kAccount, kAccount2)
         },
         NormalPathTestBundle{
@@ -2870,7 +2925,7 @@ generateTestValuesForNormalPathTest()
                 }})JSON",
                 kAccount
             ),
-            .expectedIndex = xrpl::getTicketIndex(account1, 2),
+            .expectedIndex = xrpl::keylet::ticket(account1, xrpl::SeqProxy::rawTicket(2)).key,
             .mockedEntity = createTicketLedgerObject(kAccount, 0)
         },
         NormalPathTestBundle{
@@ -2885,7 +2940,7 @@ generateTestValuesForNormalPathTest()
                 }})JSON",
                 kAccount
             ),
-            .expectedIndex = xrpl::keylet::offer(account1, 2).key,
+            .expectedIndex = xrpl::keylet::offer(account1, xrpl::SeqProxy::rawSequence(2)).key,
             .mockedEntity = createOfferLedgerObject(
                 kAccount,
                 100,
@@ -3227,7 +3282,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::keylet::permissionedDomain(
                                  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
                                  *xrpl::parseBase58<xrpl::AccountID>(kAccount),
-                                 kRangeMax
+                                 xrpl::SeqProxy::rawSequence(kRangeMax)
             )
                                  .key,
             .mockedEntity =
@@ -3268,9 +3323,12 @@ generateTestValuesForNormalPathTest()
                 kAccount,
                 kRangeMax
             ),
-            .expectedIndex =
-                // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            xrpl::keylet::vault(*xrpl::parseBase58<xrpl::AccountID>(kAccount), kRangeMax).key,
+            .expectedIndex = xrpl::keylet::vault(
+                                 // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+                                 *xrpl::parseBase58<xrpl::AccountID>(kAccount),
+                                 xrpl::SeqProxy::rawSequence(kRangeMax)
+            )
+                                 .key,
             .mockedEntity = createVault(
                 kAccount,
                 kAccount,
@@ -3313,7 +3371,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::keylet::loanBroker(
                                  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
                                  *xrpl::parseBase58<xrpl::AccountID>(kAccount),
-                                 kRangeMax
+                                 xrpl::SeqProxy::rawSequence(kRangeMax)
             )
                                  .key,
             .mockedEntity = createLoanBroker(
@@ -3346,7 +3404,8 @@ generateTestValuesForNormalPathTest()
                 }})JSON",
                 kIndex1
             ),
-            .expectedIndex = xrpl::keylet::loan(xrpl::uint256{kIndex1}, 1).key,
+            .expectedIndex =
+                xrpl::keylet::loan(xrpl::uint256{kIndex1}, xrpl::SeqProxy::rawSequence(1)).key,
             .mockedEntity = createLoan(
                 kAccount, xrpl::uint256{kIndex1}, 1, 1000, 86400, 100, xrpl::uint256{0}, 0
             )
@@ -3496,9 +3555,12 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
         0
     );
 
-    auto const vaultKey =
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        xrpl::keylet::vault(*xrpl::parseBase58<xrpl::AccountID>(kAccount), kRangeMax).key;
+    auto const vaultKey = xrpl::keylet::vault(
+                              // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+                              *xrpl::parseBase58<xrpl::AccountID>(kAccount),
+                              xrpl::SeqProxy::rawSequence(kRangeMax)
+    )
+                              .key;
 
     xrpl::STLedgerEntry const sle{
         xrpl::SerialIter{
@@ -3548,7 +3610,7 @@ TEST_F(RPCLedgerEntryTest, LoanBroker_BinaryFalse)
     auto const loanBrokerKey = xrpl::keylet::loanBroker(
                                    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
                                    *xrpl::parseBase58<xrpl::AccountID>(kAccount),
-                                   kRangeMax
+                                   xrpl::SeqProxy::rawSequence(kRangeMax)
     )
                                    .key;
 

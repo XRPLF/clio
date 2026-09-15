@@ -6,6 +6,7 @@
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 using namespace std;
 using namespace rpc;

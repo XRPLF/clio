@@ -1,11 +1,11 @@
 #pragma once
 
-#include "rpc/Errors.hpp"
 #include "util/log/Logger.hpp"
 #include "util/requests/WsConnection.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
+#include <rpcspec/Errors.hpp>
 
 #include <chrono>
 #include <expected>

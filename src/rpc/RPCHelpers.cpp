@@ -4,7 +4,6 @@
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
@@ -16,7 +15,6 @@
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/format/free_funcs.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -27,6 +25,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/lexical_cast/bad_lexical_cast.hpp>
 #include <fmt/format.h>
+#include <rpcspec/Errors.hpp>
+#include <rpcspec/Ledger.hpp>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
@@ -43,7 +43,10 @@
 #include <xrpl/protocol/Keylet.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/NFTSyntheticSerializer.h>
+#include <xrpl/protocol/MPTIssue.h>
+#include <xrpl/protocol/NFTokenID.h>
+#include <xrpl/protocol/NFTokenOfferID.h>
+#include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/PublicKey.h>
 #include <xrpl/protocol/Rate.h>
 #include <xrpl/protocol/SField.h>
@@ -245,7 +248,8 @@ toExpandedJson(
 
     if (nftEnabled == NFTokenjson::ENABLE) {
         json::Value nftJson;
-        xrpl::RPC::insertNFTSyntheticInJson(nftJson, txn, *meta);
+        xrpl::insertNFTokenID(nftJson[xrpl::jss::meta], txn, *meta);
+        xrpl::insertNFTokenOfferID(nftJson[xrpl::jss::meta], txn, *meta);
         // if there is no nft fields, the nftJson will be {"meta":null}
         auto const nftBoostJson = toBoostJson(nftJson).as_object();
         if (nftBoostJson.contains(JS(meta)) and nftBoostJson.at(JS(meta)).is_object()) {
@@ -410,7 +414,7 @@ toJson(xrpl::SLE const& sle)
             std::string md5 = strHex(hash);
             boost::algorithm::to_lower(md5);
             value.as_object()["urlgravatar"] =
-                str(boost::format("http://www.gravatar.com/avatar/%s") % md5);
+                fmt::format("http://www.gravatar.com/avatar/{}", md5);
         }
     }
     return value.as_object();
@@ -543,6 +547,47 @@ getLedgerHeaderFromHashOrSeq(
         return err;
 
     return *lgrInfo;
+}
+
+std::expected<xrpl::LedgerHeader, Status>
+getLedgerHeaderFromLedgerSpecifier(
+    BackendInterface const& backend,
+    boost::asio::yield_context yield,
+    rpc::spec::LedgerSpecifier const& ledger,
+    uint32_t maxSeq
+)
+{
+    auto const err = std::unexpected{Status{RippledError::RpcLgrNotFound, "ledgerNotFound"}};
+    auto const resolved = ledger.resolved();
+
+    if (resolved.isHash()) {
+        auto const maybeLgrInfo =
+            backend.fetchLedgerByHash(std::get<xrpl::uint256>(resolved.value), yield);
+        if (not maybeLgrInfo.has_value() or maybeLgrInfo->seq > maxSeq)
+            return err;
+
+        return *maybeLgrInfo;
+    }
+
+    if (resolved.isShortcut()) {
+        auto const shortcut = std::get<rpc::spec::LedgerShortcut>(resolved.value);
+        ASSERT(
+            shortcut == rpc::spec::LedgerShortcut::Validated,
+            "current/closed ledgers must be forwarded before dispatch"
+        );
+    }
+
+    auto const ledgerSequence = resolved.isSequence() ? std::get<uint32_t>(resolved.value) : maxSeq;
+
+    // return without hitting the db
+    if (ledgerSequence > maxSeq)
+        return err;
+
+    auto const maybeLgrInfo = backend.fetchLedgerBySequence(ledgerSequence, yield);
+    if (not maybeLgrInfo.has_value())
+        return err;
+
+    return *maybeLgrInfo;
 }
 
 std::vector<unsigned char>
@@ -1240,6 +1285,66 @@ transferRate(
     return xrpl::kParityRate;
 }
 
+xrpl::STAmount
+accountHoldsMPT(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    xrpl::AccountID const& account,
+    xrpl::MPTIssue const& mptIssue,
+    bool zeroIfFrozen,
+    boost::asio::yield_context yield
+)
+{
+    xrpl::STAmount zero{mptIssue, 0};
+
+    if (account == mptIssue.getIssuer()) {
+        // Issuer: available = MaximumAmount - OutstandingAmount
+        auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
+        auto const issuanceBlob = backend.fetchLedgerObject(issuanceKey, sequence, yield);
+        if (!issuanceBlob)
+            return zero;
+        xrpl::SerialIter it{issuanceBlob->data(), issuanceBlob->size()};
+        xrpl::SLE const sle{it, issuanceKey};
+        auto const maxAmount = sle.isFieldPresent(xrpl::sfMaximumAmount)
+            ? sle.getFieldU64(xrpl::sfMaximumAmount)
+            : xrpl::kMaxMpTokenAmount;
+        auto const outstanding = sle.isFieldPresent(xrpl::sfOutstandingAmount)
+            ? sle.getFieldU64(xrpl::sfOutstandingAmount)
+            : 0u;
+        auto const available = (outstanding > maxAmount) ? 0u : (maxAmount - outstanding);
+        return xrpl::STAmount{mptIssue, available};
+    }
+
+    auto const key = xrpl::keylet::mptoken(mptIssue.getMptID(), account).key;
+    auto const blob = backend.fetchLedgerObject(key, sequence, yield);
+    if (!blob)
+        return zero;
+
+    xrpl::SerialIter it{blob->data(), blob->size()};
+    xrpl::SLE const sle{it, key};
+
+    auto const issuanceKey = xrpl::keylet::mptokenIssuance(mptIssue.getMptID()).key;
+    auto const issuanceBlob = backend.fetchLedgerObject(issuanceKey, sequence, yield);
+    std::optional<xrpl::SLE> issuanceSle;
+    if (issuanceBlob) {
+        xrpl::SerialIter issuanceIt{issuanceBlob->data(), issuanceBlob->size()};
+        issuanceSle.emplace(issuanceIt, issuanceKey);
+    }
+
+    if (zeroIfFrozen) {
+        if (issuanceSle && issuanceSle->isFlag(xrpl::lsfMPTLocked))
+            return zero;
+        if (sle.isFlag(xrpl::lsfMPTLocked))
+            return zero;
+    }
+
+    if (issuanceSle && issuanceSle->isFlag(xrpl::lsfMPTRequireAuth) &&
+        !sle.isFlag(xrpl::lsfMPTAuthorized))
+        return zero;
+
+    return xrpl::STAmount{mptIssue, sle.getFieldU64(xrpl::sfMPTAmount)};
+}
+
 boost::json::array
 postProcessOrderBook(
     std::vector<data::LedgerObject> const& offers,
@@ -1274,8 +1379,13 @@ postProcessOrderBook(
             bool firstOwnerOffer = true;
 
             if (book.out.getIssuer() == uOfferOwnerID) {
-                // If an offer is selling issuer's own IOUs, it is fully
-                // funded.
+                // If an offer is selling the issuer's own asset, it is treated as fully funded.
+                // This mirrors xrpld's getBookPage for both IOU and MPT.
+                //
+                // NOTE: xrpld has a separate fix (issuerFundsToSelfIssue) that bounds an MPT
+                // issuer's self-issued offers by the remaining issuance capacity
+                // (MaximumAmount - OutstandingAmount). It is not part of the getBookPage logic
+                // mirrored here; port it if/when clio mirrors that updated getBookPage.
                 saOwnerFunds = saTakerGets;
             } else if (globalFreeze) {
                 // If either asset is globally frozen, consider all offers
@@ -1289,16 +1399,27 @@ postProcessOrderBook(
                     saOwnerFunds = umBalanceEntry->second;
                     firstOwnerOffer = false;
                 } else {
-                    saOwnerFunds = accountHolds(
-                        backend,
-                        amendmentCenter,
-                        ledgerSequence,
-                        uOfferOwnerID,
-                        book.out.get<xrpl::Issue>().currency,
-                        book.out.getIssuer(),
-                        true,
-                        yield
-                    );
+                    if (book.out.holds<xrpl::MPTIssue>()) {
+                        saOwnerFunds = accountHoldsMPT(
+                            backend,
+                            ledgerSequence,
+                            uOfferOwnerID,
+                            book.out.get<xrpl::MPTIssue>(),
+                            true,
+                            yield
+                        );
+                    } else {
+                        saOwnerFunds = accountHolds(
+                            backend,
+                            amendmentCenter,
+                            ledgerSequence,
+                            uOfferOwnerID,
+                            book.out.get<xrpl::Issue>().currency,
+                            book.out.getIssuer(),
+                            true,
+                            yield
+                        );
+                    }
 
                     if (saOwnerFunds < beast::kZero)
                         saOwnerFunds.clear();
@@ -1333,8 +1454,7 @@ postProcessOrderBook(
                     toBoostJson(saTakerGetsFunded.getJson(xrpl::JsonOptions::Values::None));
                 offerJson["taker_pays_funded"] = toBoostJson(
                     std::min(
-                        saTakerPays,
-                        xrpl::multiply(saTakerGetsFunded, dirRate, saTakerPays.get<xrpl::Issue>())
+                        saTakerPays, xrpl::multiply(saTakerGetsFunded, dirRate, saTakerPays.asset())
                     )
                         .getJson(xrpl::JsonOptions::Values::None)
                 );
@@ -1360,7 +1480,6 @@ postProcessOrderBook(
     return jsonOffers;
 }
 
-// get book via currency type
 std::expected<xrpl::Book, Status>
 parseBook(
     xrpl::Currency pays,
@@ -1370,46 +1489,58 @@ parseBook(
     std::optional<std::string> const& domain
 )
 {
-    if (isXRP(pays) && !isXRP(payIssuer)) {
-        return std::unexpected{Status{
-            RippledError::RpcSrcIsrMalformed,
-            "Unneeded field 'taker_pays.issuer' for XRP currency specification."
-        }};
-    }
+    return parseBook(xrpl::Issue{pays, payIssuer}, xrpl::Issue{gets, getIssuer}, domain);
+}
 
-    if (!isXRP(pays) && isXRP(payIssuer)) {
-        return std::unexpected{Status{
-            RippledError::RpcSrcIsrMalformed,
-            "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
-        }};
-    }
+std::expected<xrpl::Book, Status>
+parseBook(
+    xrpl::Asset const& pays,
+    xrpl::Asset const& gets,
+    std::optional<std::string> const& domain
+)
+{
+    auto const checkIssuer = [](xrpl::Asset const& asset,
+                                std::string_view field,
+                                RippledError error) -> std::optional<Status> {
+        if (!asset.holds<xrpl::Issue>())
+            return std::nullopt;
 
-    if (xrpl::isXRP(gets) && !xrpl::isXRP(getIssuer)) {
-        return std::unexpected{Status{
-            RippledError::RpcDstIsrMalformed,
-            "Unneeded field 'taker_gets.issuer' for XRP currency specification."
-        }};
-    }
+        auto const& issue = asset.get<xrpl::Issue>();
+        if (xrpl::isXRP(issue.currency) && !xrpl::isXRP(issue.account)) {
+            return Status{
+                error,
+                fmt::format("Unneeded field '{}.issuer' for XRP currency specification.", field)
+            };
+        }
+        if (!xrpl::isXRP(issue.currency) && xrpl::isXRP(issue.account)) {
+            return Status{
+                error, fmt::format("Invalid field '{}.issuer', expected non-XRP issuer.", field)
+            };
+        }
+        return std::nullopt;
+    };
 
-    if (!xrpl::isXRP(gets) && xrpl::isXRP(getIssuer)) {
-        return std::unexpected{Status{
-            RippledError::RpcDstIsrMalformed,
-            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
-        }};
-    }
+    if (auto const err = checkIssuer(pays, JS(taker_pays), RippledError::RpcSrcIsrMalformed))
+        return std::unexpected{*err};
 
-    if (pays == gets && payIssuer == getIssuer)
-        return std::unexpected{Status{RippledError::RpcBadMarket, "badMarket"}};
+    if (auto const err = checkIssuer(gets, JS(taker_gets), RippledError::RpcDstIsrMalformed))
+        return std::unexpected{*err};
 
     std::optional<xrpl::uint256> domainID = std::nullopt;
     if (domain.has_value()) {
         xrpl::uint256 dom;
-        if (!dom.parseHex(*domain))
-            return std::unexpected{Status{RippledError::RpcDomainMalformed}};
+        if (!dom.parseHex(*domain)) {
+            return std::unexpected{
+                Status{RippledError::RpcDomainMalformed, "Unable to parse domain."}
+            };
+        }
         domainID = dom;
     }
 
-    return xrpl::Book{xrpl::Issue{pays, payIssuer}, xrpl::Issue{gets, getIssuer}, domainID};
+    if (pays == gets)
+        return std::unexpected{Status{RippledError::RpcBadMarket}};
+
+    return xrpl::Book{pays, gets, domainID};
 }
 
 std::expected<xrpl::Book, Status>
@@ -1651,6 +1782,49 @@ toJsonWithBinaryTx(data::TransactionAndMetadata const& txnPlusMeta, std::uint32_
     obj[metaKey] = xrpl::strHex(txnPlusMeta.metadata);
     obj[JS(tx_blob)] = xrpl::strHex(txnPlusMeta.transaction);
     return obj;
+}
+
+std::optional<DelegateFilter::Role>
+parseDelegateType(boost::json::value const& delegateType)
+{
+    if (not delegateType.is_string())
+        return {};
+
+    auto const& type = delegateType.as_string();
+
+    if (type == JS(authorizer))
+        return DelegateFilter::Role::Authorizer;
+    if (type == JS(actor))
+        return DelegateFilter::Role::Actor;
+
+    return {};
+}
+
+std::optional<DelegateFilter>
+parseDelegateFilter(boost::json::object const& delegateObject)
+{
+    if (!delegateObject.contains(JS(delegate_filter)))
+        return {};
+
+    auto const& filterVal = delegateObject.at(JS(delegate_filter));
+    if (!filterVal.is_string())
+        return {};
+
+    auto const delegateTypeOpt = parseDelegateType(filterVal.as_string());
+    if (!delegateTypeOpt.has_value())
+        return {};
+
+    std::optional<std::string> counterParty;
+    if (delegateObject.contains(JS(counter_party))) {
+        auto const& counterpartyVal = delegateObject.at(JS(counter_party));
+
+        if (!counterpartyVal.is_string())
+            return {};
+
+        counterParty = counterpartyVal.as_string();
+    }
+
+    return DelegateFilter{*delegateTypeOpt, std::move(counterParty)};
 }
 
 }  // namespace rpc

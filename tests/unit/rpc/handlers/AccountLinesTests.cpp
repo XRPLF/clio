@@ -12,6 +12,8 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -71,7 +73,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonHexLedgerHash)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'ledger_hash'.");
     });
 }
 
@@ -94,7 +96,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonStringLedgerHash)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'ledger_hash', not string.");
     });
 }
 
@@ -117,7 +119,10 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidLedgerIndexString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
+        EXPECT_EQ(
+            err.at("error_message").as_string(),
+            "Invalid field 'ledger_index', not string or number."
+        );
     });
 }
 
@@ -164,7 +169,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Malformed cursor.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'marker'.");
     });
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
@@ -1253,7 +1258,7 @@ TEST(RPCAccountLinesHandlerSpecTest, DeprecatedFields)
         {"peer_index", 456}
     };
     auto const spec = AccountLinesHandler::spec(2);
-    auto const warnings = spec.check(json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(json));
     ASSERT_EQ(warnings.size(), 1);
     ASSERT_TRUE(warnings[0].is_object());
     auto const& warning = warnings[0].as_object();

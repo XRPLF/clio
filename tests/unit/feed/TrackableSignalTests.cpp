@@ -14,6 +14,25 @@ struct FeedTrackableSignalTests : Test {
     web::SubscriptionContextPtr sessionPtr = std::make_shared<MockSession>();
 };
 
+namespace {
+
+struct DestructorDisconnectingSubscriber;
+using ReentrantSignalMap =
+    feed::impl::TrackableSignalMap<std::string, DestructorDisconnectingSubscriber, int>;
+
+struct DestructorDisconnectingSubscriber {
+    ReentrantSignalMap* signalMap = nullptr;
+    bool* disconnectFinished = nullptr;
+
+    ~DestructorDisconnectingSubscriber()
+    {
+        signalMap->disconnect(this, "key");
+        *disconnectFinished = true;
+    }
+};
+
+}  // namespace
+
 TEST_F(FeedTrackableSignalTests, Connect)
 {
     feed::impl::TrackableSignal<web::SubscriptionContextInterface, std::string> signal;
@@ -106,4 +125,31 @@ TEST_F(FeedTrackableSignalTests, MapAutoDisconnect)
 
     signalMap.emit("test1", "test1");
     EXPECT_TRUE(testString.empty());
+}
+
+TEST_F(FeedTrackableSignalTests, MapDisconnectFromTrackableDestructorWhileEmitting)
+{
+    ReentrantSignalMap signalMap;
+    bool disconnectFinished = false;
+
+    auto subscriber = std::make_shared<DestructorDisconnectingSubscriber>();
+    subscriber->signalMap = &signalMap;
+    subscriber->disconnectFinished = &disconnectFinished;
+
+    bool slotCalled = false;
+    ASSERT_TRUE(signalMap.connectTrackableSlot(subscriber, "key", [&](int) {
+        slotCalled = true;
+        // The session died while the slot is running; the signal now holds the last reference.
+        subscriber.reset();
+    }));
+
+    signalMap.emit("key", 42);
+
+    EXPECT_TRUE(slotCalled);
+    EXPECT_TRUE(disconnectFinished);
+
+    // The entry was removed by the destructor's disconnect, so nothing is left to notify.
+    slotCalled = false;
+    signalMap.emit("key", 42);
+    EXPECT_FALSE(slotCalled);
 }

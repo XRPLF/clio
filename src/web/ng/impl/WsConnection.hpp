@@ -28,8 +28,8 @@
 #include <boost/beast/websocket/stream_base.hpp>
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <variant>
@@ -60,23 +60,29 @@ public:
         std::string ip,
         boost::beast::flat_buffer buffer,
         boost::beast::http::request<boost::beast::http::string_body> initialRequest,
-        util::TagDecoratorFactory const& tagDecoratorFactory
+        util::TagDecoratorFactory const& tagDecoratorFactory,
+        size_t maxSendingQueueSize
     )
         : WsConnectionBase(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_(std::move(stream))
         , initialRequest_(std::move(initialRequest))
-        , sendingQueue_{[this](MessageType const& message, auto&& yield) {
-            boost::asio::const_buffer const buffer = std::visit(
-                util::OverloadSet{
-                    [](Response const& r) -> boost::asio::const_buffer { return r.asWsResponse(); },
-                    [](std::shared_ptr<std::string> const& m) -> boost::asio::const_buffer {
-                        return boost::asio::buffer(*m);
-                    }
-                },
-                message
-            );
-            stream_.async_write(buffer, yield);
-        }}
+        , sendingQueue_{
+              [this](MessageType const& message, auto&& yield) {
+                  boost::asio::const_buffer const buffer = std::visit(
+                      util::OverloadSet{
+                          [](Response const& r) -> boost::asio::const_buffer {
+                              return r.asWsResponse();
+                          },
+                          [](std::shared_ptr<std::string> const& m) -> boost::asio::const_buffer {
+                              return boost::asio::buffer(*m);
+                          }
+                      },
+                      message
+                  );
+                  stream_.async_write(buffer, yield);
+              },
+              maxSendingQueueSize
+          }
     {
         setupWsStream();
     }
@@ -188,6 +194,7 @@ makeWsConnection(
     boost::beast::flat_buffer buffer,
     boost::beast::http::request<boost::beast::http::string_body> request,
     util::TagDecoratorFactory const& tagDecoratorFactory,
+    size_t maxSendingQueueSize,
     boost::asio::yield_context yield
 )
 {
@@ -196,7 +203,8 @@ makeWsConnection(
         std::move(ip),
         std::move(buffer),
         std::move(request),
-        tagDecoratorFactory
+        tagDecoratorFactory,
+        maxSendingQueueSize
     );
     auto const expectedSuccess = connection->performHandshake(yield);
     if (not expectedSuccess.has_value())

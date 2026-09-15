@@ -1,6 +1,5 @@
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/FakesAndMocks.hpp"
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
@@ -29,6 +28,7 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <exception>
 #include <memory>
@@ -262,7 +262,7 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
     EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
     EXPECT_CALL(*handlerProvider, getHandler(method))
         .WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
-    EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).WillOnce(Throw(data::DatabaseTimeout{}));
+    EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).WillOnce(Throw(data::DatabaseError{}));
     EXPECT_CALL(*handlerProvider, contains(method)).WillOnce(Return(true));
     EXPECT_CALL(*mockCountersPtr_, onTooBusy());
 

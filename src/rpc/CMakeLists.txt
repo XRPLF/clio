@@ -21,6 +21,8 @@ target_sources(
         common/MetaProcessors.cpp
         common/impl/APIVersionParser.cpp
         common/impl/HandlerProvider.cpp
+        common/impl/HandlerRegistry.cpp
+        filters/impl/DelegateTransactionsFilter.cpp
         handlers/AccountChannels.cpp
         handlers/AccountCurrencies.cpp
         handlers/AccountInfo.cpp
@@ -44,6 +46,7 @@ target_sources(
         handlers/LedgerIndex.cpp
         handlers/LedgerRange.cpp
         handlers/MPTHolders.cpp
+        handlers/MPTokenIssuanceHistory.cpp
         handlers/NFTsByIssuer.cpp
         handlers/NFTBuyOffers.cpp
         handlers/NFTHistory.cpp
@@ -58,4 +61,7 @@ target_sources(
         handlers/VaultInfo.cpp
 )
 
-target_link_libraries(clio_rpc PUBLIC clio_util clio_data)
+rpcspec_generate_instantiations(OUT_VAR rpcspec_instantiations)
+target_sources(clio_rpc PRIVATE ${rpcspec_instantiations})
+
+target_link_libraries(clio_rpc PUBLIC clio_util clio_data rpcspec::rpcspec)

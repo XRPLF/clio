@@ -28,8 +28,7 @@ public:
     ExponentialBackoffRetryPolicy(boost::asio::io_context& ioc)
         : retry_(
               util::makeRetryExponentialBackoff(
-                  std::chrono::milliseconds(1),
-                  std::chrono::seconds(1),
+                  {.initial = std::chrono::milliseconds(1), .max = std::chrono::seconds(1)},
                   boost::asio::make_strand(ioc)
               )
           )

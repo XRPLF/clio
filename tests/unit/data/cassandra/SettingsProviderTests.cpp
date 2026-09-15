@@ -47,7 +47,11 @@ getParseSettingsConfig(boost::json::value val)
         {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
         {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
-        {"database.cassandra.request_timeout", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+        {"database.cassandra.initial_request_retry_delay",
+         ConfigValue{ConfigType::Double}.defaultValue(0.5)},
+        {"database.cassandra.max_request_retry_delay",
+         ConfigValue{ConfigType::Double}.defaultValue(5.0)},
+        {"database.cassandra.request_timeout", ConfigValue{ConfigType::Double}.optional()},
         {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
@@ -162,4 +166,73 @@ TEST_F(SettingsProviderTest, CertificateConfig)
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.certificate, "certificateData");
+}
+
+TEST_F(SettingsProviderTest, RequestTimeoutAcceptsFractionalSeconds)
+{
+    auto const cfg = getParseSettingsConfig(
+        boost::json::parse(
+            R"JSON({"database.cassandra.contact_points": "127.0.0.1",
+                "database.cassandra.request_timeout": 2.5})JSON"
+        )
+    );
+    SettingsProvider const provider{cfg.getObject("database.cassandra")};
+
+    EXPECT_EQ(provider.getSettings().requestTimeout, std::chrono::milliseconds{2500});
+}
+
+TEST_F(SettingsProviderTest, RequestTimeoutStillAcceptsWholeSeconds)
+{
+    // a JSON integer must still be accepted
+    auto const cfg = getParseSettingsConfig(
+        boost::json::parse(
+            R"JSON({"database.cassandra.contact_points": "127.0.0.1",
+                "database.cassandra.request_timeout": 3})JSON"
+        )
+    );
+    SettingsProvider const provider{cfg.getObject("database.cassandra")};
+
+    EXPECT_EQ(provider.getSettings().requestTimeout, std::chrono::milliseconds{3000});
+}
+
+TEST_F(SettingsProviderTest, RetryDelaysDefaults)
+{
+    auto const cfg = getParseSettingsConfig(
+        boost::json::parse(R"JSON({"database.cassandra.contact_points": "127.0.0.1"})JSON")
+    );
+    SettingsProvider const provider{cfg.getObject("database.cassandra")};
+
+    EXPECT_EQ(provider.getInitialRetryDelay(), std::chrono::milliseconds{500});
+    EXPECT_EQ(provider.getMaxRetryDelay(), std::chrono::milliseconds{5000});
+}
+
+TEST_F(SettingsProviderTest, RetryDelaysAreIndependentOfRequestTimeout)
+{
+    auto const cfg = getParseSettingsConfig(
+        boost::json::parse(
+            R"JSON({"database.cassandra.contact_points": "127.0.0.1",
+                "database.cassandra.request_timeout": 2.5,
+                "database.cassandra.initial_request_retry_delay": 0.25,
+                "database.cassandra.max_request_retry_delay": 1.5})JSON"
+        )
+    );
+    SettingsProvider const provider{cfg.getObject("database.cassandra")};
+
+    EXPECT_EQ(provider.getSettings().requestTimeout, std::chrono::milliseconds{2500});
+    EXPECT_EQ(provider.getInitialRetryDelay(), std::chrono::milliseconds{250});
+    EXPECT_EQ(provider.getMaxRetryDelay(), std::chrono::milliseconds{1500});
+}
+
+TEST_F(SettingsProviderTest, EqualRetryDelaysDisableBackoff)
+{
+    auto const cfg = getParseSettingsConfig(
+        boost::json::parse(
+            R"JSON({"database.cassandra.contact_points": "127.0.0.1",
+                "database.cassandra.initial_request_retry_delay": 0.5,
+                "database.cassandra.max_request_retry_delay": 0.5})JSON"
+        )
+    );
+    SettingsProvider const provider{cfg.getObject("database.cassandra")};
+
+    EXPECT_EQ(provider.getInitialRetryDelay(), provider.getMaxRetryDelay());
 }

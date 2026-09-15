@@ -3,6 +3,7 @@
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/Cluster.hpp"
 #include "util/Constants.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/config/ObjectView.hpp"
 
 #include <cerrno>
@@ -25,6 +26,12 @@ SettingsProvider::SettingsProvider(util::config::ObjectView const& cfg)
     , keyspace_{cfg.get<std::string>("keyspace")}
     , tablePrefix_{cfg.maybeValue<std::string>("table_prefix")}
     , replicationFactor_{cfg.get<uint16_t>("replication_factor")}
+    , initialRetryDelay_{util::config::ClioConfigDefinition::toMilliseconds(
+          cfg.get<float>("initial_request_retry_delay")
+      )}
+    , maxRetryDelay_{util::config::ClioConfigDefinition::toMilliseconds(
+          cfg.get<float>("max_request_retry_delay")
+      )}
     , settings_{parseSettings()}
 {
 }
@@ -94,9 +101,9 @@ SettingsProvider::parseSettings() const
     }
 
     if (config_.getValueView("request_timeout").hasValue()) {
-        auto const requestTimeoutSecond = config_.get<uint32_t>("request_timeout");
-        settings.requestTimeout =
-            std::chrono::milliseconds{requestTimeoutSecond * util::kMillisecondsPerSecond};
+        settings.requestTimeout = util::config::ClioConfigDefinition::toMilliseconds(
+            config_.get<float>("request_timeout")
+        );
     }
 
     settings.certificate = parseOptionalCertificate();

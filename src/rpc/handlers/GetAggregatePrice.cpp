@@ -1,6 +1,5 @@
 #include "rpc/handlers/GetAggregatePrice.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"

@@ -1,4 +1,3 @@
-#include "rpc/Errors.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -12,6 +11,7 @@
 #include <boost/json/serialize.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <memory>
 #include <optional>

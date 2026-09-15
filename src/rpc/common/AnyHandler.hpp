@@ -60,7 +60,7 @@ public:
      *
      * @param value The JSON to process
      * @param ctx Request context
-     * @return JSON result or @ref Status on error
+     * @return JSON result or Status on error
      */
     [[nodiscard]] ReturnType
     process(boost::json::value const& value, Context const& ctx) const

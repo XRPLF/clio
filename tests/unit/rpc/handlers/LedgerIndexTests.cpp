@@ -47,6 +47,39 @@ TEST_F(RPCLedgerIndexTest, DateStrNotValid)
     });
 }
 
+TEST_F(RPCLedgerIndexTest, DateStrSpaceInsteadOfT)
+{
+    auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
+    auto const req = boost::json::parse(R"JSON({"date": "2024-06-25 12:23:05Z"})JSON");
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        EXPECT_EQ(rpc::makeError(output.result.error()).at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCLedgerIndexTest, DateStrMissingZ)
+{
+    auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
+    auto const req = boost::json::parse(R"JSON({"date": "2024-06-25T12:23:05"})JSON");
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        EXPECT_EQ(rpc::makeError(output.result.error()).at("error").as_string(), "invalidParams");
+    });
+}
+
+TEST_F(RPCLedgerIndexTest, DateStrDateOnly)
+{
+    auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
+    auto const req = boost::json::parse(R"JSON({"date": "2024-06-25"})JSON");
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        EXPECT_EQ(rpc::makeError(output.result.error()).at("error").as_string(), "invalidParams");
+    });
+}
+
 TEST_F(RPCLedgerIndexTest, NoDateGiven)
 {
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, kRangeMax, 5);

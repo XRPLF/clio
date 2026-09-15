@@ -21,4 +21,4 @@ target_sources(
         SubscriptionContext.cpp
 )
 
-target_link_libraries(clio_web PUBLIC clio_util)
+target_link_libraries(clio_web PUBLIC clio_util rpcspec::rpcspec)

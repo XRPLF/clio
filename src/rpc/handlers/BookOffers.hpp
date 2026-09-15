@@ -2,27 +2,19 @@
 
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
-#include "rpc/Errors.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/MetaProcessors.hpp"
-#include "rpc/common/Modifiers.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <xrpl/protocol/AccountID.h>
-#include <xrpl/protocol/ErrorCodes.h>
-#include <xrpl/protocol/UintTypes.h>
-#include <xrpl/protocol/jss.h>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/book_offers/Types.hpp>
 
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <string>
+#include <utility>
 
 namespace rpc {
 
@@ -32,14 +24,14 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/book_offers.html
  */
-class BookOffersHandler {
+class BookOffersHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::book_offers::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
 public:
-    static constexpr auto kLimitMin = 1;
-    static constexpr auto kLimitMax = 100;
-    static constexpr auto kLimitDefault = 60;
+    static constexpr auto kLimitMin = rpc::spec::handlers::book_offers::kLimitMin;
+    static constexpr auto kLimitMax = rpc::spec::handlers::book_offers::kLimitMax;
+    static constexpr auto kLimitDefault = rpc::spec::handlers::book_offers::kLimitDefault;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -49,25 +41,6 @@ public:
         uint32_t ledgerIndex;
         boost::json::array offers;
         bool validated = true;
-    };
-
-    /**
-     * @brief A struct to hold the input data for the command
-     *
-     * @note The taker is not really used in both Clio and `rippled`, both of them return all the
-     * offers regardless of the funding status
-     */
-    struct Input {
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = kLimitDefault;
-        std::optional<xrpl::AccountID> taker;
-        xrpl::Currency paysCurrency;
-        xrpl::Currency getsCurrency;
-        // accountID will be filled by input converter, if no issuer is given, will use XRP issuer
-        xrpl::AccountID paysID = xrpl::xrpAccount();
-        xrpl::AccountID getsID = xrpl::xrpAccount();
-        std::optional<std::string> domain;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -84,74 +57,6 @@ public:
     )
         : sharedPtrBackend_(std::move(sharedPtrBackend)), amendmentCenter_{amendmentCenter}
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const kRpcSpec = RpcSpec{
-            {JS(taker_gets),
-             validation::Required{},
-             validation::Type<boost::json::object>{},
-             meta::Section{
-                 {JS(currency),
-                  validation::Required{},
-                  meta::WithCustomError{
-                      validation::CustomValidators::currencyValidator,
-                      Status(RippledError::RpcDstAmtMalformed)
-                  }},
-                 {JS(issuer),
-                  meta::WithCustomError{
-                      validation::CustomValidators::issuerValidator,
-                      Status(RippledError::RpcDstIsrMalformed)
-                  }}
-             }},
-            {JS(taker_pays),
-             validation::Required{},
-             validation::Type<boost::json::object>{},
-             meta::Section{
-                 {JS(currency),
-                  validation::Required{},
-                  meta::WithCustomError{
-                      validation::CustomValidators::currencyValidator,
-                      Status(RippledError::RpcSrcCurMalformed)
-                  }},
-                 {JS(issuer),
-                  meta::WithCustomError{
-                      validation::CustomValidators::issuerValidator,
-                      Status(RippledError::RpcSrcIsrMalformed)
-                  }}
-             }},
-            // return INVALID_PARAMS if account format is wrong for "taker"
-            {JS(taker),
-             meta::WithCustomError{
-                 validation::CustomValidators::accountValidator,
-                 Status(RippledError::RpcInvalidParams, "Invalid field 'taker'.")
-             }},
-            {JS(domain),
-             meta::WithCustomError{
-                 validation::Type<std::string>{},
-                 Status(RippledError::RpcDomainMalformed, "Unable to parse domain.")
-             },
-             meta::WithCustomError{
-                 validation::CustomValidators::uint256HexStringValidator,
-                 Status(RippledError::RpcDomainMalformed, "Unable to parse domain.")
-             }},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-        };
-
-        return kRpcSpec;
     }
 
     /**
@@ -173,14 +78,5 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 }  // namespace rpc

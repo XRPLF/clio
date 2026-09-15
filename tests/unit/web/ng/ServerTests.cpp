@@ -35,11 +35,16 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <ranges>
 #include <string>
 #include <unordered_set>
+
+namespace {
+constexpr size_t kMaxSendingQueueSize = 1500;
+}  // namespace
 
 using namespace web::ng;
 using namespace util::config;
@@ -218,7 +223,7 @@ TEST_F(ServerTest, BadEndpoint)
         std::nullopt,
         tagDecoratorFactory,
         web::ProxyIpResolver{{}, {}},
-        std::nullopt,
+        kMaxSendingQueueSize,
         Server::Hooks{
             .onConnectCheck = emptyOnConnectCheck_,
             .onIpChangeHook = [](auto&&, auto&&) {},
@@ -291,7 +296,7 @@ TEST_F(ServerHttpTest, OnConnectCheck)
         std::nullopt,
         tagDecoratorFactory,
         web::ProxyIpResolver{{}, {}},
-        std::nullopt,
+        kMaxSendingQueueSize,
         Server::Hooks{
             .onConnectCheck = onConnectCheck.AsStdFunction(),
             .onIpChangeHook = [](auto&&, auto&&) {},
@@ -361,7 +366,7 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         std::nullopt,
         tagDecoratorFactory,
         web::ProxyIpResolver{{}, {}},
-        std::nullopt,
+        kMaxSendingQueueSize,
         Server::Hooks{
             .onConnectCheck = onConnectCheck.AsStdFunction(),
             .onIpChangeHook = [](auto&&, auto&&) {},
@@ -431,7 +436,7 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
         std::nullopt,
         tagDecoratorFactory,
         web::ProxyIpResolver{{}, {}},
-        std::nullopt,
+        kMaxSendingQueueSize,
         Server::Hooks{
             .onConnectCheck = emptyOnConnectCheck_,
             .onIpChangeHook = [](auto&&, auto&&) {},

@@ -4,6 +4,7 @@
 #include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
 #include "etl/CorruptionDetector.hpp"
+#include "util/Retry.hpp"
 #include "util/Spawn.hpp"
 #include "util/log/Logger.hpp"
 
@@ -35,41 +36,123 @@
 namespace data {
 
 /**
- * @brief Represents a database timeout error.
+ * @brief Represents a transient database error that the caller should retry.
  */
-class DatabaseTimeout : public std::exception {
+class DatabaseError : public std::exception {
+    std::string message_{"Transient database error. Please retry the request"};
+
 public:
+    DatabaseError() = default;
+
+    /**
+     * @brief Construct with a description of the underlying failure.
+     *
+     * @param message What actually went wrong.
+     */
+    explicit DatabaseError(std::string message) : message_{std::move(message)}
+    {
+    }
+
     /**
      * @return The error message as a C string
      */
     [[nodiscard]] char const*
-    what() const throw() override
+    what() const noexcept override
     {
-        return "Database read timed out. Please retry the request";
+        return message_.c_str();
     }
 };
 
-static constexpr std::size_t kDefaultWaitBetweenRetry = 500;
 /**
- * @brief A helper function that catches DatabaseTimeout exceptions and retries indefinitely.
+ * @brief Delay before the first retry in @ref retryOnTimeout().
+ */
+static constexpr std::chrono::milliseconds kDefaultWaitBetweenRetry{500};
+
+/**
+ * @brief Default upper bound for the exponential backoff in @ref retryOnTimeout().
+ */
+static constexpr std::chrono::milliseconds kMaxWaitBetweenRetry{5'000};
+
+/**
+ * @brief Default delays for @ref retryOnTimeout().
+ */
+static constexpr util::Retry::Delays kDefaultRetryDelays{
+    .initial = kDefaultWaitBetweenRetry,
+    .max = kDefaultWaitBetweenRetry
+};
+
+/**
+ * @brief Retry `func` while it throws DatabaseError, suspending the calling coroutine in between.
  *
  * @tparam FnType The type of function object to execute
  * @param func The function object to execute
- * @param waitMs Delay between retry attempts
+ * @param yield The coroutine to suspend between attempts
+ * @param delays The delays to use between attempts
  * @return The same as the return type of func
  */
 template <typename FnType>
 auto
-retryOnTimeout(FnType func, size_t waitMs = kDefaultWaitBetweenRetry)
+retryOnTimeout(
+    FnType func,
+    boost::asio::yield_context yield,
+    util::Retry::Delays delays = kDefaultRetryDelays
+)
 {
     static util::Logger const log{"Backend"};  // NOLINT(readability-identifier-naming)
+
+    auto retry = util::makeRetryExponentialBackoff(delays, yield.get_executor());
+
+    while (true) {
+        // Suspending a coroutine from inside a catch block is not safe so we copy out the failure.
+        std::string failure;
+
+        try {
+            return func();
+        } catch (DatabaseError const& e) {
+            failure = e.what();
+        }
+
+        auto const delayMs =
+            std::chrono::duration_cast<std::chrono::milliseconds>(retry.delayValue()).count();
+        LOG(log.error()) << failure << " (attempt " << retry.attemptNumber() + 1
+                         << "). Retrying in " << delayMs << "ms ...";
+
+        retry.wait(yield);
+    }
+}
+
+/**
+ * @brief Retry `func` while it throws DatabaseError, blocking the calling thread in between.
+ *
+ * @warning Blocks the calling thread; from a coroutine use the `yield_context` overload instead.
+ *
+ * @tparam FnType The type of function object to execute
+ * @param func The function object to execute
+ * @param delays The delays to use between attempts
+ * @return The same as the return type of func
+ */
+template <typename FnType>
+auto
+retryOnTimeout(FnType func, util::Retry::Delays delays = kDefaultRetryDelays)
+{
+    static util::Logger const log{"Backend"};  // NOLINT(readability-identifier-naming)
+
+    util::ExponentialBackoffStrategy backoff{delays};
+    std::size_t attempt = 1;
 
     while (true) {
         try {
             return func();
-        } catch (DatabaseTimeout const&) {
-            LOG(log.error()) << "Database request timed out. Sleeping and retrying ... ";
-            std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
+        } catch (DatabaseError const& e) {
+            auto const delay = backoff.getDelay();
+            LOG(log.error()) << e.what() << " (attempt " << attempt << "). Retrying in "
+                             << std::chrono::duration_cast<std::chrono::milliseconds>(delay).count()
+                             << "ms ...";
+
+            ++attempt;
+
+            std::this_thread::sleep_for(delay);
+            backoff.increaseDelay();
         }
     }
 }
@@ -105,18 +188,21 @@ synchronous(FnType&& func)
 }
 
 /**
- * @brief Synchronously execute the given function object and retry until no DatabaseTimeout is
+ * @brief Synchronously execute the given function object and retry until no DatabaseError is
  * thrown.
+ *
+ * @warning Blocks the calling thread while backing off.
  *
  * @tparam FnType The type of function object to execute
  * @param func The function object to execute
+ * @param delays The delays to use between attempts
  * @return The same as the return type of func
  */
 template <typename FnType>
 auto
-synchronousAndRetryOnTimeout(FnType&& func)
+synchronousAndRetryOnTimeout(FnType&& func, util::Retry::Delays delays = kDefaultRetryDelays)
 {
-    return retryOnTimeout([&]() { return synchronous(func); });
+    return retryOnTimeout([&]() { return synchronous(func); }, delays);
 }
 
 /**
@@ -139,7 +225,26 @@ public:
     BackendInterface(LedgerCacheInterface& cache) : cache_{cache}
     {
     }
+
     virtual ~BackendInterface() = default;
+
+    /**
+     * @return Delay before the first retry of a request against this backend
+     */
+    [[nodiscard]] virtual std::chrono::milliseconds
+    initialRetryDelay() const
+    {
+        return kDefaultWaitBetweenRetry;
+    }
+
+    /**
+     * @return Upper bound for the retry backoff; equal to @ref initialRetryDelay() means flat
+     */
+    [[nodiscard]] virtual std::chrono::milliseconds
+    maxRetryDelay() const
+    {
+        return kMaxWaitBetweenRetry;
+    }
 
     // TODO https://github.com/XRPLF/clio/issues/1956: Remove this hack once old ETL is removed.
     // Cache should not be exposed thru BackendInterface
@@ -705,7 +810,7 @@ public:
     hardFetchLedgerRange(boost::asio::yield_context yield) const = 0;
 
     /**
-     * @brief Fetches the ledger range from DB retrying until no DatabaseTimeout is thrown.
+     * @brief Fetches the ledger range from DB retrying until no DatabaseError is thrown.
      *
      * @return The ledger range if available; nullopt otherwise
      */

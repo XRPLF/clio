@@ -1,5 +1,4 @@
 #include "data/BackendInterface.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
@@ -7,6 +6,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>

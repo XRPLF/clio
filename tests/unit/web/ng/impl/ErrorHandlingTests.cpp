@@ -1,4 +1,3 @@
-#include "rpc/Errors.hpp"
 #include "util/NameGenerator.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/impl/ErrorHandling.hpp"
@@ -11,6 +10,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <optional>
 #include <string>

@@ -1,13 +1,15 @@
 #include "rpc/handlers/AccountTx.hpp"
 
 #include "data/Types.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Types.hpp"
+#include "rpc/filters/TransactionFilter.hpp"
+#include "rpc/filters/impl/DelegateTransactionsFilter.hpp"
 #include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
+#include "util/MPTIssuanceUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
@@ -16,6 +18,8 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
@@ -111,8 +115,17 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         }
     }
 
-    auto const limit = input.limit.value_or(kLimitDefault);
     auto const accountID = accountFromStringStrict(input.account);
+
+    std::optional<rpc::DelegateTransactionFilter> txFilter;
+    if (input.delegateFilter) {
+        txFilter.emplace(
+            *input.delegateFilter,
+            *accountID  // NOLINT(bugprone-unchecked-optional-access)
+        );
+    }
+
+    auto const limit = input.limit.value_or(kLimitDefault);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
         return sharedPtrBackend_->fetchAccountTransactions(
             *accountID, limit, input.forward, cursor, ctx.yield
@@ -128,6 +141,10 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     if (retCursor)
         response.marker = {.ledger = retCursor->ledgerSequence, .seq = retCursor->transactionIndex};
 
+    std::optional<xrpl::uint192> mptIssuanceFilter;
+    if (input.mptIssuanceId)
+        mptIssuanceFilter = xrpl::uint192{input.mptIssuanceId->c_str()};
+
     for (auto const& txnPlusMeta : blobs) {
         // over the range
         if ((txnPlusMeta.ledgerSequence < minIndex && !input.forward) ||
@@ -140,7 +157,22 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
             continue;
         }
 
+        std::optional<rpc::TransactionFilter::CheckResult> filterResult;
+        if (txFilter) {
+            filterResult = txFilter->check(txnPlusMeta);
+            if (not filterResult.has_value())
+                continue;
+        }
+
         boost::json::object obj;
+
+        // Skip all Txns where the specified filter mpt_id doesn't match the query
+        if (mptIssuanceFilter) {
+            auto const [sttx, txMeta] =
+                deserializeTxPlusMeta(txnPlusMeta, txnPlusMeta.ledgerSequence);
+            if (!util::referencesMptIssuance(*txMeta, *sttx, *mptIssuanceFilter))
+                continue;
+        }
 
         // if binary is false or transactionType is specified, we need to expand the transaction
         if (!input.binary || input.transactionTypeInLowercase.has_value()) {
@@ -190,6 +222,15 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                         obj[JS(close_time_iso)] = xrpl::toStringIso(ledgerHeader->closeTime);
                     }
                 }
+
+                if (filterResult) {
+                    if (filterResult->role == rpc::DelegateFilter::Role::Authorizer) {
+                        obj[JS(authorizer)] = xrpl::to_string(filterResult->account);
+                    } else {
+                        obj[JS(actor)] = xrpl::to_string(filterResult->account);
+                    }
+                }
+
                 obj[JS(validated)] = true;
                 response.transactions.push_back(std::move(obj));
                 continue;
@@ -296,6 +337,14 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     if (jsonObject.contains("tx_type")) {
         input.transactionTypeInLowercase =
             boost::json::value_to<std::string>(jsonObject.at("tx_type"));
+    }
+
+    if (jsonObject.contains(JS(delegate)))
+        input.delegateFilter = parseDelegateFilter(jsonObject.at(JS(delegate)).as_object());
+
+    if (jsonObject.contains(JS(mpt_issuance_id))) {
+        input.mptIssuanceId =
+            boost::json::value_to<std::string>(jsonObject.at(JS(mpt_issuance_id)));
     }
 
     return input;

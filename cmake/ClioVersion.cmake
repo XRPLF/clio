@@ -54,8 +54,16 @@ else()
 
     string(SUBSTRING ${GIT_COMMIT_HASH} 0 7 GIT_COMMIT_HASH_SHORT)
 
+    # Debian package versions may only contain alphanumerics and '.+~-'
+    string(
+        REGEX REPLACE "[^a-zA-Z0-9.+~-]"
+        "."
+        SANITIZED_BUILD_BRANCH
+        "${GIT_BUILD_BRANCH}"
+    )
+
     set(CLIO_VERSION
-        "${BUILD_DATE}-${GIT_BUILD_BRANCH}-${GIT_COMMIT_HASH_SHORT}"
+        "${BUILD_DATE}-${SANITIZED_BUILD_BRANCH}-${GIT_COMMIT_HASH_SHORT}"
     )
     set(DOC_CLIO_VERSION "develop")
 endif()

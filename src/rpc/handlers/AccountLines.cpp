@@ -1,16 +1,14 @@
 #include "rpc/handlers/AccountLines.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
@@ -22,7 +20,6 @@
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
-#include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>
@@ -122,11 +119,10 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountLines' ledger range must be available");
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -134,19 +130,15 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const accountID = accountFromStringStrict(input.account);
+    auto const& accountID = input.account;
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        xrpl::keylet::account(*accountID).key,
-        lgrInfo.seq,
-        ctx.yield
+        xrpl::keylet::account(accountID).key, lgrInfo.seq, ctx.yield
     );
 
     if (not accountLedgerObject)
         return Error{Status{RippledError::RpcActNotFound}};
 
-    auto const peerAccountID =
-        input.peer ? accountFromStringStrict(*(input.peer)) : std::optional<xrpl::AccountID>{};
+    auto const& peerAccountID = input.peer;
 
     Output response;
     response.lines.reserve(input.limit);
@@ -163,13 +155,13 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
             }
 
             if (not ignore)
-                addLine(response.lines, sle, *accountID, peerAccountID);
+                addLine(response.lines, sle, accountID, peerAccountID);
         }
     };
 
     auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
+        accountID,
         lgrInfo.seq,
         input.limit,
         input.marker,
@@ -182,7 +174,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
 
     auto const nextMarker = *expectedNext;
 
-    response.account = input.account;
+    response.account = xrpl::to_string(accountID);
     response.limit = input.limit;  // not documented,
                                    // https://github.com/XRPLF/xrpl-dev-portal/issues/1838
     response.ledgerHash = xrpl::strHex(lgrInfo.hash);
@@ -192,37 +184,6 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
         response.marker = nextMarker.toString();
 
     return response;
-}
-
-AccountLinesHandler::Input
-tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::value const& jv)
-{
-    auto input = AccountLinesHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    input.account = boost::json::value_to<std::string>(jv.at(JS(account)));
-    if (jsonObject.contains(JS(limit)))
-        input.limit = util::integralValueAs<uint32_t>(jv.at(JS(limit)));
-
-    if (jsonObject.contains(JS(marker)))
-        input.marker = boost::json::value_to<std::string>(jv.at(JS(marker)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(peer)))
-        input.peer = boost::json::value_to<std::string>(jv.at(JS(peer)));
-
-    if (jsonObject.contains(JS(ignore_default)))
-        input.ignoreDefault = jv.at(JS(ignore_default)).as_bool();
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    return input;
 }
 
 void

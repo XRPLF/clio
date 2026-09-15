@@ -1,7 +1,6 @@
 #include "rpc/Factories.hpp"
 
 #include "data/Types.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/common/APIVersion.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Taggable.hpp"
@@ -13,6 +12,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
 
 #include <expected>
 #include <functional>

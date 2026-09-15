@@ -1,11 +1,11 @@
 #include "rpc/common/Specs.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/common/Checkers.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/value.hpp>
+#include <rpcspec/Errors.hpp>
 
 #include <string>
 #include <unordered_map>

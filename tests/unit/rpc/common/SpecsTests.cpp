@@ -1,4 +1,3 @@
-#include "rpc/Errors.hpp"
 #include "rpc/common/Checkers.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
@@ -7,6 +6,7 @@
 #include <boost/json/value.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rpcspec/Errors.hpp>
 
 #include <optional>
 #include <string>

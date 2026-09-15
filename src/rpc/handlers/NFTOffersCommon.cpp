@@ -1,18 +1,17 @@
 #include "rpc/handlers/NFTOffersCommon.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
+#include <rpcspec/Errors.hpp>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Keylet.h>
@@ -74,11 +73,10 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "NFTOffersCommon's ledger range must be available");
 
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -91,14 +89,15 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     if (not sharedPtrBackend_->fetchLedgerObject(directory.key, lgrInfo.seq, yield))
         return Error{Status{RippledError::RpcObjectNotFound, "notFound"}};
 
-    auto output = Output{.nftID = input.nftID, .offers = {}, .limit = {}, .marker = {}};
+    auto output =
+        Output{.nftID = xrpl::strHex(input.nftID), .offers = {}, .limit = {}, .marker = {}};
     auto offers = std::vector<xrpl::SLE>{};
     auto reserve = input.limit;
     auto cursor = uint256{};
     auto startHint = uint64_t{0ul};
 
     if (input.marker) {
-        cursor = uint256(input.marker->c_str());
+        cursor = *input.marker;
 
         // We have a start point. Use limit - 1 from the result and use the very last one for the
         // resume.
@@ -179,32 +178,6 @@ tag_invoke(
         object[JS(limit)] = *(output.limit);
 
     jv = std::move(object);
-}
-
-NFTOffersHandlerBase::Input
-tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::value const& jv)
-{
-    auto input = NFTOffersHandlerBase::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    input.nftID = boost::json::value_to<std::string>(jsonObject.at(JS(nft_id)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    if (jsonObject.contains(JS(marker)))
-        input.marker = boost::json::value_to<std::string>(jsonObject.at(JS(marker)));
-
-    if (jsonObject.contains(JS(limit)))
-        input.limit = util::integralValueAs<uint32_t>(jsonObject.at(JS(limit)));
-
-    return input;
 }
 
 }  // namespace rpc

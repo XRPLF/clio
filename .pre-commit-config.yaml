@@ -40,13 +40,13 @@ repos:
         exclude: LICENSE.md
 
   - repo: https://github.com/hadolint/hadolint
-    rev: 57e1618d78fd469a92c1e584e8c9313024656623 # frozen: v2.14.0
+    rev: 2eece55955ced00200be9729e9728cb7dacca505 # frozen: v2.15.1
     hooks:
       - id: hadolint-docker
         # hadolint-docker is a special hook that runs hadolint in a Docker container
         # Docker is not installed in the environment where pre-commit is run
         stages: [manual]
-        entry: hadolint/hadolint:v2.14.0 hadolint
+        entry: hadolint/hadolint:v2.15.1 hadolint
 
   - repo: https://github.com/codespell-project/codespell
     rev: 57b21406f092110c18776e39b0bda50d37c945c8 # frozen: v2.4.3
@@ -100,14 +100,14 @@ repos:
         files: \.(h|hpp)$
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: f4d7745e17a28aad7eed2f4874ca8d1568c11c4c # frozen: v22.1.8
+    rev: 34b241d706d24e4ccb69e38f9f0fa190b5f486ec # frozen: v23.1.0
     hooks:
       - id: clang-format
         args: [--style=file]
         types: [c++]
 
   - repo: https://github.com/BlankSpruce/gersemi-pre-commit
-    rev: e98930bdc210d3387007f9252d8c1694ea7e410f # frozen: 0.27.7
+    rev: c1c636fef559eeef0dae280afcd44420f6126e63 # frozen: 0.28.1
     hooks:
       - id: gersemi
 
