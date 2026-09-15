@@ -107,19 +107,6 @@ CustomValidator CustomValidators::ledgerIndexValidator =
         return MaybeError{};
     }};
 
-CustomValidator CustomValidators::accountValidator =
-    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        if (!value.is_string())
-            return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotString"}};
-
-        // TODO: we are using accountFromStringStrict from RPCHelpers, after we
-        // remove all old handler, this function can be moved to here
-        if (!accountFromStringStrict(boost::json::value_to<std::string>(value)))
-            return Error{Status{RippledError::RpcActMalformed, std::string(key) + "Malformed"}};
-
-        return MaybeError{};
-    }};
-
 CustomValidator CustomValidators::accountBase58Validator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
@@ -212,27 +199,6 @@ CustomValidator CustomValidators::bookTakerValidator =
                 RippledError::RpcInvalidParams,
                 fmt::format("Invalid field '{}.currency', not string.", key)
             }};
-        }
-
-        return MaybeError{};
-    }};
-
-CustomValidator CustomValidators::subscribeAccountsValidator =
-    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        if (!value.is_array())
-            return Error{Status{RippledError::RpcInvalidParams, std::string(key) + "NotArray"}};
-
-        if (value.as_array().empty())
-            return Error{Status{RippledError::RpcActMalformed, std::string(key) + " malformed."}};
-
-        for (auto const& v : value.as_array()) {
-            auto obj = boost::json::object();
-            auto const keyItem = std::string(key) + "'sItem";
-
-            obj[keyItem] = v;
-
-            if (auto err = accountValidator.verify(obj, keyItem); !err)
-                return err;
         }
 
         return MaybeError{};

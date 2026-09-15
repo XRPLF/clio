@@ -526,37 +526,6 @@ TEST_F(RPCBaseTest, LedgerIndexValidator)
     ASSERT_EQ(err.error().message, "ledgerIndexMalformed");
 }
 
-TEST_F(RPCBaseTest, AccountValidator)
-{
-    auto spec = RpcSpec{
-        {"account", CustomValidators::accountValidator},
-    };
-    auto failingInput = boost::json::parse(R"JSON({ "account": 256 })JSON");
-    ASSERT_FALSE(spec.process(failingInput));
-
-    failingInput =
-        boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON");
-    ASSERT_FALSE(spec.process(failingInput));
-
-    failingInput = boost::json::parse(
-        R"JSON({ "account": "02000000000000000000000000000000000000000000000000000000000000000" })JSON"
-    );
-    ASSERT_FALSE(spec.process(failingInput));
-
-    failingInput =
-        boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })JSON");
-    ASSERT_FALSE(spec.process(failingInput));
-
-    auto passingInput =
-        boost::json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" })JSON");
-    ASSERT_TRUE(spec.process(passingInput));
-
-    passingInput = boost::json::parse(
-        R"JSON({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })JSON"
-    );
-    ASSERT_TRUE(spec.process(passingInput));
-}
-
 TEST_F(RPCBaseTest, AccountBase58Validator)
 {
     auto spec = RpcSpec{
@@ -778,27 +747,6 @@ TEST_F(RPCBaseTest, BookTakerValidatorUsesFieldKey)
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
     EXPECT_EQ(err.error().message, "Invalid field 'taker_pays'.");
-}
-
-TEST_F(RPCBaseTest, SubscribeAccountsValidator)
-{
-    auto const spec = RpcSpec{{"accounts", CustomValidators::subscribeAccountsValidator}};
-    auto passingInput = boost::json::parse(
-        R"JSON({ "accounts": ["rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"]})JSON"
-    );
-    ASSERT_TRUE(spec.process(passingInput));
-
-    auto failingInput = boost::json::parse(R"JSON({ "accounts": 256})JSON");
-    auto err = spec.process(failingInput);
-    ASSERT_FALSE(err);
-
-    failingInput = boost::json::parse(R"JSON({ "accounts": ["test"]})JSON");
-    err = spec.process(failingInput);
-    ASSERT_FALSE(err);
-
-    failingInput = boost::json::parse(R"JSON({ "accounts": [123]})JSON");
-    err = spec.process(failingInput);
-    ASSERT_FALSE(err);
 }
 
 TEST_F(RPCBaseTest, ClampingModifier)
