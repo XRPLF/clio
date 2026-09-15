@@ -24,7 +24,6 @@
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
 
-#include <memory>
 #include <optional>
 #include <ranges>
 #include <string>
