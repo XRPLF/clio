@@ -569,12 +569,11 @@ getLedgerHeaderFromLedgerSpecifier(
         return *maybeLgrInfo;
     }
 
-    if (resolved.isShortcut()) {
-        auto const shortcut = std::get<rpc::spec::LedgerShortcut>(resolved.value);
-        ASSERT(
-            shortcut == rpc::spec::LedgerShortcut::Validated,
-            "current/closed ledgers must be forwarded before dispatch"
-        );
+    if (resolved.isShortcut() &&
+        // `current` and `closed` are not supported in Clio.
+        std::get<rpc::spec::LedgerShortcut>(resolved.value) !=
+            rpc::spec::LedgerShortcut::Validated) {
+        return std::unexpected{Status{RippledError::RpcInvalidParams, "ledgerIndexMalformed"}};
     }
 
     auto const ledgerSequence = resolved.isSequence() ? std::get<uint32_t>(resolved.value) : maxSeq;
