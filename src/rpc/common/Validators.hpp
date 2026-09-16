@@ -491,13 +491,6 @@ struct CustomValidators final {
     /**
      * @brief Provides a commonly used validator for accounts.
      *
-     * Account must be a string and the converted public key is valid.
-     */
-    static CustomValidator accountValidator;
-
-    /**
-     * @brief Provides a commonly used validator for accounts.
-     *
      * Account must be a string and can convert to base58.
      */
     static CustomValidator accountBase58Validator;
@@ -547,23 +540,6 @@ struct CustomValidators final {
      * token code.
      */
     static CustomValidator currencyValidator;
-
-    /**
-     * @brief Provides a commonly used validator for issuer type.
-     *
-     * It must be a hex string or base58 string.
-     */
-    static CustomValidator issuerValidator;
-
-    /**
-     * @brief Provides a validator for validating streams used in subscribe/unsubscribe.
-     */
-    static CustomValidator subscribeStreamValidator;
-
-    /**
-     * @brief Provides a validator for validating accounts used in subscribe/unsubscribe.
-     */
-    static CustomValidator subscribeAccountsValidator;
 
     /**
      * @brief Validates an asset (xrpl::Issue).

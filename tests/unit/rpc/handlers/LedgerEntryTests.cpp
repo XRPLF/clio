@@ -17,6 +17,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
@@ -128,7 +129,7 @@ generateTestValuesForParametersTest()
                 "ledger_index": "wrong"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
         },
 
         ParamTestCaseBundle{
@@ -837,7 +838,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "dir_rootMalformed"
+            .expectedErrorMessage = "Invalid field 'dir_root'."
         },
 
         ParamTestCaseBundle{
@@ -848,7 +849,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "dir_rootNotString"
+            .expectedErrorMessage = "Invalid field 'dir_root'."
         },
 
         ParamTestCaseBundle{
@@ -3730,6 +3731,191 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
     });
 }
 
+// Each variant field's hex-key arm sets its own expectedType, so a wrong constant there would
+// silently accept the wrong object type.
+struct LedgerEntryHexKeyTypeTestBundle {
+    std::string testName;
+    std::string field;
+    xrpl::LedgerEntryType expectedType;
+};
+
+struct LedgerEntryHexKeyTypeTest : public RPCLedgerEntryTest,
+                                   public WithParamInterface<LedgerEntryHexKeyTypeTestBundle> {};
+
+TEST_P(LedgerEntryHexKeyTypeTest, WrongLedgerTypeForHexKey)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kRangeMax);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _))
+        .WillRepeatedly(Return(ledgerHeader));
+
+    // a valid, deserializable object of a type that none of these fields expect
+    auto const ledgerEntry =
+        createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 200, 300, kIndex1, 400);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kIndex1}, kRangeMax, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"{}": "{}"}})JSON", GetParam().field, kIndex1));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "unexpectedLedgerType");
+    });
+}
+
+TEST_P(LedgerEntryHexKeyTypeTest, MatchingLedgerTypeForHexKeyAccepted)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kRangeMax);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _))
+        .WillRepeatedly(Return(ledgerHeader));
+
+    // a bare object of exactly the type this field's hex key implies
+    xrpl::STLedgerEntry const ledgerEntry{GetParam().expectedType, xrpl::uint256{kIndex1}};
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kIndex1}, kRangeMax, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"{}": "{}"}})JSON", GetParam().field, kIndex1));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->as_object().at("index").as_string(), kIndex1);
+    });
+}
+
+INSTANTIATE_TEST_CASE_P(
+    RPCLedgerEntryHexKeyTypeGroup,
+    LedgerEntryHexKeyTypeTest,
+    ValuesIn({
+        // kHexLocators table entries
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "NftOffer",
+            .field = "nft_offer",
+            .expectedType = xrpl::ltNFTOKEN_OFFER
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "SignerList",
+            .field = "signer_list",
+            .expectedType = xrpl::ltSIGNER_LIST
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Amendments",
+            .field = "amendments",
+            .expectedType = xrpl::ltAMENDMENTS
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Fee",
+            .field = "fee",
+            .expectedType = xrpl::ltFEE_SETTINGS
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Hashes",
+            .field = "hashes",
+            .expectedType = xrpl::ltLEDGER_HASHES
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Nunl",
+            .field = "nunl",
+            .expectedType = xrpl::ltNEGATIVE_UNL
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Check",
+            .field = "check",
+            .expectedType = xrpl::ltCHECK
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "NftPage",
+            .field = "nft_page",
+            .expectedType = xrpl::ltNFTOKEN_PAGE
+        },
+        // variant fields' hex arms
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Directory",
+            .field = "directory",
+            .expectedType = xrpl::ltDIR_NODE
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Offer",
+            .field = "offer",
+            .expectedType = xrpl::ltOFFER
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Escrow",
+            .field = "escrow",
+            .expectedType = xrpl::ltESCROW
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "DepositPreauth",
+            .field = "deposit_preauth",
+            .expectedType = xrpl::ltDEPOSIT_PREAUTH
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Ticket",
+            .field = "ticket",
+            .expectedType = xrpl::ltTICKET
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Amm",
+            .field = "amm",
+            .expectedType = xrpl::ltAMM
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Oracle",
+            .field = "oracle",
+            .expectedType = xrpl::ltORACLE
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Credential",
+            .field = "credential",
+            .expectedType = xrpl::ltCREDENTIAL
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Mptoken",
+            .field = "mptoken",
+            .expectedType = xrpl::ltMPTOKEN
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "PermissionedDomain",
+            .field = "permissioned_domain",
+            .expectedType = xrpl::ltPERMISSIONED_DOMAIN
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Vault",
+            .field = "vault",
+            .expectedType = xrpl::ltVAULT
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "LoanBroker",
+            .field = "loan_broker",
+            .expectedType = xrpl::ltLOAN_BROKER
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Loan",
+            .field = "loan",
+            .expectedType = xrpl::ltLOAN
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Delegate",
+            .field = "delegate",
+            .expectedType = xrpl::ltDELEGATE
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "XChainOwnedClaimId",
+            .field = "xchain_owned_claim_id",
+            .expectedType = xrpl::ltXCHAIN_OWNED_CLAIM_ID
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "XChainOwnedCreateAccountClaimId",
+            .field = "xchain_owned_create_account_claim_id",
+            .expectedType = xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID
+        },
+    }),
+    tests::util::kNameGenerator
+);
+
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _))
@@ -3835,7 +4021,7 @@ TEST(RPCLedgerEntrySpecTest, DeprecatedFields)
 {
     boost::json::value const json{{"ledger", 2}};
     auto const spec = LedgerEntryHandler::spec(2);
-    auto const warnings = spec.check(json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(json));
     ASSERT_EQ(warnings.size(), 1);
     ASSERT_TRUE(warnings[0].is_object());
     auto const& warning = warnings[0].as_object();

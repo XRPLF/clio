@@ -1,266 +1,423 @@
 #include "rpc/handlers/LedgerEntry.hpp"
 
-#include "rpc/CredentialHelpers.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
-#include "util/AccountUtils.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/handlers/ledger_entry/Types.hpp>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
-#include <xrpl/json/json_value.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
-#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STXChainBridge.h>
 #include <xrpl/protocol/SeqProxy.h>
 #include <xrpl/protocol/Serializer.h>
-#include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
-#include <algorithm>
+#include <array>
 #include <cstdint>
+#include <expected>
 #include <optional>
-#include <string>
-#include <string_view>
-#include <unordered_map>
+#include <set>
 #include <utility>
+#include <variant>
+#include <vector>
 
 namespace rpc {
+
+namespace {
+
+namespace le = rpc::spec::handlers::ledger_entry;
+using Input = LedgerEntryHandler::Input;
+
+/**
+ * @brief The ledger key a request resolves to, plus the entry type it must have.
+ *
+ * @c expectedType is @c ltANY when the key was computed from a precise keylet, since the
+ * type is then implied by construction and needs no verification after the read.
+ */
+struct Locator {
+    xrpl::uint256 key;
+    xrpl::LedgerEntryType expectedType = xrpl::ltANY;
+};
+
+/**
+ * @brief A resolved Locator, or the Status explaining why the request could not name one.
+ */
+using LocatorOrStatus = std::expected<Locator, Status>;
+
+xrpl::STXChainBridge
+makeBridge(le::BridgeSpec const& spec)
+{
+    return xrpl::STXChainBridge{
+        spec.lockingChainDoor, spec.lockingChainIssue, spec.issuingChainDoor, spec.issuingChainIssue
+    };
+}
+
+/**
+ * @brief Resolve a locator field that accepts either a hex key or an entry object.
+ *
+ * A raw hex key only names the entry, so @p type is recorded and verified after the read.
+ * The object form computes a precise keylet via @p fromEntry and needs no verification.
+ *
+ * @param field The variant field to resolve
+ * @param type The entry type implied by the hex form
+ * @param fromEntry Computes the locator from the object form
+ * @return The resolved locator, or a Status describing why it could not be
+ */
+template <typename Entry, typename FromEntry>
+LocatorOrStatus
+locatorFrom(
+    std::variant<xrpl::uint256, Entry> const& field,
+    xrpl::LedgerEntryType type,
+    FromEntry&& fromEntry
+)
+{
+    if (auto const* hash = std::get_if<xrpl::uint256>(&field))
+        return Locator{.key = *hash, .expectedType = type};
+
+    return std::forward<FromEntry>(fromEntry)(std::get<Entry>(field));
+}
+
+/**
+ * @brief One kHexLocators entry: the Input field carrying the key, and the type it implies.
+ */
+struct HexLocator {
+    std::optional<xrpl::uint256> Input::* field;
+    xrpl::LedgerEntryType type;
+};
+
+/**
+ * @brief Locator fields that carry a ledger key directly, each implying its entry type.
+ *
+ * These are pure data: the field is the key, and naming the field names the type. Kept in
+ * request-field order so the search order matches the rest of resolveLocator().
+ */
+constexpr auto kHexLocators = std::to_array<HexLocator>({
+    {.field = &Input::check, .type = xrpl::ltCHECK},
+    {.field = &Input::paymentChannel, .type = xrpl::ltPAYCHAN},
+    {.field = &Input::nftPage, .type = xrpl::ltNFTOKEN_PAGE},
+    {.field = &Input::nftOffer, .type = xrpl::ltNFTOKEN_OFFER},
+    {.field = &Input::signerList, .type = xrpl::ltSIGNER_LIST},
+    {.field = &Input::amendments, .type = xrpl::ltAMENDMENTS},
+    {.field = &Input::fee, .type = xrpl::ltFEE_SETTINGS},
+    {.field = &Input::hashes, .type = xrpl::ltLEDGER_HASHES},
+    {.field = &Input::nunl, .type = xrpl::ltNEGATIVE_UNL},
+});
+
+LocatorOrStatus
+directoryLocator(le::DirectoryEntry const& entry)
+{
+    if (entry.dirRoot.has_value() && entry.owner.has_value()) {
+        return std::unexpected{
+            Status{RippledError::RpcInvalidParams, "mayNotSpecifyBothDirRootAndOwner"}
+        };
+    }
+    if (not entry.dirRoot.has_value() and not entry.owner.has_value())
+        return std::unexpected{Status{RippledError::RpcInvalidParams, "missingOwnerOrDirRoot"}};
+
+    auto const subIndex = entry.subIndex.value_or(0);
+    if (entry.dirRoot.has_value())
+        return Locator{.key = xrpl::keylet::page(*entry.dirRoot, subIndex).key};
+
+    return Locator{.key = xrpl::keylet::page(xrpl::keylet::ownerDir(*entry.owner), subIndex).key};
+}
+
+LocatorOrStatus
+depositPreauthLocator(le::DepositPreauthEntry const& entry)
+{
+    // Exactly one of authorized or authorized_credentials MUST exist.
+    if (entry.authorized.has_value() == entry.authorizedCredentials.has_value()) {
+        return std::unexpected{Status{
+            ClioError::RpcMalformedRequest, "Must have one of authorized or authorized_credentials."
+        }};
+    }
+
+    if (entry.authorized.has_value())
+        return Locator{.key = xrpl::keylet::depositPreauth(entry.owner, *entry.authorized).key};
+
+    std::set<std::pair<xrpl::AccountID, xrpl::Slice>> authCreds;
+
+    // Keep the decoded credential-type bytes alive while the Slices that reference them
+    // are used to build the keylet.
+    std::vector<xrpl::Blob> buffers;
+    buffers.reserve(entry.authorizedCredentials->size());
+
+    for (auto const& cred : *entry.authorizedCredentials) {
+        auto const decoded = xrpl::strUnHex(cred.credentialType);
+        ASSERT(decoded.has_value(), "credential_type is hex-validated by the spec");
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        buffers.push_back(*decoded);
+        authCreds.emplace(cred.issuer, xrpl::Slice(buffers.back().data(), buffers.back().size()));
+    }
+
+    if (authCreds.size() != entry.authorizedCredentials->size()) {
+        return std::unexpected{
+            Status{ClioError::RpcMalformedAuthorizedCredentials, "duplicates in credentials."}
+        };
+    }
+
+    return Locator{.key = xrpl::keylet::depositPreauth(entry.owner, authCreds).key};
+}
+
+LocatorOrStatus
+credentialLocator(le::CredentialEntry const& entry)
+{
+    auto const credType = xrpl::strUnHex(entry.credentialType);
+    ASSERT(credType.has_value(), "credential_type is hex-validated by the spec");
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    auto const credSlice = xrpl::Slice(credType->data(), credType->size());
+
+    return Locator{.key = xrpl::keylet::credential(entry.subject, entry.issuer, credSlice).key};
+}
+
+/**
+ * @brief Resolve the `bridge` locator, the only one needing a second request field.
+ *
+ * @param bridge The `bridge` field
+ * @param bridgeAccount The `bridge_account` field, which is required alongside it
+ * @return The resolved locator, or a Status describing why it could not be
+ */
+LocatorOrStatus
+bridgeLocator(le::BridgeSpec const& bridge, std::optional<xrpl::AccountID> const& bridgeAccount)
+{
+    if (not bridgeAccount.has_value())
+        return std::unexpected{Status{ClioError::RpcMalformedRequest}};
+
+    auto const stBridge = makeBridge(bridge);
+    auto const chainType =
+        xrpl::STXChainBridge::srcChain(*bridgeAccount == bridge.lockingChainDoor);
+
+    if (*bridgeAccount != stBridge.door(chainType))
+        return std::unexpected{Status{ClioError::RpcMalformedRequest}};
+
+    return Locator{.key = xrpl::keylet::bridge(stBridge, chainType).key};
+}
+
+/**
+ * @brief Work out which ledger key the request asks for.
+ *
+ * The spec admits one locator field per request; fields are searched in request-field order
+ * so that a malformed multi-locator request resolves deterministically.
+ *
+ * @param input The request input
+ * @param apiVersion The API version, which selects the error for a request with no locator
+ * @return The resolved locator, or a Status describing why it could not be
+ */
+LocatorOrStatus
+resolveLocator(Input const& input, uint32_t apiVersion)
+{
+    if (input.index.has_value()) {
+        // A raw key names no entry type, so nothing is verified after the read.
+        if (input.index->isZero())
+            return std::unexpected{Status{RippledError::RpcEntryNotFound}};
+
+        return Locator{.key = *input.index};
+    }
+
+    if (input.accountRoot.has_value())
+        return Locator{.key = xrpl::keylet::account(*input.accountRoot).key};
+
+    if (input.did.has_value())
+        return Locator{.key = xrpl::keylet::did(*input.did).key};
+
+    for (auto const& [field, type] : kHexLocators) {
+        if (auto const& hexKey = input.*field; hexKey.has_value())
+            return Locator{.key = *hexKey, .expectedType = type};
+    }
+
+    if (input.mptIssuance.has_value())
+        return Locator{.key = xrpl::keylet::mptokenIssuance(*input.mptIssuance).key};
+
+    if (input.directory.has_value())
+        return locatorFrom(*input.directory, xrpl::ltDIR_NODE, directoryLocator);
+
+    if (input.offer.has_value()) {
+        return locatorFrom(*input.offer, xrpl::ltOFFER, [](le::OfferEntry const& entry) {
+            return LocatorOrStatus{Locator{
+                .key =
+                    xrpl::keylet::offer(entry.account, xrpl::SeqProxy::rawSequence(entry.seq)).key
+            }};
+        });
+    }
+
+    if (input.rippleStateAccount.has_value()) {
+        auto const& state = *input.rippleStateAccount;
+        return Locator{
+            .key = xrpl::keylet::trustLine(state.accounts[0], state.accounts[1], state.currency).key
+        };
+    }
+
+    if (input.escrow.has_value()) {
+        return locatorFrom(*input.escrow, xrpl::ltESCROW, [](le::EscrowEntry const& entry) {
+            return LocatorOrStatus{Locator{
+                .key = xrpl::keylet::escrow(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key
+            }};
+        });
+    }
+
+    if (input.depositPreauth.has_value())
+        return locatorFrom(*input.depositPreauth, xrpl::ltDEPOSIT_PREAUTH, depositPreauthLocator);
+
+    if (input.ticket.has_value()) {
+        return locatorFrom(*input.ticket, xrpl::ltTICKET, [](le::TicketEntry const& entry) {
+            return LocatorOrStatus{Locator{
+                .key =
+                    xrpl::keylet::ticket(entry.account, xrpl::SeqProxy::rawTicket(entry.ticketSeq))
+                        .key
+            }};
+        });
+    }
+
+    if (input.amm.has_value()) {
+        return locatorFrom(*input.amm, xrpl::ltAMM, [](le::AmmEntry const& entry) {
+            return LocatorOrStatus{
+                Locator{.key = xrpl::keylet::amm(entry.asset, entry.asset2).key}
+            };
+        });
+    }
+
+    if (input.bridge.has_value())
+        return bridgeLocator(*input.bridge, input.bridgeAccount);
+
+    if (input.xchainOwnedClaimId.has_value()) {
+        return locatorFrom(
+            *input.xchainOwnedClaimId,
+            xrpl::ltXCHAIN_OWNED_CLAIM_ID,
+            [](le::XChainClaimIdEntry const& entry) {
+                return LocatorOrStatus{Locator{
+                    .key = xrpl::keylet::xChainClaimID(makeBridge(entry.bridge), entry.claimId).key
+                }};
+            }
+        );
+    }
+
+    if (input.xchainOwnedCreateAccountClaimId.has_value()) {
+        return locatorFrom(
+            *input.xchainOwnedCreateAccountClaimId,
+            xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID,
+            [](le::XChainClaimIdEntry const& entry) {
+                return LocatorOrStatus{Locator{
+                    .key = xrpl::keylet::xChainCreateAccountClaimID(
+                               makeBridge(entry.bridge), entry.claimId
+                    )
+                               .key
+                }};
+            }
+        );
+    }
+
+    if (input.oracle.has_value()) {
+        return locatorFrom(*input.oracle, xrpl::ltORACLE, [](le::OracleEntry const& entry) {
+            return LocatorOrStatus{
+                Locator{.key = xrpl::keylet::oracle(entry.account, entry.oracleDocumentId).key}
+            };
+        });
+    }
+
+    if (input.credential.has_value())
+        return locatorFrom(*input.credential, xrpl::ltCREDENTIAL, credentialLocator);
+
+    if (input.mptoken.has_value()) {
+        return locatorFrom(*input.mptoken, xrpl::ltMPTOKEN, [](le::MptokenEntry const& entry) {
+            return LocatorOrStatus{
+                Locator{.key = xrpl::keylet::mptoken(entry.mptIssuanceId, entry.account).key}
+            };
+        });
+    }
+
+    if (input.permissionedDomain.has_value()) {
+        return locatorFrom(
+            *input.permissionedDomain,
+            xrpl::ltPERMISSIONED_DOMAIN,
+            [](le::PermissionedDomainEntry const& entry) {
+                return LocatorOrStatus{Locator{
+                    .key = xrpl::keylet::permissionedDomain(
+                               entry.account, xrpl::SeqProxy::rawSequence(entry.seq)
+                    )
+                               .key
+                }};
+            }
+        );
+    }
+
+    if (input.vault.has_value()) {
+        return locatorFrom(*input.vault, xrpl::ltVAULT, [](le::VaultEntry const& entry) {
+            return LocatorOrStatus{Locator{
+                .key = xrpl::keylet::vault(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key
+            }};
+        });
+    }
+
+    if (input.loanBroker.has_value()) {
+        return locatorFrom(
+            *input.loanBroker, xrpl::ltLOAN_BROKER, [](le::LoanBrokerEntry const& entry) {
+                return LocatorOrStatus{Locator{
+                    .key = xrpl::keylet::loanBroker(
+                               entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)
+                    )
+                               .key
+                }};
+            }
+        );
+    }
+
+    if (input.loan.has_value()) {
+        return locatorFrom(*input.loan, xrpl::ltLOAN, [](le::LoanEntry const& entry) {
+            return LocatorOrStatus{Locator{
+                .key = xrpl::keylet::loan(
+                           entry.loanBrokerId, xrpl::SeqProxy::rawSequence(entry.loanSeq)
+                )
+                           .key
+            }};
+        });
+    }
+
+    if (input.delegate.has_value()) {
+        return locatorFrom(*input.delegate, xrpl::ltDELEGATE, [](le::DelegateEntry const& entry) {
+            return LocatorOrStatus{
+                Locator{.key = xrpl::keylet::delegate(entry.account, entry.authorize).key}
+            };
+        });
+    }
+
+    if (apiVersion == 1u)
+        return std::unexpected{Status{ClioError::RpcUnknownOption}};
+
+    return std::unexpected{
+        Status{RippledError::RpcInvalidParams, "No ledger_entry params provided."}
+    };
+}
+
+}  // namespace
 
 LedgerEntryHandler::Result
 LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context const& ctx) const
 {
-    xrpl::uint256 key;
+    auto const locator = resolveLocator(input, ctx.apiVersion);
+    if (not locator.has_value())
+        return Error{locator.error()};
 
-    if (input.index) {
-        key = xrpl::uint256{std::string_view(*(input.index))};
-        if (key.isZero())
-            return Error{Status{RippledError::RpcEntryNotFound}};
-    } else if (input.accountRoot) {
-        key = xrpl::keylet::account(
-                  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                  *util::parseBase58Wrapper<xrpl::AccountID>(*(input.accountRoot))
-        )
-                  .key;
-    } else if (input.did) {
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::did(*util::parseBase58Wrapper<xrpl::AccountID>(*(input.did))).key;
-    } else if (input.directory) {
-        auto const expectedkey = composeKeyFromDirectory(*input.directory);
-        if (!expectedkey.has_value())
-            return Error{expectedkey.error()};
+    auto const key = locator->key;
+    auto const expectedType = locator->expectedType;
 
-        key = expectedkey.value();  // std::expected, not optional
-    } else if (input.offer) {
-        auto const id = util::parseBase58Wrapper<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.offer->at(JS(account)))
-        );
-
-        // NOLINTBEGIN(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::offer(
-                  *id,
-                  xrpl::SeqProxy::rawSequence(
-                      boost::json::value_to<std::uint32_t>(input.offer->at(JS(seq)))
-                  )
-        )
-                  .key;
-        // NOLINTEND(bugprone-unchecked-optional-access)
-    } else if (input.rippleStateAccount) {
-        auto const id1 =
-            util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(
-                input.rippleStateAccount->at(JS(accounts)).as_array().at(0)
-            ));
-        auto const id2 =
-            util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(
-                input.rippleStateAccount->at(JS(accounts)).as_array().at(1)
-            ));
-        auto const currency = xrpl::toCurrency(
-            boost::json::value_to<std::string>(input.rippleStateAccount->at(JS(currency)))
-        );
-
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::trustLine(*id1, *id2, currency).key;
-    } else if (input.escrow) {
-        auto const id = util::parseBase58Wrapper<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.escrow->at(JS(owner)))
-        );
-        key = xrpl::keylet::escrow(
-                  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                  *id,
-                  xrpl::SeqProxy::rawSequence(
-                      util::integralValueAs<uint32_t>(input.escrow->at(JS(seq)))
-                  )
-        )
-                  .key;
-    } else if (input.depositPreauth) {
-        auto const owner = util::parseBase58Wrapper<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.depositPreauth->at(JS(owner)))
-        );
-        // Only one of authorize or authorized_credentials MUST exist;
-        if (input.depositPreauth->contains(JS(authorized)) ==
-            input.depositPreauth->contains(JS(authorized_credentials))) {
-            return Error{Status{
-                ClioError::RpcMalformedRequest,
-                "Must have one of authorized or authorized_credentials."
-            }};
-        }
-
-        if (input.depositPreauth->contains(JS(authorized))) {
-            auto const authorized = util::parseBase58Wrapper<xrpl::AccountID>(
-                boost::json::value_to<std::string>(input.depositPreauth->at(JS(authorized)))
-            );
-            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            key = xrpl::keylet::depositPreauth(*owner, *authorized).key;
-        } else {
-            auto const authorizedCredentials = rpc::credentials::parseAuthorizeCredentials(
-                input.depositPreauth->at(JS(authorized_credentials)).as_array()
-            );
-
-            auto const authCreds = credentials::createAuthCredentials(authorizedCredentials);
-            if (authCreds.size() != authorizedCredentials.size()) {
-                return Error{Status{
-                    ClioError::RpcMalformedAuthorizedCredentials, "duplicates in credentials."
-                }};
-            }
-
-            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            key = xrpl::keylet::depositPreauth(*owner, authCreds).key;
-        }
-    } else if (input.ticket) {
-        auto const id = util::parseBase58Wrapper<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.ticket->at(JS(account)))
-        );
-
-        key = xrpl::keylet::ticket(
-                  *id,  // NOLINT(bugprone-unchecked-optional-access)
-                  xrpl::SeqProxy::rawTicket(
-                      util::integralValueAs<uint32_t>(input.ticket->at(JS(ticket_seq)))
-                  )
-        )
-                  .key;
-    } else if (input.amm) {
-        auto const getIssuerFromJson = [](auto const& assetJson) {
-            // the field check has been done in validator
-            auto const currency =
-                xrpl::toCurrency(boost::json::value_to<std::string>(assetJson.at(JS(currency))));
-            if (xrpl::isXRP(currency)) {
-                return xrpl::xrpIssue();
-            }
-            auto const issuer = util::parseBase58Wrapper<xrpl::AccountID>(
-                boost::json::value_to<std::string>(assetJson.at(JS(issuer)))
-            );
-            return xrpl::Issue{currency, *issuer};
-        };
-
-        key = xrpl::keylet::amm(
-                  getIssuerFromJson(input.amm->at(JS(asset))),
-                  getIssuerFromJson(input.amm->at(JS(asset2)))
-        )
-                  .key;
-    } else if (input.bridge) {
-        if (!input.bridgeAccount && !input.chainClaimId && !input.createAccountClaimId)
-            return Error{Status{ClioError::RpcMalformedRequest}};
-
-        if (input.bridgeAccount) {
-            auto const bridgeAccount =
-                util::parseBase58Wrapper<xrpl::AccountID>(*(input.bridgeAccount));
-            auto const chainType =
-                xrpl::STXChainBridge::srcChain(bridgeAccount == input.bridge->lockingChainDoor());
-
-            if (bridgeAccount != input.bridge->door(chainType))
-                return Error{Status{ClioError::RpcMalformedRequest}};
-
-            key = xrpl::keylet::bridge(input.bridge->value(), chainType).key;
-        } else if (input.chainClaimId) {
-            key = xrpl::keylet::xChainClaimID(input.bridge->value(), *input.chainClaimId).key;
-        } else {
-            key = xrpl::keylet::xChainCreateAccountClaimID(
-                      input.bridge->value(), *input.createAccountClaimId
-            )
-                      .key;
-        }
-    } else if (input.oracleNode) {
-        key = *input.oracleNode;
-    } else if (input.credential) {
-        key = *input.credential;
-    } else if (input.mptIssuance) {
-        auto const mptIssuanceID = xrpl::uint192{std::string_view(*(input.mptIssuance))};
-        key = xrpl::keylet::mptokenIssuance(mptIssuanceID).key;
-    } else if (input.mptoken) {
-        auto const holder = xrpl::parseBase58<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.mptoken->at(JS(account)))
-        );
-        auto const mptIssuanceID = xrpl::uint192{std::string_view(
-            boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id)))
-        )};
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::mptoken(mptIssuanceID, *holder).key;
-    } else if (input.permissionedDomain) {
-        auto const account = xrpl::parseBase58<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.permissionedDomain->at(JS(account)))
-        );
-        auto const seq = util::integralValueAs<uint32_t>(input.permissionedDomain->at(JS(seq)));
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::permissionedDomain(*account, xrpl::SeqProxy::rawSequence(seq)).key;
-    } else if (input.vault) {
-        auto const account = xrpl::parseBase58<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.vault->at(JS(owner)))
-        );
-        auto const seq = util::integralValueAs<uint32_t>(input.vault->at(JS(seq)));
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::vault(*account, xrpl::SeqProxy::rawSequence(seq)).key;
-    } else if (input.loanBroker) {
-        auto const account = xrpl::parseBase58<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.loanBroker->at(JS(owner)))
-        );
-        auto const seq = util::integralValueAs<uint32_t>(input.loanBroker->at(JS(seq)));
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::loanBroker(*account, xrpl::SeqProxy::rawSequence(seq)).key;
-    } else if (input.loan) {
-        auto const id = xrpl::uint256{
-            boost::json::value_to<std::string>(input.loan->at(JS(loan_broker_id))).data()
-        };
-        auto const seq = util::integralValueAs<uint32_t>(input.loan->at(JS(loan_seq)));
-        key = xrpl::keylet::loan(id, xrpl::SeqProxy::rawSequence(seq)).key;
-    } else if (input.delegate) {
-        auto const account = xrpl::parseBase58<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.delegate->at(JS(account)))
-        );
-        auto const authorize = xrpl::parseBase58<xrpl::AccountID>(
-            boost::json::value_to<std::string>(input.delegate->at(JS(authorize)))
-        );
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        key = xrpl::keylet::delegate(*account, *authorize).key;
-    } else {
-        // Must specify 1 of the following fields to indicate what type
-        if (ctx.apiVersion == 1)
-            return Error{Status{ClioError::RpcUnknownOption}};
-        return Error{Status{RippledError::RpcInvalidParams, "No ledger_entry params provided."}};
-    }
-
-    // check ledger exists
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "LedgerEntry's ledger range must be available");
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -271,15 +428,15 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
     auto output = LedgerEntryHandler::Output{};
     auto ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
 
-    if (!ledgerObject || ledgerObject->empty()) {
+    if (not ledgerObject.has_value() or ledgerObject->empty()) {
         if (not input.includeDeleted)
             return Error{Status{RippledError::RpcEntryNotFound}};
         auto const deletedSeq =
             sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
-        if (!deletedSeq)
+        if (not deletedSeq.has_value())
             return Error{Status{RippledError::RpcEntryNotFound}};
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, *deletedSeq - 1, ctx.yield);
-        if (!ledgerObject || ledgerObject->empty())
+        if (not ledgerObject.has_value() or ledgerObject->empty())
             return Error{Status{RippledError::RpcEntryNotFound}};
         output.deletedLedgerIndex = deletedSeq;
     }
@@ -288,7 +445,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         xrpl::SerialIter{ledgerObject->data(), ledgerObject->size()}, key
     };
 
-    if (input.expectedType != xrpl::ltANY && sle.getType() != input.expectedType)
+    if (expectedType != xrpl::ltANY && sle.getType() != expectedType)
         return Error{Status{RippledError::RpcUnexpectedLedgerType}};
 
     output.index = xrpl::strHex(key);
@@ -302,38 +459,6 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
     }
 
     return output;
-}
-
-std::expected<xrpl::uint256, Status>
-LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory) noexcept
-{
-    // can not specify both dir_root and owner.
-    if (directory.contains(JS(dir_root)) && directory.contains(JS(owner))) {
-        return std::unexpected{
-            Status{RippledError::RpcInvalidParams, "mayNotSpecifyBothDirRootAndOwner"}
-        };
-    }
-
-    // at least one should available
-    if (!(directory.contains(JS(dir_root)) || directory.contains(JS(owner))))
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "missingOwnerOrDirRoot"}};
-
-    uint64_t const subIndex = directory.contains(JS(sub_index))
-        ? boost::json::value_to<uint64_t>(directory.at(JS(sub_index)))
-        : 0;
-
-    if (directory.contains(JS(dir_root))) {
-        xrpl::uint256 const uDirRoot{
-            boost::json::value_to<std::string>(directory.at(JS(dir_root))).data()
-        };
-        return xrpl::keylet::page(uDirRoot, subIndex).key;
-    }
-
-    auto const ownerID = util::parseBase58Wrapper<xrpl::AccountID>(
-        boost::json::value_to<std::string>(directory.at(JS(owner)))
-    );
-    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    return xrpl::keylet::page(xrpl::keylet::ownerDir(*ownerID), subIndex).key;
 }
 
 void
@@ -350,180 +475,16 @@ tag_invoke(
         {JS(index), output.index},
     };
 
-    if (output.deletedLedgerIndex)
+    if (output.deletedLedgerIndex.has_value())
         object["deleted_ledger_index"] = *(output.deletedLedgerIndex);
 
-    if (output.nodeBinary) {
+    if (output.nodeBinary.has_value()) {
         object[JS(node_binary)] = *(output.nodeBinary);
     } else {
         object[JS(node)] = *(output.node);  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     jv = std::move(object);
-}
-
-LedgerEntryHandler::Input
-tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::value const& jv)
-{
-    auto input = LedgerEntryHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    if (jsonObject.contains(JS(binary)))
-        input.binary = jv.at(JS(binary)).as_bool();
-
-    // check all the potential index
-    static auto const kIndexFieldTypeMap = std::unordered_map<std::string, xrpl::LedgerEntryType>{
-        {JS(index), xrpl::ltANY},
-        {JS(directory), xrpl::ltDIR_NODE},
-        {JS(offer), xrpl::ltOFFER},
-        {JS(check), xrpl::ltCHECK},
-        {JS(escrow), xrpl::ltESCROW},
-        {JS(payment_channel), xrpl::ltPAYCHAN},
-        {JS(deposit_preauth), xrpl::ltDEPOSIT_PREAUTH},
-        {JS(ticket), xrpl::ltTICKET},
-        {JS(nft_page), xrpl::ltNFTOKEN_PAGE},
-        {JS(amm), xrpl::ltAMM},
-        {JS(xchain_owned_create_account_claim_id), xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
-        {JS(xchain_owned_claim_id), xrpl::ltXCHAIN_OWNED_CLAIM_ID},
-        {JS(oracle), xrpl::ltORACLE},
-        {JS(credential), xrpl::ltCREDENTIAL},
-        {JS(mptoken), xrpl::ltMPTOKEN},
-        {JS(permissioned_domain), xrpl::ltPERMISSIONED_DOMAIN},
-        {JS(vault), xrpl::ltVAULT},
-        {JS(loan_broker), xrpl::ltLOAN_BROKER},
-        {JS(loan), xrpl::ltLOAN},
-        {JS(delegate), xrpl::ltDELEGATE},
-        {JS(amendments), xrpl::ltAMENDMENTS},
-        {JS(fee), xrpl::ltFEE_SETTINGS},
-        {JS(hashes), xrpl::ltLEDGER_HASHES},
-        {JS(nft_offer), xrpl::ltNFTOKEN_OFFER},
-        {JS(nunl), xrpl::ltNEGATIVE_UNL},
-        {JS(signer_list), xrpl::ltSIGNER_LIST},
-    };
-
-    auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {
-        auto const lockingDoor =
-            *util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(
-                bridgeJson.at(xrpl::sfLockingChainDoor.getJsonName().cStr())
-            ));
-        auto const issuingDoor =
-            *util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(
-                bridgeJson.at(xrpl::sfIssuingChainDoor.getJsonName().cStr())
-            ));
-        auto const lockingIssue =
-            parseIssue(bridgeJson.at(xrpl::sfLockingChainIssue.getJsonName().cStr()).as_object());
-        auto const issuingIssue =
-            parseIssue(bridgeJson.at(xrpl::sfIssuingChainIssue.getJsonName().cStr()).as_object());
-
-        return xrpl::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
-    };
-
-    auto const parseOracleFromJson = [](boost::json::value const& json) {
-        auto const account = util::parseBase58Wrapper<xrpl::AccountID>(
-            boost::json::value_to<std::string>(json.at(JS(account)))
-        );
-        auto const documentId = boost::json::value_to<uint32_t>(json.at(JS(oracle_document_id)));
-
-        return xrpl::keylet::oracle(*account, documentId).key;
-    };
-
-    auto const parseCredentialFromJson =
-        [](boost::json::value const& json) -> std::optional<xrpl::uint256> {
-        auto const subject = util::parseBase58Wrapper<xrpl::AccountID>(
-            boost::json::value_to<std::string>(json.at(JS(subject)))
-        );
-        auto const issuer = util::parseBase58Wrapper<xrpl::AccountID>(
-            boost::json::value_to<std::string>(json.at(JS(issuer)))
-        );
-        auto const credTypeOpt =
-            xrpl::strUnHex(boost::json::value_to<std::string>(json.at(JS(credential_type))));
-
-        return credTypeOpt.transform([&](xrpl::Blob const& credType) -> xrpl::uint256 {
-            return xrpl::keylet::credential(
-                       *subject, *issuer, xrpl::Slice(credType.data(), credType.size())
-            )
-                .key;
-        });
-    };
-
-    auto const indexFieldType =
-        std::ranges::find_if(kIndexFieldTypeMap, [&jsonObject](auto const& pair) {
-            auto const& [field, _] = pair;
-            return jsonObject.contains(field) && jsonObject.at(field).is_string();
-        });
-
-    if (indexFieldType != kIndexFieldTypeMap.end()) {
-        input.index = boost::json::value_to<std::string>(jv.at(indexFieldType->first));
-        input.expectedType = indexFieldType->second;
-    }
-    // check if request for account root
-    else if (jsonObject.contains(JS(account_root))) {
-        input.accountRoot = boost::json::value_to<std::string>(jv.at(JS(account_root)));
-    } else if (jsonObject.contains(JS(did))) {
-        input.did = boost::json::value_to<std::string>(jv.at(JS(did)));
-    } else if (jsonObject.contains(JS(mpt_issuance))) {
-        input.mptIssuance = boost::json::value_to<std::string>(jv.at(JS(mpt_issuance)));
-    }
-    // no need to check if_object again, validator only allows string or object
-    else if (jsonObject.contains(JS(directory))) {
-        input.directory = jv.at(JS(directory)).as_object();
-    } else if (jsonObject.contains(JS(offer))) {
-        input.offer = jv.at(JS(offer)).as_object();
-    } else if (jsonObject.contains(JS(ripple_state))) {
-        input.rippleStateAccount = jv.at(JS(ripple_state)).as_object();
-    } else if (jsonObject.contains(JS(escrow))) {
-        input.escrow = jv.at(JS(escrow)).as_object();
-    } else if (jsonObject.contains(JS(deposit_preauth))) {
-        input.depositPreauth = jv.at(JS(deposit_preauth)).as_object();
-    } else if (jsonObject.contains(JS(ticket))) {
-        input.ticket = jv.at(JS(ticket)).as_object();
-    } else if (jsonObject.contains(JS(amm))) {
-        input.amm = jv.at(JS(amm)).as_object();
-    } else if (jsonObject.contains(JS(bridge))) {
-        input.bridge.emplace(parseBridgeFromJson(jv.at(JS(bridge))));
-        if (jsonObject.contains(JS(bridge_account)))
-            input.bridgeAccount = boost::json::value_to<std::string>(jv.at(JS(bridge_account)));
-    } else if (jsonObject.contains(JS(xchain_owned_claim_id))) {
-        input.bridge.emplace(parseBridgeFromJson(jv.at(JS(xchain_owned_claim_id))));
-        input.chainClaimId = boost::json::value_to<std::int32_t>(
-            jv.at(JS(xchain_owned_claim_id)).at(JS(xchain_owned_claim_id))
-        );
-    } else if (jsonObject.contains(JS(xchain_owned_create_account_claim_id))) {
-        input.bridge.emplace(parseBridgeFromJson(jv.at(JS(xchain_owned_create_account_claim_id))));
-        input.createAccountClaimId =
-            boost::json::value_to<std::int32_t>(jv.at(JS(xchain_owned_create_account_claim_id))
-                                                    .at(JS(xchain_owned_create_account_claim_id)));
-    } else if (jsonObject.contains(JS(oracle))) {
-        input.oracleNode = parseOracleFromJson(jv.at(JS(oracle)));
-    } else if (jsonObject.contains(JS(credential))) {
-        input.credential = parseCredentialFromJson(jv.at(JS(credential)));
-    } else if (jsonObject.contains(JS(mptoken))) {
-        input.mptoken = jv.at(JS(mptoken)).as_object();
-    } else if (jsonObject.contains(JS(permissioned_domain))) {
-        input.permissionedDomain = jv.at(JS(permissioned_domain)).as_object();
-    } else if (jsonObject.contains(JS(vault))) {
-        input.vault = jv.at(JS(vault)).as_object();
-    } else if (jsonObject.contains(JS(loan_broker))) {
-        input.loanBroker = jv.at(JS(loan_broker)).as_object();
-    } else if (jsonObject.contains(JS(loan))) {
-        input.loan = jv.at(JS(loan)).as_object();
-    } else if (jsonObject.contains(JS(delegate))) {
-        input.delegate = jv.at(JS(delegate)).as_object();
-    }
-
-    if (jsonObject.contains("include_deleted"))
-        input.includeDeleted = jv.at("include_deleted").as_bool();
-
-    return input;
 }
 
 }  // namespace rpc
