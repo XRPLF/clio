@@ -3736,6 +3736,7 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 struct LedgerEntryHexKeyTypeTestBundle {
     std::string testName;
     std::string field;
+    xrpl::LedgerEntryType expectedType;
 };
 
 struct LedgerEntryHexKeyTypeTest : public RPCLedgerEntryTest,
@@ -3764,18 +3765,152 @@ TEST_P(LedgerEntryHexKeyTypeTest, WrongLedgerTypeForHexKey)
     });
 }
 
+TEST_P(LedgerEntryHexKeyTypeTest, MatchingLedgerTypeForHexKeyAccepted)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kRangeMax);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _))
+        .WillRepeatedly(Return(ledgerHeader));
+
+    // a bare object of exactly the type this field's hex key implies
+    xrpl::STLedgerEntry const ledgerEntry{GetParam().expectedType, xrpl::uint256{kIndex1}};
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kIndex1}, kRangeMax, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"{}": "{}"}})JSON", GetParam().field, kIndex1));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->as_object().at("index").as_string(), kIndex1);
+    });
+}
+
 INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryHexKeyTypeGroup,
     LedgerEntryHexKeyTypeTest,
     ValuesIn({
-        LedgerEntryHexKeyTypeTestBundle{.testName = "Credential", .field = "credential"},
+        // kHexLocators table entries
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "NftOffer",
+            .field = "nft_offer",
+            .expectedType = xrpl::ltNFTOKEN_OFFER
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "SignerList",
+            .field = "signer_list",
+            .expectedType = xrpl::ltSIGNER_LIST
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Amendments",
+            .field = "amendments",
+            .expectedType = xrpl::ltAMENDMENTS
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Fee",
+            .field = "fee",
+            .expectedType = xrpl::ltFEE_SETTINGS
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Hashes",
+            .field = "hashes",
+            .expectedType = xrpl::ltLEDGER_HASHES
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Nunl",
+            .field = "nunl",
+            .expectedType = xrpl::ltNEGATIVE_UNL
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Check",
+            .field = "check",
+            .expectedType = xrpl::ltCHECK
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "NftPage",
+            .field = "nft_page",
+            .expectedType = xrpl::ltNFTOKEN_PAGE
+        },
+        // variant fields' hex arms
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Directory",
+            .field = "directory",
+            .expectedType = xrpl::ltDIR_NODE
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Offer",
+            .field = "offer",
+            .expectedType = xrpl::ltOFFER
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Escrow",
+            .field = "escrow",
+            .expectedType = xrpl::ltESCROW
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "DepositPreauth",
+            .field = "deposit_preauth",
+            .expectedType = xrpl::ltDEPOSIT_PREAUTH
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Ticket",
+            .field = "ticket",
+            .expectedType = xrpl::ltTICKET
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Amm",
+            .field = "amm",
+            .expectedType = xrpl::ltAMM
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Oracle",
+            .field = "oracle",
+            .expectedType = xrpl::ltORACLE
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Credential",
+            .field = "credential",
+            .expectedType = xrpl::ltCREDENTIAL
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Mptoken",
+            .field = "mptoken",
+            .expectedType = xrpl::ltMPTOKEN
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "PermissionedDomain",
+            .field = "permissioned_domain",
+            .expectedType = xrpl::ltPERMISSIONED_DOMAIN
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Vault",
+            .field = "vault",
+            .expectedType = xrpl::ltVAULT
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "LoanBroker",
+            .field = "loan_broker",
+            .expectedType = xrpl::ltLOAN_BROKER
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Loan",
+            .field = "loan",
+            .expectedType = xrpl::ltLOAN
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Delegate",
+            .field = "delegate",
+            .expectedType = xrpl::ltDELEGATE
+        },
         LedgerEntryHexKeyTypeTestBundle{
             .testName = "XChainOwnedClaimId",
-            .field = "xchain_owned_claim_id"
+            .field = "xchain_owned_claim_id",
+            .expectedType = xrpl::ltXCHAIN_OWNED_CLAIM_ID
         },
         LedgerEntryHexKeyTypeTestBundle{
             .testName = "XChainOwnedCreateAccountClaimId",
-            .field = "xchain_owned_create_account_claim_id"
+            .field = "xchain_owned_create_account_claim_id",
+            .expectedType = xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID
         },
     }),
     tests::util::kNameGenerator
