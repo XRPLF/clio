@@ -185,21 +185,21 @@ credentialLocator(le::CredentialEntry const& entry)
 /**
  * @brief Resolve the `bridge` locator, the only one needing a second request field.
  *
- * @param input The request input, for both `bridge` and `bridge_account`
+ * @param bridge The `bridge` field
+ * @param bridgeAccount The `bridge_account` field, which is required alongside it
  * @return The resolved locator, or a Status describing why it could not be
  */
 LocatorOrStatus
-bridgeLocator(Input const& input)
+bridgeLocator(le::BridgeSpec const& bridge, std::optional<xrpl::AccountID> const& bridgeAccount)
 {
-    if (not input.bridgeAccount.has_value())
+    if (not bridgeAccount.has_value())
         return std::unexpected{Status{ClioError::RpcMalformedRequest}};
 
-    auto const stBridge = makeBridge(*input.bridge);
-    auto const& bridgeAccount = *input.bridgeAccount;
+    auto const stBridge = makeBridge(bridge);
     auto const chainType =
-        xrpl::STXChainBridge::srcChain(bridgeAccount == input.bridge->lockingChainDoor);
+        xrpl::STXChainBridge::srcChain(*bridgeAccount == bridge.lockingChainDoor);
 
-    if (bridgeAccount != stBridge.door(chainType))
+    if (*bridgeAccount != stBridge.door(chainType))
         return std::unexpected{Status{ClioError::RpcMalformedRequest}};
 
     return Locator{.key = xrpl::keylet::bridge(stBridge, chainType).key};
@@ -233,8 +233,8 @@ resolveLocator(Input const& input, uint32_t apiVersion)
         return Locator{.key = xrpl::keylet::did(*input.did).key};
 
     for (auto const& [field, type] : kHexLocators) {
-        if ((input.*field).has_value())
-            return Locator{.key = *(input.*field), .expectedType = type};
+        if (auto const& hexKey = input.*field; hexKey.has_value())
+            return Locator{.key = *hexKey, .expectedType = type};
     }
 
     if (input.mptIssuance.has_value())
@@ -289,7 +289,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
     }
 
     if (input.bridge.has_value())
-        return bridgeLocator(input);
+        return bridgeLocator(*input.bridge, input.bridgeAccount);
 
     if (input.xchainOwnedClaimId.has_value()) {
         return locatorFrom(
