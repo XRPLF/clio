@@ -25,8 +25,10 @@
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
 
+#include <array>
 #include <cstdint>
 #include <expected>
+#include <optional>
 #include <set>
 #include <utility>
 #include <variant>
@@ -34,274 +36,381 @@
 
 namespace rpc {
 
+namespace {
+
+namespace le = rpc::spec::handlers::ledger_entry;
+using Input = LedgerEntryHandler::Input;
+
+/**
+ * @brief The ledger key a request resolves to, plus the entry type it must have.
+ *
+ * @c expectedType is @c ltANY when the key was computed from a precise keylet, since the
+ * type is then implied by construction and needs no verification after the read.
+ */
+struct Locator {
+    xrpl::uint256 key;
+    xrpl::LedgerEntryType expectedType = xrpl::ltANY;
+};
+
+/**
+ * @brief A resolved Locator, or the Status explaining why the request could not name one.
+ */
+using LocatorOrStatus = std::expected<Locator, Status>;
+
+xrpl::STXChainBridge
+makeBridge(le::BridgeSpec const& spec)
+{
+    return xrpl::STXChainBridge{
+        spec.lockingChainDoor, spec.lockingChainIssue, spec.issuingChainDoor, spec.issuingChainIssue
+    };
+}
+
+/**
+ * @brief Resolve a locator field that accepts either a hex key or an entry object.
+ *
+ * A raw hex key only names the entry, so @p type is recorded and verified after the read.
+ * The object form computes a precise keylet via @p fromEntry and needs no verification.
+ *
+ * @param field The variant field to resolve
+ * @param type The entry type implied by the hex form
+ * @param fromEntry Computes the locator from the object form
+ * @return The resolved locator, or a Status describing why it could not be
+ */
+template <typename Entry, typename FromEntry>
+LocatorOrStatus
+locatorFrom(
+    std::variant<xrpl::uint256, Entry> const& field,
+    xrpl::LedgerEntryType type,
+    FromEntry&& fromEntry
+)
+{
+    if (auto const* hash = std::get_if<xrpl::uint256>(&field))
+        return Locator{.key = *hash, .expectedType = type};
+
+    return std::forward<FromEntry>(fromEntry)(std::get<Entry>(field));
+}
+
+/**
+ * @brief One kHexLocators entry: the Input field carrying the key, and the type it implies.
+ */
+struct HexLocator {
+    std::optional<xrpl::uint256> Input::* field;
+    xrpl::LedgerEntryType type;
+};
+
+/**
+ * @brief Locator fields that carry a ledger key directly, each implying its entry type.
+ *
+ * These are pure data: the field is the key, and naming the field names the type. Kept in
+ * request-field order so the search order matches the rest of resolveLocator().
+ */
+constexpr auto kHexLocators = std::to_array<HexLocator>({
+    {.field = &Input::check, .type = xrpl::ltCHECK},
+    {.field = &Input::paymentChannel, .type = xrpl::ltPAYCHAN},
+    {.field = &Input::nftPage, .type = xrpl::ltNFTOKEN_PAGE},
+    {.field = &Input::nftOffer, .type = xrpl::ltNFTOKEN_OFFER},
+    {.field = &Input::signerList, .type = xrpl::ltSIGNER_LIST},
+    {.field = &Input::amendments, .type = xrpl::ltAMENDMENTS},
+    {.field = &Input::fee, .type = xrpl::ltFEE_SETTINGS},
+    {.field = &Input::hashes, .type = xrpl::ltLEDGER_HASHES},
+    {.field = &Input::nunl, .type = xrpl::ltNEGATIVE_UNL},
+});
+
+LocatorOrStatus
+directoryLocator(le::DirectoryEntry const& entry)
+{
+    if (entry.dirRoot.has_value() && entry.owner.has_value()) {
+        return std::unexpected{
+            Status{RippledError::RpcInvalidParams, "mayNotSpecifyBothDirRootAndOwner"}
+        };
+    }
+    if (not entry.dirRoot.has_value() and not entry.owner.has_value())
+        return std::unexpected{Status{RippledError::RpcInvalidParams, "missingOwnerOrDirRoot"}};
+
+    auto const subIndex = entry.subIndex.value_or(0);
+    if (entry.dirRoot.has_value())
+        return Locator{.key = xrpl::keylet::page(*entry.dirRoot, subIndex).key};
+
+    return Locator{.key = xrpl::keylet::page(xrpl::keylet::ownerDir(*entry.owner), subIndex).key};
+}
+
+LocatorOrStatus
+depositPreauthLocator(le::DepositPreauthEntry const& entry)
+{
+    // Exactly one of authorized or authorized_credentials MUST exist.
+    if (entry.authorized.has_value() == entry.authorizedCredentials.has_value()) {
+        return std::unexpected{Status{
+            ClioError::RpcMalformedRequest, "Must have one of authorized or authorized_credentials."
+        }};
+    }
+
+    if (entry.authorized.has_value())
+        return Locator{.key = xrpl::keylet::depositPreauth(entry.owner, *entry.authorized).key};
+
+    std::set<std::pair<xrpl::AccountID, xrpl::Slice>> authCreds;
+
+    // Keep the decoded credential-type bytes alive while the Slices that reference them
+    // are used to build the keylet.
+    std::vector<xrpl::Blob> buffers;
+    buffers.reserve(entry.authorizedCredentials->size());
+
+    for (auto const& cred : *entry.authorizedCredentials) {
+        auto const decoded = xrpl::strUnHex(cred.credentialType);
+        ASSERT(decoded.has_value(), "credential_type is hex-validated by the spec");
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        buffers.push_back(*decoded);
+        authCreds.emplace(cred.issuer, xrpl::Slice(buffers.back().data(), buffers.back().size()));
+    }
+
+    if (authCreds.size() != entry.authorizedCredentials->size()) {
+        return std::unexpected{
+            Status{ClioError::RpcMalformedAuthorizedCredentials, "duplicates in credentials."}
+        };
+    }
+
+    return Locator{.key = xrpl::keylet::depositPreauth(entry.owner, authCreds).key};
+}
+
+LocatorOrStatus
+credentialLocator(le::CredentialEntry const& entry)
+{
+    auto const credType = xrpl::strUnHex(entry.credentialType);
+    ASSERT(credType.has_value(), "credential_type is hex-validated by the spec");
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    auto const credSlice = xrpl::Slice(credType->data(), credType->size());
+
+    return Locator{.key = xrpl::keylet::credential(entry.subject, entry.issuer, credSlice).key};
+}
+
+/**
+ * @brief Resolve the `bridge` locator, the only one needing a second request field.
+ *
+ * @param input The request input, for both `bridge` and `bridge_account`
+ * @return The resolved locator, or a Status describing why it could not be
+ */
+LocatorOrStatus
+bridgeLocator(Input const& input)
+{
+    if (not input.bridgeAccount.has_value())
+        return std::unexpected{Status{ClioError::RpcMalformedRequest}};
+
+    auto const stBridge = makeBridge(*input.bridge);
+    auto const& bridgeAccount = *input.bridgeAccount;
+    auto const chainType =
+        xrpl::STXChainBridge::srcChain(bridgeAccount == input.bridge->lockingChainDoor);
+
+    if (bridgeAccount != stBridge.door(chainType))
+        return std::unexpected{Status{ClioError::RpcMalformedRequest}};
+
+    return Locator{.key = xrpl::keylet::bridge(stBridge, chainType).key};
+}
+
+/**
+ * @brief Work out which ledger key the request asks for.
+ *
+ * The spec admits one locator field per request; fields are searched in request-field order
+ * so that a malformed multi-locator request resolves deterministically.
+ *
+ * @param input The request input
+ * @param apiVersion The API version, which selects the error for a request with no locator
+ * @return The resolved locator, or a Status describing why it could not be
+ */
+LocatorOrStatus
+resolveLocator(Input const& input, uint32_t apiVersion)
+{
+    if (input.index.has_value()) {
+        // A raw key names no entry type, so nothing is verified after the read.
+        if (input.index->isZero())
+            return std::unexpected{Status{RippledError::RpcEntryNotFound}};
+
+        return Locator{.key = *input.index};
+    }
+
+    if (input.accountRoot.has_value())
+        return Locator{.key = xrpl::keylet::account(*input.accountRoot).key};
+
+    if (input.did.has_value())
+        return Locator{.key = xrpl::keylet::did(*input.did).key};
+
+    for (auto const& [field, type] : kHexLocators) {
+        if ((input.*field).has_value())
+            return Locator{.key = *(input.*field), .expectedType = type};
+    }
+
+    if (input.mptIssuance.has_value())
+        return Locator{.key = xrpl::keylet::mptokenIssuance(*input.mptIssuance).key};
+
+    if (input.directory.has_value())
+        return locatorFrom(*input.directory, xrpl::ltDIR_NODE, directoryLocator);
+
+    if (input.offer.has_value()) {
+        return locatorFrom(*input.offer, xrpl::ltOFFER, [](le::OfferEntry const& entry) {
+            return LocatorOrStatus{Locator{
+                .key =
+                    xrpl::keylet::offer(entry.account, xrpl::SeqProxy::rawSequence(entry.seq)).key
+            }};
+        });
+    }
+
+    if (input.rippleStateAccount.has_value()) {
+        auto const& state = *input.rippleStateAccount;
+        return Locator{
+            .key = xrpl::keylet::trustLine(state.accounts[0], state.accounts[1], state.currency).key
+        };
+    }
+
+    if (input.escrow.has_value()) {
+        return locatorFrom(*input.escrow, xrpl::ltESCROW, [](le::EscrowEntry const& entry) {
+            return LocatorOrStatus{Locator{
+                .key = xrpl::keylet::escrow(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key
+            }};
+        });
+    }
+
+    if (input.depositPreauth.has_value())
+        return locatorFrom(*input.depositPreauth, xrpl::ltDEPOSIT_PREAUTH, depositPreauthLocator);
+
+    if (input.ticket.has_value()) {
+        return locatorFrom(*input.ticket, xrpl::ltTICKET, [](le::TicketEntry const& entry) {
+            return LocatorOrStatus{Locator{
+                .key =
+                    xrpl::keylet::ticket(entry.account, xrpl::SeqProxy::rawTicket(entry.ticketSeq))
+                        .key
+            }};
+        });
+    }
+
+    if (input.amm.has_value()) {
+        return locatorFrom(*input.amm, xrpl::ltAMM, [](le::AmmEntry const& entry) {
+            return LocatorOrStatus{
+                Locator{.key = xrpl::keylet::amm(entry.asset, entry.asset2).key}
+            };
+        });
+    }
+
+    if (input.bridge.has_value())
+        return bridgeLocator(input);
+
+    if (input.xchainOwnedClaimId.has_value()) {
+        return locatorFrom(
+            *input.xchainOwnedClaimId,
+            xrpl::ltXCHAIN_OWNED_CLAIM_ID,
+            [](le::XChainClaimIdEntry const& entry) {
+                return LocatorOrStatus{Locator{
+                    .key = xrpl::keylet::xChainClaimID(makeBridge(entry.bridge), entry.claimId).key
+                }};
+            }
+        );
+    }
+
+    if (input.xchainOwnedCreateAccountClaimId.has_value()) {
+        return locatorFrom(
+            *input.xchainOwnedCreateAccountClaimId,
+            xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID,
+            [](le::XChainClaimIdEntry const& entry) {
+                return LocatorOrStatus{Locator{
+                    .key = xrpl::keylet::xChainCreateAccountClaimID(
+                               makeBridge(entry.bridge), entry.claimId
+                    )
+                               .key
+                }};
+            }
+        );
+    }
+
+    if (input.oracle.has_value()) {
+        return locatorFrom(*input.oracle, xrpl::ltORACLE, [](le::OracleEntry const& entry) {
+            return LocatorOrStatus{
+                Locator{.key = xrpl::keylet::oracle(entry.account, entry.oracleDocumentId).key}
+            };
+        });
+    }
+
+    if (input.credential.has_value())
+        return locatorFrom(*input.credential, xrpl::ltCREDENTIAL, credentialLocator);
+
+    if (input.mptoken.has_value()) {
+        return locatorFrom(*input.mptoken, xrpl::ltMPTOKEN, [](le::MptokenEntry const& entry) {
+            return LocatorOrStatus{
+                Locator{.key = xrpl::keylet::mptoken(entry.mptIssuanceId, entry.account).key}
+            };
+        });
+    }
+
+    if (input.permissionedDomain.has_value()) {
+        return locatorFrom(
+            *input.permissionedDomain,
+            xrpl::ltPERMISSIONED_DOMAIN,
+            [](le::PermissionedDomainEntry const& entry) {
+                return LocatorOrStatus{Locator{
+                    .key = xrpl::keylet::permissionedDomain(
+                               entry.account, xrpl::SeqProxy::rawSequence(entry.seq)
+                    )
+                               .key
+                }};
+            }
+        );
+    }
+
+    if (input.vault.has_value()) {
+        return locatorFrom(*input.vault, xrpl::ltVAULT, [](le::VaultEntry const& entry) {
+            return LocatorOrStatus{Locator{
+                .key = xrpl::keylet::vault(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key
+            }};
+        });
+    }
+
+    if (input.loanBroker.has_value()) {
+        return locatorFrom(
+            *input.loanBroker, xrpl::ltLOAN_BROKER, [](le::LoanBrokerEntry const& entry) {
+                return LocatorOrStatus{Locator{
+                    .key = xrpl::keylet::loanBroker(
+                               entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)
+                    )
+                               .key
+                }};
+            }
+        );
+    }
+
+    if (input.loan.has_value()) {
+        return locatorFrom(*input.loan, xrpl::ltLOAN, [](le::LoanEntry const& entry) {
+            return LocatorOrStatus{Locator{
+                .key = xrpl::keylet::loan(
+                           entry.loanBrokerId, xrpl::SeqProxy::rawSequence(entry.loanSeq)
+                )
+                           .key
+            }};
+        });
+    }
+
+    if (input.delegate.has_value()) {
+        return locatorFrom(*input.delegate, xrpl::ltDELEGATE, [](le::DelegateEntry const& entry) {
+            return LocatorOrStatus{
+                Locator{.key = xrpl::keylet::delegate(entry.account, entry.authorize).key}
+            };
+        });
+    }
+
+    if (apiVersion == 1u)
+        return std::unexpected{Status{ClioError::RpcUnknownOption}};
+
+    return std::unexpected{
+        Status{RippledError::RpcInvalidParams, "No ledger_entry params provided."}
+    };
+}
+
+}  // namespace
+
 LedgerEntryHandler::Result
 LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context const& ctx) const
 {
-    using namespace rpc::spec::handlers::ledger_entry;
+    auto const locator = resolveLocator(input, ctx.apiVersion);
+    if (not locator.has_value())
+        return Error{locator.error()};
 
-    auto const makeBridge = [](BridgeSpec const& spec) {
-        return xrpl::STXChainBridge{
-            spec.lockingChainDoor,
-            spec.lockingChainIssue,
-            spec.issuingChainDoor,
-            spec.issuingChainIssue
-        };
-    };
-
-    xrpl::uint256 key;
-    // For locators supplied as a raw ledger-entry hex key, the type is implied and
-    // enforced below; a precisely-computed keylet leaves this as ltANY (no check).
-    xrpl::LedgerEntryType expectedType = xrpl::ltANY;
-
-    if (input.index.has_value()) {
-        key = *input.index;
-        if (key.isZero())
-            return Error{Status{RippledError::RpcEntryNotFound}};
-    } else if (input.accountRoot.has_value()) {
-        key = xrpl::keylet::account(*input.accountRoot).key;
-    } else if (input.did.has_value()) {
-        key = xrpl::keylet::did(*input.did).key;
-    } else if (input.check.has_value()) {
-        key = *input.check;
-        expectedType = xrpl::ltCHECK;
-    } else if (input.paymentChannel.has_value()) {
-        key = *input.paymentChannel;
-        expectedType = xrpl::ltPAYCHAN;
-    } else if (input.nftPage.has_value()) {
-        key = *input.nftPage;
-        expectedType = xrpl::ltNFTOKEN_PAGE;
-    } else if (input.nftOffer.has_value()) {
-        key = *input.nftOffer;
-        expectedType = xrpl::ltNFTOKEN_OFFER;
-    } else if (input.signerList.has_value()) {
-        key = *input.signerList;
-        expectedType = xrpl::ltSIGNER_LIST;
-    } else if (input.amendments.has_value()) {
-        key = *input.amendments;
-        expectedType = xrpl::ltAMENDMENTS;
-    } else if (input.fee.has_value()) {
-        key = *input.fee;
-        expectedType = xrpl::ltFEE_SETTINGS;
-    } else if (input.hashes.has_value()) {
-        key = *input.hashes;
-        expectedType = xrpl::ltLEDGER_HASHES;
-    } else if (input.nunl.has_value()) {
-        key = *input.nunl;
-        expectedType = xrpl::ltNEGATIVE_UNL;
-    } else if (input.mptIssuance.has_value()) {
-        key = xrpl::keylet::mptokenIssuance(*input.mptIssuance).key;
-    } else if (input.directory.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.directory)) {
-            key = *hash;
-            expectedType = xrpl::ltDIR_NODE;
-        } else {
-            auto const& dirEntry = std::get<DirectoryEntry>(*input.directory);
-            if (dirEntry.dirRoot.has_value() && dirEntry.owner.has_value()) {
-                return Error{
-                    Status{RippledError::RpcInvalidParams, "mayNotSpecifyBothDirRootAndOwner"}
-                };
-            }
-            if (not dirEntry.dirRoot.has_value() and not dirEntry.owner.has_value())
-                return Error{Status{RippledError::RpcInvalidParams, "missingOwnerOrDirRoot"}};
-
-            uint64_t const subIndex = dirEntry.subIndex.value_or(0);
-            if (dirEntry.dirRoot.has_value()) {
-                key = xrpl::keylet::page(*dirEntry.dirRoot, subIndex).key;
-            } else {
-                key = xrpl::keylet::page(xrpl::keylet::ownerDir(*dirEntry.owner), subIndex).key;
-            }
-        }
-    } else if (input.offer.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.offer)) {
-            key = *hash;
-            expectedType = xrpl::ltOFFER;
-        } else {
-            auto const& entry = std::get<OfferEntry>(*input.offer);
-            key = xrpl::keylet::offer(entry.account, xrpl::SeqProxy::rawSequence(entry.seq)).key;
-        }
-    } else if (input.rippleStateAccount.has_value()) {
-        auto const& rippleState = *input.rippleStateAccount;
-        key = xrpl::keylet::trustLine(
-                  rippleState.accounts[0], rippleState.accounts[1], rippleState.currency
-        )
-                  .key;
-    } else if (input.escrow.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.escrow)) {
-            key = *hash;
-            expectedType = xrpl::ltESCROW;
-        } else {
-            auto const& entry = std::get<EscrowEntry>(*input.escrow);
-            key = xrpl::keylet::escrow(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key;
-        }
-    } else if (input.depositPreauth.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.depositPreauth)) {
-            key = *hash;
-            expectedType = xrpl::ltDEPOSIT_PREAUTH;
-        } else {
-            auto const& preauthEntry = std::get<DepositPreauthEntry>(*input.depositPreauth);
-            // Exactly one of authorized or authorized_credentials MUST exist.
-            if (preauthEntry.authorized.has_value() ==
-                preauthEntry.authorizedCredentials.has_value()) {
-                return Error{Status{
-                    ClioError::RpcMalformedRequest,
-                    "Must have one of authorized or authorized_credentials."
-                }};
-            }
-
-            if (preauthEntry.authorized.has_value()) {
-                key =
-                    xrpl::keylet::depositPreauth(preauthEntry.owner, *preauthEntry.authorized).key;
-            } else {
-                std::set<std::pair<xrpl::AccountID, xrpl::Slice>> authCreds;
-                // Keep the decoded credential-type bytes alive while the Slices
-                // that reference them are used to build the keylet.
-                std::vector<xrpl::Blob> buffers;
-                buffers.reserve(preauthEntry.authorizedCredentials->size());
-                for (auto const& cred : *preauthEntry.authorizedCredentials) {
-                    auto const decoded = xrpl::strUnHex(cred.credentialType);
-                    ASSERT(decoded.has_value(), "credential_type is hex-validated by the spec");
-                    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                    buffers.push_back(*decoded);
-                    authCreds.emplace(
-                        cred.issuer, xrpl::Slice(buffers.back().data(), buffers.back().size())
-                    );
-                }
-
-                if (authCreds.size() != preauthEntry.authorizedCredentials->size()) {
-                    return Error{Status{
-                        ClioError::RpcMalformedAuthorizedCredentials, "duplicates in credentials."
-                    }};
-                }
-
-                key = xrpl::keylet::depositPreauth(preauthEntry.owner, authCreds).key;
-            }
-        }
-    } else if (input.ticket.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.ticket)) {
-            key = *hash;
-            expectedType = xrpl::ltTICKET;
-        } else {
-            auto const& entry = std::get<TicketEntry>(*input.ticket);
-            key =
-                xrpl::keylet::ticket(entry.account, xrpl::SeqProxy::rawTicket(entry.ticketSeq)).key;
-        }
-    } else if (input.amm.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.amm)) {
-            key = *hash;
-            expectedType = xrpl::ltAMM;
-        } else {
-            auto const& entry = std::get<AmmEntry>(*input.amm);
-            key = xrpl::keylet::amm(entry.asset, entry.asset2).key;
-        }
-    } else if (input.bridge.has_value()) {
-        if (not input.bridgeAccount.has_value())
-            return Error{Status{ClioError::RpcMalformedRequest}};
-
-        auto const stBridge = makeBridge(*input.bridge);
-        auto const& bridgeAccount = *input.bridgeAccount;
-        auto const chainType =
-            xrpl::STXChainBridge::srcChain(bridgeAccount == input.bridge->lockingChainDoor);
-
-        if (bridgeAccount != stBridge.door(chainType))
-            return Error{Status{ClioError::RpcMalformedRequest}};
-
-        key = xrpl::keylet::bridge(stBridge, chainType).key;
-    } else if (input.xchainOwnedClaimId.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.xchainOwnedClaimId)) {
-            key = *hash;
-            expectedType = xrpl::ltXCHAIN_OWNED_CLAIM_ID;
-        } else {
-            auto const& entry = std::get<XChainClaimIdEntry>(*input.xchainOwnedClaimId);
-            key = xrpl::keylet::xChainClaimID(makeBridge(entry.bridge), entry.claimId).key;
-        }
-    } else if (input.xchainOwnedCreateAccountClaimId.has_value()) {
-        if (auto const* hash =
-                std::get_if<xrpl::uint256>(&*input.xchainOwnedCreateAccountClaimId)) {
-            key = *hash;
-            expectedType = xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID;
-        } else {
-            auto const& entry =
-                std::get<XChainClaimIdEntry>(*input.xchainOwnedCreateAccountClaimId);
-            key = xrpl::keylet::xChainCreateAccountClaimID(makeBridge(entry.bridge), entry.claimId)
-                      .key;
-        }
-    } else if (input.oracle.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.oracle)) {
-            key = *hash;
-            expectedType = xrpl::ltORACLE;
-        } else {
-            auto const& entry = std::get<OracleEntry>(*input.oracle);
-            key = xrpl::keylet::oracle(entry.account, entry.oracleDocumentId).key;
-        }
-    } else if (input.credential.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.credential)) {
-            key = *hash;
-            expectedType = xrpl::ltCREDENTIAL;
-        } else {
-            auto const& entry = std::get<CredentialEntry>(*input.credential);
-            auto const credType = xrpl::strUnHex(entry.credentialType);
-            ASSERT(credType.has_value(), "credential_type is not a hex");
-            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            auto const credSlice = xrpl::Slice(credType->data(), credType->size());
-            key = xrpl::keylet::credential(entry.subject, entry.issuer, credSlice).key;
-        }
-    } else if (input.mptoken.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.mptoken)) {
-            key = *hash;
-            expectedType = xrpl::ltMPTOKEN;
-        } else {
-            auto const& entry = std::get<MptokenEntry>(*input.mptoken);
-            key = xrpl::keylet::mptoken(entry.mptIssuanceId, entry.account).key;
-        }
-    } else if (input.permissionedDomain.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.permissionedDomain)) {
-            key = *hash;
-            expectedType = xrpl::ltPERMISSIONED_DOMAIN;
-        } else {
-            auto const& entry = std::get<PermissionedDomainEntry>(*input.permissionedDomain);
-            key = xrpl::keylet::permissionedDomain(
-                      entry.account, xrpl::SeqProxy::rawSequence(entry.seq)
-            )
-                      .key;
-        }
-    } else if (input.vault.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.vault)) {
-            key = *hash;
-            expectedType = xrpl::ltVAULT;
-        } else {
-            auto const& entry = std::get<VaultEntry>(*input.vault);
-            key = xrpl::keylet::vault(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key;
-        }
-    } else if (input.loanBroker.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.loanBroker)) {
-            key = *hash;
-            expectedType = xrpl::ltLOAN_BROKER;
-        } else {
-            auto const& entry = std::get<LoanBrokerEntry>(*input.loanBroker);
-            key = xrpl::keylet::loanBroker(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key;
-        }
-    } else if (input.loan.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.loan)) {
-            key = *hash;
-            expectedType = xrpl::ltLOAN;
-        } else {
-            auto const& entry = std::get<LoanEntry>(*input.loan);
-            key = xrpl::keylet::loan(entry.loanBrokerId, xrpl::SeqProxy::rawSequence(entry.loanSeq))
-                      .key;
-        }
-    } else if (input.delegate.has_value()) {
-        if (auto const* hash = std::get_if<xrpl::uint256>(&*input.delegate)) {
-            key = *hash;
-            expectedType = xrpl::ltDELEGATE;
-        } else {
-            auto const& entry = std::get<DelegateEntry>(*input.delegate);
-            key = xrpl::keylet::delegate(entry.account, entry.authorize).key;
-        }
-    } else {
-        if (ctx.apiVersion == 1)
-            return Error{Status{ClioError::RpcUnknownOption}};
-        return Error{Status{RippledError::RpcInvalidParams, "No ledger_entry params provided."}};
-    }
+    auto const key = locator->key;
+    auto const expectedType = locator->expectedType;
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "LedgerEntry's ledger range must be available");
