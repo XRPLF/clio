@@ -2,7 +2,6 @@
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 #include "rpc/handlers/AccountMPTokenIssuances.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/NameGenerator.hpp"
@@ -1213,11 +1212,8 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MPTokenIssuanceIdIsDerivedIdNotLed
         EXPECT_EQ(mptIssuanceId, expectedMptIssuanceId(kSequence));
         EXPECT_NE(mptIssuanceId, kIssuanceIndex1);
 
-        auto const asOuterObject = boost::json::value{{"mpt_issuance_id", mptIssuanceId}};
-        auto const validated = validation::CustomValidators::uint192HexStringValidator.verify(
-            asOuterObject, "mpt_issuance_id"
-        );
-        EXPECT_TRUE(validated.has_value());
+        xrpl::uint192 parsedMptIssuanceId;
+        EXPECT_TRUE(parsedMptIssuanceId.parseHex(mptIssuanceId));
     });
 }
 

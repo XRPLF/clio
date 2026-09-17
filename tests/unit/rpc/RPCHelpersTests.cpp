@@ -7,7 +7,6 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockAmendmentCenter.hpp"
-#include "util/MockAssert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
@@ -2051,43 +2050,40 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierValidatedUsesMaxSeq)
     });
 }
 
-struct RPCHelpersAssertTest : RPCHelpersTest, common::util::WithMockAssert {};
-
-TEST_F(RPCHelpersAssertTest, LedgerHeaderFromSpecifierCurrentAsserts)
+// `current` and `closed` name ledgers Clio does not hold. Most methods never reach here because
+// ForwardingProxy diverts them to xrpld, but it skips that check for Clio-only methods, so the
+// resolver has to reject the shortcut rather than treat it as unreachable.
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierCurrentRejected)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
 
     runSpawn([&, this](auto yield) {
-        EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-            {
-                [[maybe_unused]] auto const res = getLedgerHeaderFromLedgerSpecifier(
-                    *backend_,
-                    yield,
-                    rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Current},
-                    kSpecifierRangeMax
-                );
-            },
-            "must be forwarded before dispatch"
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_,
+            yield,
+            rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Current},
+            kSpecifierRangeMax
         );
+        ASSERT_FALSE(res.has_value());
+        EXPECT_EQ(res.error().code, rpc::CombinedError{rpc::RippledError::RpcInvalidParams});
+        EXPECT_EQ(res.error().message, "ledgerIndexMalformed");
     });
 }
 
-TEST_F(RPCHelpersAssertTest, LedgerHeaderFromSpecifierClosedAsserts)
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierClosedRejected)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
 
     runSpawn([&, this](auto yield) {
-        EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-            {
-                [[maybe_unused]] auto const res = getLedgerHeaderFromLedgerSpecifier(
-                    *backend_,
-                    yield,
-                    rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Closed},
-                    kSpecifierRangeMax
-                );
-            },
-            "must be forwarded before dispatch"
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_,
+            yield,
+            rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Closed},
+            kSpecifierRangeMax
         );
+        ASSERT_FALSE(res.has_value());
+        EXPECT_EQ(res.error().code, rpc::CombinedError{rpc::RippledError::RpcInvalidParams});
+        EXPECT_EQ(res.error().message, "ledgerIndexMalformed");
     });
 }
 
