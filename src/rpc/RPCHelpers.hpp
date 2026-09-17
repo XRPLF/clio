@@ -313,8 +313,12 @@ getLedgerHeaderFromHashOrSeq(
  * only serves validated data. An unspecified ledger resolves via
  * @c LedgerSpecifier::resolved(), which the spec library fixes to @c validated for Clio.
  *
- * @c current and @c closed cannot reach here: @ref specifiesCurrentOrClosedLedger forwards
- * those upstream before dispatch.
+ * @c current and @c closed name ledgers Clio does not hold, and yield @c invalidParams with
+ * @c ledgerIndexMalformed.
+ * @ref specifiesCurrentOrClosedLedger diverts such requests to xrpld before dispatch, but only
+ * for methods xrpld can answer: @c ForwardingProxy::shouldForward returns early for Clio-only
+ * methods, so those arrive here with the shortcut intact. The spec does not reject the two
+ * shortcuts either, since xrpld needs them.
  *
  * @param backend The backend to use
  * @param yield The coroutine context

@@ -569,8 +569,9 @@ getLedgerHeaderFromLedgerSpecifier(
         return *maybeLgrInfo;
     }
 
-    if (resolved.isShortcut() &&
-        // `current` and `closed` are not supported in Clio.
+    // `current` and `closed` name ledgers Clio does not hold. Forwarding diverts them for the
+    // methods xrpld can answer; Clio-only methods are not forwarded, so they reach here.
+    if (resolved.isShortcut() and
         std::get<rpc::spec::LedgerShortcut>(resolved.value) !=
             rpc::spec::LedgerShortcut::Validated) {
         return std::unexpected{Status{RippledError::RpcInvalidParams, "ledgerIndexMalformed"}};
