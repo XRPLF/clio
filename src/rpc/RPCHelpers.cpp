@@ -1537,7 +1537,7 @@ parseBook(
     }
 
     if (pays == gets)
-        return std::unexpected{Status{RippledError::RpcBadMarket}};
+        return std::unexpected{Status{RippledError::RpcBadMarket, "badMarket"}};
 
     return xrpl::Book{pays, gets, domainID};
 }

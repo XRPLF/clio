@@ -129,7 +129,7 @@ generateTestValuesForParametersTest()
                 "ledger_index": "wrong"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
 
         ParamTestCaseBundle{
@@ -246,8 +246,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage =
-                "Must have exactly one of `authorized` and `authorized_credentials`."
+            .expectedErrorMessage = "Must have one of authorized or authorized_credentials."
         },
 
         ParamTestCaseBundle{
@@ -271,8 +270,7 @@ generateTestValuesForParametersTest()
                 kCredentialType
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage =
-                "Must have exactly one of `authorized` and `authorized_credentials`."
+            .expectedErrorMessage = "Must have one of authorized or authorized_credentials."
         },
 
         ParamTestCaseBundle{
@@ -807,7 +805,7 @@ generateTestValuesForParametersTest()
                 "directory": {}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Must have exactly one of `owner` and `dir_root` fields."
+            .expectedErrorMessage = "missingOwnerOrDirRoot"
         },
 
         ParamTestCaseBundle{
@@ -840,7 +838,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'dir_root'."
+            .expectedErrorMessage = "dir_rootMalformed"
         },
 
         ParamTestCaseBundle{
@@ -851,7 +849,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'dir_root'."
+            .expectedErrorMessage = "dir_rootNotString"
         },
 
         ParamTestCaseBundle{
@@ -867,7 +865,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Must have exactly one of `owner` and `dir_root` fields."
+            .expectedErrorMessage = "mayNotSpecifyBothDirRootAndOwner"
         },
 
         ParamTestCaseBundle{

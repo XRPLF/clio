@@ -70,27 +70,27 @@ generateTestValuesForParametersTest()
             .testJson = R"JSON({
                 "idk": "idk"
             })JSON",
-            .expectedError = "invalidParams",
-            .expectedErrorCode = RippledError::RpcInvalidParams,
-            .expectedErrorMessage = "Must specify either 'vault_id' or both 'owner' and 'seq'."
+            .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
+            .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "MissingOwnerInVault",
             .testJson = R"JSON({
                 "seq": 4
             })JSON",
-            .expectedError = "invalidParams",
-            .expectedErrorCode = RippledError::RpcInvalidParams,
-            .expectedErrorMessage = "Must specify either 'vault_id' or both 'owner' and 'seq'."
+            .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
+            .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "MissingSeqInVault",
             .testJson = R"JSON({
                 "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
             })JSON",
-            .expectedError = "invalidParams",
-            .expectedErrorCode = RippledError::RpcInvalidParams,
-            .expectedErrorMessage = "Must specify either 'vault_id' or both 'owner' and 'seq'."
+            .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
+            .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "SeqNotAnInteger",
@@ -98,9 +98,9 @@ generateTestValuesForParametersTest()
                 "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
                 "seq": "asdf"
             })JSON",
-            .expectedError = "invalidParams",
-            .expectedErrorCode = RippledError::RpcInvalidParams,
-            .expectedErrorMessage = "Invalid field 'seq', not a positive 32-bit integer."
+            .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
+            .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "OwnerNotAString",
@@ -108,9 +108,9 @@ generateTestValuesForParametersTest()
                 "owner": true,
                 "seq": 3
             })JSON",
-            .expectedError = "actMalformed",
-            .expectedErrorCode = RippledError::RpcActMalformed,
-            .expectedErrorMessage = "Invalid field 'owner', not AccountID."
+            .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
+            .expectedErrorMessage = "OwnerNotHexString"
         },
         VaultInfoParamTestCaseBundle{
             .testName = "OwnerNotAHexString",
@@ -118,27 +118,27 @@ generateTestValuesForParametersTest()
                 "owner": "asdf",
                 "seq": 3
             })JSON",
-            .expectedError = "actMalformed",
-            .expectedErrorCode = RippledError::RpcActMalformed,
-            .expectedErrorMessage = "Invalid field 'owner', not AccountID."
+            .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
+            .expectedErrorMessage = "OwnerNotHexString"
         },
         VaultInfoParamTestCaseBundle{
             .testName = "vaultIDNotString",
             .testJson = R"JSON({
                 "vault_id": 3
             })JSON",
-            .expectedError = "invalidParams",
-            .expectedErrorCode = RippledError::RpcInvalidParams,
-            .expectedErrorMessage = "Invalid field 'vault_id', not hex string."
+            .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
+            .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "vaultIDNotHex256",
             .testJson = R"JSON({
                 "vault_id": "idk"
             })JSON",
-            .expectedError = "invalidParams",
-            .expectedErrorCode = RippledError::RpcInvalidParams,
-            .expectedErrorMessage = "Invalid field 'vault_id', not hex string."
+            .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
+            .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "vaultIDWithOwner",
@@ -150,9 +150,9 @@ generateTestValuesForParametersTest()
                 kVaultId,
                 kAccount
             ),
-            .expectedError = "invalidParams",
-            .expectedErrorCode = RippledError::RpcInvalidParams,
-            .expectedErrorMessage = "Must specify either 'vault_id' or both 'owner' and 'seq'."
+            .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
+            .expectedErrorMessage = "Malformed request."
         }
     };
 }

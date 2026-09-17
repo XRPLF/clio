@@ -107,21 +107,21 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": "1"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash'."
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
             .testJson =
                 R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index": "a"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
     };
 }
