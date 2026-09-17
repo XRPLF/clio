@@ -246,8 +246,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage =
-                "Must have exactly one of `authorized` and `authorized_credentials`."
+            .expectedErrorMessage = "Must have one of authorized or authorized_credentials."
         },
 
         ParamTestCaseBundle{
@@ -271,8 +270,7 @@ generateTestValuesForParametersTest()
                 kCredentialType
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage =
-                "Must have exactly one of `authorized` and `authorized_credentials`."
+            .expectedErrorMessage = "Must have one of authorized or authorized_credentials."
         },
 
         ParamTestCaseBundle{
@@ -807,7 +805,7 @@ generateTestValuesForParametersTest()
                 "directory": {}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Must have exactly one of `owner` and `dir_root` fields."
+            .expectedErrorMessage = "missingOwnerOrDirRoot"
         },
 
         ParamTestCaseBundle{
@@ -867,7 +865,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Must have exactly one of `owner` and `dir_root` fields."
+            .expectedErrorMessage = "mayNotSpecifyBothDirRootAndOwner"
         },
 
         ParamTestCaseBundle{
