@@ -129,7 +129,7 @@ generateTestValuesForParametersTest()
                 "ledger_index": "wrong"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
 
         ParamTestCaseBundle{
@@ -840,7 +840,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'dir_root'."
+            .expectedErrorMessage = "dir_rootMalformed"
         },
 
         ParamTestCaseBundle{
@@ -851,7 +851,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'dir_root'."
+            .expectedErrorMessage = "dir_rootNotString"
         },
 
         ParamTestCaseBundle{

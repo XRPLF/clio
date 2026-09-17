@@ -87,21 +87,21 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash'.",
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         {
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not string.",
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         {
             .testName = "LedgerIndexNotInt",
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number.",
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         {
             .testName = "LimitNotInt",
@@ -127,14 +127,14 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'marker'.",
+            .expectedErrorMessage = "markerNotString",
         },
         {
             .testName = "MarkerInvalid",
             .testJson =
                 R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'marker'.",
+            .expectedErrorMessage = "markerMalformed",
         },
     };
 }

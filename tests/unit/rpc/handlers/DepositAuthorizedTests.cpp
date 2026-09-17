@@ -133,7 +133,7 @@ generateTestValuesForParametersTest()
                 "ledger_hash": "x"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash'.",
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         {
             .testName = "LedgerHashNotString",
@@ -143,7 +143,7 @@ generateTestValuesForParametersTest()
                 "ledger_hash": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not string.",
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         {
             .testName = "LedgerIndexNotInt",
@@ -153,7 +153,7 @@ generateTestValuesForParametersTest()
                 "ledger_index": "x"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number.",
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         {
             .testName = "CredentialsNotArray",

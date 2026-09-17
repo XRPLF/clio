@@ -151,8 +151,8 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
     });
 }
 
-// `transaction` is validated by rpc-spec's uint256 converter, which reports one
-// format-agnostic message for both a non-string and an unparsable hash.
+// `transaction` is validated by rpc-spec's uint256 converter, which reports a distinct
+// message for a non-string value versus an unparsable (but string) hash.
 TEST_F(RPCTxTest, TransactionNotString)
 {
     runSpawn([this](auto yield) {
@@ -163,7 +163,7 @@ TEST_F(RPCTxTest, TransactionNotString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'transaction'.");
+        EXPECT_EQ(err.at("error_message").as_string(), "transactionNotString");
     });
 }
 
@@ -178,7 +178,7 @@ TEST_F(RPCTxTest, TransactionMalformed)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'transaction'.");
+        EXPECT_EQ(err.at("error_message").as_string(), "transactionMalformed");
     });
 }
 

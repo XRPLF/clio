@@ -4,18 +4,13 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
-#include "util/AccountUtils.hpp"
 #include "util/Assert.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/HandlerFor.hpp>
-#include <rpcspec/RpcSpecView.hpp>
-#include <rpcspec/handlers/mpt_holders/Types.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
@@ -28,12 +23,6 @@
 #include <xrpl/protocol/jss.h>
 
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
-#include <expected>
-#include <optional>
-#include <string>
-#include <utility>
 #include <vector>
 
 using namespace xrpl;
@@ -104,72 +93,18 @@ mpTokenToJson(xrpl::uint192 const& mptID, data::Blob const& mpt)
 
 }  // namespace
 
-std::expected<MPTHoldersHandler::Input, Status>
-MPTHoldersHandler::parseInput(boost::json::value jv, uint32_t apiVersion)
-{
-    // The shared rpc-spec fields (mpt_issuance_id, marker, limit, ledger) are validated and
-    // parsed the same way for xrpld and Clio; only `accounts` is Clio-only and has no home in
-    // the shared spec, so it is validated by hand below.
-    auto expectedBase =
-        ::rpc::spec::HandlerFor<::rpc::spec::handlers::mpt_holders::Input>::parseInput(
-            jv, apiVersion
-        );
-    if (!expectedBase)
-        return std::unexpected{std::move(expectedBase).error()};
-
-    MPTHoldersHandler::Input input;
-    static_cast<::rpc::spec::handlers::mpt_holders::Input&>(input) = *expectedBase;
-
-    auto const& jsonObject = jv.as_object();
-    if (!jsonObject.contains(JS(accounts)))
-        return input;
-
-    auto const& accountsJv = jsonObject.at(JS(accounts));
-    if (!accountsJv.is_array())
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "accountsNotArray"}};
-
-    auto const& accountsArray = accountsJv.as_array();
-    if (accountsArray.empty() ||
-        accountsArray.size() > static_cast<std::size_t>(MPTHoldersHandler::kMaxAccounts)) {
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "accountsMalformed"}};
-    }
-
-    std::vector<xrpl::AccountID> accounts;
-    accounts.reserve(accountsArray.size());
-    for (auto const& account : accountsArray) {
-        if (!account.is_string()) {
-            return std::unexpected{Status{RippledError::RpcInvalidParams, "accountsItemNotString"}};
-        }
-
-        auto const accountID =
-            util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(account));
-        if (!accountID) {
-            return std::unexpected{Status{RippledError::RpcInvalidParams, "accountsItemMalformed"}};
-        }
-
-        accounts.push_back(*accountID);
-    }
-
-    // Account-list filter is a bounded, unpaginated lookup by key: marker/limit make no sense
-    // alongside it.
-    if (input.marker.has_value())
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "accountsWithMarker"}};
-    if (jsonObject.contains(JS(limit)))
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "accountsWithLimit"}};
-
-    input.accounts = std::move(accounts);
-    return input;
-}
-
-::rpc::spec::RpcSpecView
-MPTHoldersHandler::spec(uint32_t apiVersion)
-{
-    return ::rpc::spec::HandlerFor<::rpc::spec::handlers::mpt_holders::Input>::spec(apiVersion);
-}
-
 MPTHoldersHandler::Result
 MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const& ctx) const
 {
+    // Account-list filter is a bounded, unpaginated lookup by key: marker/limit does not make sense
+    // alongside it.
+    if (input.accounts) {
+        if (input.marker.has_value())
+            return Error{Status{RippledError::RpcInvalidParams, "accountsWithMarker"}};
+        if (input.limit.has_value())
+            return Error{Status{RippledError::RpcInvalidParams, "accountsWithLimit"}};
+    }
+
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "MPTHolder's ledger range must be available");
 
@@ -183,7 +118,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const limit = input.limit;
+    auto const limit = input.limit.value_or(MPTHoldersHandler::kLimitDefault);
     auto const& mptID = input.mptID;
 
     auto const issuanceLedgerObject = sharedPtrBackend_->fetchLedgerObject(
