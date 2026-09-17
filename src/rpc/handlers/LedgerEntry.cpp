@@ -143,7 +143,8 @@ depositPreauthLocator(le::DepositPreauthEntry const& entry)
     // Exactly one of authorized or authorized_credentials MUST exist.
     if (entry.authorized.has_value() == entry.authorizedCredentials.has_value()) {
         return std::unexpected{Status{
-            ClioError::RpcMalformedRequest, "Must have one of authorized or authorized_credentials."
+            ClioError::RpcMalformedRequest,
+            "Must have exactly one of `authorized` and `authorized_credentials`."
         }};
     }
 
