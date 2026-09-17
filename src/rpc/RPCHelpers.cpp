@@ -569,12 +569,12 @@ getLedgerHeaderFromLedgerSpecifier(
         return *maybeLgrInfo;
     }
 
-    if (resolved.isShortcut()) {
-        auto const shortcut = std::get<rpc::spec::LedgerShortcut>(resolved.value);
-        ASSERT(
-            shortcut == rpc::spec::LedgerShortcut::Validated,
-            "current/closed ledgers must be forwarded before dispatch"
-        );
+    // `current` and `closed` name ledgers Clio does not hold. Forwarding diverts them for the
+    // methods xrpld can answer; Clio-only methods are not forwarded, so they reach here.
+    if (resolved.isShortcut() and
+        std::get<rpc::spec::LedgerShortcut>(resolved.value) !=
+            rpc::spec::LedgerShortcut::Validated) {
+        return std::unexpected{Status{RippledError::RpcInvalidParams, "ledgerIndexMalformed"}};
     }
 
     auto const ledgerSequence = resolved.isSequence() ? std::get<uint32_t>(resolved.value) : maxSeq;

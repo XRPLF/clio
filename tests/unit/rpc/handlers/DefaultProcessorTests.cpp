@@ -1,9 +1,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/FakesAndMocks.hpp"
 #include "rpc/common/Concepts.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 #include "rpc/common/impl/Processors.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 
@@ -15,30 +13,15 @@ using namespace testing;
 using namespace std;
 
 using namespace rpc;
-using namespace rpc::validation;
 using namespace tests::common;
 
 class RPCDefaultProcessorTest : public HandlerBaseTest {};
 
-TEST_F(RPCDefaultProcessorTest, ValidInput)
-{
-    runSpawn([](auto yield) {
-        HandlerMock const handler;
-        rpc::impl::DefaultProcessor<HandlerMock> const processor;
+static_assert(SomeHandlerWithTypedInput<TypedHandlerFake>);
+static_assert(SomeHandlerWithTypedInput<FailingTypedHandlerFake>);
+static_assert(SomeHandlerWithoutInput<HandlerWithoutInputMock>);
 
-        auto const input = boost::json::parse(R"JSON({ "something": "works" })JSON");
-        auto const spec = RpcSpec{{"something", Required{}}};
-        auto const data = InOutFake{"works"};
-        EXPECT_CALL(handler, spec(_)).WillOnce(ReturnRef(spec));
-        EXPECT_CALL(handler, process(Eq(data), _)).WillOnce(Return(data));
-
-        auto const ret = processor(handler, input, Context{yield});
-        ASSERT_TRUE(ret);  // no error
-        EXPECT_TRUE(ret.warnings.empty());
-    });
-}
-
-TEST_F(RPCDefaultProcessorTest, NoInputValidCall)
+TEST_F(RPCDefaultProcessorTest, NoInputHandler_ValidCall)
 {
     runSpawn([](auto yield) {
         HandlerWithoutInputMock const handler;
@@ -54,34 +37,10 @@ TEST_F(RPCDefaultProcessorTest, NoInputValidCall)
     });
 }
 
-TEST_F(RPCDefaultProcessorTest, InvalidInput)
-{
-    runSpawn([](auto yield) {
-        HandlerMock const handler;
-        rpc::impl::DefaultProcessor<HandlerMock> const processor;
+// These exercise the input path of a handler whose spec, validation and
+// deserialization all come from the shared consteval spec via HandlerFor<Input>.
 
-        auto const input = boost::json::parse(R"JSON({ "other": "nope" })JSON");
-        auto const spec = RpcSpec{{"something", Required{}}};
-        EXPECT_CALL(handler, spec(_)).WillOnce(ReturnRef(spec));
-
-        auto const ret = processor(handler, input, Context{yield});
-        ASSERT_FALSE(ret);  // returns error
-        EXPECT_TRUE(ret.warnings.empty());
-    });
-}
-
-static_assert(SomeHandlerWithTypedInput<TypedHandlerFake>);
-static_assert(not SomeHandlerWithInput<TypedHandlerFake>);
-static_assert(SomeHandlerWithTypedInput<FailingTypedHandlerFake>);
-static_assert(SomeHandlerWithInput<HandlerMock>);
-static_assert(not SomeHandlerWithTypedInput<HandlerMock>);
-
-// The four tests below exercise the typed path — a handler whose spec, validation and
-// deserialization all come from the shared consteval spec via HandlerFor<Input>. They run
-// against the same DefaultProcessor as the legacy tests above, which is the point: the
-// dual path is a dispatch detail, not a second processor.
-
-TEST_F(RPCDefaultProcessorTest, NewSpecHandler_HappyPath)
+TEST_F(RPCDefaultProcessorTest, SpecHandler_HappyPath)
 {
     runSpawn([](auto yield) {
         TypedHandlerFake const handler;
@@ -96,7 +55,7 @@ TEST_F(RPCDefaultProcessorTest, NewSpecHandler_HappyPath)
     });
 }
 
-TEST_F(RPCDefaultProcessorTest, NewSpecHandler_MissingRequiredField_ReturnsError)
+TEST_F(RPCDefaultProcessorTest, SpecHandler_MissingRequiredField_ReturnsError)
 {
     runSpawn([](auto yield) {
         TypedHandlerFake const handler;
@@ -110,7 +69,7 @@ TEST_F(RPCDefaultProcessorTest, NewSpecHandler_MissingRequiredField_ReturnsError
     });
 }
 
-TEST_F(RPCDefaultProcessorTest, NewSpecHandler_DeprecatedField_WarningsForwarded)
+TEST_F(RPCDefaultProcessorTest, SpecHandler_DeprecatedField_WarningsForwarded)
 {
     runSpawn([](auto yield) {
         TypedHandlerFake const handler;
@@ -124,7 +83,7 @@ TEST_F(RPCDefaultProcessorTest, NewSpecHandler_DeprecatedField_WarningsForwarded
     });
 }
 
-TEST_F(RPCDefaultProcessorTest, NewSpecHandler_HandlerReturnsError_ForwardsError)
+TEST_F(RPCDefaultProcessorTest, SpecHandler_HandlerReturnsError_ForwardsError)
 {
     runSpawn([](auto yield) {
         FailingTypedHandlerFake const handler;
@@ -139,7 +98,7 @@ TEST_F(RPCDefaultProcessorTest, NewSpecHandler_HandlerReturnsError_ForwardsError
     });
 }
 
-TEST_F(RPCDefaultProcessorTest, NewSpecHandler_HandlerReturnsError_StillForwardsWarnings)
+TEST_F(RPCDefaultProcessorTest, SpecHandler_HandlerReturnsError_StillForwardsWarnings)
 {
     runSpawn([](auto yield) {
         FailingTypedHandlerFake const handler;
@@ -154,7 +113,7 @@ TEST_F(RPCDefaultProcessorTest, NewSpecHandler_HandlerReturnsError_StillForwards
     });
 }
 
-TEST_F(RPCDefaultProcessorTest, NewSpecHandler_DeprecatedFieldAbsent_NoWarnings)
+TEST_F(RPCDefaultProcessorTest, SpecHandler_DeprecatedFieldAbsent_NoWarnings)
 {
     runSpawn([](auto yield) {
         TypedHandlerFake const handler;

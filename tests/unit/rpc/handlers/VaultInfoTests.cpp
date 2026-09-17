@@ -70,27 +70,27 @@ generateTestValuesForParametersTest()
             .testJson = R"JSON({
                 "idk": "idk"
             })JSON",
-            .expectedError = "malformedRequest",
-            .expectedErrorCode = ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
+            .expectedError = "invalidParams",
+            .expectedErrorCode = RippledError::RpcInvalidParams,
+            .expectedErrorMessage = "Must specify either 'vault_id' or both 'owner' and 'seq'."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "MissingOwnerInVault",
             .testJson = R"JSON({
                 "seq": 4
             })JSON",
-            .expectedError = "malformedRequest",
-            .expectedErrorCode = ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
+            .expectedError = "invalidParams",
+            .expectedErrorCode = RippledError::RpcInvalidParams,
+            .expectedErrorMessage = "Must specify either 'vault_id' or both 'owner' and 'seq'."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "MissingSeqInVault",
             .testJson = R"JSON({
                 "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
             })JSON",
-            .expectedError = "malformedRequest",
-            .expectedErrorCode = ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
+            .expectedError = "invalidParams",
+            .expectedErrorCode = RippledError::RpcInvalidParams,
+            .expectedErrorMessage = "Must specify either 'vault_id' or both 'owner' and 'seq'."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "SeqNotAnInteger",
@@ -150,9 +150,9 @@ generateTestValuesForParametersTest()
                 kVaultId,
                 kAccount
             ),
-            .expectedError = "malformedRequest",
-            .expectedErrorCode = ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
+            .expectedError = "invalidParams",
+            .expectedErrorCode = RippledError::RpcInvalidParams,
+            .expectedErrorMessage = "Must specify either 'vault_id' or both 'owner' and 'seq'."
         }
     };
 }
