@@ -490,7 +490,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "No such market."
+            .expectedErrorMessage = "badMarket"
         },
         ParameterTestBundle{
             .testName = "TakerGetsMptIdAndCurrency",
@@ -585,7 +585,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "No such market."
+            .expectedErrorMessage = "badMarket"
         },
         // The "account one" issuer (rrrrrrrrrrrrrrrrrrrrBZbvji == xrpl::noAccount()) is rejected,
         // mirroring rippled's parseTakerIssuerJSON "bad issuer account one" check.
