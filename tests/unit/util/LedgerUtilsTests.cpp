@@ -91,7 +91,9 @@ TEST(LedgerUtilsTests, DeletionBlockerTypes)
     };
 
     static_assert(std::size(kDeletionBlockers) == kTestedTypes.size());
-    static_assert(std::ranges::any_of(kTestedTypes, [](auto const& type) {
+    // all_of, not any_of: with the size check above this pins the set exactly, so a swapped
+    // or missing blocker fails instead of being masked by the remaining matches.
+    static_assert(std::ranges::all_of(kTestedTypes, [](auto const& type) {
         return std::find(std::cbegin(kDeletionBlockers), std::cend(kDeletionBlockers), type) !=
             std::cend(kDeletionBlockers);
     }));
