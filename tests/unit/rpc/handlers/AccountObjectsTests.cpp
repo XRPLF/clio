@@ -962,6 +962,187 @@ TEST_F(
     });
 }
 
+// `sponsored` mirrors xrpld: a trust line is sponsored via sfHighSponsor OR sfLowSponsor,
+// every other supported type via sfSponsor. sfSponsor is a common field on all ledger entries
+// (LedgerFormats::getCommonFields), so any entry can carry one.
+namespace {
+
+// Owner-dir fixture shared by the sponsored filter tests: two sponsored trust lines (high and
+// low side), a sponsored pay channel, and an unsponsored offer.
+std::vector<Blob>
+makeSponsoredMixObjects()
+{
+    auto lineHigh = createRippleStateLedgerObject(
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
+    );
+    lineHigh.setAccountID(xrpl::sfHighSponsor, getAccountIdWithString(kAccount2));
+
+    auto lineLow = createRippleStateLedgerObject(
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
+    );
+    lineLow.setAccountID(xrpl::sfLowSponsor, getAccountIdWithString(kAccount2));
+
+    auto channel = createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
+    channel.setAccountID(xrpl::sfSponsor, getAccountIdWithString(kAccount2));
+
+    auto const offer = createOfferLedgerObject(
+        kAccount,
+        10,
+        20,
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
+    );
+
+    return {
+        lineHigh.getSerializer().peekData(),
+        lineLow.getSerializer().peekData(),
+        channel.getSerializer().peekData(),
+        offer.getSerializer().peekData()
+    };
+}
+
+}  // namespace
+
+TEST_F(RPCAccountObjectsHandlerTest, SponsoredFilterTrueReturnsOnlySponsored)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(account).key, kMaxSeq, _))
+        .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = createOwnerDirLedgerObject(
+        {xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1}},
+        kIndex1
+    );
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::ownerDir(account).key, kMaxSeq, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(
+        *backend_, doFetchLedgerObject(xrpl::keylet::nftokenPageMax(account).key, kMaxSeq, _)
+    )
+        .WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(makeSponsoredMixObjects()));
+
+    static auto const kInput = boost::json::parse(
+        fmt::format(R"JSON({{"account": "{}", "sponsored": true}})JSON", kAccount)
+    );
+
+    auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_TRUE(output);
+        // two trust lines (high/low sponsor) + the pay channel; the offer is unsponsored
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 3);
+    });
+}
+
+TEST_F(RPCAccountObjectsHandlerTest, SponsoredFilterFalseReturnsOnlyUnsponsored)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(account).key, kMaxSeq, _))
+        .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = createOwnerDirLedgerObject(
+        {xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1}},
+        kIndex1
+    );
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::ownerDir(account).key, kMaxSeq, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(
+        *backend_, doFetchLedgerObject(xrpl::keylet::nftokenPageMax(account).key, kMaxSeq, _)
+    )
+        .WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(makeSponsoredMixObjects()));
+
+    static auto const kInput = boost::json::parse(
+        fmt::format(R"JSON({{"account": "{}", "sponsored": false}})JSON", kAccount)
+    );
+
+    auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_TRUE(output);
+        auto const& objects = output.result->as_object().at("account_objects").as_array();
+        ASSERT_EQ(objects.size(), 1);
+        EXPECT_EQ(objects.at(0).as_object().at("LedgerEntryType").as_string(), "Offer");
+    });
+}
+
+// NFTokenPage is deliberately absent from isLedgerEntrySupportedBySponsorship, so it needs its
+// own sfSponsor read; without it a sponsored page would be misreported as unsponsored.
+TEST_F(RPCAccountObjectsHandlerTest, SponsoredFilterTrueMatchesSponsoredNFTokenPage)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(account).key, kMaxSeq, _))
+        .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::ownerDir(account).key, kMaxSeq, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
+
+    auto const nftPage2KK =
+        xrpl::keylet::nftokenPage(xrpl::keylet::nftokenPageMin(account), xrpl::uint256{kIndex1})
+            .key;
+
+    auto sponsoredPage = createNftTokenPage(
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, nftPage2KK
+    );
+    sponsoredPage.setAccountID(xrpl::sfSponsor, getAccountIdWithString(kAccount2));
+    EXPECT_CALL(
+        *backend_, doFetchLedgerObject(xrpl::keylet::nftokenPageMax(account).key, kMaxSeq, _)
+    )
+        .WillOnce(Return(sponsoredPage.getSerializer().peekData()));
+
+    auto const plainPage = createNftTokenPage(
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, std::nullopt
+    );
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftPage2KK, kMaxSeq, _))
+        .WillOnce(Return(plainPage.getSerializer().peekData()));
+
+    auto const offer = createOfferLedgerObject(
+        kAccount,
+        10,
+        20,
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
+    );
+    EXPECT_CALL(*backend_, doFetchLedgerObjects)
+        .WillOnce(Return(std::vector<Blob>{offer.getSerializer().peekData()}));
+
+    static auto const kInput = boost::json::parse(
+        fmt::format(R"JSON({{"account": "{}", "sponsored": true}})JSON", kAccount)
+    );
+
+    auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_TRUE(output);
+        auto const& objects = output.result->as_object().at("account_objects").as_array();
+        ASSERT_EQ(objects.size(), 1);
+        EXPECT_EQ(objects.at(0).as_object().at("LedgerEntryType").as_string(), "NFTokenPage");
+        EXPECT_TRUE(objects.at(0).as_object().contains("Sponsor"));
+    });
+}
+
 TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
 {
     static constexpr auto kExpectedOut = R"JSON({

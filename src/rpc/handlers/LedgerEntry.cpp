@@ -395,6 +395,16 @@ resolveLocator(Input const& input, uint32_t apiVersion)
         });
     }
 
+    if (input.sponsorship.has_value()) {
+        return locatorFrom(
+            *input.sponsorship, xrpl::ltSPONSORSHIP, [](le::SponsorshipEntry const& entry) {
+                return LocatorOrStatus{
+                    Locator{.key = xrpl::keylet::sponsorship(entry.sponsor, entry.sponsee).key}
+                };
+            }
+        );
+    }
+
     if (apiVersion == 1u)
         return std::unexpected{Status{ClioError::RpcUnknownOption}};
 

@@ -3444,6 +3444,37 @@ generateTestValuesForNormalPathTest()
             .mockedEntity =
                 createDelegateObject(kAccount, kAccount2, kIndex1, 0, xrpl::uint256{0}, 0)
         },
+        NormalPathTestBundle{
+            .testName = "SponsorshipViaStringIndex",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "binary": true,
+                    "sponsorship": "{}"
+                }})JSON",
+                kIndex1
+            ),
+            .expectedIndex = xrpl::uint256{kIndex1},
+            .mockedEntity = xrpl::STLedgerEntry{xrpl::ltSPONSORSHIP, xrpl::uint256{kIndex1}}
+        },
+        NormalPathTestBundle{
+            .testName = "SponsorshipViaObject",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "binary": true,
+                    "sponsorship": {{
+                        "sponsor": "{}",
+                        "sponsee": "{}"
+                    }}
+                }})JSON",
+                kAccount,
+                kAccount2
+            ),
+            .expectedIndex = xrpl::keylet::sponsorship(
+                                 getAccountIdWithString(kAccount), getAccountIdWithString(kAccount2)
+            )
+                                 .key,
+            .mockedEntity = xrpl::STLedgerEntry{xrpl::ltSPONSORSHIP, xrpl::uint256{kIndex1}}
+        },
     };
 }
 
@@ -3901,6 +3932,11 @@ INSTANTIATE_TEST_CASE_P(
             .testName = "Delegate",
             .field = "delegate",
             .expectedType = xrpl::ltDELEGATE
+        },
+        LedgerEntryHexKeyTypeTestBundle{
+            .testName = "Sponsorship",
+            .field = "sponsorship",
+            .expectedType = xrpl::ltSPONSORSHIP
         },
         LedgerEntryHexKeyTypeTestBundle{
             .testName = "XChainOwnedClaimId",
