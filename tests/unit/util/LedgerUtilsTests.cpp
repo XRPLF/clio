@@ -45,7 +45,8 @@ TEST(LedgerUtilsTests, LedgerObjectTypeList)
         JS(loan_broker),
         JS(loan),
         JS(nunl),
-        JS(delegate)
+        JS(delegate),
+        JS(sponsorship)
     };
 
     static_assert(std::size(kTypesList) == kTypes.size());
@@ -85,7 +86,8 @@ TEST(LedgerUtilsTests, DeletionBlockerTypes)
         xrpl::ltMPTOKEN_ISSUANCE,
         xrpl::ltMPTOKEN,
         xrpl::ltPERMISSIONED_DOMAIN,
-        xrpl::ltLOAN
+        xrpl::ltLOAN,
+        xrpl::ltSPONSORSHIP
     };
 
     static_assert(std::size(kDeletionBlockers) == kTestedTypes.size());
