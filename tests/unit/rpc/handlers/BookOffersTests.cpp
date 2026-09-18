@@ -194,8 +194,10 @@ generateParameterBookOffersTestBundles()
             .expectedErrorMessage = "Source currency is malformed."
         },
         ParameterTestBundle{
-            // A present-but-non-string currency is reported by validateTakerJSON as an
-            // expectedFieldError ('<field>.currency', not string) before the per-field validators.
+            // Clio deliberately skips the early "is currency a string" check (see kTakerValidator)
+            // and lets it fall through to the section's own currency validator, which is wrapped
+            // in withCustomError(currency, RpcDstAmtMalformed) with no message override, so the
+            // default rippled message/token for that code is what surfaces.
             .testName = "TakerGetsCurrencyNotString",
             .testJson = R"JSON({
                 "taker_gets": {

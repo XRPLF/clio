@@ -151,8 +151,8 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
     });
 }
 
-// `transaction` is validated by rpc-spec's uint256 converter, which reports one
-// format-agnostic message for both a non-string and an unparsable hash.
+// `transaction` is validated by rpc-spec's uint256 converter, which reports a distinct
+// message for a non-string value versus an unparsable (but string) hash.
 TEST_F(RPCTxTest, TransactionNotString)
 {
     runSpawn([this](auto yield) {

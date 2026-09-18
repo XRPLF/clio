@@ -18,8 +18,13 @@
 namespace rpc {
 
 /**
- * @brief The mpt_holders command asks the Clio server for all holders of a particular
+ * @brief The mpt_holders command asks the Clio server for holders of a particular
  * MPTokenIssuance.
+ *
+ * When `accounts` is provided, those accounts are looked up directly by
+ * `keylet::mptoken` instead of scanning the holder index. Duplicate accounts are
+ * collapsed in first-seen order and non-holders are omitted. This filtered mode is
+ * not paginated, so `marker` and `limit` are rejected.
  */
 class MPTHoldersHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::mpt_holders::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
@@ -28,6 +33,7 @@ public:
     static constexpr auto kLimitMin = rpc::spec::handlers::mpt_holders::kLimitMin;
     static constexpr auto kLimitMax = rpc::spec::handlers::mpt_holders::kLimitMax;
     static constexpr auto kLimitDefault = rpc::spec::handlers::mpt_holders::kLimitDefault;
+    static constexpr auto kMaxAccounts = rpc::spec::handlers::mpt_holders::kMaxAccounts;
 
     /**
      * @brief A struct to hold the output data of the command
