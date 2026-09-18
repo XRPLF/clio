@@ -119,12 +119,16 @@ constexpr auto kHexLocators = std::to_array<HexLocator>({
 LocatorOrStatus
 directoryLocator(le::DirectoryEntry const& entry)
 {
-    if (entry.dirRoot.has_value() == entry.owner.has_value()) {
-        return std::unexpected{Status{
-            RippledError::RpcInvalidParams,
-            "Must have exactly one of `owner` and `dir_root` fields."
-        }};
+    // xrpld folds these into a single "exactly one of" check; Clio reports them separately.
+    // This should be unified after xrpld is migrated to rpc-spec.
+    if (entry.dirRoot.has_value() and entry.owner.has_value()) {
+        return std::unexpected{
+            Status{RippledError::RpcInvalidParams, "mayNotSpecifyBothDirRootAndOwner"}
+        };
     }
+
+    if (not entry.dirRoot.has_value() and not entry.owner.has_value())
+        return std::unexpected{Status{RippledError::RpcInvalidParams, "missingOwnerOrDirRoot"}};
 
     auto const subIndex = entry.subIndex.value_or(0);
     if (entry.dirRoot.has_value())
@@ -139,8 +143,7 @@ depositPreauthLocator(le::DepositPreauthEntry const& entry)
     // Exactly one of authorized or authorized_credentials MUST exist.
     if (entry.authorized.has_value() == entry.authorizedCredentials.has_value()) {
         return std::unexpected{Status{
-            ClioError::RpcMalformedRequest,
-            "Must have exactly one of `authorized` and `authorized_credentials`."
+            ClioError::RpcMalformedRequest, "Must have one of authorized or authorized_credentials."
         }};
     }
 

@@ -67,19 +67,19 @@ generateTestValuesForParametersTest()
             .testName = "ledger_indexInvalid",
             .testJson = R"JSON({"ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         LedgerDataParamTestCaseBundle{
             .testName = "ledger_hashInvalid",
             .testJson = R"JSON({"ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash'."
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         LedgerDataParamTestCaseBundle{
             .testName = "ledger_hashNotString",
             .testJson = R"JSON({"ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         LedgerDataParamTestCaseBundle{
             .testName = "binaryNotBool",
@@ -109,7 +109,7 @@ generateTestValuesForParametersTest()
             .testName = "markerInvalid",
             .testJson = R"JSON({"marker": "xxx"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'marker'."
+            .expectedErrorMessage = "markerMalformed"
         },
         LedgerDataParamTestCaseBundle{
             .testName = "markerOutOfOrder",

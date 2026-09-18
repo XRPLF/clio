@@ -706,9 +706,7 @@ TEST_F(RPCHelpersTest, ParseBookBadMarket)
         auto const book = rpc::parseBook(usd, usd, std::nullopt);
         ASSERT_FALSE(book.has_value());
         EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
-        // badMarket carries no explicit message; it renders from the code's default, matching
-        // rippled's "No such market.".
-        EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
+        EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "badMarket");
     }
 
     // Identical MPT assets on both sides.
@@ -719,9 +717,7 @@ TEST_F(RPCHelpersTest, ParseBookBadMarket)
         auto const book = rpc::parseBook(mpt, mpt, std::nullopt);
         ASSERT_FALSE(book.has_value());
         EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
-        // badMarket carries no explicit message; it renders from the code's default, matching
-        // rippled's "No such market.".
-        EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
+        EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "badMarket");
     }
 }
 
@@ -773,9 +769,7 @@ TEST_F(RPCHelpersTest, ParseBookCurrencyOverloadDelegates)
         );
         ASSERT_FALSE(book.has_value());
         EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
-        // badMarket carries no explicit message; it renders from the code's default, matching
-        // rippled's "No such market.".
-        EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
+        EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "badMarket");
     }
 }
 

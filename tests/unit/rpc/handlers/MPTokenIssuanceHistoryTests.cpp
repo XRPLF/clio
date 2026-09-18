@@ -84,7 +84,7 @@ generateTestValuesForParametersTest()
             .testName = "MalformedMptIssuanceID",
             .testJson = R"JSON({"mpt_issuance_id": "NOTAHEXSTRING"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'mpt_issuance_id'."
+            .expectedErrorMessage = "mpt_issuance_idMalformed"
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "BinaryNotBool",
@@ -158,21 +158,21 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LedgerHashInvalid",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash'."
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LimitNotInt",
