@@ -112,21 +112,21 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": "1"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash'."
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index": "a"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LimitNotInt",
@@ -158,7 +158,7 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker": "xxxx"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'marker'."
+            .expectedErrorMessage = "Malformed cursor."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "NFTMarkerInvalid",
@@ -167,7 +167,7 @@ generateTestValuesForParametersTest()
                 std::numeric_limits<uint32_t>::max()
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'marker'."
+            .expectedErrorMessage = "Malformed cursor."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "DeletionBlockersOnlyInvalidString",

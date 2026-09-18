@@ -152,7 +152,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Missing field 'taker_pays.currency'."
+            .expectedErrorMessage = "Required field 'currency' missing"
         },
         ParameterTestBundle{
             .testName = "TakerGetsMissingCurrency",
@@ -163,7 +163,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Missing field 'taker_gets.currency'."
+            .expectedErrorMessage = "Required field 'currency' missing"
         },
         ParameterTestBundle{
             .testName = "TakerGetsWrongCurrency",
@@ -206,8 +206,8 @@ generateParameterBookOffersTestBundles()
                     "currency": "XRP"
                 }
             })JSON",
-            .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker_gets.currency', not string."
+            .expectedError = "dstAmtMalformed",
+            .expectedErrorMessage = "Destination amount/currency/issuer is malformed."
         },
         ParameterTestBundle{
             .testName = "TakerPaysCurrencyNotString",
@@ -220,8 +220,8 @@ generateParameterBookOffersTestBundles()
                     "currency": "XRP"
                 }
             })JSON",
-            .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker_pays.currency', not string."
+            .expectedError = "srcCurMalformed",
+            .expectedErrorMessage = "Source currency is malformed."
         },
         ParameterTestBundle{
             .testName = "TakerGetsWrongIssuer",
@@ -384,7 +384,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_index": "xxx"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         ParameterTestBundle{
             .testName = "LedgerHashInvalid",
@@ -399,7 +399,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_hash": "xxx"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash'."
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
@@ -414,7 +414,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_hash": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         ParameterTestBundle{
             .testName = "GetsPaysXRPWithIssuer",
@@ -488,7 +488,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "No such market."
+            .expectedErrorMessage = "badMarket"
         },
         ParameterTestBundle{
             .testName = "TakerGetsMptIdAndCurrency",
@@ -583,7 +583,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "No such market."
+            .expectedErrorMessage = "badMarket"
         },
         // The "account one" issuer (rrrrrrrrrrrrrrrrrrrrBZbvji == xrpl::noAccount()) is rejected,
         // mirroring rippled's parseTakerIssuerJSON "bad issuer account one" check.

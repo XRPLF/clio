@@ -163,7 +163,7 @@ TEST_F(RPCTxTest, TransactionNotString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'transaction'.");
+        EXPECT_EQ(err.at("error_message").as_string(), "transactionNotString");
     });
 }
 
@@ -178,7 +178,7 @@ TEST_F(RPCTxTest, TransactionMalformed)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'transaction'.");
+        EXPECT_EQ(err.at("error_message").as_string(), "transactionMalformed");
     });
 }
 
