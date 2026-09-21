@@ -1081,8 +1081,11 @@ TEST_F(RPCAccountObjectsHandlerTest, SponsoredFilterFalseReturnsOnlyUnsponsored)
     });
 }
 
-// NFTokenPage is deliberately absent from isLedgerEntrySupportedBySponsorship, so it needs its
-// own sfSponsor read; without it a sponsored page would be misreported as unsponsored.
+// Pins the NFTokenPage branch of sponsorOf. A page cannot carry sfSponsor in libxrpl 3.4.0
+// (SponsorshipTransfer::preclaim rejects types outside isLedgerEntrySupportedBySponsorship), so
+// this constructs state that the protocol cannot currently produce. It is here to lock in the
+// intended classification for when NFTokenPage joins that allowlist, matching xrpld's own
+// separate read of the page sponsor.
 TEST_F(RPCAccountObjectsHandlerTest, SponsoredFilterTrueMatchesSponsoredNFTokenPage)
 {
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
