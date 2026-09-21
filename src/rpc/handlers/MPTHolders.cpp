@@ -129,7 +129,6 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
 
     auto output = MPTHoldersHandler::Output{};
     output.mptID = to_string(mptID);
-    output.limit = limit;
     output.ledgerIndex = lgrInfo.seq;
 
     // Account-list filter: bounded lookup by key. Duplicates are dropped in first-seen
@@ -152,6 +151,8 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
         return output;
     }
 
+    output.limit = limit;
+
     auto const dbResponse =
         sharedPtrBackend_->fetchMPTHolders(mptID, limit, input.marker, lgrInfo.seq, ctx.yield);
 
@@ -173,11 +174,13 @@ tag_invoke(
 {
     jv = {
         {JS(mpt_issuance_id), output.mptID},
-        {JS(limit), output.limit},
         {JS(ledger_index), output.ledgerIndex},
         {"mptokens", output.mpts},
         {JS(validated), output.validated},
     };
+
+    if (output.limit.has_value())
+        jv.as_object()[JS(limit)] = *(output.limit);
 
     if (output.marker.has_value())
         jv.as_object()[JS(marker)] = *(output.marker);
