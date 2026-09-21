@@ -58,7 +58,7 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
 
             auto const expandTxJsonV1 = [&](data::TransactionAndMetadata const& tx) {
                 if (!input.binary) {
-                    auto [txn, meta] = toExpandedJson(tx, ctx.apiVersion);
+                    auto [txn, meta] = toExpandedJson(tx, ctx.apiVersion, NFTokenjson::ENABLE);
                     txn[JS(metaData)] = std::move(meta);
                     return txn;
                 }
@@ -68,7 +68,7 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
             auto const isoTimeStr = xrpl::toStringIso(lgrInfo.closeTime);
 
             auto const expandTxJsonV2 = [&](data::TransactionAndMetadata const& tx) {
-                auto [txn, meta] = toExpandedJson(tx, ctx.apiVersion);
+                auto [txn, meta] = toExpandedJson(tx, ctx.apiVersion, NFTokenjson::ENABLE);
                 if (!input.binary) {
                     boost::json::object entry;
                     entry[JS(validated)] = true;
