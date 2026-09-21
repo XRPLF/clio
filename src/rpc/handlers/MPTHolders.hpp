@@ -43,7 +43,7 @@ public:
         uint32_t ledgerIndex;
         std::string mptID;
         bool validated = true;
-        uint32_t limit;
+        std::optional<uint32_t> limit;
         std::optional<std::string> marker;
     };
 

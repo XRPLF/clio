@@ -885,7 +885,6 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilter)
     auto const currentOutput = fmt::format(
         R"JSON({{
             "mpt_issuance_id": "{}",
-            "limit": 50,
             "ledger_index": 30,
             "mptokens": [{}, {}],
             "validated": true
@@ -939,7 +938,6 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterMissingHolderOmitted)
     auto const currentOutput = fmt::format(
         R"JSON({{
             "mpt_issuance_id": "{}",
-            "limit": 50,
             "ledger_index": 30,
             "mptokens": [{}],
             "validated": true
@@ -1049,7 +1047,6 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterAllAbsent)
     auto const currentOutput = fmt::format(
         R"JSON({{
             "mpt_issuance_id": "{}",
-            "limit": 50,
             "ledger_index": 30,
             "mptokens": [],
             "validated": true
@@ -1100,7 +1097,6 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterConfidentialFields)
     auto const currentOutput = fmt::format(
         R"JSON({{
             "mpt_issuance_id": "{}",
-            "limit": 50,
             "ledger_index": 30,
             "mptokens": [{{
                 "account": "{}",
@@ -1209,7 +1205,6 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterSpecificLedger)
     auto const currentOutput = fmt::format(
         R"JSON({{
             "mpt_issuance_id": "{}",
-            "limit": 50,
             "ledger_index": {},
             "mptokens": [{}],
             "validated": true
@@ -1260,7 +1255,6 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterDuplicates)
     auto const currentOutput = fmt::format(
         R"JSON({{
             "mpt_issuance_id": "{}",
-            "limit": 50,
             "ledger_index": 30,
             "mptokens": [{}, {}],
             "validated": true
