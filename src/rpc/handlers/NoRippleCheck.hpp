@@ -1,25 +1,19 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/Errors.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/JsonBool.hpp"
-#include "rpc/common/MetaProcessors.hpp"
-#include "rpc/common/Modifiers.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <xrpl/protocol/ErrorCodes.h>
-#include <xrpl/protocol/jss.h>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/noripple_check/Types.hpp>
 
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace rpc {
@@ -32,7 +26,8 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/noripple_check.html
  */
-class NoRippleCheckHandler {
+class NoRippleCheckHandler
+    : public rpc::spec::HandlerFor<rpc::spec::handlers::noripple_check::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -52,18 +47,6 @@ public:
         bool validated = true;
     };
 
-    /**
-     * @brief A struct to hold the input data for the command
-     */
-    struct Input {
-        std::string account;
-        bool roleGateway = false;
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = kLimitDefault;
-        JsonBool transactions{false};
-    };
-
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -74,41 +57,6 @@ public:
     NoRippleCheckHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
         : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const kRpcSpecV1 = RpcSpec{
-            {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
-            {JS(role),
-             validation::Required{},
-             meta::WithCustomError{
-                 validation::OneOf{"gateway", "user"},
-                 Status{RippledError::RpcInvalidParams, "role field is invalid"}
-             }},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(limit),
-             validation::Type<uint32_t>(),
-             validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}}
-        };
-
-        static auto const kRpcSpec = RpcSpec{
-            kRpcSpecV1,
-            {
-                {JS(transactions), validation::Type<bool>()},
-            }
-        };
-
-        return apiVersion == 1 ? kRpcSpecV1 : kRpcSpec;
     }
 
     /**
@@ -130,14 +78,5 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 }  // namespace rpc

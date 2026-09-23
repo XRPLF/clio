@@ -569,12 +569,12 @@ getLedgerHeaderFromLedgerSpecifier(
         return *maybeLgrInfo;
     }
 
-    if (resolved.isShortcut()) {
-        auto const shortcut = std::get<rpc::spec::LedgerShortcut>(resolved.value);
-        ASSERT(
-            shortcut == rpc::spec::LedgerShortcut::Validated,
-            "current/closed ledgers must be forwarded before dispatch"
-        );
+    // `current` and `closed` name ledgers Clio does not hold. Forwarding diverts them for the
+    // methods xrpld can answer; Clio-only methods are not forwarded, so they reach here.
+    if (resolved.isShortcut() and
+        std::get<rpc::spec::LedgerShortcut>(resolved.value) !=
+            rpc::spec::LedgerShortcut::Validated) {
+        return std::unexpected{Status{RippledError::RpcInvalidParams, "ledgerIndexMalformed"}};
     }
 
     auto const ledgerSequence = resolved.isSequence() ? std::get<uint32_t>(resolved.value) : maxSeq;
@@ -1677,7 +1677,7 @@ parseBook(boost::json::object const& request)
     }
 
     if (payCurrency == getCurrency && payIssuer == getIssuer)
-        return std::unexpected{Status{RippledError::RpcBadMarket, "badMarket"}};
+        return std::unexpected{Status{RippledError::RpcBadMarket}};
 
     std::optional<xrpl::uint256> domainID;
     if (request.contains("domain")) {
@@ -1782,49 +1782,6 @@ toJsonWithBinaryTx(data::TransactionAndMetadata const& txnPlusMeta, std::uint32_
     obj[metaKey] = xrpl::strHex(txnPlusMeta.metadata);
     obj[JS(tx_blob)] = xrpl::strHex(txnPlusMeta.transaction);
     return obj;
-}
-
-std::optional<DelegateFilter::Role>
-parseDelegateType(boost::json::value const& delegateType)
-{
-    if (not delegateType.is_string())
-        return {};
-
-    auto const& type = delegateType.as_string();
-
-    if (type == JS(authorizer))
-        return DelegateFilter::Role::Authorizer;
-    if (type == JS(actor))
-        return DelegateFilter::Role::Actor;
-
-    return {};
-}
-
-std::optional<DelegateFilter>
-parseDelegateFilter(boost::json::object const& delegateObject)
-{
-    if (!delegateObject.contains(JS(delegate_filter)))
-        return {};
-
-    auto const& filterVal = delegateObject.at(JS(delegate_filter));
-    if (!filterVal.is_string())
-        return {};
-
-    auto const delegateTypeOpt = parseDelegateType(filterVal.as_string());
-    if (!delegateTypeOpt.has_value())
-        return {};
-
-    std::optional<std::string> counterParty;
-    if (delegateObject.contains(JS(counter_party))) {
-        auto const& counterpartyVal = delegateObject.at(JS(counter_party));
-
-        if (!counterpartyVal.is_string())
-            return {};
-
-        counterParty = counterpartyVal.as_string();
-    }
-
-    return DelegateFilter{*delegateTypeOpt, std::move(counterParty)};
 }
 
 }  // namespace rpc

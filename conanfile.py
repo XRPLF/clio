@@ -17,8 +17,8 @@ class ClioConan(ConanFile):
         "fmt/12.1.0",
         "libbacktrace/cci.20210118",
         "spdlog/1.17.0",
-        "xrpl-rpc-spec/0.1.7",
-        "xrpl/3.4.0-rc1",
+        "xrpl-rpc-spec/0.1.17",
+        "xrpl/3.4.0",
     ]
 
     default_options = {

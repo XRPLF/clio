@@ -151,6 +151,37 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
     });
 }
 
+// `transaction` is validated by rpc-spec's uint256 converter, which reports a distinct
+// message for a non-string value versus an unparsable (but string) hash.
+TEST_F(RPCTxTest, TransactionNotString)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
+        auto const req = boost::json::parse(R"JSON({"command": "tx", "transaction": 123})JSON");
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "transactionNotString");
+    });
+}
+
+TEST_F(RPCTxTest, TransactionMalformed)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
+        auto const req =
+            boost::json::parse(R"JSON({"command": "tx", "transaction": "nothex"})JSON");
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "transactionMalformed");
+    });
+}
+
 TEST_F(RPCTxTest, InvalidBinaryV1)
 {
     TransactionAndMetadata tx;

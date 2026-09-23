@@ -2,7 +2,6 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/AnyHandler.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Ledger.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
@@ -16,6 +15,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/RpcSpecView.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -36,6 +37,7 @@ constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25
 constexpr auto kIndex1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 constexpr auto kIndex2 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B1";
 constexpr auto kCurrency = "0158415500000000C1F76FF6ECB0BAC600000000";
+constexpr auto kNftId = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
 
 constexpr auto kRangeMin = 10;
 constexpr auto kRangeMax = 30;
@@ -574,6 +576,42 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
         // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
         EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
+    });
+}
+
+// xrpld injects the NFT synthetic fields into `ledger` transaction metadata since 3.4.0
+// (insertAllSyntheticInJson), matching what `tx` and `account_tx` already returned.
+TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryIncludesNFTokenID)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kRangeMax);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _)).WillByDefault(Return(ledgerHeader));
+
+    auto tx = createAcceptNftBuyerOfferTxWithMetadata(kAccount, 1, 50, kNftId, kIndex1);
+    tx.ledgerSequence = kRangeMax;
+
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger).Times(1);
+    ON_CALL(*backend_, fetchAllTransactionsInLedger(kRangeMax, _))
+        .WillByDefault(Return(std::vector{tx}));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
+        auto const req = boost::json::parse(
+            R"JSON({
+                "binary": false,
+                "expand": true,
+                "transactions": true
+            })JSON"
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+
+        auto const& txs =
+            output.result->as_object().at("ledger").as_object().at("transactions").as_array();
+        ASSERT_EQ(txs.size(), 1);
+        EXPECT_EQ(
+            txs.at(0).as_object().at("metaData").as_object().at("nftoken_id").as_string(), kNftId
+        );
     });
 }
 
@@ -1393,7 +1431,7 @@ struct RPCLedgerHandlerSpecCheckTestBundle {
 
 struct RPCLedgerHandlerSpecCheckTest
     : ::testing::TestWithParam<RPCLedgerHandlerSpecCheckTestBundle> {
-    RpcSpec spec = LedgerHandler::spec(2);
+    rpc::spec::RpcSpecView spec = LedgerHandler::spec(2);
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1439,7 +1477,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(RPCLedgerHandlerSpecCheckTest, CheckSpec)
 {
-    auto const warnings = spec.check(GetParam().json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(GetParam().json));
     ASSERT_EQ(warnings.size(), GetParam().expectedWarning.size());
     for (auto const& warn : warnings) {
         ASSERT_TRUE(warn.is_object());

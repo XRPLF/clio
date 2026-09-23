@@ -2,16 +2,13 @@
 
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <fmt/format.h>
 #include <rpcspec/Errors.hpp>
 #include <xrpl/basics/strHex.h>
@@ -43,11 +40,10 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "NoRippleCheck's ledger range must be available");
 
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -55,9 +51,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const accountID = accountFromStringStrict(input.account);
-    auto const keylet =
-        xrpl::keylet::account(*accountID).key;  // NOLINT(bugprone-unchecked-optional-access)
+    auto const& accountID = input.account;
+    auto const keylet = xrpl::keylet::account(accountID).key;
     auto const accountObj = sharedPtrBackend_->fetchLedgerObject(keylet, lgrInfo.seq, ctx.yield);
 
     if (!accountObj)
@@ -94,8 +89,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
         output.problems.emplace_back("You should immediately set your default ripple flag");
 
         if (input.transactions) {
-            auto tx =
-                getBaseTx(*accountID, accountSeq++);  // NOLINT(bugprone-unchecked-optional-access)
+            auto tx = getBaseTx(accountID, accountSeq++);
             tx[JS(TransactionType)] = "AccountSet";
             tx[JS(SetFlag)] = xrpl::asfDefaultRipple;
             output.transactions->push_back(tx);
@@ -106,7 +100,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
 
     traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
+        accountID,
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},
@@ -154,7 +148,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
                             xrpl::Issue{limitAmount.get<xrpl::Issue>().currency, peer}
                         );
 
-                        auto tx = getBaseTx(*accountID, accountSeq++);
+                        auto tx = getBaseTx(accountID, accountSeq++);
 
                         tx[JS(TransactionType)] = "TrustSet";
                         tx[JS(LimitAmount)] =
@@ -174,33 +168,6 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
     output.ledgerHash = xrpl::strHex(lgrInfo.hash);
 
     return output;
-}
-
-NoRippleCheckHandler::Input
-tag_invoke(boost::json::value_to_tag<NoRippleCheckHandler::Input>, boost::json::value const& jv)
-{
-    auto input = NoRippleCheckHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    input.account = boost::json::value_to<std::string>(jsonObject.at(JS(account)));
-    input.roleGateway = jsonObject.at(JS(role)).as_string() == "gateway";
-
-    if (jsonObject.contains(JS(limit)))
-        input.limit = util::integralValueAs<uint32_t>(jsonObject.at(JS(limit)));
-
-    if (jsonObject.contains(JS(transactions)))
-        input.transactions = boost::json::value_to<JsonBool>(jsonObject.at(JS(transactions)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    return input;
 }
 
 void

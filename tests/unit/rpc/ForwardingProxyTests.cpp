@@ -119,6 +119,17 @@ generateTestValuesForParametersTest()
          .called = 1,
          .isAdmin = isAdmin,
          .expected = shouldForward},
+        // The isClioOnly check short-circuits before the current/closed check, so a Clio-only
+        // method is NOT forwarded even when it names a ledger Clio does not hold. Its handler has
+        // to reject the shortcut itself - see getLedgerHeaderFromLedgerSpecifier.
+        {.testName = "ShouldForwardReturnsFalseIfClioOnlyEvenWithCurrentLedger",
+         .apiVersion = 2u,
+         .method = "nft_info",
+         .testJson = R"JSON({"ledger_index": "current"})JSON",
+         .mockedIsClioOnly = isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = !shouldForward},
         {.testName = "ShouldForwardReturnsTrueIfCurrentLedgerSpecified",
          .apiVersion = 2u,
          .method = "anymethod",

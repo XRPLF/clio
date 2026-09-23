@@ -19,6 +19,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
@@ -475,7 +476,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "badMarket"
+            .expectedErrorMessage = "No such market."
         },
         SubscribeParamTestCaseBundle{
             .testName = "BooksItemInvalidSnapshot",
@@ -1175,7 +1176,7 @@ TEST(RPCSubscribeHandlerSpecTest, DeprecatedFields)
         {"rt_accounts", true}
     };
     auto const spec = SubscribeHandler::spec(2);
-    auto const warnings = spec.check(json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(json));
     ASSERT_EQ(warnings.size(), 1);
     auto const& warning = warnings[0];
     ASSERT_TRUE(warning.is_object());

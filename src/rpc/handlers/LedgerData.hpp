@@ -1,26 +1,25 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/Checkers.hpp"
-#include "rpc/common/MetaProcessors.hpp"
-#include "rpc/common/Specs.hpp"
+#include "rpc/Errors.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/ledger_data/Types.hpp>
 #include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/ErrorCodes.h>
-#include <xrpl/protocol/jss.h>
+#include <xrpl/protocol/LedgerFormats.h>
 
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace rpc {
 
@@ -30,15 +29,15 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/ledger_data.html
  */
-class LedgerDataHandler {
+class LedgerDataHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::ledger_data::Input> {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     util::Logger log_{"RPC"};
 
 public:
     // constants
-    static constexpr uint32_t kLimitBinary = 2048;
-    static constexpr uint32_t kLimitJson = 256;
+    static constexpr auto kLimitBinary = rpc::spec::handlers::ledger_data::kLimitBinary;
+    static constexpr auto kLimitJson = rpc::spec::handlers::ledger_data::kLimitJson;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -54,23 +53,6 @@ public:
         bool validated = true;
     };
 
-    /**
-     * @brief A struct to hold the input data for the command
-     *
-     * @note `outOfOrder` is only for Clio, there is no document, traverse via seq diff (outOfOrder
-     * implementation is copied from old rpc handler)
-     */
-    struct Input {
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        bool binary = false;
-        uint32_t limit = LedgerDataHandler::kLimitJson;  // max 256 for json ; 2048 for binary
-        std::optional<xrpl::uint256> marker;
-        std::optional<uint32_t> diffMarker;
-        bool outOfOrder = false;
-        xrpl::LedgerEntryType type = xrpl::LedgerEntryType::ltANY;
-    };
-
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -81,30 +63,6 @@ public:
     LedgerDataHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
         : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const kRpcSpec = RpcSpec{
-            {JS(binary), validation::Type<bool>{}},
-            {"out_of_order", validation::Type<bool>{}},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Min(1u)},
-            {JS(marker),
-             validation::Type<uint32_t, std::string>{},
-             meta::IfType<std::string>{validation::CustomValidators::uint256HexStringValidator}},
-            {JS(type), validation::CustomValidators::ledgerTypeValidator},
-            {JS(ledger), check::Deprecated{}},
-        };
-        return kRpcSpec;
     }
 
     /**
@@ -126,14 +84,6 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
+
 }  // namespace rpc

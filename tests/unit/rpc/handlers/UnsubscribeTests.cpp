@@ -15,6 +15,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/protocol/Book.h>
 
 #include <cstdint>
@@ -438,7 +439,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "badMarket"
+            .expectedErrorMessage = "No such market."
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemInvalidBoth",
@@ -685,7 +686,7 @@ TEST(RPCUnsubscribeSpecTest, DeprecatedFields)
         {"rt_transactions", {"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"}},
     };
     auto const spec = UnsubscribeHandler::spec(2);
-    auto const warnings = spec.check(json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(json));
     ASSERT_EQ(warnings.size(), 1);
     ASSERT_TRUE(warnings[0].is_object());
     auto const& warning = warnings[0].as_object();

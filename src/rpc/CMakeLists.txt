@@ -16,9 +16,6 @@ target_sources(
         CredentialHelpers.cpp
         Counters.cpp
         WorkQueue.cpp
-        common/Specs.cpp
-        common/Validators.cpp
-        common/MetaProcessors.cpp
         common/impl/APIVersionParser.cpp
         common/impl/HandlerProvider.cpp
         common/impl/HandlerRegistry.cpp
@@ -60,5 +57,8 @@ target_sources(
         handlers/Unsubscribe.cpp
         handlers/VaultInfo.cpp
 )
+
+rpcspec_generate_instantiations(OUT_VAR rpcspec_instantiations)
+target_sources(clio_rpc PRIVATE ${rpcspec_instantiations})
 
 target_link_libraries(clio_rpc PUBLIC clio_util clio_data rpcspec::rpcspec)

@@ -13,6 +13,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
@@ -703,6 +704,43 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
     });
 }
 
+// The default page size depends on binary vs json, so an omitted `limit` must fall back to
+// kLimitBinary here rather than the json default. Mirrors xrpld's pageLength(isBinary).
+TEST_F(RPCLedgerDataHandlerTest, BinaryNoLimitUsesBinaryDefault)
+{
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend_, fetchLedgerBySequence(kRangeMax, _))
+        .WillByDefault(Return(createLedgerHeader(kLedgerHash, kRangeMax)));
+
+    auto limit = LedgerDataHandler::kLimitBinary + 1;
+    std::vector<Blob> bbs;
+
+    EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(LedgerDataHandler::kLimitBinary);
+    ON_CALL(*backend_, doFetchSuccessorKey(_, kRangeMax, _))
+        .WillByDefault(Return(xrpl::uint256{kIndex2}));
+
+    while ((limit--) != 0u) {
+        auto const line = createRippleStateLedgerObject(
+            "USD", kAccount2, 10, kAccount, 100, kAccount2, 200, kTxnId, 123
+        );
+        bbs.push_back(line.getSerializer().peekData());
+    }
+
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerDataHandler{backend_}};
+        auto const req = boost::json::parse(R"JSON({"binary": true})JSON");
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(
+            output.result->as_object().at("state").as_array().size(),
+            LedgerDataHandler::kLimitBinary
+        );
+    });
+}
+
 TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -891,7 +929,7 @@ TEST(RPCLedgerDataHandlerSpecTest, DeprecatedFields)
         {"ledger", "some"}
     };
     auto const spec = LedgerDataHandler::spec(2);
-    auto const warnings = spec.check(json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(json));
     ASSERT_EQ(warnings.size(), 1);
     ASSERT_TRUE(warnings[0].is_object());
     auto const& warning = warnings[0].as_object();

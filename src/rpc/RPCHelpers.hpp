@@ -313,8 +313,12 @@ getLedgerHeaderFromHashOrSeq(
  * only serves validated data. An unspecified ledger resolves via
  * @c LedgerSpecifier::resolved(), which the spec library fixes to @c validated for Clio.
  *
- * @c current and @c closed cannot reach here: @ref specifiesCurrentOrClosedLedger forwards
- * those upstream before dispatch.
+ * @c current and @c closed name ledgers Clio does not hold, and yield @c invalidParams with
+ * @c ledgerIndexMalformed.
+ * @ref specifiesCurrentOrClosedLedger diverts such requests to xrpld before dispatch, but only
+ * for methods xrpld can answer: @c ForwardingProxy::shouldForward returns early for Clio-only
+ * methods, so those arrive here with the shortcut intact. The spec does not reject the two
+ * shortcuts either, since xrpld needs them.
  *
  * @param backend The backend to use
  * @param yield The coroutine context
@@ -929,23 +933,5 @@ getDeliveredAmount(
     std::uint32_t ledgerSequence,
     uint32_t date
 );
-
-/**
- * @brief Parse the delegate type from a JSON value
- *
- * @param delegateType The JSON value containing the delegate type string
- * @return The parsed delegate type or std::nullopt if the input is invalid or not a string
- */
-std::optional<DelegateFilter::Role>
-parseDelegateType(boost::json::value const& delegateType);
-
-/**
- * @brief Parse a delegate filter object from JSON
- *
- * @param delegateObject The JSON object containing the delegate filter input from user
- * @return The constructed DelegateFilter or std::nullopt if parsing fails
- */
-std::optional<DelegateFilter>
-parseDelegateFilter(boost::json::object const& delegateObject);
 
 }  // namespace rpc

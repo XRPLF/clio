@@ -4,13 +4,10 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
-#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/jss.h>
@@ -29,11 +26,10 @@ TransactionEntryHandler::process(
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "TransactionEntry's ledger range must be available");
 
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -44,8 +40,7 @@ TransactionEntryHandler::process(
     output.apiVersion = ctx.apiVersion;
 
     output.ledgerHeader = *expectedLgrInfo;
-    auto const dbRet =
-        sharedPtrBackend_->fetchTransaction(xrpl::uint256{input.txHash.c_str()}, ctx.yield);
+    auto const dbRet = sharedPtrBackend_->fetchTransaction(input.txHash, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
     // rippled, having two separate commands made sense, as tx would use SQLite
@@ -96,26 +91,6 @@ tag_invoke(
             jv.as_object()[JS(tx_json)].as_object().erase(JS(hash));
         }
     }
-}
-
-TransactionEntryHandler::Input
-tag_invoke(boost::json::value_to_tag<TransactionEntryHandler::Input>, boost::json::value const& jv)
-{
-    auto input = TransactionEntryHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    input.txHash = boost::json::value_to<std::string>(jv.at(JS(tx_hash)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    return input;
 }
 
 }  // namespace rpc

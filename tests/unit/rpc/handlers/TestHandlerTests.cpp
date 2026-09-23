@@ -10,7 +10,6 @@
 
 using namespace std;
 using namespace rpc;
-using namespace rpc::validation;
 using namespace tests::common;
 
 class RPCTestHandlerTest : public HandlerBaseTest {};
@@ -19,7 +18,7 @@ class RPCTestHandlerTest : public HandlerBaseTest {};
 TEST_F(RPCTestHandlerTest, HandlerSuccess)
 {
     runSpawn([](auto yield) {
-        auto const handler = AnyHandler{HandlerFake{}};
+        auto const handler = AnyHandler{TypedHandlerFake{}};
         auto const input = boost::json::parse(R"JSON({
             "hello": "world",
             "limit": 10
@@ -48,7 +47,7 @@ TEST_F(RPCTestHandlerTest, NoInputHandlerSuccess)
 TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
 {
     runSpawn([](auto yield) {
-        auto const handler = AnyHandler{HandlerFake{}};
+        auto const handler = AnyHandler{TypedHandlerFake{}};
         auto const input = boost::json::parse(R"JSON({
             "hello": "not world",
             "limit": 10
@@ -67,7 +66,7 @@ TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
 TEST_F(RPCTestHandlerTest, HandlerInnerErrorHandling)
 {
     runSpawn([](auto yield) {
-        auto const handler = AnyHandler{FailingHandlerFake{}};
+        auto const handler = AnyHandler{FailingTypedHandlerFake{}};
         auto const input = boost::json::parse(R"JSON({
             "hello": "world",
             "limit": 10

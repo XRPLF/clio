@@ -4,24 +4,23 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/JsonUtils.hpp"
 #include "util/LedgerUtils.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/LedgerTypes.hpp>
 #include <xrpl/basics/strHex.h>
+#include <xrpl/ledger/helpers/SponsorHelpers.h>
+#include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/jss.h>
 
 #include <algorithm>
-#include <cstdint>
 #include <iterator>
 #include <optional>
 #include <string>
@@ -37,11 +36,10 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountObject's ledger range must be available");
-    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
         *sharedPtrBackend_,
         ctx.yield,
-        input.ledgerHash,
-        input.ledgerIndex,
+        input.ledger,
         range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
@@ -49,12 +47,9 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const accountID = accountFromStringStrict(input.account);
+    auto const& accountID = input.account;
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        xrpl::keylet::account(*accountID).key,
-        lgrInfo.seq,
-        ctx.yield
+        xrpl::keylet::account(accountID).key, lgrInfo.seq, ctx.yield
     );
 
     if (!accountLedgerObject)
@@ -78,8 +73,40 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
             typeFilter = {*input.type};
     }
 
+    auto const sponsorField = [](xrpl::SLE const& sle,
+                                 xrpl::SField const& field) -> std::optional<xrpl::AccountID> {
+        if (sle.isFieldPresent(field))
+            return sle.getAccountID(field);
+        return std::nullopt;
+    };
+
+    auto const sponsorOf = [&sponsorField](xrpl::SLE const& sle) {
+        // A trust line records a sponsor per side, so either one makes it sponsored.
+        if (sle.getType() == xrpl::ltRIPPLE_STATE) {
+            if (auto const high = sponsorField(sle, xrpl::sfHighSponsor); high.has_value())
+                return high;
+
+            return sponsorField(sle, xrpl::sfLowSponsor);
+        }
+
+        // NFTokenPage is not in isLedgerEntrySupportedBySponsorship's allowlist, so that
+        // predicate alone would report every page as unsponsored; xrpld reads pages on a
+        // separate path for the same reason. No page can actually carry sfSponsor today --
+        // SponsorshipTransfer::preclaim rejects unsupported types with tecNO_PERMISSION -- so
+        // this only starts to matter if NFTokenPage is added to that allowlist upstream.
+        if (sle.getType() == xrpl::ltNFTOKEN_PAGE or xrpl::isLedgerEntrySupportedBySponsorship(sle))
+            return sponsorField(sle, xrpl::sfSponsor);
+
+        return std::optional<xrpl::AccountID>{};
+    };
+
     Output response;
     auto const addToResponse = [&](xrpl::SLE&& sle) {
+        if (input.sponsored.has_value() and
+            sponsorOf(sle).has_value() != static_cast<bool>(*input.sponsored)) {
+            return true;
+        }
+
         if (not typeFilter or
             std::find(std::begin(*typeFilter), std::end(*typeFilter), sle.getType()) !=
                 std::end(*typeFilter)) {
@@ -90,7 +117,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
 
     auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
+        accountID,
         lgrInfo.seq,
         input.limit,
         input.marker,
@@ -105,7 +132,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
     response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
     response.limit = input.limit;
-    response.account = input.account;
+    response.account = xrpl::to_string(accountID);
 
     auto const& nextMarker = *expectedNext;
 
@@ -141,41 +168,6 @@ tag_invoke(
 
     if (output.marker)
         jv.as_object()[JS(marker)] = *(output.marker);
-}
-
-AccountObjectsHandler::Input
-tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json::value const& jv)
-{
-    auto input = AccountObjectsHandler::Input{};
-    auto const& jsonObject = jv.as_object();
-
-    input.account = boost::json::value_to<std::string>(jv.at(JS(account)));
-
-    if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
-
-    if (jsonObject.contains(JS(ledger_index))) {
-        auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
-        if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = *expectedLedgerIndex;
-    }
-
-    if (jsonObject.contains(JS(type))) {
-        input.type = rpc::spec::accountOwnedLedgerTypeFromStr(
-            boost::json::value_to<std::string>(jv.at(JS(type)))
-        );
-    }
-
-    if (jsonObject.contains(JS(limit)))
-        input.limit = util::integralValueAs<uint32_t>(jv.at(JS(limit)));
-
-    if (jsonObject.contains(JS(marker)))
-        input.marker = boost::json::value_to<std::string>(jv.at(JS(marker)));
-
-    if (jsonObject.contains(JS(deletion_blockers_only)))
-        input.deletionBlockersOnly = jsonObject.at(JS(deletion_blockers_only)).as_bool();
-
-    return input;
 }
 
 }  // namespace rpc

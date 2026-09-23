@@ -688,7 +688,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
     std::vector<Blob> bbs;
     auto const offer = createNftSellOffer(kNftId, kAccount);
     bbs.reserve(NFTSellOffersHandler::kLimitMin + 1);
-    for (auto i = 0; i < NFTSellOffersHandler::kLimitMin + 1; i++)
+    for (auto i = 0u; i < NFTSellOffersHandler::kLimitMin + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
@@ -733,7 +733,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
     std::vector<Blob> bbs;
     auto const offer = createNftSellOffer(kNftId, kAccount);
     bbs.reserve(NFTSellOffersHandler::kLimitMax + 1);
-    for (auto i = 0; i < NFTSellOffersHandler::kLimitMax + 1; i++)
+    for (auto i = 0u; i < NFTSellOffersHandler::kLimitMax + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);

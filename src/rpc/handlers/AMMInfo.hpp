@@ -2,18 +2,19 @@
 
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
-#include "rpc/common/Specs.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <xrpl/protocol/AccountID.h>
-#include <xrpl/protocol/Issue.h>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/amm_info/Types.hpp>
 
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace rpc {
 
@@ -22,7 +23,7 @@ namespace rpc {
  *
  * For more info see: https://xrpl.org/amm_info.html
  */
-class AMMInfoHandler {
+class AMMInfoHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::amm_info::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
@@ -47,18 +48,6 @@ public:
         bool validated = true;
     };
 
-    /**
-     * @brief A struct to hold the input data for the command
-     */
-    struct Input {
-        std::optional<xrpl::AccountID> accountID;
-        std::optional<xrpl::AccountID> ammAccount;
-        xrpl::Issue issue1 = xrpl::noIssue();
-        xrpl::Issue issue2 = xrpl::noIssue();
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-    };
-
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -74,15 +63,6 @@ public:
         : sharedPtrBackend_(std::move(sharedPtrBackend)), amendmentCenter_{amendmentCenter}
     {
     }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion);
 
     /**
      * @brief Process the AMMInfo command
@@ -103,15 +83,6 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
 }  // namespace rpc

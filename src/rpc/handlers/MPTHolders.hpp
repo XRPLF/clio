@@ -1,35 +1,39 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/common/Modifiers.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <xrpl/protocol/jss.h>
+#include <rpcspec/HandlerFor.hpp>
+#include <rpcspec/handlers/mpt_holders/Types.hpp>
 
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace rpc {
 
 /**
- * @brief The mpt_holders command asks the Clio server for all holders of a particular
+ * @brief The mpt_holders command asks the Clio server for holders of a particular
  * MPTokenIssuance.
+ *
+ * When `accounts` is provided, those accounts are looked up directly by
+ * `keylet::mptoken` instead of scanning the holder index. Duplicate accounts are
+ * collapsed in first-seen order and non-holders are omitted. This filtered mode is
+ * not paginated, so `marker` and `limit` are rejected.
  */
-class MPTHoldersHandler {
+class MPTHoldersHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::mpt_holders::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static constexpr auto kLimitMin = 1;
-    static constexpr auto kLimitMax = 100;
-    static constexpr auto kLimitDefault = 50;
+    static constexpr auto kLimitMin = rpc::spec::handlers::mpt_holders::kLimitMin;
+    static constexpr auto kLimitMax = rpc::spec::handlers::mpt_holders::kLimitMax;
+    static constexpr auto kLimitDefault = rpc::spec::handlers::mpt_holders::kLimitDefault;
+    static constexpr auto kMaxAccounts = rpc::spec::handlers::mpt_holders::kMaxAccounts;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -39,19 +43,8 @@ public:
         uint32_t ledgerIndex;
         std::string mptID;
         bool validated = true;
-        uint32_t limit;
-        std::optional<std::string> marker;
-    };
-
-    /**
-     * @brief A struct to hold the input data for the command
-     */
-    struct Input {
-        std::string mptID;
-        std::optional<std::string> ledgerHash;
-        std::optional<uint32_t> ledgerIndex;
-        std::optional<std::string> marker;
         std::optional<uint32_t> limit;
+        std::optional<std::string> marker;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -64,31 +57,6 @@ public:
     MPTHoldersHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
         : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
-    }
-
-    /**
-     * @brief Returns the API specification for the command
-     *
-     * @param apiVersion The api version to return the spec for
-     * @return The spec for the given apiVersion
-     */
-    static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const kRpcSpec = RpcSpec{
-            {JS(mpt_issuance_id),
-             validation::Required{},
-             validation::CustomValidators::uint192HexStringValidator},
-            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            {JS(limit),
-             validation::Type<uint32_t>{},
-             validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLimitMin, kLimitMax}},
-            {JS(marker), validation::CustomValidators::uint160HexStringValidator},
-        };
-
-        return kRpcSpec;
     }
 
     /**
@@ -110,14 +78,5 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
-
-    /**
-     * @brief Convert a JSON object to Input type
-     *
-     * @param jv The JSON object to convert
-     * @return Input parsed from the JSON object
-     */
-    friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 }  // namespace rpc

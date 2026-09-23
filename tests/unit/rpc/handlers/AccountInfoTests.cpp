@@ -15,6 +15,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -952,7 +953,7 @@ TEST(RPCAccountInfoHandlerSpecTest, DeprecatedFields)
         {"strict", true}
     };
     auto const spec = AccountInfoHandler::spec(2);
-    auto const warnings = spec.check(json);
+    auto const warnings = rpc::spec::toJsonArray(spec.check(json));
     ASSERT_EQ(warnings.size(), 1);
     auto const& warning = warnings[0];
     ASSERT_TRUE(warning.is_object());
