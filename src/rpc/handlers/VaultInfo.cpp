@@ -58,14 +58,8 @@ VaultInfoHandler::VaultInfoHandler(std::shared_ptr<BackendInterface> sharedPtrBa
 VaultInfoHandler::Result
 VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& ctx) const
 {
-    // vault info input must either have owner and sequence, or vault_id only. Wording and code
-    // match xrpld's VaultInfo.cpp parseVault().
-    if (not validate(input)) {
-        return Error{Status{
-            RippledError::RpcInvalidParams,
-            "Must specify either 'vault_id' or both 'owner' and 'seq'."
-        }};
-    }
+    if (not validate(input))
+        return Error{ClioError::RpcMalformedRequest};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "VaultInfo's ledger range must be available");
