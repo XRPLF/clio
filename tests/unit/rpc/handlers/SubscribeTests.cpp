@@ -476,7 +476,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "badMarket"
+            .expectedErrorMessage = "No such market."
         },
         SubscribeParamTestCaseBundle{
             .testName = "BooksItemInvalidSnapshot",

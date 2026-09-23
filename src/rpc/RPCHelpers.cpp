@@ -1677,7 +1677,7 @@ parseBook(boost::json::object const& request)
     }
 
     if (payCurrency == getCurrency && payIssuer == getIssuer)
-        return std::unexpected{Status{RippledError::RpcBadMarket, "badMarket"}};
+        return std::unexpected{Status{RippledError::RpcBadMarket}};
 
     std::optional<xrpl::uint256> domainID;
     if (request.contains("domain")) {
