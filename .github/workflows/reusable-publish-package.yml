@@ -29,7 +29,7 @@ jobs:
     name: Publish debian package
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/packaging-debian:sha-3e54e7d
+      image: ghcr.io/xrplf/xrpld/packaging-debian:sha-49cdc10
 
     permissions:
       contents: read
