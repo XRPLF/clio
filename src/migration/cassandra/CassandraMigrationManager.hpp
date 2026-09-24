@@ -2,6 +2,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "migration/cassandra/CassandraMigrationBackend.hpp"
+#include "migration/cassandra/MPTTransactionHistoryMigrator.hpp"
 #include "migration/impl/MigrationInspectorBase.hpp"
 #include "migration/impl/MigrationManagerBase.hpp"
 #include "migration/impl/MigratorsRegister.hpp"
@@ -11,7 +12,8 @@ namespace {
 // Register migrators here
 // MigratorsRegister<BackendType, ExampleMigrator>
 template <typename BackendType>
-using CassandraSupportedMigrators = migration::impl::MigratorsRegister<BackendType>;
+using CassandraSupportedMigrators = migration::impl::
+    MigratorsRegister<BackendType, migration::cassandra::MPTTransactionHistoryMigrator>;
 
 //  Instantiates with the backend which supports actual migration running
 using MigrationProcessor =

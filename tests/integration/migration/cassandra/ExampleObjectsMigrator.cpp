@@ -46,5 +46,5 @@ ExampleObjectsMigrator::runMigration(
             }
         )
     );
-    scanner.wait();
+    scanner.waitForAllAndThrowOnError();
 }
