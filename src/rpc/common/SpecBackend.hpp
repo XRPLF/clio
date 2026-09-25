@@ -8,17 +8,9 @@
 namespace rpc {
 
 /**
- * @brief The object view the shared specs read Clio's requests through.
- *
- * The spec library names no JSON type: a consumer picks a backend and binds it once. This
- * is Clio's choice, and the counterpart of xrpld's json::Value views.
- */
-using SpecObjectView = spec::BoostJsonObjectView;
-
-/**
  * @brief A type-erased view of a handler's spec, uniform across API versions.
  */
-using SpecView = spec::RpcSpecView<SpecObjectView>;
+using SpecView = spec::RpcSpecView<spec::BoostJsonObjectView>;
 
 /**
  * @brief The spec-driven base every typed handler inherits.

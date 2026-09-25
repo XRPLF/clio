@@ -36,14 +36,14 @@ for examples; `NFTInfo` is a small one.
 Handlers need to fulfil the requirements specified by the `SomeHandler` concept (see
 `rpc/common/Concepts.hpp`):
 
-- Derive from `rpc::spec::HandlerFor<rpc::spec::handlers::<method>::Input>`. This supplies:
+- Derive from `rpc::HandlerFor<rpc::spec::handlers::<method>::Input>` (see `rpc/common/SpecBackend.hpp`). This supplies:
 
   - `Input` — the strongly-typed input struct, owned by the spec library rather than declared here
 
   - `static parseInput(boost::json::value const&, uint32_t apiVersion)` — validates and
     deserialises in one pass, returning `std::expected<Input, Status>`
 
-  - `static spec<rpc::SpecObjectView>(uint32_t apiVersion)` — returns a type-erased `rpc::SpecView`
+  - `static spec(uint32_t apiVersion)` — returns a type-erased `rpc::SpecView`
 
   If the method takes no input at all, skip the base class and expose only `process(Context const&)`.
 
