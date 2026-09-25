@@ -2,7 +2,6 @@
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/AnyHandler.hpp"
-#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Subscribe.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
@@ -20,6 +19,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/backends/BoostJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>

@@ -2,7 +2,6 @@
 #include "rpc/CredentialHelpers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
-#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/LedgerEntry.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
@@ -18,6 +17,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/backends/BoostJson.hpp>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
