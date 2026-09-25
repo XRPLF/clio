@@ -1,10 +1,10 @@
 #pragma once
 
 #include "rpc/common/Concepts.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
-#include <rpcspec/WarningsToJson.hpp>
 
 #include <utility>
 

@@ -2,11 +2,11 @@
 
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/feature/Types.hpp>
 
 #include <cstdint>
@@ -20,7 +20,7 @@ namespace rpc {
 /**
  * @brief Contains common functionality for handling the `server_info` command
  */
-class FeatureHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::feature::Input> {
+class FeatureHandler : public rpc::HandlerFor<rpc::spec::handlers::feature::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 

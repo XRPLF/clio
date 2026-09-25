@@ -2,11 +2,11 @@
 
 #include "data/BackendInterface.hpp"
 #include "rpc/BookChangesHelper.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/book_changes/Types.hpp>
 
 #include <cstdint>
@@ -22,7 +22,7 @@ namespace rpc {
  *
  * This API is not documented in the rippled API documentation.
  */
-class BookChangesHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::book_changes::Input> {
+class BookChangesHandler : public rpc::HandlerFor<rpc::spec::handlers::book_changes::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

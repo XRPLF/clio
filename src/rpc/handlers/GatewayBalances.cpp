@@ -61,7 +61,7 @@ GatewayBalancesHandler::process(
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto output = GatewayBalancesHandler::Output{};
 

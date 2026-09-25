@@ -111,16 +111,14 @@ Response
 ErrorHelper::makeInternalError() const
 {
     return Response{
-        http::status::internal_server_error,
-        composeError(rpc::RippledError::RpcInternal),
-        rawRequest_
+        http::status::internal_server_error, composeError(rpc::XrpldError::RpcInternal), rawRequest_
     };
 }
 
 Response
 ErrorHelper::makeNotReadyError() const
 {
-    return Response{http::status::ok, composeError(rpc::RippledError::RpcNotReady), rawRequest_};
+    return Response{http::status::ok, composeError(rpc::XrpldError::RpcNotReady), rawRequest_};
 }
 
 Response
@@ -129,15 +127,13 @@ ErrorHelper::makeTooBusyError() const
     if (not rawRequest_.get().isHttp()) {
         return Response{
             http::status::too_many_requests,
-            rpc::makeError(rpc::RippledError::RpcTooBusy),
+            rpc::makeError(rpc::XrpldError::RpcTooBusy),
             rawRequest_
         };
     }
 
     return Response{
-        http::status::service_unavailable,
-        rpc::makeError(rpc::RippledError::RpcTooBusy),
-        rawRequest_
+        http::status::service_unavailable, rpc::makeError(rpc::XrpldError::RpcTooBusy), rawRequest_
     };
 }
 
@@ -146,7 +142,7 @@ ErrorHelper::makeJsonParsingError() const
 {
     if (not rawRequest_.get().isHttp()) {
         return Response{
-            http::status::bad_request, rpc::makeError(rpc::RippledError::RpcBadSyntax), rawRequest_
+            http::status::bad_request, rpc::makeError(rpc::XrpldError::RpcBadSyntax), rawRequest_
         };
     }
 
@@ -162,7 +158,7 @@ ErrorHelper::composeError(rpc::Status const& error) const
 }
 
 boost::json::object
-ErrorHelper::composeError(rpc::RippledError error) const
+ErrorHelper::composeError(rpc::XrpldError error) const
 {
     return composeErrorImpl(error, rawRequest_, request_);
 }

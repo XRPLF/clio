@@ -6,6 +6,7 @@
 #include "etl/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
 #include "util/build/Build.hpp"
@@ -15,7 +16,6 @@
 #include <boost/json/value.hpp>
 #include <fmt/format.h>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/server_info/Types.hpp>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
@@ -45,8 +45,7 @@ namespace rpc {
  * @tparam CountersType The type of the counters
  */
 template <typename CountersType>
-class BaseServerInfoHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::server_info::Input> {
+class BaseServerInfoHandler : public rpc::HandlerFor<rpc::spec::handlers::server_info::Input> {
     static constexpr auto kBackendCountersKey = "backend_counters";
 
     std::shared_ptr<BackendInterface> backend_;
@@ -164,11 +163,11 @@ public:
             ctx.yield
         );
         if (not lgrInfo.has_value())
-            return Error{Status{RippledError::RpcInternal}};
+            return Error{Status{XrpldError::RpcInternal}};
 
         auto const fees = backend_->fetchFees(lgrInfo->seq, ctx.yield);
         if (not fees.has_value())
-            return Error{Status{RippledError::RpcInternal}};
+            return Error{Status{XrpldError::RpcInternal}};
 
         auto output = Output{};
         auto const sinceEpoch =

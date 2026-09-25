@@ -1,11 +1,11 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/account_mptokens/Types.hpp>
 #include <xrpl/protocol/STLedgerEntry.h>
 
@@ -23,7 +23,7 @@ namespace rpc {
  * holds.
  */
 class AccountMPTokensHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::account_mptokens::Input> {
+    : public rpc::HandlerFor<rpc::spec::handlers::account_mptokens::Input> {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 

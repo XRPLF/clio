@@ -52,7 +52,7 @@ TransactionEntryHandler::process(
     // is in a different ledger than the one specified.
     if (!dbRet || dbRet->ledgerSequence != output.ledgerHeader->seq) {
         return Error{
-            Status{RippledError::RpcTxnNotFound, "transactionNotFound", "Transaction not found."}
+            Status{XrpldError::RpcTxnNotFound, "transactionNotFound", "Transaction not found."}
         };
     }
 

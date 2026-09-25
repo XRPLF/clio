@@ -48,7 +48,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto const cursor = input.marker;
 

@@ -2,9 +2,9 @@
 
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "feed/Types.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/unsubscribe/Types.hpp>
 #include <xrpl/protocol/AccountID.h>
 
@@ -22,7 +22,7 @@ namespace rpc {
  * For more details see: https://xrpl.org/unsubscribe.html
  */
 
-class UnsubscribeHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::unsubscribe::Input> {
+class UnsubscribeHandler : public rpc::HandlerFor<rpc::spec::handlers::unsubscribe::Input> {
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
 
 public:

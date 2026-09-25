@@ -1,12 +1,12 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/mpt_holders/Types.hpp>
 
 #include <cstdint>
@@ -26,7 +26,7 @@ namespace rpc {
  * collapsed in first-seen order and non-holders are omitted. This filtered mode is
  * not paginated, so `marker` and `limit` are rejected.
  */
-class MPTHoldersHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::mpt_holders::Input> {
+class MPTHoldersHandler : public rpc::HandlerFor<rpc::spec::handlers::mpt_holders::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

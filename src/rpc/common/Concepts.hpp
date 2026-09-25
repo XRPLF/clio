@@ -1,13 +1,13 @@
 #pragma once
 
 #include "rpc/Errors.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/RpcSpecView.hpp>
 
 #include <concepts>
 #include <cstdint>
@@ -37,15 +37,15 @@ concept SomeContextProcessWithoutInput = requires(T a, T::Output out, Context co
 /**
  * @brief Specifies what a Handler validated by the shared consteval spec must provide.
  *
- * Such a handler inherits @c rpc::spec::HandlerFor<Input> from the spec library, which
- * supplies a static @c parseInput (validate and deserialise in one pass) and a static
- * @c spec returning a type-erased @c RpcSpecView.
+ * Such a handler inherits @c rpc::HandlerFor<Input>, which binds the shared spec base to
+ * Clio JSON type and supplies a static @c parseInput (validate and deserialise in one pass)
+ * and a static @c spec returning a type-erased view of the spec.
  */
 template <typename T>
 concept SomeHandlerWithTypedInput = requires(uint32_t version, boost::json::value jv) {
     typename T::Input;
     { T::parseInput(jv, version) } -> std::same_as<std::expected<typename T::Input, Status>>;
-    { T::spec(version) } -> std::same_as<rpc::spec::RpcSpecView>;
+    { T::spec(version) } -> std::same_as<SpecView>;
 } and SomeContextProcessWithInput<T>;
 
 /**

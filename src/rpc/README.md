@@ -43,7 +43,7 @@ Handlers need to fulfil the requirements specified by the `SomeHandler` concept 
   - `static parseInput(boost::json::value const&, uint32_t apiVersion)` — validates and
     deserialises in one pass, returning `std::expected<Input, Status>`
 
-  - `static spec(uint32_t apiVersion)` — returns a type-erased `rpc::spec::RpcSpecView`
+  - `static spec<rpc::SpecObjectView>(uint32_t apiVersion)` — returns a type-erased `rpc::SpecView`
 
   If the method takes no input at all, skip the base class and expose only `process(Context const&)`.
 

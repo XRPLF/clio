@@ -100,9 +100,9 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
     // alongside it.
     if (input.accounts) {
         if (input.marker.has_value())
-            return Error{Status{RippledError::RpcInvalidParams, "accountsWithMarker"}};
+            return Error{Status{XrpldError::RpcInvalidParams, "accountsWithMarker"}};
         if (input.limit.has_value())
-            return Error{Status{RippledError::RpcInvalidParams, "accountsWithLimit"}};
+            return Error{Status{XrpldError::RpcInvalidParams, "accountsWithLimit"}};
     }
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
@@ -125,7 +125,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
         xrpl::keylet::mptokenIssuance(mptID).key, lgrInfo.seq, ctx.yield
     );
     if (!issuanceLedgerObject)
-        return Error{Status{RippledError::RpcObjectNotFound, "objectNotFound"}};
+        return Error{Status{XrpldError::RpcObjectNotFound, "objectNotFound"}};
 
     auto output = MPTHoldersHandler::Output{};
     output.mptID = to_string(mptID);

@@ -128,7 +128,7 @@ generateTestValuesForParametersTest()
          .isTooBusy = neverCalled,
          .isUnknownCmd = neverCalled,
          .handlerReturnError = false,
-         .status = rpc::Status{RippledError::RpcNoPermission},
+         .status = rpc::Status{XrpldError::RpcNoPermission},
          .response = std::nullopt},
         {.testName = "BackendTooBusy",
          .isAdmin = false,
@@ -138,7 +138,7 @@ generateTestValuesForParametersTest()
          .isTooBusy = true,
          .isUnknownCmd = neverCalled,
          .handlerReturnError = false,
-         .status = rpc::Status{RippledError::RpcTooBusy},
+         .status = rpc::Status{XrpldError::RpcTooBusy},
          .response = std::nullopt},
         {.testName = "HandlerUnknown",
          .isAdmin = false,
@@ -148,7 +148,7 @@ generateTestValuesForParametersTest()
          .isTooBusy = false,
          .isUnknownCmd = true,
          .handlerReturnError = false,
-         .status = rpc::Status{RippledError::RpcUnknownCommand},
+         .status = rpc::Status{XrpldError::RpcUnknownCommand},
          .response = std::nullopt},
         {.testName = "HandlerReturnError",
          .isAdmin = false,
@@ -281,7 +281,7 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
 
         auto const res = engine->buildResponse(ctx);
         ASSERT_FALSE(res.response.has_value());
-        EXPECT_EQ(res.response.error(), Status{RippledError::RpcTooBusy});
+        EXPECT_EQ(res.response.error(), Status{XrpldError::RpcTooBusy});
     });
 }
 
@@ -313,7 +313,7 @@ TEST_F(RPCEngineTest, ThrowException)
 
         auto const res = engine->buildResponse(ctx);
         ASSERT_FALSE(res.response.has_value());
-        EXPECT_EQ(res.response.error(), Status{RippledError::RpcInternal});
+        EXPECT_EQ(res.response.error(), Status{XrpldError::RpcInternal});
     });
 }
 

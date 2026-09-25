@@ -2,6 +2,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/log/Logger.hpp"
 
@@ -9,7 +10,6 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/mptoken_issuance_history/Types.hpp>
 #include <xrpl/basics/base_uint.h>
 
@@ -31,7 +31,7 @@ namespace rpc {
  * backfill reports `Migrated`, so partial history is never served.
  */
 class MPTokenIssuanceHistoryHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::mptoken_issuance_history::Input> {
+    : public rpc::HandlerFor<rpc::spec::handlers::mptoken_issuance_history::Input> {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 

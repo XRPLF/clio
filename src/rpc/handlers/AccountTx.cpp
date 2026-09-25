@@ -48,7 +48,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         if (ctx.apiVersion > 1u &&
             (input.ledgerIndexMin > range->maxSequence ||
              input.ledgerIndexMin < range->minSequence)) {
-            return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
+            return Error{Status{XrpldError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
         }
         // NOLINTEND(bugprone-unchecked-optional-access)
 
@@ -61,7 +61,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         if (ctx.apiVersion > 1u &&
             (input.ledgerIndexMax > range->maxSequence ||
              input.ledgerIndexMax < range->minSequence)) {
-            return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
+            return Error{Status{XrpldError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
         }
         // NOLINTEND(bugprone-unchecked-optional-access)
 
@@ -71,14 +71,14 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
     if (minIndex > maxIndex) {
         if (ctx.apiVersion == 1u)
-            return Error{Status{RippledError::RpcLgrIdxsInvalid}};
+            return Error{Status{XrpldError::RpcLgrIdxsInvalid}};
 
-        return Error{Status{RippledError::RpcInvalidLgrRange}};
+        return Error{Status{XrpldError::RpcInvalidLgrRange}};
     }
 
     if (not input.ledger.isUnspecified()) {
         if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin)) {
-            return Error{Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
+            return Error{Status{XrpldError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
         }
 
         if (!input.ledgerIndexMax && !input.ledgerIndexMin) {

@@ -2,6 +2,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/AnyHandler.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Ledger.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
@@ -15,8 +16,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/RpcSpecView.hpp>
-#include <rpcspec/WarningsToJson.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -1431,7 +1430,7 @@ struct RPCLedgerHandlerSpecCheckTestBundle {
 
 struct RPCLedgerHandlerSpecCheckTest
     : ::testing::TestWithParam<RPCLedgerHandlerSpecCheckTestBundle> {
-    rpc::spec::RpcSpecView spec = LedgerHandler::spec(2);
+    rpc::SpecView spec = LedgerHandler::spec(2);
 };
 
 INSTANTIATE_TEST_SUITE_P(

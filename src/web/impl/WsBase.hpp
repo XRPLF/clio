@@ -152,7 +152,7 @@ public:
     void
     sendSlowDown(std::string const& request) override
     {
-        sendError(rpc::RippledError::RpcSlowDown, request);
+        sendError(rpc::XrpldError::RpcSlowDown, request);
     }
 
     /**
@@ -282,7 +282,7 @@ public:
         try {
             (*handler_)(requestStr, shared_from_this());
         } catch (std::exception const&) {
-            sendError(rpc::RippledError::RpcInternal, std::move(requestStr));
+            sendError(rpc::XrpldError::RpcInternal, std::move(requestStr));
         }
 
         doRead();
@@ -290,7 +290,7 @@ public:
 
 private:
     void
-    sendError(rpc::RippledError error, std::string requestStr)
+    sendError(rpc::XrpldError error, std::string requestStr)
     {
         auto e = rpc::makeError(error);
 
