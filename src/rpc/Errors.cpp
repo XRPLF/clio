@@ -24,6 +24,19 @@ using namespace std;
 
 namespace rpc {
 
+namespace {
+
+boost::json::object
+extraInfoToJson(ExtraInfo const& extra)
+{
+    boost::json::object out;
+    for (auto const& [key, value] : extra)
+        std::visit([&out, &key](auto const& held) { out[key] = held; }, value);
+    return out;
+}
+
+}  // namespace
+
 /**
  * @brief Stream a Status in human readable form.
  *
@@ -39,8 +52,8 @@ operator<<(std::ostream& stream, Status const& status)
 {
     std::visit(
         util::OverloadSet{
-            [&stream, &status](RippledError err) {
-                stream << "Code: " << static_cast<std::underlying_type_t<RippledError>>(err);
+            [&stream, &status](XrpldError err) {
+                stream << "Code: " << static_cast<std::underlying_type_t<XrpldError>>(err);
                 if (!status.error.empty())
                     stream << ", Error: " << status.error;
                 if (!status.message.empty()) {
@@ -64,7 +77,7 @@ operator<<(std::ostream& stream, Status const& status)
     );
 
     if (status.extraInfo.has_value())
-        stream << ", Extra Info: " << *status.extraInfo;
+        stream << ", Extra Info: " << extraInfoToJson(*status.extraInfo);
 
     return stream;
 }
@@ -170,7 +183,7 @@ getErrorInfo(ClioError code)
 
 boost::json::object
 makeError(
-    RippledError err,
+    XrpldError err,
     std::optional<std::string_view> customError,
     std::optional<std::string_view> customMessage
 )
@@ -215,7 +228,7 @@ makeError(Status const& status)
 
     auto res = visit(
         util::OverloadSet{
-            [&status, &wrapOptional](RippledError err) {
+            [&status, &wrapOptional](XrpldError err) {
                 if (err == xrpl::RpcUnknown) {
                     return boost::json::object{
                         {"error", status.message}, {"type", "response"}, {"status", "error"}
@@ -232,7 +245,7 @@ makeError(Status const& status)
     );
 
     if (status.extraInfo) {
-        for (auto& [key, value] : *status.extraInfo)
+        for (auto& [key, value] : extraInfoToJson(*status.extraInfo))
             res[key] = value;
     }
 

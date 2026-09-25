@@ -109,27 +109,27 @@ fetchCredentialArray(
     std::unordered_set<xrpl::uint256, xrpl::uint256::hasher> seen;
     for (auto const& credHash : credIDs) {
         if (seen.contains(credHash))
-            return Error{Status{RippledError::RpcBadCredentials, "duplicates in credentials."}};
+            return Error{Status{XrpldError::RpcBadCredentials, "duplicates in credentials."}};
         seen.insert(credHash);
 
         auto const credKeylet = xrpl::keylet::credential(credHash).key;
         auto const credLedgerObject = backend.fetchLedgerObject(credKeylet, info.seq, yield);
         if (!credLedgerObject)
-            return Error{Status{RippledError::RpcBadCredentials, "credentials don't exist."}};
+            return Error{Status{XrpldError::RpcBadCredentials, "credentials don't exist."}};
 
         auto credIt = xrpl::SerialIter{credLedgerObject->data(), credLedgerObject->size()};
         auto const sleCred = xrpl::SLE{credIt, credKeylet};
 
         if ((sleCred.getType() != xrpl::ltCREDENTIAL) ||
             ((sleCred.getFieldU32(xrpl::sfFlags) & xrpl::lsfAccepted) == 0u))
-            return Error{Status{RippledError::RpcBadCredentials, "credentials aren't accepted"}};
+            return Error{Status{XrpldError::RpcBadCredentials, "credentials aren't accepted"}};
 
         if (credentials::checkExpired(sleCred, info))
-            return Error{Status{RippledError::RpcBadCredentials, "credentials are expired"}};
+            return Error{Status{XrpldError::RpcBadCredentials, "credentials are expired"}};
 
         if (sleCred.getAccountID(xrpl::sfSubject) != srcAcc) {
             return Error{Status{
-                RippledError::RpcBadCredentials, "credentials don't belong to the root account"
+                XrpldError::RpcBadCredentials, "credentials don't belong to the root account"
             }};
         }
 

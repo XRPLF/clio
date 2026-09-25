@@ -5,6 +5,7 @@
 #include "etl/ETLServiceInterface.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
 
@@ -15,7 +16,6 @@
 #include <boost/json/value_to.hpp>
 #include <fmt/format.h>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/tx/Types.hpp>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
@@ -35,7 +35,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/tx.html
  */
-class TxHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::tx::Input> {
+class TxHandler : public rpc::HandlerFor<rpc::spec::handlers::tx::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<etl::ETLServiceInterface const> etl_;
 
@@ -91,20 +91,20 @@ public:
     process(Input const& input, Context const& ctx) const
     {
         if (input.ctid && input.transaction)  // ambiguous identifier
-            return Error{Status{RippledError::RpcInvalidParams}};
+            return Error{Status{XrpldError::RpcInvalidParams}};
 
         if (!input.ctid && !input.transaction)  // at least one identifier must be supplied
-            return Error{Status{RippledError::RpcInvalidParams}};
+            return Error{Status{XrpldError::RpcInvalidParams}};
 
         static constexpr auto kMaxLedgerRange = 1000u;
         auto const rangeSupplied = input.minLedger && input.maxLedger;
 
         if (rangeSupplied) {
             if (*input.minLedger > *input.maxLedger)
-                return Error{Status{RippledError::RpcInvalidLgrRange}};
+                return Error{Status{XrpldError::RpcInvalidLgrRange}};
 
             if (*input.maxLedger - *input.minLedger > kMaxLedgerRange)
-                return Error{Status{RippledError::RpcExcessiveLgrRange}};
+                return Error{Status{XrpldError::RpcExcessiveLgrRange}};
         }
 
         std::optional<uint32_t> currentNetId = std::nullopt;
@@ -116,13 +116,13 @@ public:
         if (input.ctid) {
             auto const ctid = rpc::decodeCTID(*input.ctid);
             if (!ctid)
-                return Error{Status{RippledError::RpcInvalidParams}};
+                return Error{Status{XrpldError::RpcInvalidParams}};
 
             auto const [lgrSeq, txnIdx, netId] = *ctid;
             // when current network id is available, let us check the network id from parameter
             if (currentNetId && netId != *currentNetId) {
                 return Error{Status{
-                    RippledError::RpcWrongNetwork,
+                    XrpldError::RpcWrongNetwork,
                     fmt::format(
                         "Wrong network. You should submit this request to a node running on "
                         "NetworkID: {}",
@@ -149,13 +149,12 @@ public:
                     range->minSequence <= *input.minLedger;
                 // NOLINTEND(bugprone-unchecked-optional-access)
 
-                boost::json::object extra;
-                extra["searched_all"] = searchedAll;
-
-                return Error{Status{RippledError::RpcTxnNotFound, std::move(extra)}};
+                return Error{
+                    Status{XrpldError::RpcTxnNotFound, ExtraInfo{{"searched_all", searchedAll}}}
+                };
             }
 
-            return Error{Status{RippledError::RpcTxnNotFound}};
+            return Error{Status{XrpldError::RpcTxnNotFound}};
         }
 
         auto const [txn, meta] =

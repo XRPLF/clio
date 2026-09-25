@@ -66,7 +66,7 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     Output response;
     response.account = xrpl::to_string(accountID);

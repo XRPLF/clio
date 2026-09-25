@@ -139,7 +139,7 @@ AccountMPTokenIssuancesHandler::process(
     );
 
     if (not accountLedgerObject.has_value())
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     Output response;
     response.issuances.reserve(input.limit);

@@ -89,7 +89,7 @@ MPTokenIssuanceHistoryHandler::verifyHistoryAvailable(Context const& ctx) const
 
     // Fail closed: partial history must never be served.
     return Error{Status{
-        RippledError::RpcNotReady,
+        XrpldError::RpcNotReady,
         "mptoken_issuance_history is not available on this server because the required "
         "transaction-history backfill has not completed."
     }};
@@ -106,25 +106,25 @@ MPTokenIssuanceHistoryHandler::resolveSequenceRange(Input const& input, Context 
 
     if (input.ledgerIndexMin.has_value()) {
         if (dbMaxSeq < input.ledgerIndexMin || dbMinSeq > input.ledgerIndexMin)
-            return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
+            return Error{Status{XrpldError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
 
         resolved.min = *input.ledgerIndexMin;
     }
 
     if (input.ledgerIndexMax.has_value()) {
         if (dbMaxSeq < input.ledgerIndexMax || dbMinSeq > input.ledgerIndexMax)
-            return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
+            return Error{Status{XrpldError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
 
         resolved.max = *input.ledgerIndexMax;
     }
 
     if (resolved.min > resolved.max)
-        return Error{Status{RippledError::RpcLgrIdxsInvalid}};
+        return Error{Status{XrpldError::RpcLgrIdxsInvalid}};
 
     if (not input.ledger.isUnspecified()) {
         // rippled does not have this check
         if (input.ledgerIndexMax.has_value() || input.ledgerIndexMin.has_value())
-            return Error{Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
+            return Error{Status{XrpldError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
 
         auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
             *sharedPtrBackend_, ctx.yield, input.ledger, dbMaxSeq

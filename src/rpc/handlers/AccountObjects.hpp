@@ -1,11 +1,11 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/account_objects/Types.hpp>
 #include <xrpl/protocol/STLedgerEntry.h>
 
@@ -25,8 +25,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_objects.html
  */
-class AccountObjectsHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::account_objects::Input> {
+class AccountObjectsHandler : public rpc::HandlerFor<rpc::spec::handlers::account_objects::Input> {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 

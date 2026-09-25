@@ -42,7 +42,7 @@ NFTInfoHandler::process(NFTInfoHandler::Input const& input, Context const& ctx) 
     auto const maybeNft = sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, ctx.yield);
 
     if (not maybeNft.has_value())
-        return Error{Status{RippledError::RpcObjectNotFound, "NFT not found"}};
+        return Error{Status{XrpldError::RpcObjectNotFound, "NFT not found"}};
 
     // TODO - this formatting is exactly the same and SHOULD REMAIN THE SAME
     // for each element of the `nfts_by_issuer` API. We should factor this out

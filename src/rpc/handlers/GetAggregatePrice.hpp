@@ -2,13 +2,13 @@
 
 #include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/get_aggregate_price/Types.hpp>
 #include <xrpl/basics/Number.h>
 #include <xrpl/protocol/AccountID.h>
@@ -31,7 +31,7 @@ namespace rpc {
  *@brief The get_aggregate_price method.
  */
 class GetAggregatePriceHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::get_aggregate_price::Input> {
+    : public rpc::HandlerFor<rpc::spec::handlers::get_aggregate_price::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

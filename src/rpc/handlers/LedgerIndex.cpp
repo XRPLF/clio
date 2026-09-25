@@ -51,7 +51,7 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
 
     // If the given date is earlier than the first valid ledger, return lgrNotFound
     if (earlierThan(minIndex))
-        return Error{Status{RippledError::RpcLgrNotFound, "ledgerNotInRange"}};
+        return Error{Status{XrpldError::RpcLgrNotFound, "ledgerNotInRange"}};
 
     auto const view = std::ranges::iota_view{minIndex, maxIndex + 1};
 

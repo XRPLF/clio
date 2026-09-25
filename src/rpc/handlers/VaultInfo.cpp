@@ -88,7 +88,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
                     sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
                 if (!accountLedgerObject)
-                    return std::unexpected{Status{RippledError::RpcEntryNotFound}};
+                    return std::unexpected{Status{XrpldError::RpcEntryNotFound}};
             }
 
             return xrpl::keylet::vault(accountID, xrpl::SeqProxy::rawSequence(*input.tnxSequence));
@@ -105,7 +105,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
         sharedPtrBackend_->fetchLedgerObject(vaultKeylet->key, lgrInfo.seq, ctx.yield);
 
     if (not vaultLedgerObject)
-        return Error{Status{RippledError::RpcEntryNotFound, "vault object not found."}};
+        return Error{Status{XrpldError::RpcEntryNotFound, "vault object not found."}};
 
     xrpl::STLedgerEntry const vaultSle{
         xrpl::SerialIter{vaultLedgerObject->data(), vaultLedgerObject->size()}, vaultKeylet->key
@@ -116,7 +116,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
         sharedPtrBackend_->fetchLedgerObject(issuanceKeylet, lgrInfo.seq, ctx.yield);
 
     if (not issuanceObject)
-        return Error{Status{RippledError::RpcEntryNotFound, "issuance object not found."}};
+        return Error{Status{XrpldError::RpcEntryNotFound, "issuance object not found."}};
 
     xrpl::STLedgerEntry const issuanceSle{
         xrpl::SerialIter{issuanceObject->data(), issuanceObject->size()}, issuanceKeylet

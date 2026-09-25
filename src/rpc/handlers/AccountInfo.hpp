@@ -2,11 +2,11 @@
 
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/account_info/Types.hpp>
 #include <xrpl/protocol/STLedgerEntry.h>
 
@@ -24,7 +24,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_info.html
  */
-class AccountInfoHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::account_info::Input> {
+class AccountInfoHandler : public rpc::HandlerFor<rpc::spec::handlers::account_info::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 

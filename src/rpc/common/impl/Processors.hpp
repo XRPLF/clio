@@ -4,7 +4,7 @@
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
-#include <rpcspec/WarningsToJson.hpp>
+#include <rpcspec/backends/BoostJson.hpp>
 
 #include <utility>
 

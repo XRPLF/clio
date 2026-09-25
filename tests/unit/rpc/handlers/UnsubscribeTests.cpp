@@ -15,7 +15,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/WarningsToJson.hpp>
+#include <rpcspec/backends/BoostJson.hpp>
 #include <xrpl/protocol/Book.h>
 
 #include <cstdint>

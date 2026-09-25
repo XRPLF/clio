@@ -2,6 +2,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/log/Logger.hpp"
 
@@ -9,7 +10,6 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/ledger_data/Types.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -29,7 +29,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/ledger_data.html
  */
-class LedgerDataHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::ledger_data::Input> {
+class LedgerDataHandler : public rpc::HandlerFor<rpc::spec::handlers::ledger_data::Input> {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     util::Logger log_{"RPC"};

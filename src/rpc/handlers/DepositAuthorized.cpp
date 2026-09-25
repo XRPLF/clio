@@ -59,14 +59,14 @@ DepositAuthorizedHandler::process(
     );
 
     if (!srcAccountLedgerObject)
-        return Error{Status{RippledError::RpcSrcActNotFound, "source_accountNotFound"}};
+        return Error{Status{XrpldError::RpcSrcActNotFound, "source_accountNotFound"}};
 
     auto const dstKeylet = xrpl::keylet::account(destinationAccountID).key;
     auto const dstAccountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(dstKeylet, lgrInfo.seq, ctx.yield);
 
     if (!dstAccountLedgerObject)
-        return Error{Status{RippledError::RpcDstActNotFound, "destination_accountNotFound"}};
+        return Error{Status{XrpldError::RpcDstActNotFound, "destination_accountNotFound"}};
 
     Output response;
 
@@ -80,12 +80,10 @@ DepositAuthorizedHandler::process(
     xrpl::STArray authCreds;
     if (credentialsPresent) {
         if (creds->empty()) {
-            return Error{
-                Status{RippledError::RpcInvalidParams, "credential array has no elements."}
-            };
+            return Error{Status{XrpldError::RpcInvalidParams, "credential array has no elements."}};
         }
         if (creds->size() > xrpl::kMaxCredentialsArraySize) {
-            return Error{Status{RippledError::RpcInvalidParams, "credential array too long."}};
+            return Error{Status{XrpldError::RpcInvalidParams, "credential array too long."}};
         }
         auto const credArray = credentials::fetchCredentialArray(
             *creds, sourceAccountID, *sharedPtrBackend_, lgrInfo, ctx.yield

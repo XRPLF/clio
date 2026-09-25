@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rpc/Errors.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
@@ -12,7 +13,6 @@
 #include <rpcspec/Converters.hpp>
 #include <rpcspec/Errors.hpp>
 #include <rpcspec/FieldSpec.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/Typed.hpp>
 #include <rpcspec/VersionedSpec.hpp>
 
@@ -112,7 +112,7 @@ specFor(TypedInput const*) noexcept
 
 }  // namespace typed_fake
 
-class TypedHandlerFake : public rpc::spec::HandlerFor<typed_fake::TypedInput> {
+class TypedHandlerFake : public rpc::HandlerFor<typed_fake::TypedInput> {
 public:
     using Output = TestOutput;
     using Result = rpc::HandlerReturnType<Output>;
@@ -124,7 +124,7 @@ public:
     }
 };
 
-class FailingTypedHandlerFake : public rpc::spec::HandlerFor<typed_fake::TypedInput> {
+class FailingTypedHandlerFake : public rpc::HandlerFor<typed_fake::TypedInput> {
 public:
     using Output = TestOutput;
     using Result = rpc::HandlerReturnType<Output>;

@@ -41,7 +41,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
     if (input.ledgerIndexMin) {
         // NOLINTBEGIN(bugprone-unchecked-optional-access)
         if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
-            return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
+            return Error{Status{XrpldError::RpcLgrIdxMalformed, "ledgerSeqMinOutOfRange"}};
         // NOLINTEND(bugprone-unchecked-optional-access)
 
         minIndex = static_cast<uint32_t>(*input.ledgerIndexMin);
@@ -50,19 +50,19 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
     if (input.ledgerIndexMax) {
         // NOLINTBEGIN(bugprone-unchecked-optional-access)
         if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
-            return Error{Status{RippledError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
+            return Error{Status{XrpldError::RpcLgrIdxMalformed, "ledgerSeqMaxOutOfRange"}};
         // NOLINTEND(bugprone-unchecked-optional-access)
 
         maxIndex = static_cast<uint32_t>(*input.ledgerIndexMax);
     }
 
     if (minIndex > maxIndex)
-        return Error{Status{RippledError::RpcLgrIdxsInvalid}};
+        return Error{Status{XrpldError::RpcLgrIdxsInvalid}};
 
     if (not input.ledger.isUnspecified()) {
         // rippled does not have this check
         if (input.ledgerIndexMax || input.ledgerIndexMin) {
-            return Error{Status{RippledError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
+            return Error{Status{XrpldError::RpcInvalidParams, "containsLedgerSpecifierAndRange"}};
         }
 
         auto const expectedLgrInfo = getLedgerHeaderFromLedgerSpecifier(
