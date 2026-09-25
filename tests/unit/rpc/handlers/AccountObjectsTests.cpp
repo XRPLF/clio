@@ -564,9 +564,25 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    auto current = nftMaxKK;
+    std::string first{kIndex1};
+    std::ranges::sort(first);
+    for (auto i = 0; i < 10; i++) {
+        std::ranges::next_permutation(first);
+        auto const previous =
+            xrpl::keylet::nftokenPage(
+                xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
+            )
+                .key;
+        auto const nftPage = createNftTokenPage(
+            std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
+        );
+        ON_CALL(*backend_, doFetchLedgerObject(current, 30, _))
+            .WillByDefault(Return(nftPage.getSerializer().peekData()));
+        current = previous;
+    }
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     std::vector<Blob> bbs;
     // put 1 state and 1 offer
@@ -592,7 +608,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
         fmt::format(
             R"JSON({{
                 "account": "{}",
-                "type": "offer"
+                "type": "offer",
+                "limit": 10
             }})JSON",
             kAccount
         )
@@ -602,7 +619,11 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 1);
+        auto const& result = output.result->as_object();
+        auto const& objects = result.at("account_objects").as_array();
+        ASSERT_EQ(objects.size(), 1);
+        EXPECT_EQ(objects.at(0).as_object().at("LedgerEntryType").as_string(), "Offer");
+        EXPECT_FALSE(result.contains("marker"));
     });
 }
 
@@ -622,9 +643,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     std::vector<Blob> bbs;
     // put 1 state and 1 amm
@@ -675,9 +695,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     std::vector<Blob> bbs;
     auto const line1 = createRippleStateLedgerObject(
@@ -794,9 +813,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     auto const line = createRippleStateLedgerObject(
         "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
@@ -912,9 +930,8 @@ TEST_F(
     auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     auto const offer1 = createOfferLedgerObject(
         kAccount,
@@ -2018,9 +2035,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTIssuanceType)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     std::vector<Blob> bbs;
     // put 1 mpt issuance
@@ -2070,9 +2086,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTokenType)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     std::vector<Blob> bbs;
     // put 1 mpt issuance
