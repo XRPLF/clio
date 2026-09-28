@@ -6,6 +6,7 @@
 #include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
+#include <rpcspec/backends/BoostJson.hpp>
 
 #include <cstdint>
 #include <sstream>
@@ -50,17 +51,17 @@ check(
 TEST(RPCErrorsTest, StatusAsBool)
 {
     // Only RpcSuccess status should return false
-    EXPECT_FALSE(Status{RippledError::RpcSuccess});
+    EXPECT_FALSE(Status{XrpldError::RpcSuccess});
 
     // true should be returned for any error state, we just test a few
     CombinedError const errors[]{
-        RippledError::RpcInvalidParams,
-        RippledError::RpcUnknownCommand,
-        RippledError::RpcTooBusy,
-        RippledError::RpcNoNetwork,
-        RippledError::RpcWrongNetwork,
-        RippledError::RpcActMalformed,
-        RippledError::RpcBadMarket,
+        XrpldError::RpcInvalidParams,
+        XrpldError::RpcUnknownCommand,
+        XrpldError::RpcTooBusy,
+        XrpldError::RpcNoNetwork,
+        XrpldError::RpcWrongNetwork,
+        XrpldError::RpcActMalformed,
+        XrpldError::RpcBadMarket,
         ClioError::RpcMalformedCurrency,
     };
 
@@ -70,22 +71,20 @@ TEST(RPCErrorsTest, StatusAsBool)
 
 TEST(RPCErrorsTest, StatusEquals)
 {
-    EXPECT_EQ(Status{RippledError::RpcUnknown}, Status{RippledError::RpcUnknown});
-    EXPECT_NE(Status{RippledError::RpcUnknown}, Status{RippledError::RpcInternal});
+    EXPECT_EQ(Status{XrpldError::RpcUnknown}, Status{XrpldError::RpcUnknown});
+    EXPECT_NE(Status{XrpldError::RpcUnknown}, Status{XrpldError::RpcInternal});
 }
 
 TEST(RPCErrorsTest, SuccessToJSON)
 {
-    auto const status = Status{RippledError::RpcSuccess};
-    check(makeError(status), "unknown", RippledError::RpcSuccess, "An unknown error code.");
+    auto const status = Status{XrpldError::RpcSuccess};
+    check(makeError(status), "unknown", XrpldError::RpcSuccess, "An unknown error code.");
 }
 
 TEST(RPCErrorsTest, RippledErrorToJSON)
 {
-    auto const status = Status{RippledError::RpcInvalidParams};
-    check(
-        makeError(status), "invalidParams", RippledError::RpcInvalidParams, "Invalid parameters."
-    );
+    auto const status = Status{XrpldError::RpcInvalidParams};
+    check(makeError(status), "invalidParams", XrpldError::RpcInvalidParams, "Invalid parameters.");
 }
 
 TEST(RPCErrorsTest, RippledErrorFromStringToJSON)
@@ -96,14 +95,14 @@ TEST(RPCErrorsTest, RippledErrorFromStringToJSON)
 
 TEST(RPCErrorsTest, RippledErrorToJSONCustomMessage)
 {
-    auto const status = Status{RippledError::RpcInvalidParams, "custom"};
-    check(makeError(status), "invalidParams", RippledError::RpcInvalidParams, "custom");
+    auto const status = Status{XrpldError::RpcInvalidParams, "custom"};
+    check(makeError(status), "invalidParams", XrpldError::RpcInvalidParams, "custom");
 }
 
 TEST(RPCErrorsTest, RippledErrorToJSONCustomStrCodeAndMessage)
 {
-    auto const status = Status{RippledError::RpcInvalidParams, "customCode", "customMessage"};
-    check(makeError(status), "customCode", RippledError::RpcInvalidParams, "customMessage");
+    auto const status = Status{XrpldError::RpcInvalidParams, "customCode", "customMessage"};
+    check(makeError(status), "customCode", XrpldError::RpcInvalidParams, "customMessage");
 }
 
 TEST(RPCErrorsTest, ClioErrorToJSON)
@@ -224,7 +223,7 @@ INSTANTIATE_TEST_SUITE_P(
         },
         StatusStreamTestBundle{
             .testName = "StatusWithRippledError",
-            .status = Status{RippledError::RpcSuccess},
+            .status = Status{XrpldError::RpcSuccess},
             .expectedOutput = "Code: 0, Message: An unknown error code."
         },
         StatusStreamTestBundle{
@@ -235,7 +234,7 @@ INSTANTIATE_TEST_SUITE_P(
         },
         StatusStreamTestBundle{
             .testName = "StatusWithCodeAndExtraInfo",
-            .status = Status{ClioError::RpcForwardingConnectionError, boost::json::object{}},
+            .status = Status{ClioError::RpcForwardingConnectionError, ExtraInfo{}},
             .expectedOutput = "Code: 7000, Message: Couldn't connect to rippled., Extra Info: {}"
         },
         StatusStreamTestBundle{
@@ -245,7 +244,7 @@ INSTANTIATE_TEST_SUITE_P(
         },
         StatusStreamTestBundle{
             .testName = "StatusWithRippledErrorAndMessage",
-            .status = Status{RippledError::RpcSuccess, "test message."},
+            .status = Status{XrpldError::RpcSuccess, "test message."},
             .expectedOutput = "Code: 0, Message: test message."
         },
         StatusStreamTestBundle{

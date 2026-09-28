@@ -910,7 +910,7 @@ TEST_F(RPCTxTest, CTIDNotMatch)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "wrongNetwork");
-        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::RpcWrongNetwork);
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::XrpldError::RpcWrongNetwork);
         EXPECT_EQ(
             err.at("error_message").as_string(),
             "Wrong network. You should submit this request to a node running on NetworkID: 2"

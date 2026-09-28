@@ -472,16 +472,16 @@ ledgerHeaderFromRequest(
 
     if (!hashValue.is_null()) {
         if (!hashValue.is_string())
-            return std::unexpected{Status{RippledError::RpcInvalidParams, "ledgerHashNotString"}};
+            return std::unexpected{Status{XrpldError::RpcInvalidParams, "ledgerHashNotString"}};
 
         xrpl::uint256 ledgerHash;
         if (!ledgerHash.parseHex(boost::json::value_to<std::string>(hashValue)))
-            return std::unexpected{Status{RippledError::RpcInvalidParams, "ledgerHashMalformed"}};
+            return std::unexpected{Status{XrpldError::RpcInvalidParams, "ledgerHashMalformed"}};
 
         auto lgrInfo = backend->fetchLedgerByHash(ledgerHash, ctx.yield);
 
         if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
-            return std::unexpected{Status{RippledError::RpcLgrNotFound, "ledgerNotFound"}};
+            return std::unexpected{Status{XrpldError::RpcLgrNotFound, "ledgerNotFound"}};
 
         return *lgrInfo;
     }
@@ -505,12 +505,12 @@ ledgerHeaderFromRequest(
     }
 
     if (!ledgerSequence)
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "ledgerIndexMalformed"}};
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "ledgerIndexMalformed"}};
 
     auto lgrInfo = backend->fetchLedgerBySequence(*ledgerSequence, ctx.yield);
 
     if (!lgrInfo || lgrInfo->seq > ctx.range.maxSequence)
-        return std::unexpected{Status{RippledError::RpcLgrNotFound, "ledgerNotFound"}};
+        return std::unexpected{Status{XrpldError::RpcLgrNotFound, "ledgerNotFound"}};
 
     return *lgrInfo;
 }
@@ -526,7 +526,7 @@ getLedgerHeaderFromHashOrSeq(
 )
 {
     std::optional<xrpl::LedgerHeader> lgrInfo;
-    auto const err = std::unexpected{Status{RippledError::RpcLgrNotFound, "ledgerNotFound"}};
+    auto const err = std::unexpected{Status{XrpldError::RpcLgrNotFound, "ledgerNotFound"}};
     if (ledgerHash) {
         // invoke uint256's constructor to parse the hex string , instead of
         // copying buffer
@@ -557,7 +557,7 @@ getLedgerHeaderFromLedgerSpecifier(
     uint32_t maxSeq
 )
 {
-    auto const err = std::unexpected{Status{RippledError::RpcLgrNotFound, "ledgerNotFound"}};
+    auto const err = std::unexpected{Status{XrpldError::RpcLgrNotFound, "ledgerNotFound"}};
     auto const resolved = ledger.resolved();
 
     if (resolved.isHash()) {
@@ -574,7 +574,7 @@ getLedgerHeaderFromLedgerSpecifier(
     if (resolved.isShortcut() and
         std::get<rpc::spec::LedgerShortcut>(resolved.value) !=
             rpc::spec::LedgerShortcut::Validated) {
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "ledgerIndexMalformed"}};
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "ledgerIndexMalformed"}};
     }
 
     auto const ledgerSequence = resolved.isSequence() ? std::get<uint32_t>(resolved.value) : maxSeq;
@@ -644,7 +644,7 @@ traverseNFTObjects(
 
     // check if nextPage is valid
     if (nextPage != beast::kZero and firstNFTPage.key != (nextPage & ~xrpl::nft::kPageMask))
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "Invalid marker."}};
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "Invalid marker."}};
 
     // no marker, start from the last page
     xrpl::uint256 const currentPage = nextPage == beast::kZero ? lastNFTPage.key : nextPage;
@@ -657,7 +657,7 @@ traverseNFTObjects(
             return AccountCursor{.index = beast::kZero, .hint = 0};
         }
         // marker is in the right range, but still invalid
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "Invalid marker."}};
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "Invalid marker."}};
     }
 
     // the object exists and the key is in right range, must be nft page
@@ -697,7 +697,7 @@ traverseOwnedNodes(
     auto const maybeCursor = parseAccountCursor(jsonCursor);
 
     if (!maybeCursor)
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "Malformed cursor."}};
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "Malformed cursor."}};
 
     // the format is checked in RPC framework level
     auto [hexCursor, startHint] = *maybeCursor;
@@ -1501,7 +1501,7 @@ parseBook(
 {
     auto const checkIssuer = [](xrpl::Asset const& asset,
                                 std::string_view field,
-                                RippledError error) -> std::optional<Status> {
+                                XrpldError error) -> std::optional<Status> {
         if (!asset.holds<xrpl::Issue>())
             return std::nullopt;
 
@@ -1520,10 +1520,10 @@ parseBook(
         return std::nullopt;
     };
 
-    if (auto const err = checkIssuer(pays, JS(taker_pays), RippledError::RpcSrcIsrMalformed))
+    if (auto const err = checkIssuer(pays, JS(taker_pays), XrpldError::RpcSrcIsrMalformed))
         return std::unexpected{*err};
 
-    if (auto const err = checkIssuer(gets, JS(taker_gets), RippledError::RpcDstIsrMalformed))
+    if (auto const err = checkIssuer(gets, JS(taker_gets), XrpldError::RpcDstIsrMalformed))
         return std::unexpected{*err};
 
     std::optional<xrpl::uint256> domainID = std::nullopt;
@@ -1531,14 +1531,14 @@ parseBook(
         xrpl::uint256 dom;
         if (!dom.parseHex(*domain)) {
             return std::unexpected{
-                Status{RippledError::RpcDomainMalformed, "Unable to parse domain."}
+                Status{XrpldError::RpcDomainMalformed, "Unable to parse domain."}
             };
         }
         domainID = dom;
     }
 
     if (pays == gets)
-        return std::unexpected{Status{RippledError::RpcBadMarket}};
+        return std::unexpected{Status{XrpldError::RpcBadMarket}};
 
     return xrpl::Book{pays, gets, domainID};
 }
@@ -1547,92 +1547,88 @@ std::expected<xrpl::Book, Status>
 parseBook(boost::json::object const& request)
 {
     if (!request.contains("taker_pays")) {
-        return std::unexpected{
-            Status{RippledError::RpcInvalidParams, "Missing field 'taker_pays'"}
-        };
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "Missing field 'taker_pays'"}};
     }
 
     if (!request.contains("taker_gets")) {
-        return std::unexpected{
-            Status{RippledError::RpcInvalidParams, "Missing field 'taker_gets'"}
-        };
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "Missing field 'taker_gets'"}};
     }
 
     if (!request.at("taker_pays").is_object()) {
         return std::unexpected{
-            Status{RippledError::RpcInvalidParams, "Field 'taker_pays' is not an object"}
+            Status{XrpldError::RpcInvalidParams, "Field 'taker_pays' is not an object"}
         };
     }
 
     if (!request.at("taker_gets").is_object()) {
         return std::unexpected{
-            Status{RippledError::RpcInvalidParams, "Field 'taker_gets' is not an object"}
+            Status{XrpldError::RpcInvalidParams, "Field 'taker_gets' is not an object"}
         };
     }
 
     auto takerPays = request.at("taker_pays").as_object();
     if (!takerPays.contains("currency"))
-        return std::unexpected{Status{RippledError::RpcSrcCurMalformed}};
+        return std::unexpected{Status{XrpldError::RpcSrcCurMalformed}};
 
     if (!takerPays.at("currency").is_string())
-        return std::unexpected{Status{RippledError::RpcSrcCurMalformed}};
+        return std::unexpected{Status{XrpldError::RpcSrcCurMalformed}};
 
     auto takerGets = request.at("taker_gets").as_object();
     if (!takerGets.contains("currency"))
-        return std::unexpected{Status{RippledError::RpcDstAmtMalformed}};
+        return std::unexpected{Status{XrpldError::RpcDstAmtMalformed}};
 
     if (!takerGets.at("currency").is_string()) {
         return std::unexpected{Status{
-            RippledError::RpcDstAmtMalformed,
+            XrpldError::RpcDstAmtMalformed,
         }};
     }
 
     if (request.contains("domain") && !request.at("domain").is_string())
-        return std::unexpected{Status{RippledError::RpcDomainMalformed}};
+        return std::unexpected{Status{XrpldError::RpcDomainMalformed}};
 
     xrpl::Currency payCurrency;
     if (!xrpl::toCurrency(
             payCurrency, boost::json::value_to<std::string>(takerPays.at("currency"))
         ))
-        return std::unexpected{Status{RippledError::RpcSrcCurMalformed}};
+        return std::unexpected{Status{XrpldError::RpcSrcCurMalformed}};
 
     xrpl::Currency getCurrency;
     if (!xrpl::toCurrency(getCurrency, boost::json::value_to<std::string>(takerGets["currency"])))
-        return std::unexpected{Status{RippledError::RpcDstAmtMalformed}};
+        return std::unexpected{Status{XrpldError::RpcDstAmtMalformed}};
 
     xrpl::AccountID payIssuer;
     if (takerPays.contains("issuer")) {
         if (!takerPays.at("issuer").is_string()) {
             return std::unexpected{
-                Status{RippledError::RpcInvalidParams, "takerPaysIssuerNotString"}
+                Status{XrpldError::RpcInvalidParams, "takerPaysIssuerNotString"}
             };
         }
 
         if (!xrpl::toIssuer(payIssuer, boost::json::value_to<std::string>(takerPays.at("issuer"))))
-            return std::unexpected{Status{RippledError::RpcSrcIsrMalformed}};
+            return std::unexpected{Status{XrpldError::RpcSrcIsrMalformed}};
 
         if (payIssuer == xrpl::noAccount())
-            return std::unexpected{Status{RippledError::RpcSrcIsrMalformed}};
+            return std::unexpected{Status{XrpldError::RpcSrcIsrMalformed}};
     } else {
         payIssuer = xrpl::xrpAccount();
     }
 
     if (isXRP(payCurrency) && !isXRP(payIssuer)) {
         return std::unexpected{Status{
-            RippledError::RpcSrcIsrMalformed,
+            XrpldError::RpcSrcIsrMalformed,
             "Unneeded field 'taker_pays.issuer' for XRP currency specification."
         }};
     }
 
     if (!isXRP(payCurrency) && isXRP(payIssuer)) {
         return std::unexpected{Status{
-            RippledError::RpcSrcIsrMalformed,
+            XrpldError::RpcSrcIsrMalformed,
             "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
         }};
     }
 
     if ((!isXRP(payCurrency)) && (!takerPays.contains("issuer"))) {
-        return std::unexpected{Status{RippledError::RpcSrcIsrMalformed, "Missing non-XRP issuer."}};
+        return std::unexpected{Status{XrpldError::RpcSrcIsrMalformed, "Missing non-XRP issuer."}};
     }
 
     xrpl::AccountID getIssuer;
@@ -1640,7 +1636,7 @@ parseBook(boost::json::object const& request)
     if (takerGets.contains("issuer")) {
         if (!takerGets["issuer"].is_string()) {
             return std::unexpected{
-                Status{RippledError::RpcInvalidParams, "taker_gets.issuer should be string"}
+                Status{XrpldError::RpcInvalidParams, "taker_gets.issuer should be string"}
             };
         }
 
@@ -1648,13 +1644,13 @@ parseBook(boost::json::object const& request)
                 getIssuer, boost::json::value_to<std::string>(takerGets.at("issuer"))
             )) {
             return std::unexpected{Status{
-                RippledError::RpcDstIsrMalformed, "Invalid field 'taker_gets.issuer', bad issuer."
+                XrpldError::RpcDstIsrMalformed, "Invalid field 'taker_gets.issuer', bad issuer."
             }};
         }
 
         if (getIssuer == xrpl::noAccount()) {
             return std::unexpected{Status{
-                RippledError::RpcDstIsrMalformed,
+                XrpldError::RpcDstIsrMalformed,
                 "Invalid field 'taker_gets.issuer', bad issuer account one."
             }};
         }
@@ -1664,26 +1660,26 @@ parseBook(boost::json::object const& request)
 
     if (xrpl::isXRP(getCurrency) && !xrpl::isXRP(getIssuer)) {
         return std::unexpected{Status{
-            RippledError::RpcDstIsrMalformed,
+            XrpldError::RpcDstIsrMalformed,
             "Unneeded field 'taker_gets.issuer' for XRP currency specification."
         }};
     }
 
     if (!xrpl::isXRP(getCurrency) && xrpl::isXRP(getIssuer)) {
         return std::unexpected{Status{
-            RippledError::RpcDstIsrMalformed,
+            XrpldError::RpcDstIsrMalformed,
             "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
         }};
     }
 
     if (payCurrency == getCurrency && payIssuer == getIssuer)
-        return std::unexpected{Status{RippledError::RpcBadMarket}};
+        return std::unexpected{Status{XrpldError::RpcBadMarket}};
 
     std::optional<xrpl::uint256> domainID;
     if (request.contains("domain")) {
         xrpl::uint256 dom;
         if (!dom.parseHex(boost::json::value_to<std::string>(request.at("domain"))))
-            return std::unexpected{Status{RippledError::RpcDomainMalformed}};
+            return std::unexpected{Status{XrpldError::RpcDomainMalformed}};
         domainID = dom;
     }
 
@@ -1697,12 +1693,12 @@ parseTaker(boost::json::value const& taker)
 {
     std::optional<xrpl::AccountID> takerID = {};
     if (!taker.is_string())
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "takerNotString"}};
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "takerNotString"}};
 
     takerID = accountFromStringStrict(boost::json::value_to<std::string>(taker));
 
     if (!takerID)
-        return std::unexpected{Status{RippledError::RpcBadIssuer, "invalidTakerAccount"}};
+        return std::unexpected{Status{XrpldError::RpcBadIssuer, "invalidTakerAccount"}};
     return *takerID;
 }
 
@@ -1762,14 +1758,14 @@ std::expected<xrpl::uint256, Status>
 getNFTID(boost::json::object const& request)
 {
     if (!request.contains(JS(nft_id)))
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "missingTokenID"}};
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "missingTokenID"}};
 
     if (!request.at(JS(nft_id)).is_string())
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "tokenIDNotString"}};
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "tokenIDNotString"}};
 
     xrpl::uint256 tokenid;
     if (!tokenid.parseHex(boost::json::value_to<std::string>(request.at(JS(nft_id)))))
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "malformedTokenID"}};
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "malformedTokenID"}};
 
     return tokenid;
 }

@@ -60,7 +60,7 @@ TEST_P(NgErrorHandlingMakeErrorTest, MakeError)
         EXPECT_EQ(httpResponse.result(), GetParam().expectedStatus);
 
         std::string expectedContentType = "text/html";
-        if (std::holds_alternative<rpc::RippledError>(GetParam().status.code))
+        if (std::holds_alternative<rpc::XrpldError>(GetParam().status.code))
             expectedContentType = "application/json";
 
         EXPECT_EQ(httpResponse.at(http::field::content_type), expectedContentType);
@@ -74,7 +74,7 @@ INSTANTIATE_TEST_CASE_P(
         NgErrorHandlingMakeErrorTestBundle{
             "WsRequest",
             false,
-            rpc::Status{rpc::RippledError::RpcTooBusy},
+            rpc::Status{rpc::XrpldError::RpcTooBusy},
             R"JSON({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})JSON",
             boost::beast::http::status::ok
         },
@@ -116,7 +116,7 @@ INSTANTIATE_TEST_CASE_P(
         NgErrorHandlingMakeErrorTestBundle{
             "HttpRequest_RippledError",
             true,
-            rpc::Status{rpc::RippledError::RpcTooBusy},
+            rpc::Status{rpc::XrpldError::RpcTooBusy},
             R"JSON({"result":{"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"}})JSON",
             boost::beast::http::status::bad_request
         },
@@ -300,7 +300,7 @@ TEST_P(NgErrorHandlingComposeErrorTest, ComposeError)
 {
     auto const request = makeRequest(GetParam().isHttp);
     ErrorHelper const errorHelper{request, GetParam().request};
-    auto const response = errorHelper.composeError(rpc::Status{rpc::RippledError::RpcInternal});
+    auto const response = errorHelper.composeError(rpc::Status{rpc::XrpldError::RpcInternal});
     EXPECT_EQ(boost::json::serialize(response), GetParam().expectedMessage);
 }
 

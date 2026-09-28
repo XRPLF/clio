@@ -67,7 +67,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
     }();
 
     if (hasInvalidParams)
-        return Error{Status{RippledError::RpcInvalidParams}};
+        return Error{Status{XrpldError::RpcInvalidParams}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AMMInfo's ledger range must be available");
@@ -87,7 +87,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
     if (input.accountID) {
         auto keylet = keylet::account(*input.accountID);
         if (not sharedPtrBackend_->fetchLedgerObject(keylet.key, lgrInfo.seq, ctx.yield))
-            return Error{Status{RippledError::RpcActNotFound}};
+            return Error{Status{XrpldError::RpcActNotFound}};
     }
 
     xrpl::uint256 ammID;
@@ -96,13 +96,13 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
         auto const accountLedgerObject =
             sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
         if (not accountLedgerObject)
-            return Error{Status{RippledError::RpcActMalformed}};
+            return Error{Status{XrpldError::RpcActMalformed}};
         xrpl::STLedgerEntry const sle{
             xrpl::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()},
             accountKeylet.key
         };
         if (not sle.isFieldPresent(xrpl::sfAMMID))
-            return Error{Status{RippledError::RpcActNotFound}};
+            return Error{Status{XrpldError::RpcActNotFound}};
         ammID = sle.getFieldH256(xrpl::sfAMMID);
     }
 
@@ -113,7 +113,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
         sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (not ammBlob)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto const amm = SLE{SerialIter{ammBlob->data(), ammBlob->size()}, ammKeylet.key};
     auto const ammAccountID = amm.getAccountID(sfAccount);
@@ -121,7 +121,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
         keylet::account(ammAccountID).key, lgrInfo.seq, ctx.yield
     );
     if (not accBlob)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     // If the issue1 and issue2 are not specified, we need to get them from the AMM.
     // Otherwise we preserve the mapping of asset1 -> issue1 and asset2 -> issue2 as requested by

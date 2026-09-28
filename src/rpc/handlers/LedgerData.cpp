@@ -42,10 +42,10 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
     auto const* diffMarker = input.marker ? std::get_if<uint32_t>(&*input.marker) : nullptr;
 
     if (input.outOfOrder && uint256Marker != nullptr)
-        return Error{Status{RippledError::RpcInvalidParams, "outOfOrderMarkerNotInt"}};
+        return Error{Status{XrpldError::RpcInvalidParams, "outOfOrderMarkerNotInt"}};
 
     if (!input.outOfOrder && diffMarker != nullptr)
-        return Error{Status{RippledError::RpcInvalidParams, "markerNotString"}};
+        return Error{Status{XrpldError::RpcInvalidParams, "markerNotString"}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "LedgerData's ledger range must be available");
@@ -70,7 +70,7 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
     } else {
         if (uint256Marker != nullptr &&
             !sharedPtrBackend_->fetchLedgerObject(*uint256Marker, lgrInfo.seq, ctx.yield))
-            return Error{Status{RippledError::RpcInvalidParams, "markerDoesNotExist"}};
+            return Error{Status{XrpldError::RpcInvalidParams, "markerDoesNotExist"}};
     }
 
     output.ledgerHash = xrpl::strHex(lgrInfo.hash);

@@ -6,6 +6,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/system/error_code.hpp>
+#include <rpcspec/backends/BoostJson.hpp>
 
 #include <optional>
 #include <string_view>

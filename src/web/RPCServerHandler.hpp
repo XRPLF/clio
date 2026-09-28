@@ -23,6 +23,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include <boost/system/system_error.hpp>
+#include <rpcspec/backends/BoostJson.hpp>
 #include <xrpl/protocol/jss.h>
 
 #include <chrono>

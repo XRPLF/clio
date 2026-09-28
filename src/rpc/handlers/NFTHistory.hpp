@@ -2,6 +2,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/log/Logger.hpp"
 
@@ -9,7 +10,6 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/nft_history/Types.hpp>
 
 #include <cstdint>
@@ -27,7 +27,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/nft_history.html#nft_history
  */
-class NFTHistoryHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::nft_history::Input> {
+class NFTHistoryHandler : public rpc::HandlerFor<rpc::spec::handlers::nft_history::Input> {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 

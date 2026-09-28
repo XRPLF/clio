@@ -123,12 +123,12 @@ directoryLocator(le::DirectoryEntry const& entry)
     // This should be unified after xrpld is migrated to rpc-spec.
     if (entry.dirRoot.has_value() and entry.owner.has_value()) {
         return std::unexpected{
-            Status{RippledError::RpcInvalidParams, "mayNotSpecifyBothDirRootAndOwner"}
+            Status{XrpldError::RpcInvalidParams, "mayNotSpecifyBothDirRootAndOwner"}
         };
     }
 
     if (not entry.dirRoot.has_value() and not entry.owner.has_value())
-        return std::unexpected{Status{RippledError::RpcInvalidParams, "missingOwnerOrDirRoot"}};
+        return std::unexpected{Status{XrpldError::RpcInvalidParams, "missingOwnerOrDirRoot"}};
 
     auto const subIndex = entry.subIndex.value_or(0);
     if (entry.dirRoot.has_value())
@@ -224,7 +224,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
     if (input.index.has_value()) {
         // A raw key names no entry type, so nothing is verified after the read.
         if (input.index->isZero())
-            return std::unexpected{Status{RippledError::RpcEntryNotFound}};
+            return std::unexpected{Status{XrpldError::RpcEntryNotFound}};
 
         return Locator{.key = *input.index};
     }
@@ -409,7 +409,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
         return std::unexpected{Status{ClioError::RpcUnknownOption}};
 
     return std::unexpected{
-        Status{RippledError::RpcInvalidParams, "No ledger_entry params provided."}
+        Status{XrpldError::RpcInvalidParams, "No ledger_entry params provided."}
     };
 }
 
@@ -443,14 +443,14 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
     if (not ledgerObject.has_value() or ledgerObject->empty()) {
         if (not input.includeDeleted)
-            return Error{Status{RippledError::RpcEntryNotFound}};
+            return Error{Status{XrpldError::RpcEntryNotFound}};
         auto const deletedSeq =
             sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
         if (not deletedSeq.has_value())
-            return Error{Status{RippledError::RpcEntryNotFound}};
+            return Error{Status{XrpldError::RpcEntryNotFound}};
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, *deletedSeq - 1, ctx.yield);
         if (not ledgerObject.has_value() or ledgerObject->empty())
-            return Error{Status{RippledError::RpcEntryNotFound}};
+            return Error{Status{XrpldError::RpcEntryNotFound}};
         output.deletedLedgerIndex = deletedSeq;
     }
 
@@ -459,7 +459,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
     };
 
     if (expectedType != xrpl::ltANY && sle.getType() != expectedType)
-        return Error{Status{RippledError::RpcUnexpectedLedgerType}};
+        return Error{Status{XrpldError::RpcUnexpectedLedgerType}};
 
     output.index = xrpl::strHex(key);
     output.ledgerIndex = lgrInfo.seq;

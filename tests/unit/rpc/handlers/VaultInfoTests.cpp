@@ -210,7 +210,7 @@ TEST_F(RPCVaultInfoHandlerTest, InputHasOwnerButNotFoundResultsInError)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
-        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::RpcEntryNotFound);
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::XrpldError::RpcEntryNotFound);
         EXPECT_EQ(err.at("error_message").as_string(), "Entry not found.");
     });
 }
@@ -242,7 +242,7 @@ TEST_F(RPCVaultInfoHandlerTest, VaultIDFailsVaultDeserializationReturnsEntryNotF
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
-        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::RpcEntryNotFound);
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::XrpldError::RpcEntryNotFound);
         EXPECT_EQ(err.at("error_message").as_string(), "vault object not found.");
     });
 }
@@ -293,7 +293,7 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
-        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::RpcEntryNotFound);
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::XrpldError::RpcEntryNotFound);
         EXPECT_EQ(err.at("error_message").as_string(), "issuance object not found.");
     });
 }

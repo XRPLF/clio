@@ -1,11 +1,11 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/ledger_index/Types.hpp>
 
 #include <cstdint>
@@ -19,7 +19,7 @@ namespace rpc {
  * @brief The ledger_index method fetches the latest closed ledger before the given date.
  *
  */
-class LedgerIndexHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::ledger_index::Input> {
+class LedgerIndexHandler : public rpc::HandlerFor<rpc::spec::handlers::ledger_index::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
