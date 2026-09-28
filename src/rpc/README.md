@@ -20,9 +20,10 @@ See the [common](https://github.com/XRPLF/clio/blob/develop/src/rpc/common) subf
 
 From the spec library:
 
-- **`rpc::spec::HandlerFor<Input>`**: Base class supplying the static `parseInput` and `spec`
-  entry points a handler needs. It resolves the versioned spec for `Input` through ADL, so a
-  handler names only its `Input` type.
+- **`rpc::spec::HandlerFor<Input, Backend>`**: Base class supplying the static `parseInput` and
+  `spec` entry points a handler needs. It resolves the versioned spec for `Input` through ADL, so a
+  handler names only its `Input` type. Handlers do not inherit it directly; they use the
+  `rpc::HandlerFor<Input>` alias from `rpc/common/SpecBackend.hpp`, which binds the JSON backend.
 - **`rpcspec/handlers/<method>/Types.hpp`**: The strongly-typed `Input` struct for a method
   (`xrpl::AccountID`, `xrpl::uint256`, `LedgerSpecifier`, ... rather than `std::string`).
 - **`rpcspec/handlers/<method>/Spec.hpp`**: The consteval spec declaring that method's fields,
