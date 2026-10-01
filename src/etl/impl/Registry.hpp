@@ -57,7 +57,7 @@ concept HasInitialObjectHook = requires(T p) {
 };
 
 template <typename T>
-concept ContainsSpec = std::decay_t<T>::spec::kSpecTag;
+concept ContainsSpec = std::decay_t<T>::Spec::kSpecTag;
 
 template <typename T>
 concept ContainsValidHook =
@@ -121,7 +121,7 @@ public:
         {
             auto const expand = [&]<typename P>(P& p, model::Transaction const& t) {
                 if constexpr (requires { p.onTransaction(data.seq, t); }) {
-                    if (std::decay_t<P>::spec::wants(t.type))
+                    if (std::decay_t<P>::Spec::wants(t.type))
                         executeIfAllowed(p, [&data, &t](auto& p) { p.onTransaction(data.seq, t); });
                 }
             };
@@ -194,7 +194,7 @@ public:
         {
             auto const expand = [&]<typename P>(P&& p, model::Transaction const& tx) {
                 if constexpr (requires { p.onInitialTransaction(data.seq, tx); }) {
-                    if (std::decay_t<P>::spec::wants(tx.type)) {
+                    if (std::decay_t<P>::Spec::wants(tx.type)) {
                         executeIfAllowed(p, [&data, &tx](auto& p) {
                             p.onInitialTransaction(data.seq, tx);
                         });

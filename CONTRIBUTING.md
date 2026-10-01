@@ -157,7 +157,7 @@ All public namespaces, classes and functions must be covered by doc (`doxygen`) 
 - Prefer readability over terseness where important logic is concerned.
 - Inline functions that are not used or are not likely to be used elsewhere in the codebase.
 - Use clear and self-explanatory names for functions, variables, structs and classes.
-- Use TitleCase for classes, structs and filenames, camelCase for function and variable names, lower case for namespaces and folders.
+- Use TitleCase for classes, structs, type aliases and filenames, camelCase for function and variable names, lower case for namespaces and folders. The exception is a type alias that generic code looks up by name (`value_type`, `iterator_category`, `is_transparent`, and other standard iterator, hash and GoogleTest members), which keeps its snake_case spelling; `.clang-tidy` lists the names that are allowed.
 - Provide as many comments as you feel that a competent programmer would need to understand what your code does.
 
 ## Maintainers
