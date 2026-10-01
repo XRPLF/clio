@@ -1,8 +1,9 @@
-# These might help too
-# Mark any lines that have had a commit skipped using --ignore-rev with a `?`
-#git config --global blame.markIgnoredLines true
-# Mark any lines that were added in a skipped commit and can not be attributed with a `*`
-#git config --global blame.markUnblamableLines true
+# This feature requires Git >= 2.24
+# To use it by default in git blame:
+# git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# This file is sorted in reverse chronological order, with the most recent commits at the top.
+# The commits listed here are ignored by git blame, which is useful for formatting-only commits that would otherwise obscure the history of changes to a file.
 
 # chore: Port clang-tidy typedef style from `xrpld` (#3237)
 b5fb26119c05cca0c5dc22686bf3e20939432843
