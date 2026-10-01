@@ -661,12 +661,12 @@ generateTestValuesForParametersTest()
         },
 
         ParamTestCaseBundle{
-            .testName = "InvalidRippleStateType",
+            .testName = "InvalidRippleStateIndex",
             .testJson = R"JSON({
                 "ripple_state": "123"
             })JSON",
-            .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request."
         },
 
         ParamTestCaseBundle{

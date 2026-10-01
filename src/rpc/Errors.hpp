@@ -19,11 +19,6 @@ struct ClioErrorInfo {
 };
 
 /**
- * @brief A globally available rpc::Status that represents a successful state.
- */
-static Status gOk;
-
-/**
  * @brief Get the error info object from an clio-specific error code.
  *
  * @param code The error code
