@@ -115,9 +115,8 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
         return true;
     };
 
-    auto const nftIncluded = not typeFilter or
-        std::find(typeFilter->begin(), typeFilter->end(), xrpl::ltNFTOKEN_PAGE) !=
-            typeFilter->end();
+    auto const nftIncluded =
+        not typeFilter or std::ranges::contains(*typeFilter, xrpl::ltNFTOKEN_PAGE);
 
     auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_,
