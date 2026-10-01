@@ -256,10 +256,16 @@ resolveLocator(Input const& input, uint32_t apiVersion)
     }
 
     if (input.rippleStateAccount.has_value()) {
-        auto const& state = *input.rippleStateAccount;
-        return Locator{
-            .key = xrpl::keylet::trustLine(state.accounts[0], state.accounts[1], state.currency).key
-        };
+        return locatorFrom(
+            *input.rippleStateAccount, xrpl::ltRIPPLE_STATE, [](le::RippleStateEntry const& entry) {
+                return LocatorOrStatus{Locator{
+                    .key = xrpl::keylet::trustLine(
+                               entry.accounts[0], entry.accounts[1], entry.currency
+                    )
+                               .key
+                }};
+            }
+        );
     }
 
     if (input.escrow.has_value()) {

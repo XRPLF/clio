@@ -51,7 +51,7 @@ check(
 TEST(RPCErrorsTest, StatusAsBool)
 {
     // Only RpcSuccess status should return false
-    EXPECT_FALSE(Status{XrpldError::RpcSuccess});
+    EXPECT_FALSE(Status{Status::kOK});
 
     // true should be returned for any error state, we just test a few
     CombinedError const errors[]{
@@ -77,7 +77,7 @@ TEST(RPCErrorsTest, StatusEquals)
 
 TEST(RPCErrorsTest, SuccessToJSON)
 {
-    auto const status = Status{XrpldError::RpcSuccess};
+    auto const status = Status{Status::kOK};
     check(makeError(status), "unknown", XrpldError::RpcSuccess, "An unknown error code.");
 }
 
