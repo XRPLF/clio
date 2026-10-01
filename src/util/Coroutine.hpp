@@ -46,14 +46,14 @@ public:
      * @brief Type alias for a yield_context that is bound to a cancellation slot.
      * This allows asynchronous operations initiated with this context to be cancelled.
      */
-    using cancellable_yield_context_type = boost::asio::
+    using CancellableYieldContextType = boost::asio::
         cancellation_slot_binder<boost::asio::yield_context, boost::asio::cancellation_slot>;
 
 private:
     boost::asio::yield_context yield_;
     boost::system::error_code error_;
     boost::asio::cancellation_signal cancellationSignal_;
-    cancellable_yield_context_type cyield_;
+    CancellableYieldContextType cyield_;
     std::atomic_bool isCancelled_{false};
 
     using FamilyCancellationSignal =
@@ -159,9 +159,9 @@ public:
      * @brief Returns the cancellable yield context associated with this coroutine.
      * This context should be used for Boost.Asio asynchronous operations within the coroutine
      * to enable cancellation.
-     * @return A cancellable_yield_context_type object.
+     * @return A CancellableYieldContextType object.
      */
-    [[nodiscard]] cancellable_yield_context_type
+    [[nodiscard]] CancellableYieldContextType
     yieldContext() const;
 
     /**

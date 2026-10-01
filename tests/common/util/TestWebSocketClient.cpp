@@ -33,7 +33,7 @@
 namespace http = boost::beast::http;
 namespace net = boost::asio;
 namespace ssl = boost::asio::ssl;
-using tcp = boost::asio::ip::tcp;
+using boost::asio::ip::tcp;
 
 void
 WebSocketSyncClient::connect(

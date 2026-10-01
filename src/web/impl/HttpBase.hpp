@@ -70,7 +70,7 @@ static constexpr auto kCacheCheckNotLoadedHtml = R"html(
     </html>
 )html";
 
-using tcp = boost::asio::ip::tcp;
+using boost::asio::ip::tcp;
 
 /**
  * @brief This is the implementation class for http sessions

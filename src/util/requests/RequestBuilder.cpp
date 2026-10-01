@@ -31,7 +31,7 @@ namespace util::requests {
 namespace beast = boost::beast;
 namespace http = beast::http;
 namespace asio = boost::asio;
-using tcp = asio::ip::tcp;
+using asio::ip::tcp;
 
 RequestBuilder::RequestBuilder(std::string host, std::string port)
     : host_(std::move(host)), port_(std::move(port))

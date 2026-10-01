@@ -24,7 +24,7 @@
 namespace beast = boost::beast;
 namespace http = beast::http;
 namespace asio = boost::asio;
-using tcp = boost::asio::ip::tcp;
+using boost::asio::ip::tcp;
 
 namespace {
 
