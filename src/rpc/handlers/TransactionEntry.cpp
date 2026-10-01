@@ -40,7 +40,11 @@ TransactionEntryHandler::process(
     output.apiVersion = ctx.apiVersion;
 
     output.ledgerHeader = *expectedLgrInfo;
-    auto const dbRet = sharedPtrBackend_->fetchTransaction(input.txHash, ctx.yield);
+
+    // The spec rejects a missing or malformed tx_hash, so the hash is always present here
+    ASSERT(input.txHash.has_value(), "TransactionEntry's tx_hash must be validated by the spec");
+    auto const dbRet = sharedPtrBackend_->fetchTransaction(*input.txHash, ctx.yield);
+
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
     // rippled, having two separate commands made sense, as tx would use SQLite
