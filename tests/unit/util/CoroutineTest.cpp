@@ -21,7 +21,7 @@ protected:
 
     static void
     asyncOperation(
-        Coroutine::cancellable_yield_context_type yield,
+        Coroutine::CancellableYieldContextType yield,
         std::chrono::steady_clock::duration duration
     )
     {

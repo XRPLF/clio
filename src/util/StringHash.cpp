@@ -9,19 +9,19 @@ namespace util {
 size_t
 StringHash::operator()(char const* str) const
 {
-    return hash_type{}(str);
+    return HashType{}(str);
 }
 
 size_t
 StringHash::operator()(std::string_view str) const
 {
-    return hash_type{}(str);
+    return HashType{}(str);
 }
 
 size_t
 StringHash::operator()(std::string const& str) const
 {
-    return hash_type{}(str);
+    return HashType{}(str);
 }
 
 }  // namespace util

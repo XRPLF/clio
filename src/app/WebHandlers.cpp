@@ -106,7 +106,7 @@ MetricsHandler::operator()(
     if (!postSuccessful) {
         return web::ng::Response{
             boost::beast::http::status::too_many_requests,
-            rpc::makeError(rpc::RippledError::RpcTooBusy),
+            rpc::makeError(rpc::XrpldError::RpcTooBusy),
             request
         };
     }

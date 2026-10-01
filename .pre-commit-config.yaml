@@ -29,7 +29,7 @@ repos:
 
   # Autoformat: YAML, JSON, Markdown, etc.
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: 0ee178619d696787ca73d210cc191d720868c631 # frozen: v3.9.6
+    rev: ef4a397f916211b4a39ccf9d3d9cbb6562157251 # frozen: v3.9.9
     hooks:
       - id: prettier
 
@@ -64,7 +64,7 @@ repos:
       - id: black
 
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: 05c1426671b9237fb5e1444dd63aa5731bec0dfb # frozen: v3.13.1-1
+    rev: 479be5958357ba5ab65ce47172117348516860e9 # frozen: v3.14.1-1
     hooks:
       - id: shfmt
         args: [--write, --indent=4, --case-indent=true]
@@ -100,14 +100,14 @@ repos:
         files: \.(h|hpp)$
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: 34b241d706d24e4ccb69e38f9f0fa190b5f486ec # frozen: v23.1.0
+    rev: e2b496dc2bd8340c2524cb9a2d2a943cde1bb6df # frozen: v23.1.1
     hooks:
       - id: clang-format
         args: [--style=file]
         types: [c++]
 
   - repo: https://github.com/BlankSpruce/gersemi-pre-commit
-    rev: c1c636fef559eeef0dae280afcd44420f6126e63 # frozen: 0.28.1
+    rev: f1c4833f8cf23c6d952673abc73525411a5719e8 # frozen: 0.29.1
     hooks:
       - id: gersemi
 

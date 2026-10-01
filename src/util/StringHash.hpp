@@ -15,7 +15,7 @@ namespace util {
  * string views, and standard strings.
  */
 struct StringHash {
-    using hash_type = std::hash<std::string_view>;
+    using HashType = std::hash<std::string_view>;
     using is_transparent = void;  ///< Enables heterogeneous lookup
 
     /**

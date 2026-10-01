@@ -48,7 +48,7 @@ AccountCurrenciesHandler::process(
         xrpl::keylet::account(accountID).key, lgrInfo.seq, ctx.yield
     );
     if (!accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     Output response;
     auto const addToResponse = [&](xrpl::SLE const sle) {

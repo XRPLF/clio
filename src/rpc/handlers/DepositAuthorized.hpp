@@ -1,12 +1,12 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/deposit_authorized/Types.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/STArray.h>
@@ -31,7 +31,7 @@ namespace rpc {
  * For more details see: https://xrpl.org/deposit_authorized.html
  */
 class DepositAuthorizedHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::deposit_authorized::Input> {
+    : public rpc::HandlerFor<rpc::spec::handlers::deposit_authorized::Input> {
     // dependencies
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 

@@ -37,7 +37,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 
     if (!input.account && !input.ident) {
         return Error{
-            Status{RippledError::RpcInvalidParams, xrpl::rpc::missingFieldMessage(JS(account))}
+            Status{XrpldError::RpcInvalidParams, xrpl::rpc::missingFieldMessage(JS(account))}
         };
     }
 
@@ -60,7 +60,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     xrpl::STLedgerEntry const sle{
         xrpl::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()},
@@ -68,7 +68,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     };
 
     if (!accountKeylet.check(sle))
-        return Error{Status{RippledError::RpcDbDeserialization}};
+        return Error{Status{XrpldError::RpcDbDeserialization}};
 
     auto isEnabled = [this, &ctx, seq = lgrInfo.seq](auto key) {
         return amendmentCenter_->isEnabled(ctx.yield, key, seq);
@@ -107,7 +107,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
             };
 
             if (!signersKey.check(sleSigners))
-                return Error{Status{RippledError::RpcDbDeserialization}};
+                return Error{Status{XrpldError::RpcDbDeserialization}};
 
             out.signerLists->push_back(sleSigners);
         }

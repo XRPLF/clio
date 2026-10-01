@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-using tcp = boost::asio::ip::tcp;
+using boost::asio::ip::tcp;
 
 namespace tests::util {
 

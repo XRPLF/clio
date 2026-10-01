@@ -1,12 +1,12 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/gateway_balances/Types.hpp>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/STAmount.h>
@@ -30,7 +30,7 @@ namespace rpc {
  * For more details see: https://xrpl.org/gateway_balances.html#gateway_balances
  */
 class GatewayBalancesHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::gateway_balances::Input> {
+    : public rpc::HandlerFor<rpc::spec::handlers::gateway_balances::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

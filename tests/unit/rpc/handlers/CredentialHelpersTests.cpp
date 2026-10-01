@@ -112,7 +112,7 @@ TEST_F(CredentialHelperTest, GetInvalidCredentialArray)
         );
         ASSERT_FALSE(ret.has_value());
         auto const status = ret.error();
-        EXPECT_EQ(status, RippledError::RpcBadCredentials);
+        EXPECT_EQ(status, XrpldError::RpcBadCredentials);
         EXPECT_EQ(status.message, "credentials don't exist.");
     });
     ctx_.run();

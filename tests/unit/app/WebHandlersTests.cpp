@@ -211,7 +211,7 @@ TEST_F(RequestHandlerTest, RpcHandlerThrows)
 
         auto const body = boost::json::parse(httpResponse.body()).as_object();
         EXPECT_EQ(body.at("error").as_string(), "internal");
-        EXPECT_EQ(body.at("error_code").as_int64(), rpc::RippledError::RpcInternal);
+        EXPECT_EQ(body.at("error_code").as_int64(), rpc::XrpldError::RpcInternal);
         EXPECT_EQ(body.at("status").as_string(), "error");
     });
 }

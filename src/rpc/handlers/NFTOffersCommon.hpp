@@ -1,12 +1,12 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/nft_offers_common/Types.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Keylet.h>
@@ -24,8 +24,7 @@ namespace rpc {
 /**
  * @brief Contains common functionality for handling the `nft_offers` command
  */
-class NFTOffersHandlerBase
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::nft_offers_common::Input> {
+class NFTOffersHandlerBase : public rpc::HandlerFor<rpc::spec::handlers::nft_offers_common::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

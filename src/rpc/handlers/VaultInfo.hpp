@@ -1,11 +1,11 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/vault_info/Types.hpp>
 
 #include <cstdint>
@@ -16,7 +16,7 @@ namespace rpc {
 /**
  * @brief The vault_info command retrieves information about a vault, currency, shares etc.
  */
-class VaultInfoHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::vault_info::Input> {
+class VaultInfoHandler : public rpc::HandlerFor<rpc::spec::handlers::vault_info::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

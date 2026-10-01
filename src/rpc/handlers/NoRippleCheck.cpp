@@ -56,7 +56,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
     auto const accountObj = sharedPtrBackend_->fetchLedgerObject(keylet, lgrInfo.seq, ctx.yield);
 
     if (!accountObj)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto it = xrpl::SerialIter{accountObj->data(), accountObj->size()};
     auto sle = xrpl::SLE{it, keylet};

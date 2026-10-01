@@ -4,6 +4,7 @@
 #include "data/BackendInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "feed/Types.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -11,7 +12,6 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/subscribe/Types.hpp>
 #include <xrpl/protocol/AccountID.h>
 
@@ -29,7 +29,7 @@ namespace rpc {
  * For more details see: https://xrpl.org/subscribe.html
  */
 
-class SubscribeHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::subscribe::Input> {
+class SubscribeHandler : public rpc::HandlerFor<rpc::spec::handlers::subscribe::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
