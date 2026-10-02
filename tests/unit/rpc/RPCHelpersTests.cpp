@@ -346,7 +346,7 @@ TEST_F(RPCHelpersTest, EncodeCTID)
 
 TEST_F(RPCHelpersTest, EncodeCTIDRejectsNetworkIdAbove16Bits)
 {
-    uint32_t networkId = 0x10000;
+    uint32_t const networkId = 0x10000;
     EXPECT_FALSE(encodeCTID(0x1234, 0x67, networkId));
 }
 
