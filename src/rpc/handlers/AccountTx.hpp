@@ -2,6 +2,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "etl/ETLServiceInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/log/Logger.hpp"
 
@@ -9,7 +10,6 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/account_tx/Types.hpp>
 
 #include <cstdint>
@@ -27,7 +27,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_tx.html
  */
-class AccountTxHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::account_tx::Input> {
+class AccountTxHandler : public rpc::HandlerFor<rpc::spec::handlers::account_tx::Input> {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<etl::ETLServiceInterface const> etl_;

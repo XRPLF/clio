@@ -136,7 +136,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
     );
 
     if (not accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto const& peerAccountID = input.peer;
 

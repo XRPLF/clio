@@ -1,11 +1,11 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/account_mptoken_issuances/Types.hpp>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/STLedgerEntry.h>
@@ -24,7 +24,7 @@ namespace rpc {
  * the account has created.
  */
 class AccountMPTokenIssuancesHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::account_mptoken_issuances::Input> {
+    : public rpc::HandlerFor<rpc::spec::handlers::account_mptoken_issuances::Input> {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 

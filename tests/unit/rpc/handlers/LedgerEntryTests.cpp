@@ -17,7 +17,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rpcspec/Errors.hpp>
-#include <rpcspec/WarningsToJson.hpp>
+#include <rpcspec/backends/BoostJson.hpp>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
@@ -661,12 +661,12 @@ generateTestValuesForParametersTest()
         },
 
         ParamTestCaseBundle{
-            .testName = "InvalidRippleStateType",
+            .testName = "InvalidRippleStateIndex",
             .testJson = R"JSON({
                 "ripple_state": "123"
             })JSON",
-            .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request."
         },
 
         ParamTestCaseBundle{

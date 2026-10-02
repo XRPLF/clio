@@ -20,9 +20,10 @@ See the [common](https://github.com/XRPLF/clio/blob/develop/src/rpc/common) subf
 
 From the spec library:
 
-- **`rpc::spec::HandlerFor<Input>`**: Base class supplying the static `parseInput` and `spec`
-  entry points a handler needs. It resolves the versioned spec for `Input` through ADL, so a
-  handler names only its `Input` type.
+- **`rpc::spec::HandlerFor<Input, Backend>`**: Base class supplying the static `parseInput` and
+  `spec` entry points a handler needs. It resolves the versioned spec for `Input` through ADL, so a
+  handler names only its `Input` type. Handlers do not inherit it directly; they use the
+  `rpc::HandlerFor<Input>` alias from `rpc/common/SpecBackend.hpp`, which binds the JSON backend.
 - **`rpcspec/handlers/<method>/Types.hpp`**: The strongly-typed `Input` struct for a method
   (`xrpl::AccountID`, `xrpl::uint256`, `LedgerSpecifier`, ... rather than `std::string`).
 - **`rpcspec/handlers/<method>/Spec.hpp`**: The consteval spec declaring that method's fields,
@@ -36,14 +37,14 @@ for examples; `NFTInfo` is a small one.
 Handlers need to fulfil the requirements specified by the `SomeHandler` concept (see
 `rpc/common/Concepts.hpp`):
 
-- Derive from `rpc::spec::HandlerFor<rpc::spec::handlers::<method>::Input>`. This supplies:
+- Derive from `rpc::HandlerFor<rpc::spec::handlers::<method>::Input>` (see `rpc/common/SpecBackend.hpp`). This supplies:
 
   - `Input` — the strongly-typed input struct, owned by the spec library rather than declared here
 
   - `static parseInput(boost::json::value const&, uint32_t apiVersion)` — validates and
     deserialises in one pass, returning `std::expected<Input, Status>`
 
-  - `static spec(uint32_t apiVersion)` — returns a type-erased `rpc::spec::RpcSpecView`
+  - `static spec(uint32_t apiVersion)` — returns a type-erased `rpc::SpecView`
 
   If the method takes no input at all, skip the base class and expose only `process(Context const&)`.
 

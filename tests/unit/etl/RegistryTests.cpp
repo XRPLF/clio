@@ -42,7 +42,7 @@ struct Ext4SpecMissing {
 };
 
 struct Ext4Fixed {
-    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
+    using Spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
 
     static void
     onTransaction(uint32_t, etl::model::Transaction const&);
@@ -59,14 +59,14 @@ struct Ext6SpecMissing {
 };
 
 struct Ext6Fixed {
-    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
+    using Spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
 
     static void
     onInitialTransaction(uint32_t, etl::model::Transaction const&);
 };
 
 struct ExtRealistic {
-    using spec = etl::model::Spec<
+    using Spec = etl::model::Spec<
         xrpl::TxType::ttNFTOKEN_BURN,
         xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER,
         xrpl::TxType::ttNFTOKEN_CREATE_OFFER,
@@ -98,12 +98,12 @@ static_assert(SomeExtension<ExtRealistic>);
 static_assert(not SomeExtension<ExtCombinesTwoOfKind>);
 
 struct ValidSpec {
-    using spec = etl::model::Spec<xrpl::ttNFTOKEN_BURN, xrpl::ttNFTOKEN_MINT>;
+    using Spec = etl::model::Spec<xrpl::ttNFTOKEN_BURN, xrpl::ttNFTOKEN_MINT>;
 };
 
 // invalid spec does not compile:
 // struct DuplicatesSpec {
-//     using spec = etl::model::Spec<xrpl::ttNFTOKEN_BURN, xrpl::ttNFTOKEN_BURN,
+//     using Spec = etl::model::Spec<xrpl::ttNFTOKEN_BURN, xrpl::ttNFTOKEN_BURN,
 //     xrpl::ttNFTOKEN_MINT>;
 // };
 
@@ -130,12 +130,12 @@ struct MockExtOnObject {
 };
 
 struct MockExtTransactionNftBurn {
-    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
+    using Spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onTransaction, (uint32_t, etl::model::Transaction const&), (const));
 };
 
 struct MockExtTransactionNftOffer {
-    using spec = etl::model::Spec<
+    using Spec = etl::model::Spec<
         xrpl::TxType::ttNFTOKEN_CREATE_OFFER,
         xrpl::TxType::ttNFTOKEN_CANCEL_OFFER,
         xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER>;
@@ -156,12 +156,12 @@ struct MockExtInitialObjects {
 };
 
 struct MockExtNftBurn {
-    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
+    using Spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onInitialTransaction, (uint32_t, etl::model::Transaction const&), (const));
 };
 
 struct MockExtNftOffer {
-    using spec = etl::model::Spec<
+    using Spec = etl::model::Spec<
         xrpl::TxType::ttNFTOKEN_CREATE_OFFER,
         xrpl::TxType::ttNFTOKEN_CANCEL_OFFER,
         xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER>;
@@ -200,7 +200,7 @@ struct MockExtOnObjectReadonly {
 };
 
 struct MockExtTransactionNftBurnReadonly {
-    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
+    using Spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onTransaction, (uint32_t, etl::model::Transaction const&), (const));
 
     static bool
@@ -236,7 +236,7 @@ struct MockExtInitialObjectsReadonly {
 };
 
 struct MockExtNftBurnReadonly {
-    using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
+    using Spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
     MOCK_METHOD(void, onInitialTransaction, (uint32_t, etl::model::Transaction const&), (const));
 
     static bool
@@ -831,7 +831,7 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
 TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
 {
     struct ExtWithBothHooksAndAllowReadonly {
-        using spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
+        using Spec = etl::model::Spec<xrpl::TxType::ttNFTOKEN_BURN>;
 
         MOCK_METHOD(void, onObject, (uint32_t, etl::model::Object const&), (const));
         MOCK_METHOD(void, onInitialObject, (uint32_t, etl::model::Object const&), (const));

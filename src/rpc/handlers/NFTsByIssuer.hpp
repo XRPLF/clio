@@ -1,12 +1,12 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/nfts_by_issuer/Types.hpp>
 
 #include <cstdint>
@@ -20,8 +20,7 @@ namespace rpc {
 /**
  * @brief Handler for the `nfts_by_issuer` command
  */
-class NFTsByIssuerHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::nfts_by_issuer::Input> {
+class NFTsByIssuerHandler : public rpc::HandlerFor<rpc::spec::handlers::nfts_by_issuer::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

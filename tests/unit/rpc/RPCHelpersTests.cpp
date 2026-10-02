@@ -644,7 +644,7 @@ TEST_F(RPCHelpersTest, ParseBookIssuerErrors)
             xrpl::Asset{xrpl::Issue{xrpl::xrpCurrency(), account}}, validGets, std::nullopt
         );
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcSrcIsrMalformed});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcSrcIsrMalformed});
         EXPECT_EQ(
             book.error().message,
             "Unneeded field 'taker_pays.issuer' for XRP currency specification."
@@ -659,7 +659,7 @@ TEST_F(RPCHelpersTest, ParseBookIssuerErrors)
             std::nullopt
         );
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcSrcIsrMalformed});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcSrcIsrMalformed});
         EXPECT_EQ(
             book.error().message, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
         );
@@ -671,7 +671,7 @@ TEST_F(RPCHelpersTest, ParseBookIssuerErrors)
             validPays, xrpl::Asset{xrpl::Issue{xrpl::xrpCurrency(), account}}, std::nullopt
         );
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDstIsrMalformed});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcDstIsrMalformed});
         EXPECT_EQ(
             book.error().message,
             "Unneeded field 'taker_gets.issuer' for XRP currency specification."
@@ -686,7 +686,7 @@ TEST_F(RPCHelpersTest, ParseBookIssuerErrors)
             std::nullopt
         );
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDstIsrMalformed});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcDstIsrMalformed});
         EXPECT_EQ(
             book.error().message, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
         );
@@ -711,7 +711,7 @@ TEST_F(RPCHelpersTest, ParseBookBadMarket)
     {
         auto const book = rpc::parseBook(usd, usd, std::nullopt);
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcBadMarket});
         EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
     }
 
@@ -722,7 +722,7 @@ TEST_F(RPCHelpersTest, ParseBookBadMarket)
         auto const mpt = xrpl::Asset{xrpl::MPTIssue{mptId}};
         auto const book = rpc::parseBook(mpt, mpt, std::nullopt);
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcBadMarket});
         EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
     }
 }
@@ -735,7 +735,7 @@ TEST_F(RPCHelpersTest, ParseBookDomainMalformed)
 
     auto const book = rpc::parseBook(usd, xrp, std::string{"notavalidhex"});
     ASSERT_FALSE(book.has_value());
-    EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDomainMalformed});
+    EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcDomainMalformed});
     EXPECT_EQ(book.error().message, "Unable to parse domain.");
 }
 
@@ -748,7 +748,7 @@ TEST_F(RPCHelpersTest, ParseBookDomainCheckedBeforeBadMarket)
     // domain before the "taker_gets same as taker_pays" check, so the domain error wins.
     auto const book = rpc::parseBook(usd, usd, std::string{"notavalidhex"});
     ASSERT_FALSE(book.has_value());
-    EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDomainMalformed});
+    EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcDomainMalformed});
     EXPECT_EQ(book.error().message, "Unable to parse domain.");
 }
 
@@ -774,7 +774,7 @@ TEST_F(RPCHelpersTest, ParseBookCurrencyOverloadDelegates)
             xrpl::toCurrency("USD"), account, xrpl::toCurrency("USD"), account, std::nullopt
         );
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcBadMarket});
         EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
     }
 }
@@ -2065,7 +2065,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierCurrentRejected)
             kSpecifierRangeMax
         );
         ASSERT_FALSE(res.has_value());
-        EXPECT_EQ(res.error().code, rpc::CombinedError{rpc::RippledError::RpcInvalidParams});
+        EXPECT_EQ(res.error().code, rpc::CombinedError{rpc::XrpldError::RpcInvalidParams});
         EXPECT_EQ(res.error().message, "ledgerIndexMalformed");
     });
 }
@@ -2082,7 +2082,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierClosedRejected)
             kSpecifierRangeMax
         );
         ASSERT_FALSE(res.has_value());
-        EXPECT_EQ(res.error().code, rpc::CombinedError{rpc::RippledError::RpcInvalidParams});
+        EXPECT_EQ(res.error().code, rpc::CombinedError{rpc::XrpldError::RpcInvalidParams});
         EXPECT_EQ(res.error().message, "ledgerIndexMalformed");
     });
 }

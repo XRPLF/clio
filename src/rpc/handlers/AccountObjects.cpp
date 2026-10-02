@@ -53,7 +53,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto typeFilter = std::optional<std::vector<xrpl::LedgerEntryType>>{};
 

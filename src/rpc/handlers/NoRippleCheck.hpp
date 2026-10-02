@@ -1,12 +1,12 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/noripple_check/Types.hpp>
 
 #include <cstdint>
@@ -26,8 +26,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/noripple_check.html
  */
-class NoRippleCheckHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::noripple_check::Input> {
+class NoRippleCheckHandler : public rpc::HandlerFor<rpc::spec::handlers::noripple_check::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

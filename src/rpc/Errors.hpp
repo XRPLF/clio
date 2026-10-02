@@ -19,11 +19,6 @@ struct ClioErrorInfo {
 };
 
 /**
- * @brief A globally available rpc::Status that represents a successful state.
- */
-static Status gOk;
-
-/**
  * @brief Get the error info object from an clio-specific error code.
  *
  * @param code The error code
@@ -42,7 +37,7 @@ boost::json::object
 makeError(Status const& status);
 
 /**
- * @brief Generate JSON from a rpc::RippledError.
+ * @brief Generate JSON from a rpc::XrpldError.
  *
  * @param err The rippled error
  * @param customError A custom error
@@ -51,7 +46,7 @@ makeError(Status const& status);
  */
 boost::json::object
 makeError(
-    RippledError err,
+    XrpldError err,
     std::optional<std::string_view> customError = std::nullopt,
     std::optional<std::string_view> customMessage = std::nullopt
 );

@@ -1,11 +1,11 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/nft_info/Types.hpp>
 
 #include <cstdint>
@@ -20,7 +20,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/nft_info.html
  */
-class NFTInfoHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::nft_info::Input> {
+class NFTInfoHandler : public rpc::HandlerFor<rpc::spec::handlers::nft_info::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:

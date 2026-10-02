@@ -2,12 +2,12 @@
 
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/amm_info/Types.hpp>
 
 #include <cstdint>
@@ -23,7 +23,7 @@ namespace rpc {
  *
  * For more info see: https://xrpl.org/amm_info.html
  */
-class AMMInfoHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::amm_info::Input> {
+class AMMInfoHandler : public rpc::HandlerFor<rpc::spec::handlers::amm_info::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 

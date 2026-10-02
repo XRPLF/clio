@@ -50,7 +50,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto response = Output{};
     response.account = xrpl::to_string(accountID);
@@ -65,7 +65,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
     if (!blob) {
         if (input.marker.has_value()) {
             return Error{Status{
-                RippledError::RpcInvalidParams, "Marker field does not match any valid Page ID"
+                XrpldError::RpcInvalidParams, "Marker field does not match any valid Page ID"
             }};
         }
         return response;
@@ -77,7 +77,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
 
     if (page->getType() != xrpl::ltNFTOKEN_PAGE) {
         return Error{
-            Status{RippledError::RpcInvalidParams, "Marker matches Page ID from another Account"}
+            Status{XrpldError::RpcInvalidParams, "Marker matches Page ID from another Account"}
         };
     }
 

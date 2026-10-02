@@ -1,10 +1,49 @@
-# These might help too
-# Mark any lines that have had a commit skipped using --ignore-rev with a `?`
-#git config --global blame.markIgnoredLines true
-# Mark any lines that were added in a skipped commit and can not be attributed with a `*`
-#git config --global blame.markUnblamableLines true
+# This feature requires Git >= 2.24
+# To use it by default in git blame:
+# git config blame.ignoreRevsFile .git-blame-ignore-revs
 
-# clang-format
-e41150248a97e4bdc1cf21b54650c4bb7c63928e
-2e542e7b0d94451a933c88778461cc8d3d7e6417
+# This file is sorted in reverse chronological order, with the most recent commits at the top.
+# The commits listed here are ignored by git blame, which is useful for formatting-only commits that would otherwise obscure the history of changes to a file.
+
+# chore: Port clang-tidy typedef style from `xrpld` (#3237)
+b5fb26119c05cca0c5dc22686bf3e20939432843
+# style: Unify style for all Doxygen comments (#3142)
+50f9bc2beac80a801f1afb02f69bbdac1494069a
+# refactor: Rename static constants (#3073)
+dbc98894bab317c18f2ba1ec508b388567e35ba9
+# chore: Enable more clang-tidy checks (#3054)
+51244feb4a68bf104d2819991cbae23f2e40ce46
+# chore: Remove copyright from all source files (#2975)
+21066d16e9fea46a3590f32f5512cdda1475965e
+# style: Set clang-format width 100 (#2953)
+6ba58f42f0c58f6f72e6f0b0a8d9ee5b445dbf4c
+# style: clang-tidy auto fixes (#2635)
+420b99cfa1698d3edb6e081f6f16ed223a6f1d7f
+# style: Fix JSON indent style in C++ code (#2485)
+e6b2f9cde705cb6dd7b8ce95c15f1b9bea5cc9a4
+# style: Update pre-commit hooks (#2290)
+cc506fd0944035c96914a41b5bd95284aadd859b
+# style: Mark JSON literal strings with R"JSON (#2169)
+ecdea015b94ead5516d0f93091ebe742d21ed633
+# style: Add typos pre-commit hook (#2041)
+af0a8af287ac618d6b69c2ce970978359c805577
+# style: Add prettier pre-commit hook (#2031)
+1e0a2f516226146fa54d45508a21e875a5a0b8db
+# style: Use pre-commit tool and add simple config (#2029)
+9c92a2b51b37746608542cebc3553c23705cae93
+# chore: No ALL_CAPS (#1760)
+820b32c6d738385f2497bbd138e1b4dc6c4c3703
+# chore: Add clang-tidy 19 checks (#1774)
+475e309f25180b9bad50d5bddca56ea4c9c3c76f
+# Rename all detail to impl (#1168)
+cce695c570057c497198f61d790e7a5c795a02d9
+# Rename headers to .hpp (#1154)
+a1699d74845efbe304c46368a2cf864cab840f96
+# Switch to llvm 17 tools (#1002)
+35f119a268fe0de7063e9c8791fefa04a795c5d2
+# Move to clang-format-16 (#908)
+1aab2b94b1354398f493ae7f0ae9de01bbf541b5
+# Add clang tidy (#864)
+4b53bef1f5422fb1a6d1827bf326d5c79ed450a8
+# Reformat codebase with 120 char limit (#583)
 d816ef54abd8e8e979b9c795bdb657a8d18f5e95

@@ -2,13 +2,13 @@
 
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/book_offers/Types.hpp>
 
 #include <cstdint>
@@ -24,7 +24,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/book_offers.html
  */
-class BookOffersHandler : public rpc::spec::HandlerFor<rpc::spec::handlers::book_offers::Input> {
+class BookOffersHandler : public rpc::HandlerFor<rpc::spec::handlers::book_offers::Input> {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
