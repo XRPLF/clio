@@ -351,6 +351,96 @@ generateTestValuesForParametersTest()
             .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
+            .testName = "oracleDocumentIdNegative",
+            .testJson = R"JSON({
+                "base_asset": "USD",
+                "quote_asset": "XRP",
+                "oracles": [
+                    {
+                        "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                        "oracle_document_id": -1
+                    }
+                ]
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            .testName = "oracleDocumentIdNull",
+            .testJson = R"JSON({
+                "base_asset": "USD",
+                "quote_asset": "XRP",
+                "oracles": [
+                    {
+                        "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                        "oracle_document_id": null
+                    }
+                ]
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            .testName = "oracleDocumentIdFloat",
+            .testJson = R"JSON({
+                "base_asset": "USD",
+                "quote_asset": "XRP",
+                "oracles": [
+                    {
+                        "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                        "oracle_document_id": 2.3
+                    }
+                ]
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            .testName = "oracleDocumentIdBool",
+            .testJson = R"JSON({
+                "base_asset": "USD",
+                "quote_asset": "XRP",
+                "oracles": [
+                    {
+                        "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                        "oracle_document_id": true
+                    }
+                ]
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            .testName = "oracleDocumentIdObject",
+            .testJson = R"JSON({
+                "base_asset": "USD",
+                "quote_asset": "XRP",
+                "oracles": [
+                    {
+                        "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                        "oracle_document_id": {}
+                    }
+                ]
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            .testName = "oracleDocumentIdTooLarge",
+            .testJson = R"JSON({
+                "base_asset": "USD",
+                "quote_asset": "XRP",
+                "oracles": [
+                    {
+                        "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                        "oracle_document_id": 4294967296
+                    }
+                ]
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleMissingAccount",
             .testJson = R"JSON({
                 "base_asset": "USD",
