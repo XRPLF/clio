@@ -144,7 +144,7 @@ toExpandedJson(
     data::TransactionAndMetadata const& blobs,
     std::uint32_t apiVersion,
     NFTokenjson nftEnabled = NFTokenjson::DISABLE,
-    std::optional<uint16_t> networkId = std::nullopt
+    std::optional<uint32_t> networkId = std::nullopt
 );
 
 /**
@@ -779,7 +779,7 @@ getNFTID(boost::json::object const& request);
  * @return The encoded CTID or std::nullopt if the input is invalid
  */
 std::optional<std::string>
-encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept;
+encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint32_t networkId) noexcept;
 
 /**
  * @brief Decode the CTID from a string or a uint64_t

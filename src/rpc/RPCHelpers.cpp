@@ -236,7 +236,7 @@ toExpandedJson(
     data::TransactionAndMetadata const& blobs,
     std::uint32_t const apiVersion,
     NFTokenjson nftEnabled,
-    std::optional<uint16_t> networkId
+    std::optional<uint32_t> networkId
 )
 {
     auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
@@ -269,7 +269,7 @@ toExpandedJson(
 }
 
 std::optional<std::string>
-encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept
+encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint32_t networkId) noexcept
 {
     static constexpr uint32_t kMaxLedgerSeq = 0x0FFF'FFFF;
     static constexpr uint32_t kMaxTxnIndex = 0xFFFF;
