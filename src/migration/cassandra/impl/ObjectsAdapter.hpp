@@ -22,8 +22,10 @@ namespace migration::cassandra::impl {
  * @brief The description of the objects table. It has to be a TableSpec.
  */
 struct TableObjectsDesc {
+    // Must match kSelectColumns order.
     using Row = std::tuple<xrpl::uint256, std::uint32_t, data::Blob>;
     static constexpr char const* kPartitionKey = "key";
+    static constexpr char const* kSelectColumns = "key, sequence, object";
     static constexpr char const* kTableName = "objects";
 };
 

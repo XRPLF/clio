@@ -29,6 +29,12 @@ Result::hasRows() const
     return numRows() > 0;
 }
 
+[[nodiscard]] bool
+Result::hasMorePages() const
+{
+    return cass_result_has_more_pages(*this) != 0u;
+}
+
 /* implicit */ ResultIterator::ResultIterator(CassIterator* ptr)
     : ManagedObject{ptr, kResultIteratorDeleter}, hasMore_{cass_iterator_next(ptr) != 0u}
 {

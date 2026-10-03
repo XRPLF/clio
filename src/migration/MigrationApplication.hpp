@@ -70,6 +70,20 @@ public:
     MigratorApplication(util::config::ClioConfigDefinition const& config, MigrateSubCmd command);
 
     /**
+     * @brief Construct a new MigratorApplication object with an already-built migration manager.
+     *
+     * This overload bypasses backend/manager creation from config and is primarily intended for
+     * tests that inject a mock manager.
+     *
+     * @param command The command to run
+     * @param migrationManager The migration manager to use
+     */
+    MigratorApplication(
+        MigrateSubCmd command,
+        std::shared_ptr<migration::MigrationManagerInterface> migrationManager
+    );
+
+    /**
      * @brief Run the application
      *
      * @return exit code
