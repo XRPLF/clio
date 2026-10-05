@@ -169,7 +169,7 @@ public:
             .WillByDefault([this](
                                util::config::ObjectView const&,
                                boost::asio::io_context&,
-                               std::shared_ptr<feed::SubscriptionManagerInterface>,
+                               std::shared_ptr<etl::impl::SubscriptionMessageQueue>,
                                std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
                                std::chrono::steady_clock::duration,
                                etl::SourceBase::OnConnectHook onConnect,
@@ -214,7 +214,7 @@ public:
         makeSource,
         (util::config::ObjectView const&,
          boost::asio::io_context&,
-         std::shared_ptr<feed::SubscriptionManagerInterface>,
+         std::shared_ptr<etl::impl::SubscriptionMessageQueue>,
          std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
          std::chrono::steady_clock::duration,
          etl::SourceBase::OnConnectHook,

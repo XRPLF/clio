@@ -6,6 +6,7 @@
 #include "etl/LoadBalancerInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
+#include "etl/impl/SubscriptionMessageQueue.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "util/Mutex.hpp"
@@ -73,6 +74,7 @@ private:
 
     std::unique_ptr<util::RandomGeneratorInterface> randomGenerator_;
 
+    std::shared_ptr<impl::SubscriptionMessageQueue> subscriptionMessages_;
     std::vector<SourcePtr> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ = kDefaultDownloadRanges; /*< The number of markers to use when

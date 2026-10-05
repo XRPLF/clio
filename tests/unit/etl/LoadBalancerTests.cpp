@@ -171,6 +171,36 @@ TEST_F(LoadBalancerConstructorTests, construct)
     makeLoadBalancer();
 }
 
+TEST_F(LoadBalancerConstructorTests, SourcesShareSubscriptionQueue)
+{
+    std::shared_ptr<etl::impl::SubscriptionMessageQueue> queue;
+    EXPECT_CALL(
+        sourceFactory_,
+        makeSource(
+            testing::_,
+            testing::_,
+            testing::Truly([&queue](auto const& candidate) {
+                if (!queue)
+                    queue = candidate;
+                return candidate != nullptr && candidate == queue;
+            }),
+            testing::_,
+            testing::_,
+            testing::_,
+            testing::_,
+            testing::_
+        )
+    )
+        .Times(2);
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), run);
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), run);
+    makeLoadBalancer();
+}
+
 TEST_F(LoadBalancerConstructorTests, forwardingTimeoutPassedToSourceFactory)
 {
     auto const forwardingTimeout = 10;

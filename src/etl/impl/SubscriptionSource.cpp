@@ -1,7 +1,7 @@
 #include "etl/impl/SubscriptionSource.hpp"
 
 #include "etl/NetworkValidatedLedgersInterface.hpp"
-#include "feed/SubscriptionManagerInterface.hpp"
+#include "etl/impl/SubscriptionMessageQueue.hpp"
 #include "rpc/JS.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/Retry.hpp"
@@ -45,7 +45,7 @@ SubscriptionSource::SubscriptionSource(
     std::string const& ip,
     std::string const& wsPort,
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
-    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+    std::shared_ptr<SubscriptionMessageQueue> messageQueue,
     OnConnectHook onConnect,
     OnDisconnectHook onDisconnect,
     OnLedgerClosedHook onLedgerClosed,
@@ -55,7 +55,7 @@ SubscriptionSource::SubscriptionSource(
     : log_(fmt::format("SubscriptionSource[{}:{}]", ip, wsPort))
     , wsConnectionBuilder_(ip, wsPort)
     , validatedLedgers_(std::move(validatedLedgers))
-    , subscriptions_(std::move(subscriptions))
+    , messageQueue_(std::move(messageQueue))
     , strand_(boost::asio::make_strand(ioContext))
     , wsTimeout_(wsTimeout)
     , retry_(
@@ -174,7 +174,7 @@ SubscriptionSource::subscribe()
                     return;
                 }
 
-                if (auto const handleErrorOpt = handleMessage(*message); handleErrorOpt) {
+                if (auto const handleErrorOpt = handleMessage(*message, yield); handleErrorOpt) {
                     handleError(*handleErrorOpt, yield);
                     return;
                 }
@@ -191,7 +191,7 @@ SubscriptionSource::subscribe()
 }
 
 std::optional<util::requests::RequestError>
-SubscriptionSource::handleMessage(std::string const& message)
+SubscriptionSource::handleMessage(std::string const& message, boost::asio::yield_context yield)
 {
     setLastMessageTime();
 
@@ -201,8 +201,6 @@ SubscriptionSource::handleMessage(std::string const& message)
         uint32_t ledgerIndex = 0;
 
         static constexpr auto kJsLedgerClosed = "ledgerClosed";
-        static constexpr auto kJsValidationReceived = "validationReceived";
-        static constexpr auto kJsManifestReceived = "manifestReceived";
 
         if (object.contains(JS(result))) {
             auto const& result = object.at(JS(result)).as_object();
@@ -233,25 +231,9 @@ SubscriptionSource::handleMessage(std::string const& message)
                 onLedgerClosed_();
 
         } else {
-            if (isForwarding_) {
-                // Clio as rippled's proposed_transactions subscriber, will receive two jsons for
-                // each transaction 1 - Proposed transaction 2 - Validated transaction.
-                // Only forward proposed transaction, validated transactions are sent by Clio itself
-                if (object.contains(JS(transaction)) and !object.contains(JS(meta))) {
-                    LOG(log_.debug()) << "Forwarding proposed transaction: " << object;
-                    subscriptions_->forwardProposedTransaction(object);
-                } else if (
-                    object.contains(JS(type)) && object.at(JS(type)) == kJsValidationReceived
-                ) {
-                    LOG(log_.debug()) << "Forwarding validation: " << object;
-                    subscriptions_->forwardValidation(object);
-                } else if (
-                    object.contains(JS(type)) && object.at(JS(type)) == kJsManifestReceived
-                ) {
-                    LOG(log_.debug()) << "Forwarding manifest: " << object;
-                    subscriptions_->forwardManifest(object);
-                }
-            }
+            // Receive from every source, including backups, so a handoff cannot discard an
+            // event already observed by a source. The shared queue suppresses duplicate copies.
+            messageQueue_->push(object, yield);
         }
 
         if (ledgerIndex != 0) {
