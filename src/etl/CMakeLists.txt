@@ -20,6 +20,7 @@ target_sources(
         impl/GrpcSource.cpp
         impl/Loading.cpp
         impl/Monitor.cpp
+        impl/SubscriptionMessageQueue.cpp
         impl/SubscriptionSource.cpp
         impl/TaskManager.cpp
         impl/ext/Cache.cpp
