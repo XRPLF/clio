@@ -60,7 +60,7 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const& accountID = input.account;
+    auto const& accountID = *input.account;
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
         xrpl::keylet::account(accountID).key, lgrInfo.seq, ctx.yield
     );
