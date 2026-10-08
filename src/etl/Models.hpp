@@ -29,7 +29,7 @@ namespace etl::model {
  * It's a compilation error to list the same transaction type more than once.
  */
 template <xrpl::TxType... Types>
-    requires(util::hasNoDuplicates(Types...))
+    requires(util::hasNoDuplicates(Types...))  // NOLINT(readability-redundant-parentheses)
 struct Spec {
     static constexpr bool kSpecTag = true;
 

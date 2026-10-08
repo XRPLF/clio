@@ -172,10 +172,10 @@ tag_invoke(
     };
 
     if (output.marker)
-        object[JS(marker)] = *(output.marker);
+        object[JS(marker)] = *output.marker;
 
     if (output.limit)
-        object[JS(limit)] = *(output.limit);
+        object[JS(limit)] = *output.limit;
 
     jv = std::move(object);
 }

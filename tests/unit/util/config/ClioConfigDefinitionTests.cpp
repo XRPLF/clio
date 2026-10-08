@@ -105,7 +105,7 @@ TEST_F(ConfigTest, CheckAllKeys)
     };
 
     for (auto i = configData.begin(); i != configData.end(); ++i) {
-        expected.emplace((i->first));
+        expected.emplace(i->first);
     }
     EXPECT_EQ(expected, actual);
 }

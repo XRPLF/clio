@@ -53,16 +53,16 @@ jobs:
           - os: heavy
             compiler: gcc
             build_type: Release
-            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8" }'
           - os: heavy
             compiler: gcc
             build_type: Debug
-            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8" }'
           - os: heavy
             compiler: gcc
             sanitizers: undefinedbehavior
             build_type: Release
-            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8" }'
 
     uses: ./.github/workflows/reusable-build-test.yml
     with:
@@ -85,7 +85,7 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
+      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8" }'
       compiler: gcc
       build_type: Release
       download_ccache: false
@@ -107,7 +107,7 @@ jobs:
         include:
           - os: heavy
             compiler: clang
-            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8" }'
           - os: macos-26-apple-clang-21
             compiler: apple-clang
             container: ""
@@ -165,7 +165,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Create an issue
-        uses: XRPLF/actions/create-issue@2b8bc36af85b88bca0dd7bfac2e2dc05f94ad712
+        uses: XRPLF/actions/create-issue@b489c21d53928f7dab4874912fec40e4f6c9e85e
         with:
           title: "Nightly release failed 🌙"
           body: "Please check the nightly release workflow for details."

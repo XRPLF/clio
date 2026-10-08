@@ -187,7 +187,7 @@ tag_invoke(
     };
 
     if (output.transactions)
-        obj.emplace(JS(transactions), *(output.transactions));
+        obj.emplace(JS(transactions), *output.transactions);
 
     jv = std::move(obj);
 }

@@ -99,7 +99,7 @@ public:
         bool
         operator==(ArrayIterator const& other) const
         {
-            return &arr_ == &(other.arr_) && index_ == other.index_;
+            return &arr_ == &other.arr_ && index_ == other.index_;
         }
 
         /**
@@ -111,7 +111,7 @@ public:
         bool
         operator!=(ArrayIterator const& other) const
         {
-            return &arr_ != &(other.arr_) || index_ != other.index_;
+            return &arr_ != &other.arr_ || index_ != other.index_;
         }
 
     private:

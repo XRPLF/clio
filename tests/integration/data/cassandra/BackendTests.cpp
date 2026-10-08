@@ -786,8 +786,8 @@ TEST_F(BackendCassandraTest, Basic)
                 } while (cursor);
                 EXPECT_EQ(retData.size(), data.size());
                 for (size_t i = 0; i < retData.size(); ++i) {
-                    auto [txn, meta, _, _2] = retData[i];
-                    auto [_3, expTxn, expMeta] = data[i];
+                    auto [txn, meta, ledgerSequence, date] = retData[i];
+                    auto [hash, expTxn, expMeta] = data[i];
                     EXPECT_STREQ(
                         reinterpret_cast<char const*>(txn.data()),
                         static_cast<char const*>(expTxn.data())

@@ -103,10 +103,10 @@ tag_invoke(
     };
 
     if (output.marker.has_value())
-        jv.as_object()[JS(marker)] = *(output.marker);
+        jv.as_object()[JS(marker)] = *output.marker;
 
     if (output.nftTaxon.has_value())
-        jv.as_object()[JS(nft_taxon)] = *(output.nftTaxon);
+        jv.as_object()[JS(nft_taxon)] = *output.nftTaxon;
 }
 
 }  // namespace rpc

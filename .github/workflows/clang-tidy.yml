@@ -52,7 +52,7 @@ jobs:
     if: ${{ needs.determine-files.outputs.cpp_changed_files != '' || needs.determine-files.outputs.need_full_run == 'true' }}
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8
 
     permissions:
       contents: write
@@ -187,7 +187,7 @@ jobs:
       - name: Create issue
         id: create_issue
         if: ${{ steps.run_clang_tidy.outcome != 'success' && github.event_name != 'pull_request' }}
-        uses: XRPLF/actions/create-issue@2b8bc36af85b88bca0dd7bfac2e2dc05f94ad712
+        uses: XRPLF/actions/create-issue@b489c21d53928f7dab4874912fec40e4f6c9e85e
         with:
           title: "Clang-tidy check failed"
           body_file: ${{ env.ISSUE_FILE }}

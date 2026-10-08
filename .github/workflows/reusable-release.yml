@@ -46,7 +46,7 @@ jobs:
   release:
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8
     env:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ github.token }}

@@ -84,7 +84,7 @@ jobs:
 
       - name: Create an issue
         if: ${{ steps.run_clio_tests.outcome == 'failure' && inputs.sanitizers != '' }}
-        uses: XRPLF/actions/create-issue@2b8bc36af85b88bca0dd7bfac2e2dc05f94ad712
+        uses: XRPLF/actions/create-issue@b489c21d53928f7dab4874912fec40e4f6c9e85e
         with:
           title: "[${{ inputs.compiler }} ${{ inputs.sanitizers }}] reported issues"
           body: "Clio tests failed one or more sanitizers checks when built with `${{ inputs.compiler }}` and the `${{ inputs.sanitizers }}` sanitizers."

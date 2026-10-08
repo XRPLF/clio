@@ -150,7 +150,7 @@ SuccessorExt::updateSuccessorFromCache(uint32_t seq, model::Object const& obj) c
             auto const successor = cache_.get().getSuccessor(bookBase, seq);
             ASSERT(successor.has_value(), "Book base must have a successor for seq = {}", seq);
 
-            if (successor->key == obj.key) {
+            if (successor->key == obj.key) {  // NOLINT(bugprone-unchecked-optional-access)
                 updateBookSuccessor(successor, seq, bookBase);
             }
         }

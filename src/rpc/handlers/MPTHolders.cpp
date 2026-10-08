@@ -180,10 +180,10 @@ tag_invoke(
     };
 
     if (output.limit.has_value())
-        jv.as_object()[JS(limit)] = *(output.limit);
+        jv.as_object()[JS(limit)] = *output.limit;
 
     if (output.marker.has_value())
-        jv.as_object()[JS(marker)] = *(output.marker);
+        jv.as_object()[JS(marker)] = *output.marker;
 }
 
 }  // namespace rpc

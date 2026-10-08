@@ -294,10 +294,10 @@ tag_invoke(
     };
 
     if (output.marker.has_value())
-        jv.as_object()[JS(marker)] = boost::json::value_from(*(output.marker));
+        jv.as_object()[JS(marker)] = boost::json::value_from(*output.marker);
 
     if (output.limit.has_value())
-        jv.as_object()[JS(limit)] = *(output.limit);
+        jv.as_object()[JS(limit)] = *output.limit;
 }
 
 }  // namespace rpc
