@@ -1,22 +1,23 @@
-find_package(Git REQUIRED)
+find_package(Git)
+
+set(GIT_BUILD_BRANCH "")
+set(GIT_COMMIT_HASH "")
 
 if(DEFINED ENV{GITHUB_BRANCH_NAME})
     set(GIT_BUILD_BRANCH $ENV{GITHUB_BRANCH_NAME})
     set(GIT_COMMIT_HASH $ENV{GITHUB_HEAD_SHA})
-else()
-    set(GIT_COMMAND branch --show-current)
+elseif(Git_FOUND AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/../.git")
     execute_process(
-        COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/..
         OUTPUT_VARIABLE GIT_BUILD_BRANCH
         OUTPUT_STRIP_TRAILING_WHITESPACE
         COMMAND_ERROR_IS_FATAL ANY
     )
 
-    set(GIT_COMMAND rev-parse HEAD)
     execute_process(
-        COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/..
         OUTPUT_VARIABLE GIT_COMMIT_HASH
         OUTPUT_STRIP_TRAILING_WHITESPACE
         COMMAND_ERROR_IS_FATAL ANY
@@ -25,7 +26,7 @@ endif()
 
 execute_process(
     COMMAND date +%Y%m%d%H%M%S
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/..
     OUTPUT_VARIABLE BUILD_DATE
     OUTPUT_STRIP_TRAILING_WHITESPACE
     COMMAND_ERROR_IS_FATAL ANY
@@ -41,7 +42,7 @@ if(
 )
     message(
         STATUS
-        "Using explicitly provided '${FORCE_CLIO_VERSION}' as Clio version"
+        "Using explicitly provided '$ENV{FORCE_CLIO_VERSION}' as Clio version"
     )
 
     set(CLIO_VERSION "$ENV{FORCE_CLIO_VERSION}")
@@ -51,6 +52,13 @@ else()
         STATUS
         "Using 'YYYYMMDDHMS-<branch>-<git short rev>' as Clio version"
     )
+
+    if(GIT_COMMIT_HASH STREQUAL "")
+        message(
+            FATAL_ERROR
+            "Unable to determine Clio version without git, set FORCE_CLIO_VERSION"
+        )
+    endif()
 
     string(SUBSTRING ${GIT_COMMIT_HASH} 0 7 GIT_COMMIT_HASH_SHORT)
 
