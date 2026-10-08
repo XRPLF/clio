@@ -96,12 +96,9 @@ target_sources(
         migration/SpecTests.cpp
         # RPC
         rpc/APIVersionTests.cpp
-        rpc/BaseTests.cpp
         rpc/CountersTests.cpp
         rpc/ErrorTests.cpp
         rpc/ForwardingProxyTests.cpp
-        rpc/common/CheckersTests.cpp
-        rpc/common/SpecsTests.cpp
         rpc/common/TypesTests.cpp
         rpc/common/impl/HandlerProviderTests.cpp
         rpc/filters/impl/DelegateTransactionsFilterTests.cpp
@@ -148,7 +145,6 @@ target_sources(
         rpc/handlers/UnsubscribeTests.cpp
         rpc/handlers/VersionHandlerTests.cpp
         rpc/handlers/VaultInfoTests.cpp
-        rpc/JsonBoolTests.cpp
         rpc/RPCEngineTests.cpp
         rpc/RPCHelpersTests.cpp
         rpc/WorkQueueTests.cpp

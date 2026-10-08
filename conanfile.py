@@ -1,4 +1,7 @@
+import os
+
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.env import Environment
 
 from conan import ConanFile
 
@@ -17,8 +20,8 @@ class ClioConan(ConanFile):
         "fmt/12.1.0",
         "libbacktrace/cci.20210118",
         "spdlog/1.17.0",
-        "xrpl-rpc-spec/0.1.11",
-        "xrpl/3.4.0-rc1",
+        "xrpl-rpc-spec/0.1.23",
+        "xrpl/3.4.0",
     ]
 
     default_options = {
@@ -71,6 +74,15 @@ class ClioConan(ConanFile):
     generators = "CMakeDeps"
 
     def generate(self):
+        # The sources in the Conan cache have no git history,
+        # so the version comes from the reference.
+        if self.version and not os.path.exists(
+            os.path.join(self.source_folder, ".git")
+        ):
+            env = Environment()
+            env.define("FORCE_CLIO_VERSION", str(self.version))
+            env.vars(self).save_script("clio_version")
+
         tc = CMakeToolchain(self)
         tc.generate()
 

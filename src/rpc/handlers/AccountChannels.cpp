@@ -88,7 +88,7 @@ AccountChannelsHandler::process(
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto const& destAccountID = input.destinationAccount;
 
@@ -168,22 +168,22 @@ tag_invoke(
     };
 
     if (channel.publicKey)
-        obj[JS(public_key)] = *(channel.publicKey);
+        obj[JS(public_key)] = *channel.publicKey;
 
     if (channel.publicKeyHex)
-        obj[JS(public_key_hex)] = *(channel.publicKeyHex);
+        obj[JS(public_key_hex)] = *channel.publicKeyHex;
 
     if (channel.expiration)
-        obj[JS(expiration)] = *(channel.expiration);
+        obj[JS(expiration)] = *channel.expiration;
 
     if (channel.cancelAfter)
-        obj[JS(cancel_after)] = *(channel.cancelAfter);
+        obj[JS(cancel_after)] = *channel.cancelAfter;
 
     if (channel.sourceTag)
-        obj[JS(source_tag)] = *(channel.sourceTag);
+        obj[JS(source_tag)] = *channel.sourceTag;
 
     if (channel.destinationTag)
-        obj[JS(destination_tag)] = *(channel.destinationTag);
+        obj[JS(destination_tag)] = *channel.destinationTag;
 
     jv = std::move(obj);
 }

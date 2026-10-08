@@ -908,6 +908,38 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
     });
 }
 
+// "validated" is a shortcut naming a single ledger, so the search range collapses to it
+// rather than staying at the full available range. Matches account_tx and xrpld's
+// AccountTx.cpp getLedgerRange(), which sets uLedgerMin = uLedgerMax for any non-range
+// specifier (the shortcuts included).
+TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndexValidated)
+{
+    auto const transactions = genTransactions(kMaxSeq, kMaxSeq - 1);
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMaxSeq, _)).WillOnce(Return(ledgerHeader));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
+        static auto const kInput = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "nft_id": "{}",
+                    "ledger_index": "validated"
+                }})JSON",
+                kNftId
+            )
+        );
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMaxSeq);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMaxSeq);
+    });
+}
+
 TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerIntIndex)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);

@@ -11,10 +11,12 @@
 #include <boost/json/value.hpp>
 #include <rpcspec/Errors.hpp>
 #include <xrpl/basics/strHex.h>
+#include <xrpl/ledger/helpers/SponsorHelpers.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/jss.h>
 
@@ -51,7 +53,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto typeFilter = std::optional<std::vector<xrpl::LedgerEntryType>>{};
 
@@ -71,8 +73,40 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
             typeFilter = {*input.type};
     }
 
+    auto const sponsorField = [](xrpl::SLE const& sle,
+                                 xrpl::SField const& field) -> std::optional<xrpl::AccountID> {
+        if (sle.isFieldPresent(field))
+            return sle.getAccountID(field);
+        return std::nullopt;
+    };
+
+    auto const sponsorOf = [&sponsorField](xrpl::SLE const& sle) {
+        // A trust line records a sponsor per side, so either one makes it sponsored.
+        if (sle.getType() == xrpl::ltRIPPLE_STATE) {
+            if (auto const high = sponsorField(sle, xrpl::sfHighSponsor); high.has_value())
+                return high;
+
+            return sponsorField(sle, xrpl::sfLowSponsor);
+        }
+
+        // NFTokenPage is not in isLedgerEntrySupportedBySponsorship's allowlist, so that
+        // predicate alone would report every page as unsponsored; xrpld reads pages on a
+        // separate path for the same reason. No page can actually carry sfSponsor today --
+        // SponsorshipTransfer::preclaim rejects unsupported types with tecNO_PERMISSION -- so
+        // this only starts to matter if NFTokenPage is added to that allowlist upstream.
+        if (sle.getType() == xrpl::ltNFTOKEN_PAGE or xrpl::isLedgerEntrySupportedBySponsorship(sle))
+            return sponsorField(sle, xrpl::sfSponsor);
+
+        return std::optional<xrpl::AccountID>{};
+    };
+
     Output response;
     auto const addToResponse = [&](xrpl::SLE&& sle) {
+        if (input.sponsored.has_value() and
+            sponsorOf(sle).has_value() != static_cast<bool>(*input.sponsored)) {
+            return true;
+        }
+
         if (not typeFilter or
             std::find(std::begin(*typeFilter), std::end(*typeFilter), sle.getType()) !=
                 std::end(*typeFilter)) {
@@ -80,6 +114,9 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
         }
         return true;
     };
+
+    auto const nftIncluded =
+        not typeFilter or std::ranges::contains(*typeFilter, xrpl::ltNFTOKEN_PAGE);
 
     auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_,
@@ -89,7 +126,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
         input.marker,
         ctx.yield,
         addToResponse,
-        true
+        nftIncluded
     );
 
     if (not expectedNext.has_value())
@@ -133,7 +170,7 @@ tag_invoke(
     };
 
     if (output.marker)
-        jv.as_object()[JS(marker)] = *(output.marker);
+        jv.as_object()[JS(marker)] = *output.marker;
 }
 
 }  // namespace rpc

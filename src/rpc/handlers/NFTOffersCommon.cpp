@@ -87,7 +87,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 
     // TODO: just check for existence without pulling
     if (not sharedPtrBackend_->fetchLedgerObject(directory.key, lgrInfo.seq, yield))
-        return Error{Status{RippledError::RpcObjectNotFound, "notFound"}};
+        return Error{Status{XrpldError::RpcObjectNotFound, "notFound"}};
 
     auto output =
         Output{.nftID = xrpl::strHex(input.nftID), .offers = {}, .limit = {}, .marker = {}};
@@ -113,7 +113,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 
         if (!sle || sle->getFieldU16(xrpl::sfLedgerEntryType) != xrpl::ltNFTOKEN_OFFER ||
             tokenID != sle->getFieldH256(xrpl::sfNFTokenID)) {
-            return Error{Status{RippledError::RpcInvalidParams}};
+            return Error{Status{XrpldError::RpcInvalidParams}};
         }
 
         startHint = sle->getFieldU64(xrpl::sfNFTokenOfferNode);
@@ -172,10 +172,10 @@ tag_invoke(
     };
 
     if (output.marker)
-        object[JS(marker)] = *(output.marker);
+        object[JS(marker)] = *output.marker;
 
     if (output.limit)
-        object[JS(limit)] = *(output.limit);
+        object[JS(limit)] = *output.limit;
 
     jv = std::move(object);
 }

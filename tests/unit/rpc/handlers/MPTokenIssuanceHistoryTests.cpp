@@ -1855,14 +1855,18 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerHashWithOnlyLedgerIndexMax)
     });
 }
 
-TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexValidatedStringIsNotASpecifier)
+// `ledger_index` selects a single ledger, and "validated" is just a shortcut naming one, so
+// the search range collapses to it. Matches account_tx here and in xrpld (AccountTx.cpp
+// getLedgerRange() sets uLedgerMin = uLedgerMax = seq for any non-range specifier).
+TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexValidatedStringSelectsThatLedger)
 {
-    // "validated" resolves to no concrete index, so the request keeps the full ledger range.
-    auto const transactions = genTransactions(kMinSeq + 1, kMaxSeq - 1);
+    auto const transactions = genTransactions(kMaxSeq, kMaxSeq - 1);
     auto const transCursor =
         TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchMPTokenIssuanceTransactions).WillByDefault(Return(transCursor));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMaxSeq, _)).WillOnce(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(0);
 
     runSpawn([&, this](auto yield) {
@@ -1878,9 +1882,8 @@ TEST_F(RPCMPTokenIssuanceHistoryHandlerTest, LedgerIndexValidatedStringIsNotASpe
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMinSeq);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMaxSeq);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMaxSeq);
-        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
     });
 }
 

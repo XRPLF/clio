@@ -2,7 +2,6 @@
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 #include "rpc/handlers/AccountMPTokenIssuances.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/NameGenerator.hpp"
@@ -139,17 +138,17 @@ generateTestValuesForInvalidParamsTest()
          .testJson =
              fmt::format(R"JSON({{ "account": "{}", "ledger_hash": "xxx" }})JSON", kAccount),
          .expectedError = "invalidParams",
-         .expectedErrorMessage = "Invalid field 'ledger_hash'."},
+         .expectedErrorMessage = "ledger_hashMalformed"},
         {.testName = "NonStringLedgerHash",
          .testJson = fmt::format(R"JSON({{ "account": "{}", "ledger_hash": 123 }})JSON", kAccount),
          .expectedError = "invalidParams",
-         .expectedErrorMessage = "Invalid field 'ledger_hash', not string."},
+         .expectedErrorMessage = "ledger_hashNotString"},
         {.testName = "InvalidLedgerIndexString",
          .testJson = fmt::format(
              R"JSON({{ "account": "{}", "ledger_index": "notvalidated" }})JSON", kAccount
          ),
          .expectedError = "invalidParams",
-         .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."},
+         .expectedErrorMessage = "ledgerIndexMalformed"},
         {.testName = "MarkerNotString",
          .testJson = fmt::format(R"JSON({{ "account": "{}", "marker": 9 }})JSON", kAccount),
          .expectedError = "invalidParams",
@@ -158,7 +157,7 @@ generateTestValuesForInvalidParamsTest()
          .testJson =
              fmt::format(R"JSON({{ "account": "{}", "marker": "123invalid" }})JSON", kAccount),
          .expectedError = "invalidParams",
-         .expectedErrorMessage = "Invalid field 'marker'."},
+         .expectedErrorMessage = "Malformed cursor."},
         {.testName = "AccountMissing",
          .testJson = R"JSON({ "limit": 10 })JSON",
          .expectedError = "invalidParams",
@@ -1213,11 +1212,8 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MPTokenIssuanceIdIsDerivedIdNotLed
         EXPECT_EQ(mptIssuanceId, expectedMptIssuanceId(kSequence));
         EXPECT_NE(mptIssuanceId, kIssuanceIndex1);
 
-        auto const asOuterObject = boost::json::value{{"mpt_issuance_id", mptIssuanceId}};
-        auto const validated = validation::CustomValidators::uint192HexStringValidator.verify(
-            asOuterObject, "mpt_issuance_id"
-        );
-        EXPECT_TRUE(validated.has_value());
+        xrpl::uint192 parsedMptIssuanceId;
+        EXPECT_TRUE(parsedMptIssuanceId.parseHex(mptIssuanceId));
     });
 }
 

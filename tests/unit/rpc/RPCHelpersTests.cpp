@@ -7,7 +7,6 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockAmendmentCenter.hpp"
-#include "util/MockAssert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
@@ -345,6 +344,12 @@ TEST_F(RPCHelpersTest, EncodeCTID)
     EXPECT_FALSE(encodeCTID(0x1FFFFFFF, 0x67, 0x89));
 }
 
+TEST_F(RPCHelpersTest, EncodeCTIDRejectsNetworkIdAbove16Bits)
+{
+    uint32_t const networkId = 0x10000;
+    EXPECT_FALSE(encodeCTID(0x1234, 0x67, networkId));
+}
+
 TEST_F(RPCHelpersTest, DecodeCTIDString)
 {
     auto const ctid = decodeCTID("C000123400670089");
@@ -639,7 +644,7 @@ TEST_F(RPCHelpersTest, ParseBookIssuerErrors)
             xrpl::Asset{xrpl::Issue{xrpl::xrpCurrency(), account}}, validGets, std::nullopt
         );
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcSrcIsrMalformed});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcSrcIsrMalformed});
         EXPECT_EQ(
             book.error().message,
             "Unneeded field 'taker_pays.issuer' for XRP currency specification."
@@ -654,7 +659,7 @@ TEST_F(RPCHelpersTest, ParseBookIssuerErrors)
             std::nullopt
         );
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcSrcIsrMalformed});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcSrcIsrMalformed});
         EXPECT_EQ(
             book.error().message, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
         );
@@ -666,7 +671,7 @@ TEST_F(RPCHelpersTest, ParseBookIssuerErrors)
             validPays, xrpl::Asset{xrpl::Issue{xrpl::xrpCurrency(), account}}, std::nullopt
         );
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDstIsrMalformed});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcDstIsrMalformed});
         EXPECT_EQ(
             book.error().message,
             "Unneeded field 'taker_gets.issuer' for XRP currency specification."
@@ -681,7 +686,7 @@ TEST_F(RPCHelpersTest, ParseBookIssuerErrors)
             std::nullopt
         );
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDstIsrMalformed});
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcDstIsrMalformed});
         EXPECT_EQ(
             book.error().message, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
         );
@@ -706,9 +711,7 @@ TEST_F(RPCHelpersTest, ParseBookBadMarket)
     {
         auto const book = rpc::parseBook(usd, usd, std::nullopt);
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
-        // badMarket carries no explicit message; it renders from the code's default, matching
-        // rippled's "No such market.".
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcBadMarket});
         EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
     }
 
@@ -719,9 +722,7 @@ TEST_F(RPCHelpersTest, ParseBookBadMarket)
         auto const mpt = xrpl::Asset{xrpl::MPTIssue{mptId}};
         auto const book = rpc::parseBook(mpt, mpt, std::nullopt);
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
-        // badMarket carries no explicit message; it renders from the code's default, matching
-        // rippled's "No such market.".
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcBadMarket});
         EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
     }
 }
@@ -734,7 +735,7 @@ TEST_F(RPCHelpersTest, ParseBookDomainMalformed)
 
     auto const book = rpc::parseBook(usd, xrp, std::string{"notavalidhex"});
     ASSERT_FALSE(book.has_value());
-    EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDomainMalformed});
+    EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcDomainMalformed});
     EXPECT_EQ(book.error().message, "Unable to parse domain.");
 }
 
@@ -747,7 +748,7 @@ TEST_F(RPCHelpersTest, ParseBookDomainCheckedBeforeBadMarket)
     // domain before the "taker_gets same as taker_pays" check, so the domain error wins.
     auto const book = rpc::parseBook(usd, usd, std::string{"notavalidhex"});
     ASSERT_FALSE(book.has_value());
-    EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcDomainMalformed});
+    EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcDomainMalformed});
     EXPECT_EQ(book.error().message, "Unable to parse domain.");
 }
 
@@ -773,9 +774,7 @@ TEST_F(RPCHelpersTest, ParseBookCurrencyOverloadDelegates)
             xrpl::toCurrency("USD"), account, xrpl::toCurrency("USD"), account, std::nullopt
         );
         ASSERT_FALSE(book.has_value());
-        EXPECT_TRUE(book.error().code == CombinedError{RippledError::RpcBadMarket});
-        // badMarket carries no explicit message; it renders from the code's default, matching
-        // rippled's "No such market.".
+        EXPECT_TRUE(book.error().code == CombinedError{XrpldError::RpcBadMarket});
         EXPECT_EQ(rpc::makeError(book.error()).at("error_message").as_string(), "No such market.");
     }
 }
@@ -835,110 +834,6 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_TrustLineIsFrozenAndCheckFreez
             *backend_, kLedgerSeqObject, issuerKey, {xrpl::lsfHighDeepFreeze}, yield
         ));
     });
-}
-
-TEST_F(RPCHelpersTest, ParseDelegateType)
-{
-    auto result = parseDelegateType(boost::json::value("authorizer"));
-    ASSERT_TRUE(result.has_value());
-    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(*result, DelegateFilter::Role::Authorizer);
-
-    result = parseDelegateType(boost::json::value("actor"));
-    ASSERT_TRUE(result.has_value());
-    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(*result, DelegateFilter::Role::Actor);
-
-    // invalid types
-    result = parseDelegateType(boost::json::value("invalid_type"));
-    EXPECT_FALSE(result.has_value());
-
-    result = parseDelegateType(boost::json::value(123));
-    EXPECT_FALSE(result.has_value());
-
-    result = parseDelegateType(boost::json::value(true));
-    EXPECT_FALSE(result.has_value());
-}
-
-TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
-{
-    // only delegate agent is valid
-    {
-        auto const jsonStr = R"JSON({
-            "delegate_filter": "authorizer"
-        })JSON";
-        auto const json = boost::json::parse(jsonStr).as_object();
-
-        auto const result = parseDelegateFilter(json);
-        ASSERT_TRUE(result.has_value());
-        // NOLINTBEGIN(bugprone-unchecked-optional-access)
-        EXPECT_EQ(result->delegateType, DelegateFilter::Role::Authorizer);
-        EXPECT_FALSE(result->counterParty.has_value());
-        // NOLINTEND(bugprone-unchecked-optional-access)
-    }
-
-    // delegate agent + counter_party is valid
-    {
-        auto const jsonStr = fmt::format(
-            R"JSON({{
-                "delegate_filter": "actor",
-                "counter_party": "{}"
-            }})JSON",
-            kAccount2
-        );
-        auto const json = boost::json::parse(jsonStr).as_object();
-
-        auto const result = parseDelegateFilter(json);
-        ASSERT_TRUE(result.has_value());
-        // NOLINTBEGIN(bugprone-unchecked-optional-access)
-        EXPECT_EQ(result->delegateType, DelegateFilter::Role::Actor);
-        ASSERT_TRUE(result->counterParty.has_value());
-        EXPECT_EQ(*result->counterParty, kAccount2);
-        // NOLINTEND(bugprone-unchecked-optional-access)
-    }
-}
-
-TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
-{
-    // Missing required "delegate_filter" key
-    {
-        auto const jsonStr = fmt::format(
-            R"JSON({{
-                "counter_party": "{}"
-            }})JSON",
-            kAccount2
-        );
-        auto const json = boost::json::parse(jsonStr).as_object();
-        EXPECT_FALSE(parseDelegateFilter(json).has_value());
-    }
-
-    // "delegate_filter" is not a string (it's an integer)
-    {
-        auto const jsonStr = R"JSON({
-            "delegate_filter": 123
-        })JSON";
-        auto const json = boost::json::parse(jsonStr).as_object();
-        EXPECT_FALSE(parseDelegateFilter(json).has_value());
-    }
-
-    // "delegate_filter" is a string but invalid value
-    {
-        auto const jsonStr = R"JSON({
-            "delegate_filter": "random_string"
-        })JSON";
-        auto const json = boost::json::parse(jsonStr).as_object();
-        EXPECT_FALSE(parseDelegateFilter(json).has_value());
-    }
-
-    // "counter_party" exists but is not a string (it's a number)
-    {
-        auto const jsonStr = R"JSON({
-            "delegate_filter": "authorizer",
-            "counter_party": 9999
-        })JSON";
-        auto const json = boost::json::parse(jsonStr).as_object();
-        EXPECT_FALSE(parseDelegateFilter(json).has_value());
-    }
 }
 
 namespace {
@@ -2155,43 +2050,40 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierValidatedUsesMaxSeq)
     });
 }
 
-struct RPCHelpersAssertTest : RPCHelpersTest, common::util::WithMockAssert {};
-
-TEST_F(RPCHelpersAssertTest, LedgerHeaderFromSpecifierCurrentAsserts)
+// `current` and `closed` name ledgers Clio does not hold. Most methods never reach here because
+// ForwardingProxy diverts them to xrpld, but it skips that check for Clio-only methods, so the
+// resolver has to reject the shortcut rather than treat it as unreachable.
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierCurrentRejected)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
 
     runSpawn([&, this](auto yield) {
-        EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-            {
-                [[maybe_unused]] auto const res = getLedgerHeaderFromLedgerSpecifier(
-                    *backend_,
-                    yield,
-                    rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Current},
-                    kSpecifierRangeMax
-                );
-            },
-            "must be forwarded before dispatch"
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_,
+            yield,
+            rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Current},
+            kSpecifierRangeMax
         );
+        ASSERT_FALSE(res.has_value());
+        EXPECT_EQ(res.error().code, rpc::CombinedError{rpc::XrpldError::RpcInvalidParams});
+        EXPECT_EQ(res.error().message, "ledgerIndexMalformed");
     });
 }
 
-TEST_F(RPCHelpersAssertTest, LedgerHeaderFromSpecifierClosedAsserts)
+TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierClosedRejected)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
 
     runSpawn([&, this](auto yield) {
-        EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-            {
-                [[maybe_unused]] auto const res = getLedgerHeaderFromLedgerSpecifier(
-                    *backend_,
-                    yield,
-                    rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Closed},
-                    kSpecifierRangeMax
-                );
-            },
-            "must be forwarded before dispatch"
+        auto const res = getLedgerHeaderFromLedgerSpecifier(
+            *backend_,
+            yield,
+            rpc::spec::LedgerSpecifier{rpc::spec::LedgerShortcut::Closed},
+            kSpecifierRangeMax
         );
+        ASSERT_FALSE(res.has_value());
+        EXPECT_EQ(res.error().code, rpc::CombinedError{rpc::XrpldError::RpcInvalidParams});
+        EXPECT_EQ(res.error().message, "ledgerIndexMalformed");
     });
 }
 

@@ -194,8 +194,10 @@ generateParameterBookOffersTestBundles()
             .expectedErrorMessage = "Source currency is malformed."
         },
         ParameterTestBundle{
-            // A present-but-non-string currency is reported by validateTakerJSON as an
-            // expectedFieldError ('<field>.currency', not string) before the per-field validators.
+            // Clio deliberately skips the early "is currency a string" check (see kTakerValidator)
+            // and lets it fall through to the section's own currency validator, which is wrapped
+            // in withCustomError(currency, RpcDstAmtMalformed) with no message override, so the
+            // default rippled message/token for that code is what surfaces.
             .testName = "TakerGetsCurrencyNotString",
             .testJson = R"JSON({
                 "taker_gets": {
@@ -384,7 +386,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_index": "xxx"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         ParameterTestBundle{
             .testName = "LedgerHashInvalid",
@@ -399,7 +401,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_hash": "xxx"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash'."
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
@@ -414,7 +416,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_hash": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         ParameterTestBundle{
             .testName = "GetsPaysXRPWithIssuer",
@@ -489,6 +491,32 @@ generateParameterBookOffersTestBundles()
             })JSON",
             .expectedError = "badMarket",
             .expectedErrorMessage = "No such market."
+        },
+        ParameterTestBundle{
+            .testName = "TakerGetsMptIdNotString",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "mpt_issuance_id": 123
+                },
+                "taker_pays": {
+                    "currency": "XRP"
+                }
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'taker_gets.mpt_issuance_id', not string."
+        },
+        ParameterTestBundle{
+            .testName = "TakerPaysMptIdNotString",
+            .testJson = R"JSON({
+                "taker_gets": {
+                    "currency": "XRP"
+                },
+                "taker_pays": {
+                    "mpt_issuance_id": true
+                }
+            })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'taker_pays.mpt_issuance_id', not string."
         },
         ParameterTestBundle{
             .testName = "TakerGetsMptIdAndCurrency",

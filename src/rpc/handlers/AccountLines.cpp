@@ -136,7 +136,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
     );
 
     if (not accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto const& peerAccountID = input.peer;
 
@@ -228,28 +228,28 @@ tag_invoke(
     };
 
     if (line.noRipple)
-        obj[JS(no_ripple)] = *(line.noRipple);
+        obj[JS(no_ripple)] = *line.noRipple;
 
     if (line.noRipplePeer)
-        obj[JS(no_ripple_peer)] = *(line.noRipplePeer);
+        obj[JS(no_ripple_peer)] = *line.noRipplePeer;
 
     if (line.authorized)
-        obj[JS(authorized)] = *(line.authorized);
+        obj[JS(authorized)] = *line.authorized;
 
     if (line.peerAuthorized)
-        obj[JS(peer_authorized)] = *(line.peerAuthorized);
+        obj[JS(peer_authorized)] = *line.peerAuthorized;
 
     if (line.freeze)
-        obj[JS(freeze)] = *(line.freeze);
+        obj[JS(freeze)] = *line.freeze;
 
     if (line.freezePeer)
-        obj[JS(freeze_peer)] = *(line.freezePeer);
+        obj[JS(freeze_peer)] = *line.freezePeer;
 
     if (line.deepFreeze)
-        obj[JS(deep_freeze)] = *(line.deepFreeze);
+        obj[JS(deep_freeze)] = *line.deepFreeze;
 
     if (line.deepFreezePeer)
-        obj[JS(deep_freeze_peer)] = *(line.deepFreezePeer);
+        obj[JS(deep_freeze_peer)] = *line.deepFreezePeer;
 
     jv = std::move(obj);
 }

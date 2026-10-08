@@ -54,7 +54,7 @@ BookOffersHandler::process(Input const& input, Context const& ctx) const
     output.offers = postProcessOrderBook(
         offers,
         book,
-        input.taker ? *(input.taker) : beast::kZero,
+        input.taker ? *input.taker : beast::kZero,
         *sharedPtrBackend_,
         *amendmentCenter_,
         lgrInfo.seq,

@@ -14,3 +14,7 @@ CLAUDE.md
 .claude/**
 .agents/**
 .augment/**
+# Direnv's directory
+/.direnv
+# Direnv's local, per-developer overrides
+/.envrc.local

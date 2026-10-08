@@ -48,7 +48,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
     );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::RpcActNotFound}};
+        return Error{Status{XrpldError::RpcActNotFound}};
 
     auto const cursor = input.marker;
 
@@ -103,10 +103,10 @@ tag_invoke(
     };
 
     if (output.marker.has_value())
-        jv.as_object()[JS(marker)] = *(output.marker);
+        jv.as_object()[JS(marker)] = *output.marker;
 
     if (output.nftTaxon.has_value())
-        jv.as_object()[JS(nft_taxon)] = *(output.nftTaxon);
+        jv.as_object()[JS(nft_taxon)] = *output.nftTaxon;
 }
 
 }  // namespace rpc

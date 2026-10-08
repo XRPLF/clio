@@ -16,9 +16,6 @@ target_sources(
         CredentialHelpers.cpp
         Counters.cpp
         WorkQueue.cpp
-        common/Specs.cpp
-        common/Validators.cpp
-        common/MetaProcessors.cpp
         common/impl/APIVersionParser.cpp
         common/impl/HandlerProvider.cpp
         common/impl/HandlerRegistry.cpp
@@ -61,7 +58,11 @@ target_sources(
         handlers/VaultInfo.cpp
 )
 
-rpcspec_generate_instantiations(OUT_VAR rpcspec_instantiations)
+rpcspec_generate_instantiations(
+    OUT_VAR rpcspec_instantiations
+    VALUE_TYPE "boost::json::value"
+    VIEW_HEADER "rpcspec/backends/BoostJson.hpp"
+)
 target_sources(clio_rpc PRIVATE ${rpcspec_instantiations})
 
 target_link_libraries(clio_rpc PUBLIC clio_util clio_data rpcspec::rpcspec)

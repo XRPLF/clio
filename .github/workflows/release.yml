@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - id: release_info
-        uses: XRPLF/actions/release-info@7cc0e4a8d9d0b838f92c48d312856b190341bbba
+        uses: XRPLF/actions/release-info@a9f2eeca6fb3980ba3a84cf68566f1c69ad30674
 
   build-and-test:
     name: Build and Test
@@ -39,7 +39,7 @@ jobs:
           - os: heavy
             compiler: gcc
             build_type: Release
-            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
+            container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8" }'
 
     uses: ./.github/workflows/reusable-build-test.yml
     with:
@@ -60,7 +60,7 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
+      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8" }'
       compiler: gcc
       build_type: Release
       download_ccache: false

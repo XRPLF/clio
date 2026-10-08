@@ -1,11 +1,11 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/common/SpecBackend.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <rpcspec/HandlerFor.hpp>
 #include <rpcspec/handlers/account_channels/Types.hpp>
 #include <xrpl/protocol/STLedgerEntry.h>
 
@@ -26,7 +26,7 @@ namespace rpc {
  * For more details see: https://xrpl.org/account_channels.html
  */
 class AccountChannelsHandler
-    : public rpc::spec::HandlerFor<rpc::spec::handlers::account_channels::Input> {
+    : public rpc::HandlerFor<rpc::spec::handlers::account_channels::Input> {
     // dependencies
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 

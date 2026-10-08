@@ -92,7 +92,7 @@ public:
      * @return The composed json object.
      */
     [[nodiscard]] boost::json::object
-    composeError(rpc::RippledError error) const;
+    composeError(rpc::XrpldError error) const;
 };
 
 }  // namespace web::ng::impl

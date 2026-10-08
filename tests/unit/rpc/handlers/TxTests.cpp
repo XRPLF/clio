@@ -151,8 +151,8 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
     });
 }
 
-// `transaction` is validated by rpc-spec's uint256 converter, which reports one
-// format-agnostic message for both a non-string and an unparsable hash.
+// `transaction` is validated by rpc-spec's uint256 converter, which reports a distinct
+// message for a non-string value versus an unparsable (but string) hash.
 TEST_F(RPCTxTest, TransactionNotString)
 {
     runSpawn([this](auto yield) {
@@ -163,7 +163,7 @@ TEST_F(RPCTxTest, TransactionNotString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'transaction'.");
+        EXPECT_EQ(err.at("error_message").as_string(), "transactionNotString");
     });
 }
 
@@ -178,7 +178,7 @@ TEST_F(RPCTxTest, TransactionMalformed)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'transaction'.");
+        EXPECT_EQ(err.at("error_message").as_string(), "transactionMalformed");
     });
 }
 
@@ -910,7 +910,7 @@ TEST_F(RPCTxTest, CTIDNotMatch)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "wrongNetwork");
-        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::RpcWrongNetwork);
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::XrpldError::RpcWrongNetwork);
         EXPECT_EQ(
             err.at("error_message").as_string(),
             "Wrong network. You should submit this request to a node running on NetworkID: 2"
@@ -988,6 +988,38 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, boost::json::parse(kOut));
+    });
+}
+
+TEST_F(RPCTxTest, OmitCTIDWhenNetworkIdExceeds16Bits)
+{
+    TransactionAndMetadata tx;
+    tx.metadata =
+        createMetaDataForCreateOffer(kCurrency, kAccount, 100, 200, 300).getSerializer().peekData();
+    tx.transaction =
+        createCreateOfferTransactionObject(kAccount, 2, 100, kCurrency, kAccount2, 200, 300)
+            .getSerializer()
+            .peekData();
+    tx.ledgerSequence = 100;
+
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTxnId}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(tx.ledgerSequence, _))
+        .WillOnce(Return(std::nullopt));
+
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
+    ASSERT_NE(rawETLPtr, nullptr);
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0x10000}));
+
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
+        auto const req = boost::json::parse(
+            fmt::format(R"JSON({{"command": "tx", "transaction": "{}"}})JSON", kTxnId)
+        );
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        auto const& result = output.result->as_object();
+        EXPECT_FALSE(result.contains("ctid"));
+        EXPECT_FALSE(result.at("tx_json").as_object().contains("ctid"));
     });
 }
 

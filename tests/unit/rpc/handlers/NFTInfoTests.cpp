@@ -55,7 +55,54 @@ TEST_F(RPCNFTInfoHandlerTest, NonHexLedgerHash)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'ledger_hash'.");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
+    });
+}
+
+// nft_info is Clio-only, so ForwardingProxy::shouldForward returns false before it gets to the
+// current/closed check and the request is dispatched here rather than sent to xrpld. Clio holds
+// neither ledger, so the resolver has to reject them itself.
+TEST_F(RPCNFTInfoHandlerTest, CurrentLedgerIndexRejected)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{NFTInfoHandler{backend_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "nft_id": "{}",
+                    "ledger_index": "current"
+                }})JSON",
+                kNftId
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = yield});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
+    });
+}
+
+TEST_F(RPCNFTInfoHandlerTest, ClosedLedgerIndexRejected)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{NFTInfoHandler{backend_}};
+        auto const input = boost::json::parse(
+            fmt::format(
+                R"JSON({{
+                    "nft_id": "{}",
+                    "ledger_index": "closed"
+                }})JSON",
+                kNftId
+            )
+        );
+        auto const output = handler.process(input, Context{.yield = yield});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
     });
 }
 
@@ -77,7 +124,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonStringLedgerHash)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'ledger_hash', not string.");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
     });
 }
 
@@ -99,10 +146,7 @@ TEST_F(RPCNFTInfoHandlerTest, InvalidLedgerIndexString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(
-            err.at("error_message").as_string(),
-            "Invalid field 'ledger_index', not string or number."
-        );
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
     });
 }
 
@@ -118,7 +162,7 @@ TEST_F(RPCNFTInfoHandlerTest, NFTIDInvalidFormat)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'nft_id'.");
+        EXPECT_EQ(err.at("error_message").as_string(), "nft_idMalformed");
     });
 }
 
@@ -135,7 +179,7 @@ TEST_F(RPCNFTInfoHandlerTest, NFTIDNotString)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid field 'nft_id'.");
+        EXPECT_EQ(err.at("error_message").as_string(), "nft_idNotString");
     });
 }
 

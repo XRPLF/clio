@@ -178,7 +178,7 @@ AccountTxHandler::Input
 createInput<AccountTxHandler>()
 {
     AccountTxHandler::Input input{};
-    input.account = kAccount;
+    input.account = getAccountIdWithString(kAccount);
     return input;
 }
 
@@ -207,7 +207,7 @@ LedgerEntryHandler::Input
 createInput<LedgerEntryHandler>()
 {
     LedgerEntryHandler::Input input{};
-    input.index = kIndex1;
+    input.index = xrpl::uint256{kIndex1};
     return input;
 }
 
@@ -255,7 +255,7 @@ VaultInfoHandler::Input
 createInput<VaultInfoHandler>()
 {
     VaultInfoHandler::Input input{};
-    input.vaultID = kVaultId;
+    input.vaultID = xrpl::uint256{kVaultId};
 
     return input;
 }

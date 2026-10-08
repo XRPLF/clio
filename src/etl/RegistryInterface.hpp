@@ -39,7 +39,7 @@ namespace etl {
  * The specification is setup like so:
  * @code{.cpp}
  * struct Ext {
- *   using spec = etl::model::Spec<
+ *   using Spec = etl::model::Spec<
  *     xrpl::TxType::ttNFTOKEN_BURN,
  *     xrpl::TxType::ttNFTOKEN_ACCEPT_OFFER,
  *     xrpl::TxType::ttNFTOKEN_CREATE_OFFER,

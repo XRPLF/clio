@@ -66,7 +66,7 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
     );
 
     if (filtered.empty())
-        return Error{Status{RippledError::RpcBadFeature}};
+        return Error{Status{XrpldError::RpcBadFeature}};
 
     std::vector<data::AmendmentKey> names;
     rg::transform(filtered, std::back_inserter(names), [](auto const& feature) {

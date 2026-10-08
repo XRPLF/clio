@@ -112,21 +112,21 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": "1"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash'."
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_hash', not string."
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index": "a"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'ledger_index', not string or number."
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LimitNotInt",
@@ -158,7 +158,7 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker": "xxxx"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'marker'."
+            .expectedErrorMessage = "Malformed cursor."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "NFTMarkerInvalid",
@@ -167,7 +167,7 @@ generateTestValuesForParametersTest()
                 std::numeric_limits<uint32_t>::max()
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'marker'."
+            .expectedErrorMessage = "Malformed cursor."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "DeletionBlockersOnlyInvalidString",
@@ -564,9 +564,25 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    auto current = nftMaxKK;
+    std::string first{kIndex1};
+    std::ranges::sort(first);
+    for (auto i = 0; i < 10; i++) {
+        std::ranges::next_permutation(first);
+        auto const previous =
+            xrpl::keylet::nftokenPage(
+                xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
+            )
+                .key;
+        auto const nftPage = createNftTokenPage(
+            std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
+        );
+        ON_CALL(*backend_, doFetchLedgerObject(current, 30, _))
+            .WillByDefault(Return(nftPage.getSerializer().peekData()));
+        current = previous;
+    }
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     std::vector<Blob> bbs;
     // put 1 state and 1 offer
@@ -592,7 +608,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
         fmt::format(
             R"JSON({{
                 "account": "{}",
-                "type": "offer"
+                "type": "offer",
+                "limit": 10
             }})JSON",
             kAccount
         )
@@ -602,7 +619,11 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 1);
+        auto const& result = output.result->as_object();
+        auto const& objects = result.at("account_objects").as_array();
+        ASSERT_EQ(objects.size(), 1);
+        EXPECT_EQ(objects.at(0).as_object().at("LedgerEntryType").as_string(), "Offer");
+        EXPECT_FALSE(result.contains("marker"));
     });
 }
 
@@ -622,9 +643,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     std::vector<Blob> bbs;
     // put 1 state and 1 amm
@@ -675,9 +695,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     std::vector<Blob> bbs;
     auto const line1 = createRippleStateLedgerObject(
@@ -794,9 +813,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     auto const line = createRippleStateLedgerObject(
         "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
@@ -912,9 +930,8 @@ TEST_F(
     auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     auto const offer1 = createOfferLedgerObject(
         kAccount,
@@ -959,6 +976,190 @@ TEST_F(
         auto const output = handler.process(kInput, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 0);
+    });
+}
+
+// `sponsored` mirrors xrpld: a trust line is sponsored via sfHighSponsor OR sfLowSponsor,
+// every other supported type via sfSponsor. sfSponsor is a common field on all ledger entries
+// (LedgerFormats::getCommonFields), so any entry can carry one.
+namespace {
+
+// Owner-dir fixture shared by the sponsored filter tests: two sponsored trust lines (high and
+// low side), a sponsored pay channel, and an unsponsored offer.
+std::vector<Blob>
+makeSponsoredMixObjects()
+{
+    auto lineHigh = createRippleStateLedgerObject(
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
+    );
+    lineHigh.setAccountID(xrpl::sfHighSponsor, getAccountIdWithString(kAccount2));
+
+    auto lineLow = createRippleStateLedgerObject(
+        "USD", kIssuer, 100, kAccount, 10, kAccount2, 20, kTxnId, 123, 0
+    );
+    lineLow.setAccountID(xrpl::sfLowSponsor, getAccountIdWithString(kAccount2));
+
+    auto channel = createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 10, 32, kTxnId, 28);
+    channel.setAccountID(xrpl::sfSponsor, getAccountIdWithString(kAccount2));
+
+    auto const offer = createOfferLedgerObject(
+        kAccount,
+        10,
+        20,
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
+    );
+
+    return {
+        lineHigh.getSerializer().peekData(),
+        lineLow.getSerializer().peekData(),
+        channel.getSerializer().peekData(),
+        offer.getSerializer().peekData()
+    };
+}
+
+}  // namespace
+
+TEST_F(RPCAccountObjectsHandlerTest, SponsoredFilterTrueReturnsOnlySponsored)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(account).key, kMaxSeq, _))
+        .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = createOwnerDirLedgerObject(
+        {xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1}},
+        kIndex1
+    );
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::ownerDir(account).key, kMaxSeq, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(
+        *backend_, doFetchLedgerObject(xrpl::keylet::nftokenPageMax(account).key, kMaxSeq, _)
+    )
+        .WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(makeSponsoredMixObjects()));
+
+    static auto const kInput = boost::json::parse(
+        fmt::format(R"JSON({{"account": "{}", "sponsored": true}})JSON", kAccount)
+    );
+
+    auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_TRUE(output);
+        // two trust lines (high/low sponsor) + the pay channel; the offer is unsponsored
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 3);
+    });
+}
+
+TEST_F(RPCAccountObjectsHandlerTest, SponsoredFilterFalseReturnsOnlyUnsponsored)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(account).key, kMaxSeq, _))
+        .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = createOwnerDirLedgerObject(
+        {xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1},
+         xrpl::uint256{kIndex1}},
+        kIndex1
+    );
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::ownerDir(account).key, kMaxSeq, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(
+        *backend_, doFetchLedgerObject(xrpl::keylet::nftokenPageMax(account).key, kMaxSeq, _)
+    )
+        .WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(makeSponsoredMixObjects()));
+
+    static auto const kInput = boost::json::parse(
+        fmt::format(R"JSON({{"account": "{}", "sponsored": false}})JSON", kAccount)
+    );
+
+    auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_TRUE(output);
+        auto const& objects = output.result->as_object().at("account_objects").as_array();
+        ASSERT_EQ(objects.size(), 1);
+        EXPECT_EQ(objects.at(0).as_object().at("LedgerEntryType").as_string(), "Offer");
+    });
+}
+
+// Pins the NFTokenPage branch of sponsorOf. A page cannot carry sfSponsor in libxrpl 3.4.0
+// (SponsorshipTransfer::preclaim rejects types outside isLedgerEntrySupportedBySponsorship), so
+// this constructs state that the protocol cannot currently produce. It is here to lock in the
+// intended classification for when NFTokenPage joins that allowlist, matching xrpld's own
+// separate read of the page sponsor.
+TEST_F(RPCAccountObjectsHandlerTest, SponsoredFilterTrueMatchesSponsoredNFTokenPage)
+{
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kMaxSeq);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::account(account).key, kMaxSeq, _))
+        .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex1}}, kIndex1);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::ownerDir(account).key, kMaxSeq, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
+
+    auto const nftPage2KK =
+        xrpl::keylet::nftokenPage(xrpl::keylet::nftokenPageMin(account), xrpl::uint256{kIndex1})
+            .key;
+
+    auto sponsoredPage = createNftTokenPage(
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, nftPage2KK
+    );
+    sponsoredPage.setAccountID(xrpl::sfSponsor, getAccountIdWithString(kAccount2));
+    EXPECT_CALL(
+        *backend_, doFetchLedgerObject(xrpl::keylet::nftokenPageMax(account).key, kMaxSeq, _)
+    )
+        .WillOnce(Return(sponsoredPage.getSerializer().peekData()));
+
+    auto const plainPage = createNftTokenPage(
+        std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, std::nullopt
+    );
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftPage2KK, kMaxSeq, _))
+        .WillOnce(Return(plainPage.getSerializer().peekData()));
+
+    auto const offer = createOfferLedgerObject(
+        kAccount,
+        10,
+        20,
+        xrpl::to_string(xrpl::toCurrency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        kAccount2,
+        toBase58(xrpl::xrpAccount()),
+        kIndex1
+    );
+    EXPECT_CALL(*backend_, doFetchLedgerObjects)
+        .WillOnce(Return(std::vector<Blob>{offer.getSerializer().peekData()}));
+
+    static auto const kInput = boost::json::parse(
+        fmt::format(R"JSON({{"account": "{}", "sponsored": true}})JSON", kAccount)
+    );
+
+    auto const handler = AnyHandler{AccountObjectsHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_TRUE(output);
+        auto const& objects = output.result->as_object().at("account_objects").as_array();
+        ASSERT_EQ(objects.size(), 1);
+        EXPECT_EQ(objects.at(0).as_object().at("LedgerEntryType").as_string(), "NFTokenPage");
+        EXPECT_TRUE(objects.at(0).as_object().contains("Sponsor"));
     });
 }
 
@@ -1834,9 +2035,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTIssuanceType)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     std::vector<Blob> bbs;
     // put 1 mpt issuance
@@ -1886,9 +2086,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTokenType)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    // nft null
     auto const nftMaxKK = xrpl::keylet::nftokenPageMax(account).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(nftMaxKK, 30, _)).Times(0);
 
     std::vector<Blob> bbs;
     // put 1 mpt issuance

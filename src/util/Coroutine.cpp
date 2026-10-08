@@ -52,7 +52,7 @@ Coroutine::isCancelled() const
     return error_ == boost::asio::error::operation_aborted || isCancelled_;
 }
 
-Coroutine::cancellable_yield_context_type
+Coroutine::CancellableYieldContextType
 Coroutine::yieldContext() const
 {
     return cyield_;

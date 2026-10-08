@@ -106,7 +106,7 @@ AsyncGrpcCall::process(
     data.reserve(numObjects);
 
     for (int i = 0; i < numObjects; ++i) {
-        auto obj = std::move(*(cur_->mutable_ledger_objects()->mutable_objects(i)));
+        auto obj = std::move(*cur_->mutable_ledger_objects()->mutable_objects(i));
         if (!more && nextPrefix_ != 0x00) {
             if (static_cast<unsigned char>(obj.key()[0]) >= nextPrefix_)
                 continue;

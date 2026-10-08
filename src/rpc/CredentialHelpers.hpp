@@ -6,6 +6,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
 #include <xrpl/basics/Slice.h>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/LedgerHeader.h>
@@ -17,6 +18,7 @@
 #include <optional>
 #include <set>
 #include <utility>
+#include <vector>
 
 namespace rpc::credentials {
 
@@ -52,7 +54,7 @@ parseAuthorizeCredentials(boost::json::array const& jv);
 /**
  * @brief Get Array of Credential objects
  *
- * @param credID Array of CredentialID's to parse
+ * @param credIDs The credential IDs to look up
  * @param srcAcc The Source Account
  * @param backend backend interface
  * @param info The ledger header
@@ -61,7 +63,7 @@ parseAuthorizeCredentials(boost::json::array const& jv);
  */
 std::expected<xrpl::STArray, Status>
 fetchCredentialArray(
-    std::optional<boost::json::array> const& credID,
+    std::vector<xrpl::uint256> const& credIDs,
     xrpl::AccountID const& srcAcc,
     BackendInterface const& backend,
     xrpl::LedgerHeader const& info,

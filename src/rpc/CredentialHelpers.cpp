@@ -5,7 +5,6 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
-#include <boost/json/value_to.hpp>
 #include <rpcspec/Errors.hpp>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
@@ -27,9 +26,9 @@
 #include <optional>
 #include <set>
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 namespace rpc::credentials {
 
@@ -99,7 +98,7 @@ parseAuthorizeCredentials(boost::json::array const& jv)
 
 std::expected<xrpl::STArray, Status>
 fetchCredentialArray(
-    std::optional<boost::json::array> const& credID,
+    std::vector<xrpl::uint256> const& credIDs,
     xrpl::AccountID const& srcAcc,
     BackendInterface const& backend,
     xrpl::LedgerHeader const& info,
@@ -107,40 +106,30 @@ fetchCredentialArray(
 )
 {
     xrpl::STArray authCreds;
-    std::unordered_set<std::string_view> elems;
-    for (auto const& elem : *credID) {  // NOLINT(bugprone-unchecked-optional-access)
-        ASSERT(
-            elem.is_string(), "should already be checked in validators.hpp that elem is a string."
-        );
-
-        if (elems.contains(elem.as_string()))
-            return Error{Status{RippledError::RpcBadCredentials, "duplicates in credentials."}};
-        elems.insert(elem.as_string());
-
-        xrpl::uint256 credHash;
-        ASSERT(
-            credHash.parseHex(boost::json::value_to<std::string>(elem)),
-            "should already be checked in validators.hpp that elem is a uint256 hex"
-        );
+    std::unordered_set<xrpl::uint256, xrpl::uint256::hasher> seen;
+    for (auto const& credHash : credIDs) {
+        if (seen.contains(credHash))
+            return Error{Status{XrpldError::RpcBadCredentials, "duplicates in credentials."}};
+        seen.insert(credHash);
 
         auto const credKeylet = xrpl::keylet::credential(credHash).key;
         auto const credLedgerObject = backend.fetchLedgerObject(credKeylet, info.seq, yield);
         if (!credLedgerObject)
-            return Error{Status{RippledError::RpcBadCredentials, "credentials don't exist."}};
+            return Error{Status{XrpldError::RpcBadCredentials, "credentials don't exist."}};
 
         auto credIt = xrpl::SerialIter{credLedgerObject->data(), credLedgerObject->size()};
         auto const sleCred = xrpl::SLE{credIt, credKeylet};
 
         if ((sleCred.getType() != xrpl::ltCREDENTIAL) ||
             ((sleCred.getFieldU32(xrpl::sfFlags) & xrpl::lsfAccepted) == 0u))
-            return Error{Status{RippledError::RpcBadCredentials, "credentials aren't accepted"}};
+            return Error{Status{XrpldError::RpcBadCredentials, "credentials aren't accepted"}};
 
         if (credentials::checkExpired(sleCred, info))
-            return Error{Status{RippledError::RpcBadCredentials, "credentials are expired"}};
+            return Error{Status{XrpldError::RpcBadCredentials, "credentials are expired"}};
 
         if (sleCred.getAccountID(xrpl::sfSubject) != srcAcc) {
             return Error{Status{
-                RippledError::RpcBadCredentials, "credentials don't belong to the root account"
+                XrpldError::RpcBadCredentials, "credentials don't belong to the root account"
             }};
         }
 
