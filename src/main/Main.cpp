@@ -46,6 +46,7 @@ runApp(int argc, char const* argv[])
             if (not app::parseConfig(migrate.configPath))
                 return EXIT_FAILURE;
 
+            PrometheusService::init(getClioConfig());
             if (auto const initSuccess = util::LogService::init(getClioConfig()); not initSuccess) {
                 std::cerr << initSuccess.error() << std::endl;
                 return EXIT_FAILURE;
