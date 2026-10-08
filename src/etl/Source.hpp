@@ -3,7 +3,7 @@
 #include "etl/InitialLoadObserverInterface.hpp"
 #include "etl/LoadBalancerInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
-#include "feed/SubscriptionManagerInterface.hpp"
+#include "etl/impl/SubscriptionMessageQueue.hpp"
 #include "util/config/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -145,7 +145,7 @@ using SourcePtr = std::unique_ptr<SourceBase>;
 using SourceFactory = std::function<SourcePtr(
     util::config::ObjectView const& config,
     boost::asio::io_context& ioc,
-    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+    std::shared_ptr<impl::SubscriptionMessageQueue> messageQueue,
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
     std::chrono::steady_clock::duration forwardingTimeout,
     SourceBase::OnConnectHook onConnect,
@@ -158,7 +158,7 @@ using SourceFactory = std::function<SourcePtr(
  *
  * @param config The configuration to use
  * @param ioc The io_context to run on
- * @param subscriptions Subscription manager
+ * @param messageQueue Shared queue for subscription events
  * @param validatedLedgers The network validated ledgers data structure
  * @param forwardingTimeout The timeout for forwarding to rippled
  * @param onConnect The hook to call on connect
@@ -171,7 +171,7 @@ using SourceFactory = std::function<SourcePtr(
 makeSource(
     util::config::ObjectView const& config,
     boost::asio::io_context& ioc,
-    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+    std::shared_ptr<impl::SubscriptionMessageQueue> messageQueue,
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
     std::chrono::steady_clock::duration forwardingTimeout,
     SourceBase::OnConnectHook onConnect,

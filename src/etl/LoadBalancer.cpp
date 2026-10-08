@@ -78,6 +78,9 @@ LoadBalancer::LoadBalancer(
     SourceFactory sourceFactory
 )
     : randomGenerator_(std::move(randomGenerator))
+    , subscriptionMessages_(
+          std::make_shared<impl::SubscriptionMessageQueue>(ioc, std::move(subscriptions))
+      )
     , forwardingCounters_{
           .successDuration = PrometheusService::counterInt(
               "forwarding_duration_milliseconds_counter",
@@ -143,7 +146,7 @@ LoadBalancer::LoadBalancer(
         auto source = sourceFactory(
             *it,
             ioc,
-            subscriptions,
+            subscriptionMessages_,
             validatedLedgers,
             forwardingTimeout,
             [this]() {
