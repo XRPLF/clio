@@ -22,6 +22,7 @@ nix develop .#clang  # or .#gcc, .#apple-clang
 ```
 
 The shell uses its own Conan home, `~/.conan2-nix`, and sets it up on entry.
+With [direnv](https://direnv.net/), run `direnv allow` once to enter the shell automatically, using the provided `.envrc`.
 See [xrpld's Nix guide](https://github.com/XRPLF/rippled/blob/develop/docs/build/nix.md) for more details.
 
 The following compiler version are guaranteed to work.
