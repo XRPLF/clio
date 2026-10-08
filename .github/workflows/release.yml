@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - id: release_info
-        uses: XRPLF/actions/release-info@7cc0e4a8d9d0b838f92c48d312856b190341bbba
+        uses: XRPLF/actions/release-info@a9f2eeca6fb3980ba3a84cf68566f1c69ad30674
 
   build-and-test:
     name: Build and Test
