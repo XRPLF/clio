@@ -114,7 +114,7 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
         results = std::move(page.objects);
 
         if (page.cursor) {
-            output.marker = xrpl::strHex(*(page.cursor));
+            output.marker = xrpl::strHex(*page.cursor);
         } else if (input.outOfOrder) {
             output.diffMarker = range->maxSequence;  // NOLINT(bugprone-unchecked-optional-access)
         }
@@ -169,15 +169,15 @@ tag_invoke(
     };
 
     if (output.header)
-        obj[JS(ledger)] = *(output.header);
+        obj[JS(ledger)] = *output.header;
 
     if (output.cacheFull)
-        obj["cache_full"] = *(output.cacheFull);
+        obj["cache_full"] = *output.cacheFull;
 
     if (output.diffMarker) {
-        obj[JS(marker)] = *(output.diffMarker);
+        obj[JS(marker)] = *output.diffMarker;
     } else if (output.marker) {
-        obj[JS(marker)] = *(output.marker);
+        obj[JS(marker)] = *output.marker;
     }
 
     jv = std::move(obj);

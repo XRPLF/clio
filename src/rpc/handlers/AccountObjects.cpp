@@ -170,7 +170,7 @@ tag_invoke(
     };
 
     if (output.marker)
-        jv.as_object()[JS(marker)] = *(output.marker);
+        jv.as_object()[JS(marker)] = *output.marker;
 }
 
 }  // namespace rpc

@@ -174,7 +174,7 @@ private:
                 })
                 .value_or(0);
 
-        auto const [success, duration_ms] = util::timed([&]() {
+        auto const [success, durationMs] = util::timed([&]() {
             return cache_.get().loadFromFile(settings_.cacheFileSettings->path, minLatestSequence);
         });
 
@@ -183,7 +183,7 @@ private:
             return false;
         }
 
-        LOG(log_.info()) << "Loaded cache from file in " << duration_ms
+        LOG(log_.info()) << "Loaded cache from file in " << durationMs
                          << " ms. Latest sequence: " << cache_.get().latestLedgerSequence();
         return true;
     }

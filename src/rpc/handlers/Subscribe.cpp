@@ -49,19 +49,19 @@ SubscribeHandler::process(Input const& input, Context const& ctx) const
     ctx.session->setApiSubversion(ctx.apiVersion);
 
     if (input.streams) {
-        auto const ledger = subscribeToStreams(ctx.yield, *(input.streams), ctx.session);
+        auto const ledger = subscribeToStreams(ctx.yield, *input.streams, ctx.session);
         if (!ledger.empty())
             output.ledger = ledger;
     }
 
     if (input.accounts)
-        subscribeToAccounts(*(input.accounts), ctx.session);
+        subscribeToAccounts(*input.accounts, ctx.session);
 
     if (input.accountsProposed)
-        subscribeToAccountsProposed(*(input.accountsProposed), ctx.session);
+        subscribeToAccountsProposed(*input.accountsProposed, ctx.session);
 
     if (input.books)
-        subscribeToBooks(*(input.books), ctx.session, ctx.yield, output);
+        subscribeToBooks(*input.books, ctx.session, ctx.yield, output);
 
     return output;
 }
@@ -154,7 +154,7 @@ SubscribeHandler::subscribeToBooks(
                 // the taker is not really used, same issue with
                 // https://github.com/XRPLF/xrpl-dev-portal/issues/1818
                 auto const takerID = internalBook.taker
-                    ? accountFromStringStrict(*(internalBook.taker))
+                    ? accountFromStringStrict(*internalBook.taker)
                     : beast::kZero;
 
                 auto const orderBook = postProcessOrderBook(
@@ -174,12 +174,12 @@ SubscribeHandler::subscribeToBooks(
                     output.bids = boost::json::array();
                 if (!output.asks)
                     output.asks = boost::json::array();
-                getOrderBook(internalBook.book, *(output.bids));
-                getOrderBook(xrpl::reversed(internalBook.book), *(output.asks));
+                getOrderBook(internalBook.book, *output.bids);
+                getOrderBook(xrpl::reversed(internalBook.book), *output.asks);
             } else {
                 if (!output.offers)
                     output.offers = boost::json::array();
-                getOrderBook(internalBook.book, *(output.offers));
+                getOrderBook(internalBook.book, *output.offers);
             }
         }
 
@@ -197,14 +197,14 @@ tag_invoke(
     SubscribeHandler::Output const& output
 )
 {
-    jv = output.ledger ? *(output.ledger) : boost::json::object();
+    jv = output.ledger ? *output.ledger : boost::json::object();
 
     if (output.offers)
-        jv.as_object().emplace(JS(offers), *(output.offers));
+        jv.as_object().emplace(JS(offers), *output.offers);
     if (output.asks)
-        jv.as_object().emplace(JS(asks), *(output.asks));
+        jv.as_object().emplace(JS(asks), *output.asks);
     if (output.bids)
-        jv.as_object().emplace(JS(bids), *(output.bids));
+        jv.as_object().emplace(JS(bids), *output.bids);
 }
 
 }  // namespace rpc
