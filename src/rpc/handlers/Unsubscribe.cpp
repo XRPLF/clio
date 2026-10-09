@@ -7,6 +7,7 @@
 #include <rpcspec/handlers/unsubscribe/Types.hpp>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <expected>
 #include <memory>
@@ -35,6 +36,9 @@ UnsubscribeHandler::process(Input const& input, Context const& ctx) const
 
     if (input.books)
         unsubscribeFromBooks(*input.books, ctx.session);
+
+    if (input.mptIssuances)
+        unsubscribeFromMPTIssuances(*(input.mptIssuances), ctx.session);
 
     return Output{};
 }
@@ -106,6 +110,16 @@ UnsubscribeHandler::unsubscribeFromBooks(
         if (orderBook.both)
             subscriptions_->unsubBook(xrpl::reversed(orderBook.book), session);
     }
+}
+
+void
+UnsubscribeHandler::unsubscribeFromMPTIssuances(
+    std::vector<xrpl::MPTID> const& mptIssuanceIDs,
+    feed::SubscriberSharedPtr const& session
+) const
+{
+    for (auto const& mptIssuanceID : mptIssuanceIDs)
+        subscriptions_->unsubMPTIssuance(mptIssuanceID, session);
 }
 
 }  // namespace rpc

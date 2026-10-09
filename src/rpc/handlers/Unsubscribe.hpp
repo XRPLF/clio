@@ -7,6 +7,7 @@
 
 #include <rpcspec/handlers/unsubscribe/Types.hpp>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <expected>
 #include <memory>
@@ -78,6 +79,12 @@ private:
     void
     unsubscribeFromBooks(
         std::vector<OrderBook> const& books,
+        feed::SubscriberSharedPtr const& session
+    ) const;
+
+    void
+    unsubscribeFromMPTIssuances(
+        std::vector<xrpl::MPTID> const& mptIssuanceIDs,
         feed::SubscriberSharedPtr const& session
     ) const;
 };

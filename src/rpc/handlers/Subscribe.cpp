@@ -19,6 +19,7 @@
 #include <xrpl/beast/utility/Zero.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
 #include <expected>
@@ -62,6 +63,9 @@ SubscribeHandler::process(Input const& input, Context const& ctx) const
 
     if (input.books)
         subscribeToBooks(*input.books, ctx.session, ctx.yield, output);
+
+    if (input.mptIssuances)
+        subscribeToMPTIssuances(*(input.mptIssuances), ctx.session);
 
     return output;
 }
@@ -124,6 +128,16 @@ SubscribeHandler::subscribeToAccounts(
 {
     for (auto const& account : accounts)
         subscriptions_->subAccount(account, session);
+}
+
+void
+SubscribeHandler::subscribeToMPTIssuances(
+    std::vector<xrpl::MPTID> const& mptIssuanceIDs,
+    feed::SubscriberSharedPtr const& session
+) const
+{
+    for (auto const& mptIssuanceID : mptIssuanceIDs)
+        subscriptions_->subMPTIssuance(mptIssuanceID, session);
 }
 
 void

@@ -6,6 +6,9 @@
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/MPTAmount.h>
+#include <xrpl/protocol/MPTIssue.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STArray.h>
@@ -128,4 +131,51 @@ TEST(MPTIssuanceUtilsTest, ReferencesMptIssuance_NoReferenceReturnsFalse)
     auto const txMeta = createTxMeta({});
 
     EXPECT_FALSE(util::referencesMptIssuance(txMeta, createPaymentTx(), defaultIssuanceID()));
+}
+
+TEST(MPTIssuanceUtilsTest, GetAffectedMPTs_CollectsFromAllNodeKinds)
+{
+    auto const issuanceFromMPToken =
+        xrpl::makeMptID(kIssuanceSeq + 1, getAccountIdWithString(kIssuer));
+    auto const issuanceFromAmount =
+        xrpl::makeMptID(kIssuanceSeq + 2, getAccountIdWithString(kIssuer));
+
+    // A node holding an MPT amount, e.g. an Escrow
+    xrpl::STObject finalFields(xrpl::sfFinalFields);
+    finalFields.setFieldAmount(
+        xrpl::sfAmount, xrpl::STAmount(xrpl::MPTAmount{100}, xrpl::MPTIssue{issuanceFromAmount})
+    );
+    xrpl::STObject escrowNode(xrpl::sfDeletedNode);
+    escrowNode.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltESCROW);
+    escrowNode.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
+    escrowNode.set(std::move(finalFields));
+
+    std::vector<xrpl::STObject> nodes;
+    nodes.push_back(util::createMPTokenIssuanceNode(xrpl::sfCreatedNode, kIssuanceSeq, kIssuer));
+    nodes.push_back(util::createMPTokenNode(xrpl::sfModifiedNode, issuanceFromMPToken, kAccount));
+    nodes.push_back(std::move(escrowNode));
+    auto const txMeta = createTxMeta(std::move(nodes));
+
+    EXPECT_EQ(
+        util::getAffectedMPTs(txMeta),
+        util::MPTokenIssuanceIDs({defaultIssuanceID(), issuanceFromMPToken, issuanceFromAmount})
+    );
+}
+
+TEST(MPTIssuanceUtilsTest, GetAffectedMPTs_DeduplicatesIssuances)
+{
+    std::vector<xrpl::STObject> nodes;
+    nodes.push_back(util::createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer));
+    nodes.push_back(util::createMPTokenNode(xrpl::sfModifiedNode, defaultIssuanceID(), kAccount));
+    nodes.push_back(util::createMPTokenNode(xrpl::sfCreatedNode, defaultIssuanceID(), kAccount2));
+    auto const txMeta = createTxMeta(std::move(nodes));
+
+    EXPECT_EQ(util::getAffectedMPTs(txMeta), util::MPTokenIssuanceIDs({defaultIssuanceID()}));
+}
+
+TEST(MPTIssuanceUtilsTest, GetAffectedMPTs_NoMPTNodes)
+{
+    auto const txMeta = createTxMeta({});
+
+    EXPECT_TRUE(util::getAffectedMPTs(txMeta).empty());
 }

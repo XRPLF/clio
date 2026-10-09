@@ -17,6 +17,7 @@
 #include <rpcspec/Errors.hpp>
 #include <rpcspec/backends/BoostJson.hpp>
 #include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <memory>
@@ -32,6 +33,8 @@ namespace {
 
 constexpr auto kAccount = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr auto kAccount2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr auto kMptIssuanceId1 = "00000001A407AF5856CCF3C42619DAA925813FC955C72983";
+constexpr auto kMptIssuanceId2 = "00000002A407AF5856CCF3C42619DAA925813FC955C72983";
 
 }  // namespace
 
@@ -478,6 +481,31 @@ generateTestValuesForParametersTest()
             .expectedError = "notSupported",
             .expectedErrorMessage = "Operation not supported."
         },
+        UnsubscribeParamTestCaseBundle{
+            .testName = "MPTIssuancesNotArray",
+            .testJson =
+                R"JSON({"mpt_issuances": "00000001A407AF5856CCF3C42619DAA925813FC955C72983"})JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        UnsubscribeParamTestCaseBundle{
+            .testName = "MPTIssuancesEmptyArray",
+            .testJson = R"JSON({"mpt_issuances": []})JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        UnsubscribeParamTestCaseBundle{
+            .testName = "MPTIssuancesItemNotString",
+            .testJson = R"JSON({"mpt_issuances": [123]})JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        UnsubscribeParamTestCaseBundle{
+            .testName = "MPTIssuancesItemInvalidString",
+            .testJson = R"JSON({"mpt_issuances": ["123"]})JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
     };
 }
 
@@ -665,6 +693,33 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
     auto const book = *parsedBookMaybe;
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(book, _)).Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{UnsubscribeHandler{mockSubscriptionManagerPtr_}};
+        auto const output = handler.process(input, Context{yield, session_});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output.result->as_object().empty());
+    });
+}
+
+TEST_F(RPCUnsubscribeTest, MPTIssuances)
+{
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuances": ["{}", "{}"]
+            }})JSON",
+            kMptIssuanceId1,
+            kMptIssuanceId2
+        )
+    );
+
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr_, unsubMPTIssuance(xrpl::uint192{kMptIssuanceId1}, session_)
+    );
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr_, unsubMPTIssuance(xrpl::uint192{kMptIssuanceId2}, session_)
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{UnsubscribeHandler{mockSubscriptionManagerPtr_}};
