@@ -166,6 +166,34 @@ TEST_F(WsConnectionTests, WriteTimeout)
     });
 }
 
+TEST_F(WsConnectionTests, WriteTimeoutBetweenSocketWritesIsNotLost)
+{
+    // A message is sent as many socket writes, and a timeout firing in between them used to be
+    // lost, hanging the write. Different timeouts make it more likely to fire there.
+    TestWsConnectionPtr serverConnection;
+
+    runSpawn([&](asio::yield_context yield) {
+        for (auto timeout = std::chrono::microseconds{50}; timeout < std::chrono::milliseconds{3};
+             timeout += std::chrono::microseconds{25}) {
+            // Replaces (and closes) the previous connection, so only one keeps unread data
+            util::spawn(ctx_, [&](asio::yield_context yield) {
+                serverConnection =
+                    std::make_unique<TestWsConnection>(unwrap(server.acceptConnection(yield)));
+            });
+
+            auto connection = unwrap(builder.plainConnect(yield));
+            std::optional<RequestError> error;
+            size_t counter = 0;
+            while (not error.has_value() and counter < 100) {
+                error = connection->write(std::string(100'000, 'a'), yield, timeout);
+                ++counter;
+            }
+            ASSERT_TRUE(error.has_value()) << "timeout: " << timeout.count() << "us";
+            EXPECT_EQ(error->errorCode().value().value(), asio::error::timed_out);
+        }
+    });
+}
+
 TEST_F(WsConnectionTests, WriteWithTimeoutWorksFine)
 {
     util::spawn(ctx_, [&](asio::yield_context yield) {
