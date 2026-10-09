@@ -88,6 +88,24 @@ TEST_F(WithTimeoutTests, TimeoutBetweenSubOperationsIsNotLost)
     });
 }
 
+TEST_F(WithTimeoutTests, OperationIgnoringCancellationCompletes)
+{
+    boost::asio::steady_timer timer{ctx_};
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const error = util::withTimeout(
+            [&timer](auto cyield) {
+                timer.expires_after(std::chrono::milliseconds{20});
+                timer.async_wait(
+                    boost::asio::bind_cancellation_slot(boost::asio::cancellation_slot{}, cyield)
+                );
+            },
+            yield,
+            std::chrono::milliseconds{1}
+        );
+        EXPECT_EQ(error, boost::system::error_code{});
+    });
+}
+
 TEST_F(WithTimeoutTests, OperationFailed)
 {
     EXPECT_CALL(operationMock, Call).WillOnce([](auto cyield) {
