@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/STObject.h>
 
@@ -116,6 +117,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
             "account": 2,
             "accounts_proposed": 2,
             "books": 2,
+            "mpt_issuances": 2,
             "book_changes": 2
         })JSON";
     web::SubscriptionContextPtr const session1 = std::make_shared<MockSession>();
@@ -139,8 +141,8 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     subscriptionManagerPtr_->subTransactions(session1);
 
     // session2->apiSubVersion = 2;
-    EXPECT_CALL(*mockSession1, onDisconnect).Times(5);
-    EXPECT_CALL(*mockSession2, onDisconnect).Times(6);
+    EXPECT_CALL(*mockSession1, onDisconnect).Times(6);
+    EXPECT_CALL(*mockSession2, onDisconnect).Times(7);
     subscriptionManagerPtr_->subTransactions(session2);
     subscriptionManagerPtr_->subValidation(session1);
     subscriptionManagerPtr_->subValidation(session2);
@@ -153,6 +155,9 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
     subscriptionManagerPtr_->subBook(book, session1);
     subscriptionManagerPtr_->subBook(book, session2);
+    auto const mptIssuanceID = xrpl::makeMptID(1, account);
+    subscriptionManagerPtr_->subMPTIssuance(mptIssuanceID, session1);
+    subscriptionManagerPtr_->subMPTIssuance(mptIssuanceID, session2);
     EXPECT_EQ(subscriptionManagerPtr_->report(), boost::json::parse(kReportReturn));
 
     // count down when unsub manually
@@ -164,6 +169,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     subscriptionManagerPtr_->unsubAccount(account, session1);
     subscriptionManagerPtr_->unsubProposedAccount(account, session1);
     subscriptionManagerPtr_->unsubBook(book, session1);
+    subscriptionManagerPtr_->unsubMPTIssuance(mptIssuanceID, session1);
 
     // try to unsub an account which is not subscribed
     auto const account2 = getAccountIdWithString(kAccount2);
@@ -178,6 +184,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
         EXPECT_EQ(reportReturn["accounts_proposed"], result);
         EXPECT_EQ(reportReturn["account"], result);
         EXPECT_EQ(reportReturn["books"], result);
+        EXPECT_EQ(reportReturn["mpt_issuances"], result);
     };
     checkResult(subscriptionManagerPtr_->report(), 1);
 

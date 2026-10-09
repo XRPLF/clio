@@ -49,6 +49,8 @@ constexpr auto kPayS20XrpGetS10UsdBookDir =
     "7B1767D41DBCE79D9585CF9D0262A5FEC45E5206FF524F8B55071AFD498D0000";
 constexpr auto kIndex1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 constexpr auto kIndex2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr auto kMptIssuanceId1 = "00000001A407AF5856CCF3C42619DAA925813FC955C72983";
+constexpr auto kMptIssuanceId2 = "00000002A407AF5856CCF3C42619DAA925813FC955C72983";
 
 }  // namespace
 
@@ -554,6 +556,31 @@ generateTestValuesForParametersTest()
             .expectedError = "badIssuer",
             .expectedErrorMessage = "Issuer account malformed."
         },
+        SubscribeParamTestCaseBundle{
+            .testName = "MPTIssuancesNotArray",
+            .testJson =
+                R"JSON({"mpt_issuances": "00000001A407AF5856CCF3C42619DAA925813FC955C72983"})JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        SubscribeParamTestCaseBundle{
+            .testName = "MPTIssuancesEmptyArray",
+            .testJson = R"JSON({"mpt_issuances": []})JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        SubscribeParamTestCaseBundle{
+            .testName = "MPTIssuancesItemNotString",
+            .testJson = R"JSON({"mpt_issuances": [123]})JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        SubscribeParamTestCaseBundle{
+            .testName = "MPTIssuancesItemInvalidString",
+            .testJson = R"JSON({"mpt_issuances": ["123"]})JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
     };
 }
 
@@ -709,6 +736,35 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
             subProposedAccount(getAccountIdWithString(kAccount2), session_)
         )
             .Times(2);
+        EXPECT_CALL(*mockSession_, setApiSubversion(0));
+        auto const output = handler.process(input, Context{yield, session_});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output.result->as_object().empty());
+    });
+}
+
+TEST_F(RPCSubscribeHandlerTest, MPTIssuances)
+{
+    auto const input = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "mpt_issuances": ["{}", "{}"]
+            }})JSON",
+            kMptIssuanceId1,
+            kMptIssuanceId2
+        )
+    );
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
+
+        EXPECT_CALL(
+            *mockSubscriptionManagerPtr_, subMPTIssuance(xrpl::uint192{kMptIssuanceId1}, session_)
+        );
+        EXPECT_CALL(
+            *mockSubscriptionManagerPtr_, subMPTIssuance(xrpl::uint192{kMptIssuanceId2}, session_)
+        );
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
