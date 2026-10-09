@@ -67,7 +67,7 @@ withTimeout(
             timer.expires_after(retryInterval);
             retryInterval =
                 std::min<std::chrono::steady_clock::duration>(retryInterval * 2, kMaxRetryInterval);
-            timer.async_wait(std::move(self));
+            timer.async_wait(std::forward<decltype(self)>(self));
         }
     );
     operation(cyield);
