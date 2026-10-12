@@ -44,7 +44,7 @@ public:
         std::latch completion{numThreads};
         for (std::size_t i = 0; i < numThreads; ++i) {
             q_.push(std::nullopt);
-            threads_.emplace_back([this, &completion]() { process(completion); });
+            threads_.emplace_back([this, &completion] { process(completion); });
         }
 
         completion.wait();
