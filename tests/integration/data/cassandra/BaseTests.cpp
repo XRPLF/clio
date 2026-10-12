@@ -343,6 +343,53 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
     dropKeyspace(handle, "test");
 }
 
+TEST_F(BackendCassandraBaseTest, StatementPagingStateReadsAllPages)
+{
+    auto handle = createHandle(TestGlobals::instance().backendHost, "test_paging_state");
+    auto const create = fmt::format(
+        R"(
+            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
+              WITH default_time_to_live = {}
+        )",
+        5000
+    );
+    ASSERT_TRUE(handle.execute(create));
+
+    auto const insert = handle.prepare("INSERT INTO strings (hash, sequence) VALUES (?, ?)");
+    std::vector<Statement> statements;
+    statements.push_back(insert.bind(std::string{"first"}, 1));
+    statements.push_back(insert.bind(std::string{"second"}, 2));
+    statements.push_back(insert.bind(std::string{"third"}, 3));
+    ASSERT_TRUE(handle.execute(statements));
+
+    auto select = handle.prepare("SELECT hash, sequence FROM strings").bind();
+    select.setPagingSize(1);
+
+    std::vector<std::string> hashes;
+    bool sawMorePages = false;
+    for (;;) {
+        auto const res = handle.execute(select);
+        ASSERT_TRUE(res) << res.error();
+        auto const& results = res.value();
+
+        for (auto const& [hash, seq] : extract<std::string, std::int64_t>(results)) {
+            hashes.push_back(hash);
+            EXPECT_GT(seq, 0);
+        }
+
+        if (not results.hasMorePages())
+            break;
+
+        sawMorePages = true;
+        select.setPagingState(results);
+    }
+
+    EXPECT_TRUE(sawMorePages);
+    std::ranges::sort(hashes);
+    EXPECT_EQ(hashes, (std::vector<std::string>{"first", "second", "third"}));
+    dropKeyspace(handle, "test_paging_state");
+}
+
 TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
 {
     using std::to_string;

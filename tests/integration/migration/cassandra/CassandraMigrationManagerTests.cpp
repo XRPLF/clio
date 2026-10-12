@@ -2,7 +2,9 @@
 #include "data/DBHelpers.hpp"
 #include "data/LedgerCache.hpp"
 #include "data/cassandra/Handle.hpp"
+#include "data/cassandra/Schema.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
+#include "data/cassandra/Types.hpp"
 #include "migration/MigrationManagerInterface.hpp"
 #include "migration/MigratiorStatus.hpp"
 #include "migration/cassandra/CassandraMigrationTestBackend.hpp"
@@ -21,16 +23,22 @@
 #include "util/config/Types.hpp"
 
 #include <TestGlobals.hpp>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <utility>
+#include <vector>
 
 using namespace util;
 using namespace std;
@@ -52,6 +60,13 @@ using CassandraMigrationTestManager =
     migration::impl::MigrationManagerBase<CassandraSupportedTestMigrators>;
 
 namespace {
+struct FullScanPagingTableDesc {
+    using Row = std::tuple<std::int64_t, std::int64_t>;
+    static constexpr char const* kPartitionKey = "id";
+    static constexpr char const* kSelectColumns = "id, value";
+    static constexpr char const* kTableName = "full_scan_paging_test";
+};
+
 std::pair<
     std::shared_ptr<migration::MigrationManagerInterface>,
     std::shared_ptr<CassandraMigrationTestBackend>>
@@ -199,6 +214,56 @@ TEST_F(MigrationCassandraManagerCleanDBTest, MigratorStatus)
 
     status = testMigrationManager_->getMigratorStatusByName("NonExistentMigrator");
     EXPECT_EQ(status, MigratorStatus::Status::NotKnown);
+}
+
+TEST_F(MigrationCassandraManagerCleanDBTest, MigrateInTokenRangeReadsAllDriverPages)
+{
+    // Exceeds CassandraMigrationBackend's internal full-scan page size, so this fails if the
+    // migration scan reads only the first driver page.
+    constexpr std::int64_t kRowsBeyondFullScanPage = 5'001;
+
+    auto const dbCfg = cfg_.getObject("database.cassandra");
+    SettingsProvider const provider{dbCfg};
+    Handle const handle{TestGlobals::instance().backendHost};
+    ASSERT_TRUE(handle.connect());
+
+    auto const tableName =
+        data::cassandra::qualifiedTableName(provider, FullScanPagingTableDesc::kTableName);
+    ASSERT_TRUE(handle.execute(
+        fmt::format(
+            R"(
+            CREATE TABLE IF NOT EXISTS {}
+                (id bigint PRIMARY KEY, value bigint)
+        )",
+            tableName
+        )
+    ));
+
+    auto const insert =
+        handle.prepare(fmt::format("INSERT INTO {} (id, value) VALUES (?, ?)", tableName));
+    std::vector<Statement> statements;
+    statements.reserve(kRowsBeyondFullScanPage);
+    for (std::int64_t id = 0; id < kRowsBeyondFullScanPage; ++id)
+        statements.push_back(insert.bind(id, id * 2));
+    ASSERT_TRUE(handle.executeEach(statements));
+
+    std::set<std::int64_t> seenIds;
+    data::synchronous([&](auto yield) {
+        testMigrationBackend_->migrateInTokenRange<FullScanPagingTableDesc>(
+            std::numeric_limits<std::int64_t>::min(),
+            std::numeric_limits<std::int64_t>::max(),
+            [&](FullScanPagingTableDesc::Row const& row) {
+                auto const& [id, value] = row;
+                EXPECT_EQ(value, id * 2);
+                seenIds.insert(id);
+            },
+            yield
+        );
+    });
+
+    EXPECT_EQ(seenIds.size(), static_cast<std::size_t>(kRowsBeyondFullScanPage));
+    EXPECT_TRUE(seenIds.contains(0));
+    EXPECT_TRUE(seenIds.contains(kRowsBeyondFullScanPage - 1));
 }
 
 // The test suite for testing migration process for ExampleTransactionsMigrator. In this test suite,

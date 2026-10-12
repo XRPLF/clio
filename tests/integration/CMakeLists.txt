@@ -8,6 +8,7 @@ target_sources(
         data/cassandra/BaseTests.cpp
         migration/cassandra/DBRawData.cpp
         migration/cassandra/CassandraMigrationManagerTests.cpp
+        migration/cassandra/MPTTransactionHistoryMigratorTests.cpp
         migration/cassandra/ExampleTransactionsMigrator.cpp
         migration/cassandra/ExampleObjectsMigrator.cpp
         migration/cassandra/ExampleLedgerMigrator.cpp

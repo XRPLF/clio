@@ -6,8 +6,9 @@ target_sources(
         MigrationApplication.cpp
         impl/MigrationManagerFactory.cpp
         MigratorStatus.cpp
+        cassandra/MPTTransactionHistoryMigrator.cpp
         cassandra/impl/ObjectsAdapter.cpp
         cassandra/impl/TransactionsAdapter.cpp
 )
 
-target_link_libraries(clio_migration PRIVATE clio_util clio_data)
+target_link_libraries(clio_migration PRIVATE clio_util clio_data clio_etl)

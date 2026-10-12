@@ -107,6 +107,9 @@ struct Result : public ManagedObject<CassResult const> {
     [[nodiscard]] bool
     hasRows() const;
 
+    [[nodiscard]] bool
+    hasMorePages() const;
+
     template <typename... RowTypes>
     [[nodiscard]] std::optional<std::tuple<RowTypes...>>
     get() const
