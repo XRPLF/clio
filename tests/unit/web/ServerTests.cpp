@@ -230,7 +230,7 @@ TEST_F(WebServerTest, InvalidIpAddress)
     auto jsonConfig = generateJSONWithDynamicPort(port);
     jsonConfig.as_object()["server"].as_object()["ip"] = "not-an-ip";
 
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     auto const result =
         web::makeHttpServer(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
@@ -240,7 +240,7 @@ TEST_F(WebServerTest, InvalidIpAddress)
 
 TEST_F(WebServerTest, Http)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::post("localhost", port, R"JSON({"Hello":1})JSON");
@@ -250,7 +250,7 @@ TEST_F(WebServerTest, Http)
 
 TEST_F(WebServerTest, Ws)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     WebSocketSyncClient wsClient;
@@ -262,7 +262,7 @@ TEST_F(WebServerTest, Ws)
 
 TEST_F(WebServerTest, HttpInternalError)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::post("localhost", port, R"JSON({})JSON");
@@ -275,7 +275,7 @@ TEST_F(WebServerTest, HttpInternalError)
 
 TEST_F(WebServerTest, WsInternalError)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     WebSocketSyncClient wsClient;
@@ -290,7 +290,7 @@ TEST_F(WebServerTest, WsInternalError)
 
 TEST_F(WebServerTest, WsInternalErrorNotJson)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     WebSocketSyncClient wsClient;
@@ -310,7 +310,7 @@ TEST_F(WebServerTest, IncompleteSslConfig)
     auto jsonConfig = generateJSONWithDynamicPort(port);
     jsonConfig.as_object()["ssl_key_file"] = sslKeyFile.path;
 
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const result =
         web::makeHttpServer(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
     EXPECT_FALSE(result.has_value());
@@ -324,7 +324,7 @@ TEST_F(WebServerTest, WrongSslConfig)
     jsonConfig.as_object()["ssl_key_file"] = sslKeyFile.path;
     jsonConfig.as_object()["ssl_cert_file"] = "wrong_path";
 
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const result =
         web::makeHttpServer(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
     EXPECT_FALSE(result.has_value());
@@ -332,7 +332,7 @@ TEST_F(WebServerTest, WrongSslConfig)
 
 TEST_F(WebServerTest, Https)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     cfg = getParseServerConfig(addSslConfig(generateJSONWithDynamicPort(port)));
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
@@ -342,7 +342,7 @@ TEST_F(WebServerTest, Https)
 
 TEST_F(WebServerTest, Wss)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     cfg = getParseServerConfig(addSslConfig(generateJSONWithDynamicPort(port)));
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
@@ -356,7 +356,7 @@ TEST_F(WebServerTest, Wss)
 TEST_F(WebServerTest, HttpPayloadOverload)
 {
     std::string const s100(100, 'a');
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e, cache);
     auto const [status, res] =
@@ -371,7 +371,7 @@ TEST_F(WebServerTest, HttpPayloadOverload)
 TEST_F(WebServerTest, WsPayloadOverload)
 {
     std::string const s100(100, 'a');
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e, cache);
     WebSocketSyncClient wsClient;
@@ -386,7 +386,7 @@ TEST_F(WebServerTest, WsPayloadOverload)
 
 TEST_F(WebServerTest, WsTooManyConnection)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e, cache);
     // max connection is 2, exception should happen when the third connection is made
@@ -409,7 +409,7 @@ TEST_F(WebServerTest, WsTooManyConnection)
 
 TEST_F(WebServerTest, HealthCheck)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e =
         std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
@@ -421,7 +421,7 @@ TEST_F(WebServerTest, HealthCheck)
 
 TEST_F(WebServerTest, CacheStateCheckWithLoadedCache)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     EXPECT_CALL(cache, isFull()).WillRepeatedly(testing::Return(true));
 
     auto const e =
@@ -435,7 +435,7 @@ TEST_F(WebServerTest, CacheStateCheckWithLoadedCache)
 
 TEST_F(WebServerTest, CacheStateCheckWithoutLoadedCache)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     EXPECT_CALL(cache, isFull()).WillRepeatedly(testing::Return(false));
 
     auto const e =
@@ -449,7 +449,7 @@ TEST_F(WebServerTest, CacheStateCheckWithoutLoadedCache)
 
 TEST_F(WebServerTest, GetOtherThanHealthCheck)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e =
         std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
@@ -580,7 +580,7 @@ class WebServerAdminTest : public WebServerTest,
 
 TEST_P(WebServerAdminTest, WsAdminCheck)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<AdminCheckExecutor>();
     ClioConfigDefinition const serverConfig{
         getParseAdminServerConfig(boost::json::parse(GetParam().config))
@@ -597,7 +597,7 @@ TEST_P(WebServerAdminTest, WsAdminCheck)
 
 TEST_P(WebServerAdminTest, HttpAdminCheck)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<AdminCheckExecutor>();
     ClioConfigDefinition const serverConfig{
         getParseAdminServerConfig(boost::json::parse(GetParam().config))
@@ -749,7 +749,7 @@ struct WebServerPrometheusTest : util::prometheus::WithPrometheus, WebServerTest
 
 TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     uint32_t const webServerPort = tests::util::generateFreePort();
     ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
@@ -780,7 +780,7 @@ TEST_F(WebServerPrometheusDisabledTest, rejectedIfPrometheusIsDisabled)
         webServerPort
     );
 
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     ClioConfigDefinition const serverConfig{
         getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithDisabledPrometheus))
@@ -802,7 +802,7 @@ TEST_F(WebServerPrometheusDisabledTest, rejectedIfPrometheusIsDisabled)
 
 TEST_F(WebServerPrometheusTest, validResponse)
 {
-    auto cache = MockLedgerCache();
+    auto const cache = MockLedgerCache();
     uint32_t const webServerPort = tests::util::generateFreePort();
     auto& testCounter = PrometheusService::counterInt("test_counter", util::prometheus::Labels());
     ++testCounter;

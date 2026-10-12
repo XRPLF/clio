@@ -156,8 +156,9 @@ TEST_F(ClusterCommunicationServiceTest, MetricsGetsNewStateFromBackend)
         return state;
     }));
 
-    auto const& nodesInClusterMetric =
-        PrometheusService::gaugeInt("cluster_nodes_total_number", {});
+    // const& triggers a GCC -Wdangling-reference false positive
+    // NOLINTNEXTLINE(misc-const-correctness)
+    auto& nodesInClusterMetric = PrometheusService::gaugeInt("cluster_nodes_total_number", {});
     auto const isHealthyMetric =
         PrometheusService::boolMetric("cluster_communication_is_healthy", {});
 

@@ -592,7 +592,9 @@ struct SubscriptionSourcePrometheusCounterTests : util::prometheus::WithMockProm
 
 TEST_F(SubscriptionSourcePrometheusCounterTests, LastMessageTime)
 {
-    auto const& lastMessageTimeMock = makeMock<util::prometheus::GaugeInt>(
+    // const& triggers a GCC -Wdangling-reference false positive
+    // NOLINTNEXTLINE(misc-const-correctness)
+    auto& lastMessageTimeMock = makeMock<util::prometheus::GaugeInt>(
         "subscription_source_last_message_time",
         fmt::format("{{source=\"127.0.0.1:{}\"}}", wsServer_.port())
     );

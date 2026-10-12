@@ -47,7 +47,7 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
     auto const& lgrInfo = *expectedLgrInfo;
     auto const& all = amendmentCenter_->getAll();
 
-    auto searchPredicate = [search = input.feature](auto const& feature) {
+    auto const searchPredicate = [search = input.feature](auto const& feature) {
         if (search) {
             return xrpl::to_string(feature.feature) == *search or feature.name == *search;
         }

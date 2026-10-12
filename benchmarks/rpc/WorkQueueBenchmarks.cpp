@@ -68,7 +68,7 @@ benchmarkWorkQueue(benchmark::State& state)
     auto const itemsPerClient = static_cast<uint32_t>(state.range(3));
     auto const clientProcessingMs = static_cast<uint32_t>(state.range(4));
 
-    for (auto _ : state) {
+    for (auto const _ : state) {
         std::atomic_size_t totalExecuted = 0uz;
         std::atomic_size_t totalQueued = 0uz;
 

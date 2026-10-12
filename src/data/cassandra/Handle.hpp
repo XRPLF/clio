@@ -203,7 +203,7 @@ public:
     [[nodiscard]] FutureType
     asyncExecute(PreparedStatementType const& statement, Args&&... args) const
     {
-        auto bound = statement.bind<Args...>(std::forward<Args>(args)...);
+        auto const bound = statement.bind<Args...>(std::forward<Args>(args)...);
         return cass_session_execute(session_, bound);
     }
 
