@@ -29,7 +29,7 @@ getParseWhitelistHandlerConfig(boost::json::value val)
     auto config =
         ClioConfigDefinition{{"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}}};
     auto const errors = config.parse(jsonVal);
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
+    [&] { ASSERT_FALSE(errors.has_value()); }();
     return config;
 }
 

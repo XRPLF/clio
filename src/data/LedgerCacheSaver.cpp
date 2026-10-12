@@ -29,14 +29,14 @@ void
 LedgerCacheSaver::save()
 {
     ASSERT(not savingThread_.has_value(), "Multiple save() calls are not allowed");
-    savingThread_ = std::thread([this]() {
+    savingThread_ = std::thread([this] {
         if (not cacheFilePath_.has_value()) {
             return;
         }
 
         LOG(util::LogService::info()) << "Saving ledger cache to " << *cacheFilePath_;
         if (auto const [success, durationMs] =
-                util::timed([&]() { return cache_.get().saveToFile(*cacheFilePath_); });
+                util::timed([&] { return cache_.get().saveToFile(*cacheFilePath_); });
             success.has_value()) {
             LOG(util::LogService::info())
                 << "Successfully saved ledger cache in " << durationMs << " ms";

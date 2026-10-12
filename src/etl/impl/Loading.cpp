@@ -50,7 +50,7 @@ Loader::load(model::LedgerData const& data)
         // Only a writer should attempt to commit to DB
         // This is also where conflicts with other writer nodes will be detected
         if (state_->isWriting) {
-            auto [success, duration] = ::util::timed<std::chrono::milliseconds>([&]() {
+            auto [success, duration] = ::util::timed<std::chrono::milliseconds>([&] {
                 return backend_->finishWrites(data.seq);
             });
             LOG(log_.info()) << "Finished writes to DB for " << data.seq << ": "
@@ -131,7 +131,7 @@ Loader::loadInitialLedger(model::LedgerData const& data)
 
         LOG(log_.debug()) << "Deserialized ledger header. " << ::util::toString(data.header);
 
-        auto seconds = ::util::timed<std::chrono::seconds>([this, &data]() {
+        auto seconds = ::util::timed<std::chrono::seconds>([this, &data] {
             registry_->dispatchInitialData(data);
         });
         LOG(log_.info()) << "Dispatching initial data and submitting all writes took " << seconds

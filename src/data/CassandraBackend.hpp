@@ -111,7 +111,7 @@ public:
     {
         NFTsAndCursor ret;
 
-        Statement const idQueryStatement = [&taxon, &issuer, &cursorIn, &limit, this]() {
+        Statement const idQueryStatement = [&taxon, &issuer, &cursorIn, &limit, this] {
             if (taxon.has_value()) {
                 auto r = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
                 r.bindAt(1, *taxon);

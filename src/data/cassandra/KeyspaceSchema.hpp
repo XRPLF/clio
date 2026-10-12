@@ -34,7 +34,7 @@ public:
         //
         // Insert queries
         //
-        PreparedStatement insertLedgerRange = [this]() {
+        PreparedStatement insertLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -48,7 +48,7 @@ public:
         //
         // Update (and "delete") queries
         //
-        PreparedStatement updateLedgerRange = [this]() {
+        PreparedStatement updateLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -62,7 +62,7 @@ public:
             );
         }();
 
-        PreparedStatement selectLedgerRange = [this]() {
+        PreparedStatement selectLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -78,7 +78,7 @@ public:
         //
         // Select queries
         //
-        PreparedStatement selectNFTsAfterTaxonKeyspaces = [this]() {
+        PreparedStatement selectNFTsAfterTaxonKeyspaces = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(

@@ -77,7 +77,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
     auto const& lgrInfo = *expectedLgrInfo;
 
     // Extract the vault keylet based on input
-    auto const vaultKeylet = [&]() -> std::expected<xrpl::Keylet, Status> {
+    auto const vaultKeylet = [&] -> std::expected<xrpl::Keylet, Status> {
         if (input.owner && input.tnxSequence) {
             auto const& accountID = *input.owner;
 

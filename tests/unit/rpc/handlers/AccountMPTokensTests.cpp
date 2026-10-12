@@ -415,7 +415,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const indexes = std::vector<xrpl::uint256>(50, xrpl::uint256{kTokenIndeX1});
-    auto const bbs = [&]() {
+    auto const bbs = [&] {
         std::vector<Blob> v;
         v.reserve(50);
         for (int i = 0; i < 50; ++i) {
@@ -514,7 +514,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerOutput)
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const bbs = [&]() {
+    auto const bbs = [&] {
         std::vector<Blob> v;
         v.reserve(kLimit);
         for (int i = 0; i < kLimit; ++i) {
@@ -582,7 +582,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerInput)
     auto const ownerDirKk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNextPage).key;
 
     auto const indexes = std::vector<xrpl::uint256>(kLimit, xrpl::uint256{kTokenIndeX1});
-    auto const bbs = [&]() {
+    auto const bbs = [&] {
         std::vector<Blob> v;
         v.reserve(kLimit);
         for (int i = 0; i < kLimit; ++i) {

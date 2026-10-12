@@ -122,7 +122,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
     // Using coroutine group here to wait for stopConnection() to finish before exiting this
     // function and destroying connection.
     util::CoroutineGroup stopTask{yield, 1};
-    auto stopSignalConnection = onStop_.connect([&connectionRef, &stopTask, yield]() {
+    auto stopSignalConnection = onStop_.connect([&connectionRef, &stopTask, yield] {
         stopTask.spawn(yield, [&connectionRef](boost::asio::yield_context innerYield) {
             stopConnection(connectionRef, innerYield);
         });

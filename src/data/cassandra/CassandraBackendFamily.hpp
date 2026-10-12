@@ -170,7 +170,7 @@ public:
         if (!rng)
             return {.txns = {}, .cursor = {}};
 
-        Statement const statement = [this, forward, &account]() {
+        Statement const statement = [this, forward, &account] {
             if (forward)
                 return schema_->selectAccountTxForward.bind(account);
 
@@ -451,7 +451,7 @@ public:
         if (!rng)
             return {.txns = {}, .cursor = {}};
 
-        Statement const statement = [this, forward, &tokenID]() {
+        Statement const statement = [this, forward, &tokenID] {
             if (forward)
                 return schema_->selectNFTTxForward.bind(tokenID);
 
@@ -520,7 +520,7 @@ public:
         boost::asio::yield_context yield
     ) const override
     {
-        auto const statement = [this, forward, &mptIssuanceID]() {
+        auto const statement = [this, forward, &mptIssuanceID] {
             if (forward)
                 return schema_->selectMPTokenIssuanceTxForward.bind(mptIssuanceID);
 
@@ -547,7 +547,7 @@ public:
         boost::asio::yield_context yield
     ) const override
     {
-        auto const statement = [this, forward, &mptIssuanceID, &account]() {
+        auto const statement = [this, forward, &mptIssuanceID, &account] {
             if (forward)
                 return schema_->selectAccountMPTokenIssuanceTxForward.bind(mptIssuanceID, account);
 
@@ -711,7 +711,7 @@ public:
         std::vector<Statement> statements;
         statements.reserve(numHashes);
 
-        auto const timeDiff = util::timed([this, yield, &results, &hashes, &statements]() {
+        auto const timeDiff = util::timed([this, yield, &results, &hashes, &statements] {
             // TODO: seems like a job for "hash IN (list of hashes)" instead?
             std::transform(
                 std::cbegin(hashes),
@@ -792,7 +792,7 @@ public:
     ) const override
     {
         auto const [keys, timeDiff] =
-            util::timed([this, &ledgerSequence, yield]() -> std::vector<xrpl::uint256> {
+            util::timed([this, &ledgerSequence, yield] -> std::vector<xrpl::uint256> {
                 auto const res = executor_.read(yield, schema_->selectDiff, ledgerSequence);
                 if (not res) {
                     LOG(log_.error()) << "Could not fetch ledger diff: " << res.error()

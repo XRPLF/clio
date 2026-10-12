@@ -148,7 +148,7 @@ MPTokenIssuanceHistoryHandler::fetchTransactions(
 ) const
 {
     // Construct the database cursor as {ledgerSequence, transactionIndex}.
-    auto const startCursor = [&]() -> data::TransactionsCursor {
+    auto const startCursor = [&] -> data::TransactionsCursor {
         if (input.marker.has_value())
             return {input.marker->ledger, input.marker->seq};
 

@@ -168,7 +168,7 @@ GetAggregatePriceHandler::process(
         );
     }
 
-    auto const median = [&, size = out.extireStats.size]() {
+    auto const median = [&, size = out.extireStats.size] {
         auto const middle = size / 2;
         if ((size % 2) == 0) {
             static xrpl::STAmount const kTwo{xrpl::noIssue(), 2, 0};

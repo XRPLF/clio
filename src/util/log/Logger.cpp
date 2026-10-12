@@ -185,7 +185,7 @@ spdlog::sink_ptr
 LogService::createFileSink(FileLoggingParams const& params, std::string const& format)
 {
     std::filesystem::path const dirPath(params.logDir);
-    auto fileSink = [&]() -> std::shared_ptr<spdlog::sinks::sink> {
+    auto fileSink = [&] -> std::shared_ptr<spdlog::sinks::sink> {
         auto const logPath = (dirPath / "clio.log").string();
         if (params.rotation.has_value()) {
             // rotation sizes are taken from user in MB, but spdlog needs bytes

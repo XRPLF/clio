@@ -57,7 +57,7 @@ public:
     void
     writeTxIndexExample(std::string const& hash, std::string const& txType)
     {
-        static auto kInsertTxIndexExample = [this]() {
+        static auto kInsertTxIndexExample = [this] {
             return handle_.prepare(
                 fmt::format(
                     R"(
@@ -83,7 +83,7 @@ public:
     std::optional<std::string>
     fetchTxTypeViaID(std::string const& hash, boost::asio::yield_context ctx)
     {
-        static auto kFetchTxType = [this]() {
+        static auto kFetchTxType = [this] {
             return handle_.prepare(
                 fmt::format(
                     R"(
@@ -119,7 +119,7 @@ public:
     std::optional<std::uint64_t>
     fetchTxIndexTableSize(boost::asio::yield_context ctx)
     {
-        static auto kInsertTxIndexExample = [this]() {
+        static auto kInsertTxIndexExample = [this] {
             return handle_.prepare(
                 fmt::format(
                     R"(
@@ -161,7 +161,7 @@ public:
     void
     writeLedgerAccountHash(std::uint64_t sequence, std::string const& accountHash)
     {
-        static auto kInsertLedgerExample = [this]() {
+        static auto kInsertLedgerExample = [this] {
             return handle_.prepare(
                 fmt::format(
                     R"(
@@ -187,7 +187,7 @@ public:
     std::optional<xrpl::uint256>
     fetchAccountHashViaSequence(std::uint64_t sequence, boost::asio::yield_context ctx)
     {
-        static auto kFetchAccountHash = [this]() {
+        static auto kFetchAccountHash = [this] {
             return handle_.prepare(
                 fmt::format(
                     R"(
@@ -222,7 +222,7 @@ public:
     std::optional<std::uint64_t>
     fetchLedgerTableSize(boost::asio::yield_context ctx)
     {
-        static auto kInsertLedgerExample = [this]() {
+        static auto kInsertLedgerExample = [this] {
             return handle_.prepare(
                 fmt::format(
                     R"(
@@ -281,7 +281,7 @@ public:
     std::optional<std::uint64_t>
     fetchDiffTableSize(boost::asio::yield_context ctx)
     {
-        static auto kCountDiff = [this]() {
+        static auto kCountDiff = [this] {
             return handle_.prepare(
                 fmt::format(
                     R"(

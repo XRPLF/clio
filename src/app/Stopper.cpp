@@ -40,7 +40,7 @@ Stopper::stop()
     if (worker_.joinable())
         return;
 
-    worker_ = std::thread{[this]() { ctx_.run(); }};
+    worker_ = std::thread{[this] { ctx_.run(); }};
 }
 
 }  // namespace app

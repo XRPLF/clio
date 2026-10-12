@@ -208,7 +208,7 @@ TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingAndQueueIsEmpty)
         queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false)
     );
 
-    EXPECT_CALL(onTasksComplete, Call()).WillOnce([&]() { EXPECT_EQ(queue.size(), 0u); });
+    EXPECT_CALL(onTasksComplete, Call()).WillOnce([&] { EXPECT_EQ(queue.size(), 0u); });
     queue.requestStop(onTasksComplete.AsStdFunction());
     queue.stop();
 }
@@ -226,7 +226,7 @@ TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingOnLastTask)
         /* isWhiteListed = */ false
     ));
 
-    EXPECT_CALL(onTasksComplete, Call()).WillOnce([&]() { EXPECT_EQ(queue.size(), 0u); });
+    EXPECT_CALL(onTasksComplete, Call()).WillOnce([&] { EXPECT_EQ(queue.size(), 0u); });
     queue.requestStop(onTasksComplete.AsStdFunction());
     semaphore.release();
 

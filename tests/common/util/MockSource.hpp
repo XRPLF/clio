@@ -179,7 +179,7 @@ public:
                 auto it = std::ranges::find_if(mockData_, [](auto const& d) {
                     return not d.callbacks.has_value();
                 });
-                [&]() {
+                [&] {
                     ASSERT_NE(it, mockData_.end()) << "Make source called more than expected";
                 }();
                 it->callbacks = MockSourceCallbacks{
@@ -232,7 +232,7 @@ public:
     callbacksAt(size_t index)
     {
         auto& callbacks = mockData_.at(index).callbacks;
-        [&]() { ASSERT_TRUE(callbacks.has_value()) << "Callbacks not set"; }();
+        [&] { ASSERT_TRUE(callbacks.has_value()) << "Callbacks not set"; }();
         return *callbacks;  // NOLINT(bugprone-unchecked-optional-access)
     }
 };

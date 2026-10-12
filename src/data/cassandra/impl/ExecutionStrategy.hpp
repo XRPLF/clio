@@ -92,7 +92,7 @@ public:
         , writeBatchSize_{settings.writeBatchSize}
         , work_{boost::asio::make_work_guard(ioc_)}
         , handle_{std::cref(handle)}
-        , thread_{[this]() { ioc_.run(); }}
+        , thread_{[this] { ioc_.run(); }}
         , counters_{std::move(counters)}
     {
         LOG(log_.info()) << "Max write requests outstanding is " << maxWriteRequestsOutstanding_
@@ -114,7 +114,7 @@ public:
     {
         LOG(log_.debug()) << "Waiting to sync all writes...";
         std::unique_lock<std::mutex> lck(syncMutex_);
-        syncCv_.wait(lck, [this]() { return finishedAllWriteRequests(); });
+        syncCv_.wait(lck, [this] { return finishedAllWriteRequests(); });
         LOG(log_.debug()) << "Sync done.";
     }
 
@@ -207,7 +207,7 @@ public:
 
                 counters_->registerWriteFinished(startTime);
             },
-            [this]() { counters_->registerWriteRetry(); }
+            [this] { counters_->registerWriteRetry(); }
         );
     }
 
@@ -244,7 +244,7 @@ public:
                     decrementOutstandingRequestCount();
                     counters_->registerWriteFinished(startTime);
                 },
-                [this]() { counters_->registerWriteRetry(); }
+                [this] { counters_->registerWriteRetry(); }
             );
         });
     }
@@ -313,7 +313,7 @@ public:
                 future.emplace(handle_.get().asyncExecute(statements, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::forward<decltype(res)>(res)]() mutable {
+                        [sself, res = std::forward<decltype(res)>(res)] mutable {
                             sself->complete(std::move(res));
                         }
                     );
@@ -368,7 +368,7 @@ public:
                 future.emplace(handle_.get().asyncExecute(statement, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::forward<decltype(res)>(res)]() mutable {
+                        [sself, res = std::forward<decltype(res)>(res)] mutable {
                             sself->complete(std::move(res));
                         }
                     );
@@ -433,7 +433,7 @@ public:
                     if (--numOutstanding == 0) {
                         boost::asio::post(
                             boost::asio::get_associated_executor(*sself),
-                            [sself]() mutable { sself->complete(); }
+                            [sself] mutable { sself->complete(); }
                         );
                     }
                 };
@@ -512,7 +512,7 @@ private:
             if (!canAddWriteRequest()) {
                 LOG(log_.trace()) << "Max outstanding requests reached. "
                                   << "Waiting for other requests to finish";
-                throttleCv_.wait(lck, [this]() { return canAddWriteRequest(); });
+                throttleCv_.wait(lck, [this] { return canAddWriteRequest(); });
             }
         }
         ++numWriteRequestsOutstanding_;

@@ -466,7 +466,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const indexes = std::vector<xrpl::uint256>(50, xrpl::uint256{kIssuanceIndex1});
-    auto const bbs = [&]() {
+    auto const bbs = [&] {
         std::vector<Blob> v;
         v.reserve(50);
         for (int i = 0; i < 50; ++i) {
@@ -563,7 +563,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const indexes = std::vector<xrpl::uint256>(10, xrpl::uint256{kIssuanceIndex1});
-    auto const bbs = [&]() {
+    auto const bbs = [&] {
         std::vector<Blob> v;
         v.reserve(kLimit);
         for (int i = 0; i < kLimit; ++i) {
@@ -624,7 +624,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const indexes = std::vector<xrpl::uint256>(kLimit, xrpl::uint256{kIssuanceIndex1});
-    auto const bbs = [&]() {
+    auto const bbs = [&] {
         std::vector<Blob> v;
         v.reserve(kLimit);
         for (int i = 0; i < kLimit; ++i) {

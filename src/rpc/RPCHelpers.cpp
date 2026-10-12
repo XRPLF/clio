@@ -875,7 +875,7 @@ traverseOwnedNodes(
     );
 
     auto [objects, timeDiff] =
-        util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
+        util::timed([&] { return backend.fetchLedgerObjects(keys, sequence, yield); });
 
     LOG(log.debug()) << "Time loading owned entries: " << timeDiff << " milliseconds";
 
@@ -1086,7 +1086,7 @@ xrpLiquid(
 
     auto balance = sle.getFieldAmount(xrpl::sfBalance);
 
-    xrpl::STAmount const amount = [&]() {
+    xrpl::STAmount const amount = [&] {
         // AMM doesn't require the reserves
         if ((sle.getFlags() & xrpl::lsfAMMNode) != 0u)
             return balance;
@@ -1197,7 +1197,7 @@ accountHolds(
         return amount;
     }
 
-    auto const allowBalance = [&]() {
+    auto const allowBalance = [&] {
         if (!zeroIfFrozen)
             return true;
 

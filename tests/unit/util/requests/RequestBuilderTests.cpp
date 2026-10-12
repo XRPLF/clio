@@ -75,7 +75,7 @@ TEST_P(RequestBuilderTest, SimpleRequest)
         [&replyBody](
             http::request<http::string_body> request
         ) -> std::optional<http::response<http::string_body>> {
-            [&]() {
+            [&] {
                 EXPECT_TRUE(request.target() == GetParam().target);
                 EXPECT_TRUE(request.method() == GetParam().method);
                 for (auto const& header : GetParam().headers) {
@@ -94,7 +94,7 @@ TEST_P(RequestBuilderTest, SimpleRequest)
     );
 
     runSpawn([this, replyBody](asio::yield_context yield) {
-        auto const response = [&]() -> std::expected<std::string, RequestError> {
+        auto const response = [&] -> std::expected<std::string, RequestError> {
             switch (GetParam().method) {
                 case http::verb::get:
                     return builder.getPlain(yield);
@@ -116,7 +116,7 @@ TEST_F(RequestBuilderTest, Timeout)
         [](
             http::request<http::string_body> request
         ) -> std::optional<http::response<http::string_body>> {
-            [&]() {
+            [&] {
                 ASSERT_TRUE(request.target() == "/");
                 ASSERT_TRUE(request.method() == http::verb::get);
             }();
@@ -140,7 +140,7 @@ TEST_F(RequestBuilderTest, RequestWithBody)
         [&](
             http::request<http::string_body> request
         ) -> std::optional<http::response<http::string_body>> {
-            [&]() {
+            [&] {
                 EXPECT_EQ(request.target(), "/");
                 EXPECT_EQ(request.method(), http::verb::get);
                 EXPECT_EQ(request.body(), requestBody);
@@ -217,7 +217,7 @@ TEST_P(RequestBuilderSslTest, TrySslUsePlain)
     // First try will be SSL, but the server can't handle SSL requests
     server.handleRequest(
         [](auto&&) -> std::optional<http::response<http::string_body>> {
-            []() { FAIL(); }();
+            [] { FAIL(); }();
             return std::nullopt;
         },
         true
@@ -227,7 +227,7 @@ TEST_P(RequestBuilderSslTest, TrySslUsePlain)
         [&](
             http::request<http::string_body> request
         ) -> std::optional<http::response<http::string_body>> {
-            [&]() {
+            [&] {
                 EXPECT_EQ(request.target(), "/");
                 EXPECT_EQ(request.method(), GetParam().method);
             }();
@@ -236,7 +236,7 @@ TEST_P(RequestBuilderSslTest, TrySslUsePlain)
     );
 
     runSpawn([this](asio::yield_context yield) {
-        auto const response = [&]() -> std::expected<std::string, RequestError> {
+        auto const response = [&] -> std::expected<std::string, RequestError> {
             switch (GetParam().method) {
                 case http::verb::get:
                     return builder.get(yield);

@@ -106,7 +106,7 @@ private:
             } else {
                 if (retryPolicy_.shouldRetry(res.error())) {
                     onRetry_();
-                    retryPolicy_.retry([self, &handle]() { self->execute(handle); });
+                    retryPolicy_.retry([self, &handle] { self->execute(handle); });
                 } else {
                     onComplete_(std::forward<decltype(res)>(res));  // report error
                 }

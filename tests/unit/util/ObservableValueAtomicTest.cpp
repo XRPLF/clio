@@ -164,7 +164,7 @@ TEST_F(ObservableValueAtomicTest, ThreadSafetyBasic)
     threads.reserve(kNumThreads);
 
     for (int i = 0; i < kNumThreads; ++i) {
-        threads.emplace_back([&obs]() {
+        threads.emplace_back([&obs] {
             for (int j = 0; j < kIncrementsPerThread; ++j) {
                 int const expected = obs.get();
                 int const newValue = expected + 1;
@@ -201,7 +201,7 @@ TEST_F(ObservableValueAtomicTest, ThreadSafetyWithDirectAccess)
     threads.reserve(kNumThreads);
 
     for (int i = 0; i < kNumThreads; ++i) {
-        threads.emplace_back([&obs]() {
+        threads.emplace_back([&obs] {
             for (int j = 0; j < kOperationsPerThread; ++j) {
                 int const current = obs.get();
                 obs.set(current + 1);
@@ -269,7 +269,7 @@ TEST_F(ObservableValueAtomicTest, RaceConditionNotificationIntegrity)
     threads.reserve(kNumThreads);
 
     for (int i = 0; i < kNumThreads; ++i) {
-        threads.emplace_back([&obs]() {
+        threads.emplace_back([&obs] {
             for (int j = 0; j < kOperationsPerThread; ++j) {
                 obs.set(j % 3);
                 std::this_thread::sleep_for(std::chrono::microseconds(1));
@@ -312,7 +312,7 @@ TEST_F(ObservableValueAtomicTest, DeterministicNotificationTest)
     threads.reserve(kNumThreads);
 
     for (int i = 0; i < kNumThreads; ++i) {
-        threads.emplace_back([&obs, i]() { obs.set(i + 1); });
+        threads.emplace_back([&obs, i] { obs.set(i + 1); });
     }
 
     for (auto& thread : threads)
@@ -347,7 +347,7 @@ TEST_F(ObservableValueAtomicTest, NoNotificationForSameValue)
     threads.reserve(kNumThreads);
 
     for (int i = 0; i < kNumThreads; ++i) {
-        threads.emplace_back([&obs]() { obs.set(42); });
+        threads.emplace_back([&obs] { obs.set(42); });
     }
 
     for (auto& thread : threads)
@@ -378,7 +378,7 @@ TEST_F(ObservableValueAtomicTest, AtomicRaceConditionCorrectness)
     // Test that direct access properly notifies for all value changes
     // Each thread will make unique changes to avoid race condition conflicts
     for (int i = 0; i < kNumThreads; ++i) {
-        threads.emplace_back([&obs, i]() {
+        threads.emplace_back([&obs, i] {
             int const baseValue = (i + 1) * 10;  // 10, 20, 30
             obs.set(baseValue);                  // Store unique values
             obs.set(baseValue + 1);              // Then increment

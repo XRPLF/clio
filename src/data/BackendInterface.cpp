@@ -52,7 +52,7 @@ BackendInterface::writeLedgerObject(std::string&& key, std::uint32_t const seq, 
 std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow() const
 {
-    return retryOnTimeout([&]() { return hardFetchLedgerRange(); });
+    return retryOnTimeout([&] { return hardFetchLedgerRange(); });
 }
 
 // *** state data methods
@@ -308,7 +308,7 @@ BackendInterface::fetchLedgerPage(
     bool reachedEnd = false;
 
     while (keys.size() < limit && !reachedEnd) {
-        xrpl::uint256 const& curCursor = [&]() {
+        xrpl::uint256 const& curCursor = [&] {
             if (!keys.empty())
                 return keys.back();
             return (cursor ? *cursor : kFirstKey);

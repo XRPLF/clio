@@ -191,7 +191,7 @@ TransactionFeed::pub(
         auto const account = tx->getAccountID(xrpl::sfAccount);
         auto const amount = tx->getFieldAmount(xrpl::sfTakerGets);
         if (account != amount.get<xrpl::Issue>().account) {
-            auto fetchFundsSynchronous = [&]() {
+            auto fetchFundsSynchronous = [&] {
                 data::synchronous([&](boost::asio::yield_context yield) {
                     ownerFunds = rpc::accountFunds(
                         *backend, *amendmentCenter, lgrInfo.seq, amount, account, yield
@@ -312,7 +312,7 @@ TransactionFeed::pub(
     [[maybe_unused]] auto task = strand_.execute([this,
                                                   allVersionsMsgs = std::move(allVersionsMsgs),
                                                   affectedAccounts = std::move(affectedAccounts),
-                                                  affectedBooks = std::move(affectedBooks)]() {
+                                                  affectedBooks = std::move(affectedBooks)] {
         notified_.clear();
         signal_.emit(allVersionsMsgs);
         // clear the notified set. If the same connection subscribes both transactions +

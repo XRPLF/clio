@@ -36,7 +36,7 @@ struct SpawnDispatchStrategy {
             boost::asio::post(
                 ctx.getExecutor(),
                 [outcome = std::forward<OutcomeType>(outcome),
-                 fn = std::forward<FnType>(fn)]() mutable {
+                 fn = std::forward<FnType>(fn)] mutable {
                     std::invoke(std::forward<decltype(fn)>(fn), outcome);
                 }
             );
@@ -49,7 +49,7 @@ struct SpawnDispatchStrategy {
     static void
     post(ContextType& ctx, FnType&& fn)
     {
-        boost::asio::post(ctx.getExecutor(), [fn = std::forward<FnType>(fn)]() mutable {
+        boost::asio::post(ctx.getExecutor(), [fn = std::forward<FnType>(fn)] mutable {
             std::invoke(std::forward<decltype(fn)>(fn));
         });
     }
@@ -64,8 +64,7 @@ struct PostDispatchStrategy {
 
         boost::asio::post(
             ctx.getExecutor(),
-            [outcome = std::forward<OutcomeType>(outcome),
-             fn = std::forward<FnType>(fn)]() mutable {
+            [outcome = std::forward<OutcomeType>(outcome), fn = std::forward<FnType>(fn)] mutable {
                 if constexpr (SomeStoppableOutcome<OutcomeType>) {
                     auto& stopSource = outcome.getStopSource();
                     std::invoke(

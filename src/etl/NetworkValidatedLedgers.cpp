@@ -30,7 +30,7 @@ std::optional<uint32_t>
 NetworkValidatedLedgers::getMostRecent()
 {
     std::unique_lock lck(mtx_);
-    cv_.wait(lck, [this]() { return latest_; });
+    cv_.wait(lck, [this] { return latest_; });
     return latest_;
 }
 
@@ -41,7 +41,7 @@ NetworkValidatedLedgers::waitUntilValidatedByNetwork(
 )
 {
     std::unique_lock lck(mtx_);
-    auto pred = [sequence, this]() -> bool { return (latest_ && sequence <= *latest_); };
+    auto pred = [sequence, this] -> bool { return (latest_ && sequence <= *latest_); };
     if (maxWaitMs) {
         cv_.wait_for(lck, std::chrono::milliseconds(*maxWaitMs));
     } else {

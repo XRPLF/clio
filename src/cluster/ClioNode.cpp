@@ -38,7 +38,7 @@ ClioNode::from(
     data::LedgerCacheLoadingStateInterface const& cacheLoadingState
 )
 {
-    auto const dbRole = [&writerState]() {
+    auto const dbRole = [&writerState] {
         if (writerState.isReadOnly()) {
             return ClioNode::DbRole::ReadOnly;
         }

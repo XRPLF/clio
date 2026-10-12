@@ -78,7 +78,7 @@ public:
             return;  // Already stopped or not started
 
         std::binary_semaphore cancelSemaphore{0};
-        boost::asio::post(strand_, [this, &cancelSemaphore]() {
+        boost::asio::post(strand_, [this, &cancelSemaphore] {
             timer_.cancel();
             cancelSemaphore.release();
         });

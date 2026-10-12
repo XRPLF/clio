@@ -63,7 +63,7 @@ static_assert(not SomeStopSourceProvider<Outcome<int>>);
 static_assert(SomeStoppableOutcome<StoppableOutcome<int, impl::BasicStopSource>>);
 static_assert(not SomeStoppableOutcome<Outcome<int>>);
 
-static_assert(SomeHandlerWithoutStopToken<decltype([]() {})>);
+static_assert(SomeHandlerWithoutStopToken<decltype([] {})>);
 static_assert(not SomeHandlerWithoutStopToken<decltype([](int) {})>);
 
 static_assert(SomeHandlerWith<decltype([](int) {}), int>);
@@ -321,7 +321,7 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithReturnValue)
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
 
-    auto op = strand.execute([]() -> int { throw 0; });
+    auto op = strand.execute([] -> int { throw 0; });
     static_assert(std::is_same_v<decltype(op), AnyOperation<int>>);
 
     EXPECT_EQ(op.get().value(), 42);

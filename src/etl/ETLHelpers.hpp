@@ -52,7 +52,7 @@ public:
     push(T const& elt)
     {
         std::unique_lock lck(m_);
-        cv_.wait(lck, [this]() { return queue_.size() <= maxSize_; });
+        cv_.wait(lck, [this] { return queue_.size() <= maxSize_; });
         queue_.push(elt);
         cv_.notify_all();
     }
@@ -68,7 +68,7 @@ public:
     push(T&& elt)
     {
         std::unique_lock lck(m_);
-        cv_.wait(lck, [this]() { return queue_.size() <= maxSize_; });
+        cv_.wait(lck, [this] { return queue_.size() <= maxSize_; });
         queue_.push(std::move(elt));
         cv_.notify_all();
     }
@@ -84,7 +84,7 @@ public:
     pop()
     {
         std::unique_lock lck(m_);
-        cv_.wait(lck, [this]() { return !queue_.empty(); });
+        cv_.wait(lck, [this] { return !queue_.empty(); });
 
         T ret = std::move(queue_.front());
         queue_.pop();

@@ -81,13 +81,13 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         threads.reserve(numThreads);
 
         std::chrono::high_resolution_clock::time_point start;
-        std::barrier barrier(numThreads, [&state, &start]() {
+        std::barrier barrier(numThreads, [&state, &start] {
             state.ResumeTiming();
             start = std::chrono::high_resolution_clock::now();
         });
 
         for (size_t threadNum = 0; threadNum < numThreads; ++threadNum) {
-            threads.emplace_back([threadNum, messagesPerThread, fileSink, &barrier]() {
+            threads.emplace_back([threadNum, messagesPerThread, fileSink, &barrier] {
                 std::string const channel = fmt::format("Thread_{}", threadNum);
                 auto logger = std::make_shared<spdlog::async_logger>(
                     channel, fileSink, spdlog::thread_pool(), spdlog::async_overflow_policy::block

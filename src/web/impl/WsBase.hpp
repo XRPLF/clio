@@ -168,7 +168,7 @@ public:
         // maybeSendNext
         boost::asio::post(
             derived().ws().get_executor(),
-            [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
+            [this, self = derived().shared_from_this(), msg = std::move(msg)] {
                 if (messages_.size() > maxSendingQueueSize_) {
                     wsFail(boost::asio::error::timed_out, "Client is too slow");
                     return;

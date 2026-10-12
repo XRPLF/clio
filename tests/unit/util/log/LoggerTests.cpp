@@ -69,7 +69,7 @@ TEST_F(LoggerTest, LOGMacro)
     Logger const log{"General"};
 
     auto computeCalled = false;
-    auto compute = [&computeCalled]() {
+    auto compute = [&computeCalled] {
         computeCalled = true;
         return "computed";
     };

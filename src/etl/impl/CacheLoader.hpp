@@ -146,7 +146,7 @@ private:
 
             while (not token.isStopRequested() and not cache_.get().isDisabled()) {
                 auto res = data::retryOnTimeout(
-                    [this, seq, cachePageFetchSize, &start, token]() {
+                    [this, seq, cachePageFetchSize, &start, token] {
                         return backend_->fetchLedgerPage(
                             start, seq, cachePageFetchSize, false, token
                         );
