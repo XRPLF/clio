@@ -59,7 +59,7 @@ TEST(TimedTest, ChangeToNs)
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         return 8;
     };
-    auto [ret, time] = timed<std::chrono::nanoseconds>(std::move(f));
+    auto [ret, time] = timed<std::chrono::nanoseconds>(f);
     ASSERT_EQ(ret, 8);
     ASSERT_GE(time, 5 * 1000000);
 }
@@ -72,7 +72,7 @@ TEST(TimedTest, NestedLambda)
         timeNested = timed([] { std::this_thread::sleep_for(std::chrono::milliseconds(5)); });
         return 8;
     };
-    auto [ret, time] = timed<std::chrono::nanoseconds>(std::move(f));
+    auto [ret, time] = timed<std::chrono::nanoseconds>(f);
     ASSERT_EQ(ret, 8);
     ASSERT_GE(timeNested, 5);
     ASSERT_GE(time, 10 * 1000000);
@@ -84,7 +84,7 @@ TEST(TimedTest, FloatSec)
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         return 8;
     };
-    auto [ret, time] = timed<std::chrono::duration<double>>(std::move(f));
+    auto [ret, time] = timed<std::chrono::duration<double>>(f);
     ASSERT_EQ(ret, 8);
     ASSERT_GE(time, 0);
 }

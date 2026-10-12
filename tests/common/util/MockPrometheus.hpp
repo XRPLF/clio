@@ -180,39 +180,32 @@ struct MockPrometheusImpl : PrometheusInterface {
     {
         std::unique_ptr<MetricBase> metric;
         auto const key = name + labelsString;
+        // Metric constructors require a non-const mock reference
+        // NOLINTBEGIN(misc-const-correctness)
         if constexpr (std::is_same_v<MetricType, GaugeInt> or std::is_same_v<MetricType, Bool>) {
-            // Metric constructors require a non-const mock reference
-            // NOLINTNEXTLINE(misc-const-correctness)
             auto& impl = counterIntImpls[key];
             metric = std::make_unique<GaugeInt>(name, labelsString, impl);
         } else if constexpr (std::is_same_v<MetricType, CounterInt>) {
-            // Metric constructors require a non-const mock reference
-            // NOLINTNEXTLINE(misc-const-correctness)
             auto& impl = counterUintImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
         } else if constexpr (
             std::is_same_v<MetricType, GaugeDouble> || std::is_same_v<MetricType, CounterDouble>
         ) {
-            // Metric constructors require a non-const mock reference
-            // NOLINTNEXTLINE(misc-const-correctness)
             auto& impl = counterDoubleImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
         } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
-            // Metric constructors require a non-const mock reference
-            // NOLINTNEXTLINE(misc-const-correctness)
             auto& impl = histogramIntImpls[key];
             metric = std::make_unique<MetricType>(
                 name, labelsString, std::vector<std::int64_t>{1}, impl
             );
         } else if constexpr (std::is_same_v<MetricType, HistogramDouble>) {
-            // Metric constructors require a non-const mock reference
-            // NOLINTNEXTLINE(misc-const-correctness)
             auto& impl = histogramDoubleImpls[key];
             metric =
                 std::make_unique<MetricType>(name, labelsString, std::vector<double>{1.}, impl);
         } else {
             throw std::runtime_error("Wrong metric type");
         }
+        // NOLINTEND(misc-const-correctness)
         auto* ptr = metrics.emplace(key, std::move(metric)).first->second.get();
         auto metricPtr = dynamic_cast<MetricType*>(ptr);
         ASSERT(metricPtr != nullptr, "Wrong metric type");

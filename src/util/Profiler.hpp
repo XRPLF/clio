@@ -26,10 +26,12 @@ timed(FnType&& func)
         func();
         return std::chrono::duration_cast<U>(std::chrono::system_clock::now() - start).count();
     } else {
-        auto const ret = func();
+        // Must be non-const so the result can be moved out below
+        // NOLINTNEXTLINE(misc-const-correctness)
+        auto ret = func();
         auto const elapsed =
             std::chrono::duration_cast<U>(std::chrono::system_clock::now() - start).count();
-        return std::make_pair(std::move(ret), std::move(elapsed));
+        return std::make_pair(std::move(ret), elapsed);
     }
 }
 
