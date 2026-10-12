@@ -106,7 +106,7 @@ getParseLoadBalancerConfig(boost::json::value val)
     };
 
     auto const errors = config.parse(ConfigFileJson{val.as_object()});
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
+    [&] { ASSERT_FALSE(errors.has_value()); }();
 
     return config;
 }

@@ -33,7 +33,7 @@ struct WsConnectionTestsBase : SyncAsioContextTest {
     T
     unwrap(std::expected<T, E> expected)
     {
-        [&]() { ASSERT_TRUE(expected.has_value()) << expected.error().message(); }();
+        [&] { ASSERT_TRUE(expected.has_value()) << expected.error().message(); }();
         return std::move(expected).value();
     }
 };
@@ -48,7 +48,7 @@ struct WsConnectionTests : WsConnectionTestsBase,
                            testing::WithParamInterface<WsConnectionTestBundle> {
     WsConnectionTests()
     {
-        [this]() { ASSERT_EQ(clientMessages.size(), serverMessages.size()); }();
+        [this] { ASSERT_EQ(clientMessages.size(), serverMessages.size()); }();
     }
     std::vector<std::string> const clientMessages{"hello", "world"};
 
@@ -354,7 +354,7 @@ TEST_F(WsConnectionTests, RespondsToPing)
         EXPECT_CALL(
             controlFrameCallback, Call(boost::beast::websocket::frame_type::pong, testing::_)
         )
-            .WillOnce([&]() {
+            .WillOnce([&] {
                 serverConnection.resetControlFrameCallback();
                 util::spawn(ctx_, [&](asio::yield_context yield) {
                     auto maybeError = serverConnection.send("got pong", yield);

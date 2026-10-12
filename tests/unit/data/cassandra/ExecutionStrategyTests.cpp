@@ -469,7 +469,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteMultipleAndCallSyncSucceeds)
     auto callCount = std::atomic_uint{0u};
 
     auto work = std::make_optional(boost::asio::make_work_guard(ctx_));
-    auto thread = std::thread{[this]() { ctx_.run(); }};
+    auto thread = std::thread{[this] { ctx_.run(); }};
 
     ON_CALL(
         handle_,
@@ -522,7 +522,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteEachAndCallSyncSucceeds)
     auto callCount = std::atomic_uint{0u};
 
     auto work = std::make_optional(boost::asio::make_work_guard(ctx_));
-    auto thread = std::thread{[this]() { ctx_.run(); }};
+    auto thread = std::thread{[this] { ctx_.run(); }};
 
     EXPECT_CALL(
         handle_,

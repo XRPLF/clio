@@ -174,7 +174,7 @@ private:
                 })
                 .value_or(0);
 
-        auto const [success, durationMs] = util::timed([&]() {
+        auto const [success, durationMs] = util::timed([&] {
             return cache_.get().loadFromFile(settings_.cacheFileSettings->path, minLatestSequence);
         });
 

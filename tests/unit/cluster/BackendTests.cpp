@@ -279,7 +279,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsOnlySelfData)
         "cache_is_currently_loading": false
     })JSON";
 
-    EXPECT_CALL(*backend_, fetchClioNodesData).Times(testing::AtLeast(1)).WillRepeatedly([&]() {
+    EXPECT_CALL(*backend_, fetchClioNodesData).Times(testing::AtLeast(1)).WillRepeatedly([&] {
         return BackendInterface::ClioNodesDataFetchResult{
             std::vector<std::pair<boost::uuids::uuid, std::string>>{
                 {*clusterBackend.selfId(), selfNodeJson}

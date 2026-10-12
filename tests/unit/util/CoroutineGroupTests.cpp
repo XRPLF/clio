@@ -163,9 +163,9 @@ TEST_F(CoroutineGroupTests, SpawnForeign)
         CoroutineGroup group{yield, 1};
 
         auto const onForeignComplete = group.registerForeign(yield);
-        [&]() { ASSERT_TRUE(onForeignComplete.has_value()); }();
+        [&] { ASSERT_TRUE(onForeignComplete.has_value()); }();
 
-        [&]() { ASSERT_FALSE(group.registerForeign(yield).has_value()); }();
+        [&] { ASSERT_FALSE(group.registerForeign(yield).has_value()); }();
 
         util::spawn(ctx_, [this, &onForeignComplete](boost::asio::yield_context innerYield) {
             boost::asio::steady_timer timer{

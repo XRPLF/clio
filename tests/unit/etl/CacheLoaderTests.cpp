@@ -58,7 +58,7 @@ getParseCacheConfig(boost::json::value val)
     ConfigFileJson const jsonVal{val.as_object()};
     auto config = generateDefaultCacheConfig();
     auto const errors = config.parse(jsonVal);
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
+    [&] { ASSERT_FALSE(errors.has_value()); }();
     return config;
 }
 
@@ -244,7 +244,7 @@ TEST_P(ParametrizedCacheLoaderTest, LoadCacheWithDifferentSettings)
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).WillRepeatedly(Return(diffs));
     EXPECT_CALL(*backend_, doFetchSuccessorKey(_, kSeq, _))
         .Times(keysSize * loops)
-        .WillRepeatedly([this]() { return diffProvider.nextKey(keysSize); });
+        .WillRepeatedly([this] { return diffProvider.nextKey(keysSize); });
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects(_, kSeq, _))
         .WillRepeatedly(Return(std::vector<Blob>(keysSize - 1, Blob{'s'})));
@@ -279,7 +279,7 @@ TEST_P(ParametrizedCacheLoaderTest, AutomaticallyCancelledAndAwaitedInDestructor
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).WillRepeatedly(Return(diffs));
     EXPECT_CALL(*backend_, doFetchSuccessorKey(_, kSeq, _))
         .Times(AtMost(keysSize * loops))
-        .WillRepeatedly([this]() { return diffProvider.nextKey(keysSize); });
+        .WillRepeatedly([this] { return diffProvider.nextKey(keysSize); });
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects(_, kSeq, _))
         .WillRepeatedly(Return(std::vector<Blob>(keysSize - 1, Blob{'s'})));
@@ -314,7 +314,7 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).WillRepeatedly(Return(diffs));
     EXPECT_CALL(*backend_, doFetchSuccessorKey(_, kSeq, _))
         .Times(AtMost(keysSize * loops))
-        .WillRepeatedly([this]() { return diffProvider.nextKey(keysSize); });
+        .WillRepeatedly([this] { return diffProvider.nextKey(keysSize); });
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects(_, kSeq, _))
         .WillRepeatedly(Return(std::vector<Blob>(keysSize - 1, Blob{'s'})));
@@ -385,7 +385,7 @@ TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
     auto const keysSize = 14;
 
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).Times(32).WillRepeatedly(Return(diffs));
-    EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(keysSize * loops).WillRepeatedly([this]() {
+    EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(keysSize * loops).WillRepeatedly([this] {
         return diffProvider.nextKey(keysSize);
     });
 
@@ -416,7 +416,7 @@ TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).Times(AtMost(32)).WillRepeatedly(Return(diffs));
     EXPECT_CALL(*backend_, doFetchSuccessorKey)
         .Times(AtMost(keysSize * loops))
-        .WillRepeatedly([this]() { return diffProvider.nextKey(keysSize); });
+        .WillRepeatedly([this] { return diffProvider.nextKey(keysSize); });
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects(_, kSeq, _))
         .Times(AtMost(loops))
@@ -511,7 +511,7 @@ TEST_F(CacheLoaderFromFileTest, FailureBackToNormalLoad)
 
     EXPECT_CALL(cacheLoadingStateRef, waitForLoadingAllowed()).Times(1);
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).Times(32).WillRepeatedly(Return(diffs));
-    EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(keysSize * loops).WillRepeatedly([this]() {
+    EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(keysSize * loops).WillRepeatedly([this] {
         return diffProvider.nextKey(keysSize);
     });
 

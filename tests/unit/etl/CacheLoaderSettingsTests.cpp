@@ -36,7 +36,7 @@ getParseCacheConfig(boost::json::value val)
     ConfigFileJson const jsonVal{val.as_object()};
     auto config = generateDefaultCacheConfig();
     auto const errors = config.parse(jsonVal);
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
+    [&] { ASSERT_FALSE(errors.has_value()); }();
     return config;
 }
 

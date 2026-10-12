@@ -144,7 +144,7 @@ private:
             auto const g = to_string(deltaGets.get<xrpl::Issue>());
             auto const p = to_string(deltaPays.get<xrpl::Issue>());
 
-            auto const noswap = [&]() {
+            auto const noswap = [&] {
                 if (isXRP(deltaGets))
                     return true;
                 return isXRP(deltaPays) ? false : (g < p);

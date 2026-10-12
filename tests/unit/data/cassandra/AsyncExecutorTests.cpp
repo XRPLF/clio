@@ -26,7 +26,7 @@ protected:
         MOCK_METHOD(void, onRetry, ());
     };
     CallbackMock callbackMock_;
-    std::function<void()> onRetry_ = [this]() { callbackMock_.onRetry(); };
+    std::function<void()> onRetry_ = [this] { callbackMock_.onRetry(); };
 };
 
 TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
@@ -38,7 +38,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
         asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>())
     )
         .WillByDefault([this](auto const&, auto&& cb) {
-            boost::asio::post(ctx_, [cb = std::forward<decltype(cb)>(cb)]() { cb({}); });
+            boost::asio::post(ctx_, [cb = std::forward<decltype(cb)>(cb)] { cb({}); });
             return FakeFutureWithCallback{};
         });
     EXPECT_CALL(

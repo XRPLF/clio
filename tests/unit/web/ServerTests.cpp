@@ -119,7 +119,7 @@ getParseServerConfig(boost::json::value val)
         {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
     };
     auto const errors = config.parse(jsonVal);
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
+    [&] { ASSERT_FALSE(errors.has_value()); }();
     return config;
 };
 
@@ -219,7 +219,7 @@ makeServerSync(
 )
 {
     auto result = web::makeHttpServer(config, ioc, dosGuard, handler, cache);
-    [&]() { ASSERT_TRUE(result.has_value()); }();
+    [&] { ASSERT_TRUE(result.has_value()); }();
     return std::move(result).value();
 }
 
@@ -567,7 +567,7 @@ getParseAdminServerConfig(boost::json::value val)
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
     };
     auto const errors = config.parse(jsonVal);
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
+    [&] { ASSERT_FALSE(errors.has_value()); }();
     return config;
 };
 

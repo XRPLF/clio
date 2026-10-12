@@ -365,7 +365,7 @@ TEST_P(ChannelCallbackTest, MultipleSendersOneReceiver)
             for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
                 auto senderCopy = localSender;
                 boost::asio::post(
-                    executor, [senderCopy = std::move(senderCopy), senderId, &executor]() mutable {
+                    executor, [senderCopy = std::move(senderCopy), senderId, &executor] mutable {
                         auto sendNext = [senderCopy = std::move(senderCopy),
                                          senderId,
                                          &executor](this auto&& self, std::size_t i) -> void {
@@ -380,7 +380,7 @@ TEST_P(ChannelCallbackTest, MultipleSendersOneReceiver)
                                     if (success) {
                                         boost::asio::post(
                                             executor,
-                                            [self = std::move(self), i]() mutable { self(i + 1); }
+                                            [self = std::move(self), i] mutable { self(i + 1); }
                                         );
                                     }
                                 }
@@ -427,7 +427,7 @@ TEST_P(ChannelCallbackTest, MultipleSendersMultipleReceivers)
             for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
                 auto senderCopy = localSender;
                 boost::asio::post(
-                    executor, [senderCopy = std::move(senderCopy), senderId, &executor]() mutable {
+                    executor, [senderCopy = std::move(senderCopy), senderId, &executor] mutable {
                         auto sendNext = [senderCopy = std::move(senderCopy),
                                          senderId,
                                          &executor](this auto&& self, std::size_t i) -> void {
@@ -442,7 +442,7 @@ TEST_P(ChannelCallbackTest, MultipleSendersMultipleReceivers)
                                     if (success) {
                                         boost::asio::post(
                                             executor,
-                                            [self = std::move(self), i]() mutable { self(i + 1); }
+                                            [self = std::move(self), i] mutable { self(i + 1); }
                                         );
                                     }
                                 }
@@ -483,11 +483,11 @@ TEST_P(ChannelCallbackTest, ChannelClosureScenarios)
                         EXPECT_EQ(*value, 42);
 
                         boost::asio::post(
-                            executor, [&executor, receiverPtr, senderPtr, &testCompleted]() {
+                            executor, [&executor, receiverPtr, senderPtr, &testCompleted] {
                                 (*senderPtr).reset();
                                 EXPECT_TRUE(receiverPtr->isClosed());
 
-                                boost::asio::post(executor, [receiverPtr, &testCompleted]() {
+                                boost::asio::post(executor, [receiverPtr, &testCompleted] {
                                     receiverPtr->asyncReceive([&testCompleted](auto closedValue) {
                                         EXPECT_FALSE(closedValue.has_value());
                                         testCompleted = true;
@@ -513,7 +513,7 @@ TEST_P(ChannelCallbackTest, TrySendTryReceiveMethods)
         auto receiverPtr = std::make_shared<decltype(receiver)>(std::move(receiver));
         auto senderPtr = std::make_shared<decltype(sender)>(std::move(sender));
 
-        boost::asio::post(executor, [receiverPtr, senderPtr, &testCompleted]() {
+        boost::asio::post(executor, [receiverPtr, senderPtr, &testCompleted] {
             EXPECT_FALSE(receiverPtr->tryReceive().has_value());
 
             EXPECT_TRUE(senderPtr->trySend(100));
@@ -551,7 +551,7 @@ TEST_P(ChannelCallbackTest, TryMethodsWithClosedChannel)
         auto senderPtr =
             std::make_shared<std::optional<util::Channel<int>::Sender>>(std::move(sender));
 
-        boost::asio::post(executor, [receiverPtr, senderPtr, &testCompleted]() {
+        boost::asio::post(executor, [receiverPtr, senderPtr, &testCompleted] {
             EXPECT_TRUE(senderPtr->value().trySend(100));
             EXPECT_TRUE(senderPtr->value().trySend(101));
 

@@ -28,7 +28,7 @@ TEST_F(MetricBuilderAssertTest, build)
           MetricType::GaugeDouble,
           MetricType::HistogramInt,
           MetricType::HistogramDouble}) {
-        std::unique_ptr<MetricBase> metric = [&]() {
+        std::unique_ptr<MetricBase> metric = [&] {
             if (type == MetricType::HistogramInt)
                 return builder(name, labelsString, type, std::vector<std::int64_t>{1});
 

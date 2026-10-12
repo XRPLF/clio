@@ -64,7 +64,7 @@ TestWsConnection::sendPing(
 {
     boost::beast::error_code errorCode;
     ws_.async_ping(data, yield[errorCode]);
-    [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
+    [&] { ASSERT_FALSE(errorCode) << errorCode.message(); }();
 }
 
 std::optional<std::string>
@@ -77,7 +77,7 @@ TestWsConnection::receive(boost::asio::yield_context yield)
     if (errorCode == websocket::error::closed)
         return std::nullopt;
 
-    [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
+    [&] { ASSERT_FALSE(errorCode) << errorCode.message(); }();
     return boost::beast::buffers_to_string(buffer.data());
 }
 
@@ -173,6 +173,6 @@ TestWsServer::acceptConnectionWithoutHandshake(boost::asio::yield_context yield)
     boost::beast::error_code errorCode;
     asio::ip::tcp::socket socket(acceptor_.get_executor());
     acceptor_.async_accept(socket, yield[errorCode]);
-    [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
+    [&] { ASSERT_FALSE(errorCode) << errorCode.message(); }();
     return socket;
 }

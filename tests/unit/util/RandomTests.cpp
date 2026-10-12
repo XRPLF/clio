@@ -15,7 +15,7 @@ struct RandomTests : public ::testing::Test {
     {
         std::vector<int> v;
         v.reserve(numRandoms);
-        std::ranges::generate_n(std::back_inserter(v), numRandoms, [&randomGenerator]() {
+        std::ranges::generate_n(std::back_inserter(v), numRandoms, [&randomGenerator] {
             return randomGenerator.uniform(0, 1000);
         });
         return v;

@@ -61,7 +61,7 @@ getParseSettingsConfig(boost::json::value val)
         {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
     };
     auto const errors = config.parse(jsonVal);
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
+    [&] { ASSERT_FALSE(errors.has_value()); }();
     return config;
 };
 

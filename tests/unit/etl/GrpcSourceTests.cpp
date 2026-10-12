@@ -323,7 +323,7 @@ TEST_F(GrpcSourceStopTests, LoadInitialLedgerStopsWhenRequested)
 
     EXPECT_CALL(observer_, onInitialLoadGotMoreObjects).Times(0);
 
-    auto loadTask = std::async(std::launch::async, [&]() {
+    auto loadTask = std::async(std::launch::async, [&] {
         return grpcSource_.loadInitialLedger(sequence, numMarkers, observer_);
     });
 

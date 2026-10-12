@@ -753,7 +753,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
         *mockWsConnection,
         setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCloseConnectionTimeout})
     );
-    EXPECT_CALL(*mockWsConnection, close).WillOnce([&connectionClosed]() {
+    EXPECT_CALL(*mockWsConnection, close).WillOnce([&connectionClosed] {
         connectionClosed = true;
     });
 

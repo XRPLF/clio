@@ -150,7 +150,7 @@ INSTANTIATE_TEST_CASE_P(
 struct ServerTest : util::prometheus::WithPrometheus, SyncAsioContextTest {
     ServerTest()
     {
-        [&]() { ASSERT_TRUE(server_.has_value()); }();
+        [&] { ASSERT_TRUE(server_.has_value()); }();
         server_->onGet("/", getHandler_.AsStdFunction());
         server_->onPost("/", postHandler_.AsStdFunction());
         server_->onWs(wsHandler_.AsStdFunction());
@@ -264,7 +264,7 @@ TEST_F(ServerHttpTest, ClientDisconnects)
         auto expectedSuccess = client.connect(
             "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         client.disconnect();
         server_->stop(yield);
@@ -319,7 +319,7 @@ TEST_F(ServerHttpTest, OnConnectCheck)
         auto expectedSuccess = client.connect(
             "127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         // Have to send a request here because the server does async_detect_ssl() which waits for
         // some data to appear
@@ -328,7 +328,7 @@ TEST_F(ServerHttpTest, OnConnectCheck)
             yield,
             std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         // Wait for the onConnectCheck to be called
         timer.expires_after(std::chrono::milliseconds{100});
@@ -389,7 +389,7 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         auto expectedSuccess = client.connect(
             "127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         // Have to send a request here because the server does async_detect_ssl() which waits for
         // some data to appear
@@ -398,10 +398,10 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
             yield,
             std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         auto const response = client.receive(yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_TRUE(response.has_value()) << response.error().message(); }();
+        [&] { ASSERT_TRUE(response.has_value()) << response.error().message(); }();
         EXPECT_EQ(response->result(), http::status::too_many_requests);
         EXPECT_EQ(response->body(), R"JSON({"error":"some error"})JSON");
         EXPECT_EQ(response->version(), 11);
@@ -454,7 +454,7 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
         auto expectedSuccess = client.connect(
             "127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         // Have to send a request here because the server does async_detect_ssl() which waits for
         // some data to appear
@@ -463,7 +463,7 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
             yield,
             std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         client.gracefulShutdown();
 
@@ -487,7 +487,7 @@ TEST_F(ServerHttpTest, ClientIsDisconnectedIfServerStopped)
         auto expectedSuccess = client.connect(
             "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         // Have to send a request here because the server does async_detect_ssl() which waits for
         // some data to appear
@@ -496,7 +496,7 @@ TEST_F(ServerHttpTest, ClientIsDisconnectedIfServerStopped)
             yield,
             std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         auto message = client.receive(yield, std::chrono::milliseconds{100});
         EXPECT_TRUE(message.has_value()) << message.error().message();
@@ -524,14 +524,14 @@ TEST_P(ServerHttpTest, RequestResponse)
         auto expectedSuccess = client.connect(
             "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
             expectedSuccess = client.send(request, yield, std::chrono::milliseconds{100});
             EXPECT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
 
             auto const expectedResponse = client.receive(yield, std::chrono::milliseconds{100});
-            [&]() {
+            [&] {
                 ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message();
             }();
             EXPECT_EQ(expectedResponse->result(), http::status::ok);
@@ -582,7 +582,7 @@ TEST_F(ServerTest, WsClientDisconnects)
         auto expectedSuccess = client.connect(
             "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         client.close();
         server_->stop(yield);
@@ -605,14 +605,14 @@ TEST_F(ServerTest, WsRequestResponse)
         auto expectedSuccess = client.connect(
             "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
+        [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
             expectedSuccess = client.send(yield, requestMessage_, std::chrono::milliseconds{100});
             EXPECT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
 
             auto const expectedResponse = client.receive(yield, std::chrono::milliseconds{100});
-            [&]() {
+            [&] {
                 ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message();
             }();
             EXPECT_EQ(expectedResponse.value(), response.message());

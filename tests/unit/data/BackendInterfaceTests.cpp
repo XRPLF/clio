@@ -196,7 +196,7 @@ TEST(BackendInterfaceRetryTest, RetryOnTimeoutBlockingRetriesUntilSuccess)
     std::size_t calls = 0;
 
     auto const result = retryOnTimeout(
-        [&calls]() -> int {
+        [&calls] -> int {
             if (++calls < 3)
                 throw DatabaseError{};
             return 42;
@@ -231,7 +231,7 @@ TEST_F(BackendInterfaceRetryCoroTest, RetryOnTimeoutCoroRetriesUntilSuccess)
 
     runSpawn([&calls](auto yield) {
         auto const result = retryOnTimeout(
-            [&calls]() -> int {
+            [&calls] -> int {
                 if (++calls < 3)
                     throw DatabaseError{};
                 return 42;
@@ -273,13 +273,13 @@ TEST_F(BackendInterfaceRetryCoroTest, RetryOnTimeoutCoroDoesNotWaitInsideCatchHa
 
     runSpawn([&exceptionInFlightDuringWait, this](auto yield) {
         // Runs on this thread while the retry below is suspended on its timer.
-        boost::asio::post(ctx_, [&exceptionInFlightDuringWait]() {
+        boost::asio::post(ctx_, [&exceptionInFlightDuringWait] {
             exceptionInFlightDuringWait = std::current_exception() != nullptr;
         });
 
         std::size_t calls = 0;
         retryOnTimeout(
-            [&calls]() -> int {
+            [&calls] -> int {
                 if (++calls < 2)
                     throw DatabaseError{};
                 return 0;
@@ -303,11 +303,11 @@ TEST_F(BackendInterfaceRetryCoroTest, RetryOnTimeoutCoroDoesNotBlockItsThread)
     bool ran = false;
 
     runSpawn([&ran, this](auto yield) {
-        boost::asio::post(ctx_, [&ran]() { ran = true; });
+        boost::asio::post(ctx_, [&ran] { ran = true; });
 
         std::size_t calls = 0;
         retryOnTimeout(
-            [&calls]() -> int {
+            [&calls] -> int {
                 if (++calls < 2)
                     throw DatabaseError{};
                 return 0;

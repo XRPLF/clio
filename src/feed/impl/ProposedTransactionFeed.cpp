@@ -86,7 +86,7 @@ void
 ProposedTransactionFeed::pub(boost::json::object const& receivedTxJson)
 {
     // v2: rename "transaction" → "tx_json", move "hash" to top level
-    auto const v2Json = [&]() {
+    auto const v2Json = [&] {
         boost::json::object v2Json = receivedTxJson;
         if (v2Json.contains(JS(transaction))) {
             boost::json::value txVal = v2Json.at(JS(transaction));
@@ -114,7 +114,7 @@ ProposedTransactionFeed::pub(boost::json::object const& receivedTxJson)
     auto affectedAccounts = std::unordered_set<xrpl::AccountID>(accounts.cbegin(), accounts.cend());
 
     [[maybe_unused]] auto task =
-        strand_.execute([this, allVersionMsgs, affectedAccounts = std::move(affectedAccounts)]() {
+        strand_.execute([this, allVersionMsgs, affectedAccounts = std::move(affectedAccounts)] {
             notified_.clear();
             signal_.emit(allVersionMsgs);
             // Prevent the same connection from receiving the same message twice if it is subscribed

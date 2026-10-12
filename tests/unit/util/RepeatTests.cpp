@@ -23,9 +23,9 @@ struct RepeatTests : SyncAsioContextTest {
     withRunningContext(std::function<void()> func)
     {
         tests::common::util::callWithTimeout(
-            std::chrono::seconds{1}, [this, func = std::move(func)]() {
+            std::chrono::seconds{1}, [this, func = std::move(func)] {
                 auto workGuard = boost::asio::make_work_guard(ctx_);
-                std::thread thread{[this]() { ctx_.run(); }};
+                std::thread thread{[this] { ctx_.run(); }};
                 func();
                 workGuard.reset();
                 thread.join();
@@ -43,7 +43,7 @@ TEST_F(RepeatTests, CallsHandler)
 
 TEST_F(RepeatTests, StopsOnStop)
 {
-    withRunningContext([this]() {
+    withRunningContext([this] {
         EXPECT_CALL(handlerMock, Call).Times(AtLeast(1));
         repeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());
         std::this_thread::sleep_for(std::chrono::milliseconds{10});
@@ -53,7 +53,7 @@ TEST_F(RepeatTests, StopsOnStop)
 
 TEST_F(RepeatTests, RunsAfterStop)
 {
-    withRunningContext([this]() {
+    withRunningContext([this] {
         for ([[maybe_unused]] auto i : std::ranges::iota_view(0, 2)) {
             EXPECT_CALL(handlerMock, Call).Times(AtLeast(1));
             repeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());

@@ -118,7 +118,7 @@ struct Result : public ManagedObject<CassResult const> {
             return std::nullopt;
 
         std::size_t idx = 0;
-        auto advanceId = [&idx]() { return idx++; };
+        auto advanceId = [&idx] { return idx++; };
 
         return std::make_optional<std::tuple<RowTypes...>>(
             {extractColumn<RowTypes>(row, advanceId())...}
@@ -161,7 +161,7 @@ public:
         auto const* row = cass_iterator_get_row(*this);
 
         std::size_t idx = 0;
-        auto advanceId = [&idx]() { return idx++; };
+        auto advanceId = [&idx] { return idx++; };
 
         return {extractColumn<RowTypes>(row, advanceId())...};
     }

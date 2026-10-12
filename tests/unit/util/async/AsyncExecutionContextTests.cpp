@@ -50,14 +50,14 @@ TYPED_TEST(ExecutionContextTests, move)
 
 TYPED_TEST(ExecutionContextTests, execute)
 {
-    auto res = this->ctx.execute([]() { return 42; });
+    auto res = this->ctx.execute([] { return 42; });
     EXPECT_EQ(res.get().value(), 42);
 }
 
 TYPED_TEST(ExecutionContextTests, executeVoid)
 {
     auto value = 0;
-    auto res = this->ctx.execute([&value]() { value = 42; });
+    auto res = this->ctx.execute([&value] { value = 42; });
 
     res.wait();
     ASSERT_EQ(value, 42);
@@ -65,7 +65,7 @@ TYPED_TEST(ExecutionContextTests, executeVoid)
 
 TYPED_TEST(ExecutionContextTests, executeStdException)
 {
-    auto res = this->ctx.execute([]() { throw std::runtime_error("test"); });
+    auto res = this->ctx.execute([] { throw std::runtime_error("test"); });
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("test"));
@@ -74,7 +74,7 @@ TYPED_TEST(ExecutionContextTests, executeStdException)
 
 TYPED_TEST(ExecutionContextTests, executeUnknownException)
 {
-    auto res = this->ctx.execute([]() { throw 0; });
+    auto res = this->ctx.execute([] { throw 0; });
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("unknown"));
@@ -277,7 +277,7 @@ TYPED_TEST(ExecutionContextTests, strand)
 TYPED_TEST(ExecutionContextTests, strandStdException)
 {
     auto strand = this->ctx.makeStrand();
-    auto res = strand.execute([]() { throw std::runtime_error("test"); });
+    auto res = strand.execute([] { throw std::runtime_error("test"); });
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("test"));
@@ -287,7 +287,7 @@ TYPED_TEST(ExecutionContextTests, strandStdException)
 TYPED_TEST(ExecutionContextTests, strandUnknownException)
 {
     auto strand = this->ctx.makeStrand();
-    auto res = strand.execute([]() { throw 0; });
+    auto res = strand.execute([] { throw 0; });
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("unknown"));

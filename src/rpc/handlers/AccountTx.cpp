@@ -119,7 +119,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     }
 
     auto const limit = input.limit.value_or(kLimitDefault);
-    auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
+    auto const [txnsAndCursor, timeDiff] = util::timed([&] {
         return sharedPtrBackend_->fetchAccountTransactions(
             input.account, limit, input.forward, cursor, ctx.yield
         );

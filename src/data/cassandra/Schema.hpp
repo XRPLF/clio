@@ -56,7 +56,7 @@ public:
     {
     }
 
-    std::string createKeyspace = [this]() {
+    std::string createKeyspace = [this] {
         return fmt::format(
             R"(
             CREATE KEYSPACE IF NOT EXISTS {}
@@ -75,7 +75,7 @@ public:
     // Schema creation queries
     // =======================
 
-    std::vector<Statement> createSchema = [this]() {
+    std::vector<Statement> createSchema = [this] {
         std::vector<Statement> statements;
 
         statements.emplace_back(
@@ -377,7 +377,7 @@ public:
         // Insert queries
         //
 
-        PreparedStatement insertObject = [this]() {
+        PreparedStatement insertObject = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -390,7 +390,7 @@ public:
             );
         }();
 
-        PreparedStatement insertTransaction = [this]() {
+        PreparedStatement insertTransaction = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -403,7 +403,7 @@ public:
             );
         }();
 
-        PreparedStatement insertLedgerTransaction = [this]() {
+        PreparedStatement insertLedgerTransaction = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -416,7 +416,7 @@ public:
             );
         }();
 
-        PreparedStatement insertSuccessor = [this]() {
+        PreparedStatement insertSuccessor = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -429,7 +429,7 @@ public:
             );
         }();
 
-        PreparedStatement insertDiff = [this]() {
+        PreparedStatement insertDiff = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -442,7 +442,7 @@ public:
             );
         }();
 
-        PreparedStatement insertAccountTx = [this]() {
+        PreparedStatement insertAccountTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -455,7 +455,7 @@ public:
             );
         }();
 
-        PreparedStatement insertNFT = [this]() {
+        PreparedStatement insertNFT = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -468,7 +468,7 @@ public:
             );
         }();
 
-        PreparedStatement insertIssuerNFT = [this]() {
+        PreparedStatement insertIssuerNFT = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -481,7 +481,7 @@ public:
             );
         }();
 
-        PreparedStatement insertNFTURI = [this]() {
+        PreparedStatement insertNFTURI = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -494,7 +494,7 @@ public:
             );
         }();
 
-        PreparedStatement insertNFTTx = [this]() {
+        PreparedStatement insertNFTTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -507,7 +507,7 @@ public:
             );
         }();
 
-        PreparedStatement insertMPTokenIssuanceTx = [this]() {
+        PreparedStatement insertMPTokenIssuanceTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -520,7 +520,7 @@ public:
             );
         }();
 
-        PreparedStatement insertAccountMPTokenIssuanceTx = [this]() {
+        PreparedStatement insertAccountMPTokenIssuanceTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -535,7 +535,7 @@ public:
             );
         }();
 
-        PreparedStatement insertMPTHolder = [this]() {
+        PreparedStatement insertMPTHolder = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -548,7 +548,7 @@ public:
             );
         }();
 
-        PreparedStatement insertLedgerHeader = [this]() {
+        PreparedStatement insertLedgerHeader = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -561,7 +561,7 @@ public:
             );
         }();
 
-        PreparedStatement insertLedgerHash = [this]() {
+        PreparedStatement insertLedgerHash = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -578,7 +578,7 @@ public:
         // Update (and "delete") queries
         //
 
-        PreparedStatement deleteLedgerRange = [this]() {
+        PreparedStatement deleteLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -591,7 +591,7 @@ public:
             );
         }();
 
-        PreparedStatement insertMigratorStatus = [this]() {
+        PreparedStatement insertMigratorStatus = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -604,7 +604,7 @@ public:
             );
         }();
 
-        PreparedStatement updateClioNodeMessage = [this]() {
+        PreparedStatement updateClioNodeMessage = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -621,7 +621,7 @@ public:
         // Select queries
         //
 
-        PreparedStatement selectSuccessor = [this]() {
+        PreparedStatement selectSuccessor = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -637,7 +637,7 @@ public:
             );
         }();
 
-        PreparedStatement selectDiff = [this]() {
+        PreparedStatement selectDiff = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -650,7 +650,7 @@ public:
             );
         }();
 
-        PreparedStatement selectObject = [this]() {
+        PreparedStatement selectObject = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -666,7 +666,7 @@ public:
             );
         }();
 
-        PreparedStatement selectTransaction = [this]() {
+        PreparedStatement selectTransaction = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -679,7 +679,7 @@ public:
             );
         }();
 
-        PreparedStatement selectAllTransactionHashesInLedger = [this]() {
+        PreparedStatement selectAllTransactionHashesInLedger = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -692,7 +692,7 @@ public:
             );
         }();
 
-        PreparedStatement getToken = [this]() {
+        PreparedStatement getToken = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -706,7 +706,7 @@ public:
             );
         }();
 
-        PreparedStatement selectAccountTx = [this]() {
+        PreparedStatement selectAccountTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -721,7 +721,7 @@ public:
             );
         }();
 
-        PreparedStatement selectAccountTxForward = [this]() {
+        PreparedStatement selectAccountTxForward = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -737,7 +737,7 @@ public:
             );
         }();
 
-        PreparedStatement selectNFT = [this]() {
+        PreparedStatement selectNFT = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -753,7 +753,7 @@ public:
             );
         }();
 
-        PreparedStatement selectNFTURI = [this]() {
+        PreparedStatement selectNFTURI = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -769,7 +769,7 @@ public:
             );
         }();
 
-        PreparedStatement selectNFTTx = [this]() {
+        PreparedStatement selectNFTTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -785,7 +785,7 @@ public:
             );
         }();
 
-        PreparedStatement selectNFTTxForward = [this]() {
+        PreparedStatement selectNFTTxForward = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -801,7 +801,7 @@ public:
             );
         }();
 
-        PreparedStatement selectMPTokenIssuanceTx = [this]() {
+        PreparedStatement selectMPTokenIssuanceTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -817,7 +817,7 @@ public:
             );
         }();
 
-        PreparedStatement selectMPTokenIssuanceTxForward = [this]() {
+        PreparedStatement selectMPTokenIssuanceTxForward = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -833,7 +833,7 @@ public:
             );
         }();
 
-        PreparedStatement selectAccountMPTokenIssuanceTx = [this]() {
+        PreparedStatement selectAccountMPTokenIssuanceTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -852,7 +852,7 @@ public:
             );
         }();
 
-        PreparedStatement selectAccountMPTokenIssuanceTxForward = [this]() {
+        PreparedStatement selectAccountMPTokenIssuanceTxForward = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -871,7 +871,7 @@ public:
             );
         }();
 
-        PreparedStatement selectNFTIDsByIssuerTaxon = [this]() {
+        PreparedStatement selectNFTIDsByIssuerTaxon = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -888,7 +888,7 @@ public:
             );
         }();
 
-        PreparedStatement selectMPTHolders = [this]() {
+        PreparedStatement selectMPTHolders = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -904,7 +904,7 @@ public:
             );
         }();
 
-        PreparedStatement selectLedgerByHash = [this]() {
+        PreparedStatement selectLedgerByHash = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -918,7 +918,7 @@ public:
             );
         }();
 
-        PreparedStatement selectLedgerBySeq = [this]() {
+        PreparedStatement selectLedgerBySeq = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -931,7 +931,7 @@ public:
             );
         }();
 
-        PreparedStatement selectLatestLedger = [this]() {
+        PreparedStatement selectLatestLedger = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -944,7 +944,7 @@ public:
             );
         }();
 
-        PreparedStatement selectLedgerRange = [this]() {
+        PreparedStatement selectLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -957,7 +957,7 @@ public:
             );
         }();
 
-        PreparedStatement selectMigratorStatus = [this]() {
+        PreparedStatement selectMigratorStatus = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -970,7 +970,7 @@ public:
             );
         }();
 
-        PreparedStatement selectClioNodesData = [this]() {
+        PreparedStatement selectClioNodesData = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(

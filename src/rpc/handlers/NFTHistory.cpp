@@ -94,7 +94,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
     auto const limit = input.limit.value_or(kLimitDefault);
     auto const& tokenID = input.nftID;
 
-    auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
+    auto const [txnsAndCursor, timeDiff] = util::timed([&] {
         return sharedPtrBackend_->fetchNFTTransactions(
             tokenID, limit, input.forward, cursor, ctx.yield
         );
