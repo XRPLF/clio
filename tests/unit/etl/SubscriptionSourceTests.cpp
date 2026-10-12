@@ -114,7 +114,7 @@ TEST_F(SubscriptionSourceConnectionTests, ReadError)
 TEST_F(SubscriptionSourceConnectionTests, ReadTimeout)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
-        auto connection = serverConnection(yield);
+        auto const connection = serverConnection(yield);
         std::this_thread::sleep_for(std::chrono::milliseconds{10});
     });
 
@@ -592,7 +592,7 @@ struct SubscriptionSourcePrometheusCounterTests : util::prometheus::WithMockProm
 
 TEST_F(SubscriptionSourcePrometheusCounterTests, LastMessageTime)
 {
-    auto& lastMessageTimeMock = makeMock<util::prometheus::GaugeInt>(
+    auto const& lastMessageTimeMock = makeMock<util::prometheus::GaugeInt>(
         "subscription_source_last_message_time",
         fmt::format("{{source=\"127.0.0.1:{}\"}}", wsServer_.port())
     );

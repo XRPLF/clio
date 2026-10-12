@@ -10,8 +10,8 @@ using namespace util;
 
 TEST(PrettyPath, CurrentFile)
 {
-    auto loc = std::source_location::current();
-    auto pretty = prettyPath(loc.file_name());
+    auto const loc = std::source_location::current();
+    auto const pretty = prettyPath(loc.file_name());
     EXPECT_EQ(pretty, "util/log/PrettyPathTests.cpp");
 }
 
@@ -22,25 +22,25 @@ struct PrettyPathDepth : public common::util::WithMockAssert {
 TEST_F(PrettyPathDepth, Zero)
 {
     EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-        { [[maybe_unused]] auto unused = prettyPath(kTestPath, 0); },
+        { [[maybe_unused]] auto const unused = prettyPath(kTestPath, 0); },
         "maxDepth must be greater than 0"
     );
 }
 
 TEST_F(PrettyPathDepth, Small)
 {
-    auto pretty = prettyPath(kTestPath, 1);
+    auto const pretty = prettyPath(kTestPath, 1);
     EXPECT_EQ(pretty, "file.cpp");
 }
 
 TEST_F(PrettyPathDepth, Big)
 {
-    auto pretty = prettyPath(kTestPath, 4);
+    auto const pretty = prettyPath(kTestPath, 4);
     EXPECT_EQ(pretty, "awesome/path/to/file.cpp");
 }
 
 TEST_F(PrettyPathDepth, MoreThanParts)
 {
-    auto pretty = prettyPath(kTestPath, 10);
+    auto const pretty = prettyPath(kTestPath, 10);
     EXPECT_EQ(pretty, "my/awesome/path/to/file.cpp");
 }

@@ -21,7 +21,7 @@ TEST(TimedTest, HasReturnValue)
 
 TEST(TimedTest, ReturnVoid)
 {
-    auto time = timed([] { std::this_thread::sleep_for(std::chrono::milliseconds(5)); });
+    auto const time = timed([] { std::this_thread::sleep_for(std::chrono::milliseconds(5)); });
 
     ASSERT_NE(time, 0);
 }
@@ -36,14 +36,14 @@ struct FunctorTest {
 
 TEST(TimedTest, Functor)
 {
-    auto time = timed(FunctorTest());
+    auto const time = timed(FunctorTest());
 
     ASSERT_NE(time, 0);
 }
 
 TEST(TimedTest, MovedLambda)
 {
-    auto f = [] {
+    auto const f = [] {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         return 8;
     };
@@ -55,7 +55,7 @@ TEST(TimedTest, MovedLambda)
 
 TEST(TimedTest, ChangeToNs)
 {
-    auto f = [] {
+    auto const f = [] {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         return 8;
     };
@@ -67,7 +67,7 @@ TEST(TimedTest, ChangeToNs)
 TEST(TimedTest, NestedLambda)
 {
     double timeNested = std::numeric_limits<double>::quiet_NaN();
-    auto f = [&] {
+    auto const f = [&] {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         timeNested = timed([] { std::this_thread::sleep_for(std::chrono::milliseconds(5)); });
         return 8;
@@ -80,7 +80,7 @@ TEST(TimedTest, NestedLambda)
 
 TEST(TimedTest, FloatSec)
 {
-    auto f = [] {
+    auto const f = [] {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         return 8;
     };

@@ -84,7 +84,7 @@ Loader::onInitialLoadGotMoreObjects(
 )
 {
     static constexpr std::size_t kLogStride = 1000u;
-    static auto kInitialLoadStartTime = std::chrono::steady_clock::now();
+    static auto const kInitialLoadStartTime = std::chrono::steady_clock::now();
 
     try {
         LOG(log_.trace()) << "On initial load: got more objects for seq " << seq
@@ -100,12 +100,12 @@ Loader::onInitialLoadGotMoreObjects(
         initialLoadWrittenObjects_ += data.size();
         ++initialLoadWrites_;
         if (initialLoadWrites_ % kLogStride == 0u && initialLoadWrites_ != 0u) {
-            auto elapsedSinceStart = std::chrono::duration_cast<std::chrono::milliseconds>(
+            auto const elapsedSinceStart = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - kInitialLoadStartTime
             );
-            auto elapsedSeconds =
+            auto const elapsedSeconds =
                 elapsedSinceStart.count() / static_cast<double>(util::kMillisecondsPerSecond);
-            auto objectsPerSecond = elapsedSeconds > 0.0
+            auto const objectsPerSecond = elapsedSeconds > 0.0
                 ? static_cast<double>(initialLoadWrittenObjects_) / elapsedSeconds
                 : 0.0;
 
@@ -131,7 +131,7 @@ Loader::loadInitialLedger(model::LedgerData const& data)
 
         LOG(log_.debug()) << "Deserialized ledger header. " << ::util::toString(data.header);
 
-        auto seconds = ::util::timed<std::chrono::seconds>([this, &data] {
+        auto const seconds = ::util::timed<std::chrono::seconds>([this, &data] {
             registry_->dispatchInitialData(data);
         });
         LOG(log_.info()) << "Dispatching initial data and submitting all writes took " << seconds

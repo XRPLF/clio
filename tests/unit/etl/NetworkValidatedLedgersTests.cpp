@@ -60,8 +60,8 @@ TEST_F(NetworkValidatedLedgersTests, SubscribersGetNotifiedWhileConnectionIsAliv
     EXPECT_CALL(actionMock2, Call).Times(2);
 
     {
-        auto connection1 = ledgers_->subscribe(actionMock1.AsStdFunction());
-        auto connection2 = ledgers_->subscribe(actionMock2.AsStdFunction());
+        auto const connection1 = ledgers_->subscribe(actionMock1.AsStdFunction());
+        auto const connection2 = ledgers_->subscribe(actionMock2.AsStdFunction());
 
         ledgers_->push(123u);
         ledgers_->push(124u);

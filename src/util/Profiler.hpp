@@ -20,14 +20,14 @@ template <typename U = std::chrono::milliseconds, typename FnType>
 [[nodiscard]] auto
 timed(FnType&& func)
 {
-    auto start = std::chrono::system_clock::now();
+    auto const start = std::chrono::system_clock::now();
 
     if constexpr (std::is_same_v<decltype(func()), void>) {
         func();
         return std::chrono::duration_cast<U>(std::chrono::system_clock::now() - start).count();
     } else {
-        auto ret = func();
-        auto elapsed =
+        auto const ret = func();
+        auto const elapsed =
             std::chrono::duration_cast<U>(std::chrono::system_clock::now() - start).count();
         return std::make_pair(std::move(ret), std::move(elapsed));
     }

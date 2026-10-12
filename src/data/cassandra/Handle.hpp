@@ -148,7 +148,7 @@ public:
     [[nodiscard]] FutureType
     asyncExecute(std::string_view query, Args&&... args) const
     {
-        auto statement = StatementType{query, std::forward<Args>(args)...};
+        auto const statement = StatementType{query, std::forward<Args>(args)...};
         return cass_session_execute(session_, statement);
     }
 

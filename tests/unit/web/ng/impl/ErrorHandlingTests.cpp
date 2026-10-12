@@ -239,7 +239,7 @@ TEST_F(NgErrorHandlingTests, MakeNotReadyError)
 TEST_F(NgErrorHandlingTests, MakeTooBusyError_WebsocketRequest)
 {
     auto const request = makeRequest(false);
-    auto response = ErrorHelper{request}.makeTooBusyError();
+    auto const response = ErrorHelper{request}.makeTooBusyError();
     EXPECT_EQ(
         response.message(),
         std::string{
@@ -266,7 +266,7 @@ TEST_F(NgErrorHandlingTests, sendTooBusyError_HttpConnection)
 TEST_F(NgErrorHandlingTests, makeJsonParsingError_WebsocketConnection)
 {
     auto const request = makeRequest(false);
-    auto response = ErrorHelper{request}.makeJsonParsingError();
+    auto const response = ErrorHelper{request}.makeJsonParsingError();
     EXPECT_EQ(
         response.message(),
         std::string{

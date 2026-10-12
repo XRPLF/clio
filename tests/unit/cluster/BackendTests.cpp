@@ -480,7 +480,7 @@ TEST_F(ClusterBackendTest, WriteNodeMessageWritesSelfDataWithRecentTimestampAndD
 
 TEST_F(ClusterBackendTest, WriteNodeMessageReflectsCacheIsCurrentlyLoading)
 {
-    auto& cacheLoadingStateRef = *cacheLoadingState;
+    auto const& cacheLoadingStateRef = *cacheLoadingState;
     Backend clusterBackend{
         ctx,
         backend_,
@@ -521,7 +521,7 @@ TEST_F(ClusterBackendTest, WriteNodeMessageReflectsCacheIsCurrentlyLoading)
 
 TEST_F(ClusterBackendTest, SubscribeToNewStateReflectsCacheIsCurrentlyLoading)
 {
-    auto& cacheLoadingStateRef = *cacheLoadingState;
+    auto const& cacheLoadingStateRef = *cacheLoadingState;
     Backend clusterBackend{
         ctx,
         backend_,

@@ -37,14 +37,14 @@ namespace {
 Response
 handleHttpRequest(
     ConnectionMetadata& connectionMetadata,
-    SubscriptionContextPtr& subscriptionContext,
+    SubscriptionContextPtr const& subscriptionContext,
     ConnectionHandler::TargetToHandlerMap const& handlers,
     Request const& request,
     boost::asio::yield_context yield
 )
 {
     ASSERT(request.target().has_value(), "Got not a HTTP request");
-    auto it = handlers.find(*request.target());  // NOLINT(bugprone-unchecked-optional-access)
+    auto const it = handlers.find(*request.target());  // NOLINT(bugprone-unchecked-optional-access)
     if (it == handlers.end()) {
         return Response{boost::beast::http::status::bad_request, "Bad target", request};
     }
@@ -54,7 +54,7 @@ handleHttpRequest(
 Response
 handleWsRequest(
     ConnectionMetadata& connectionMetadata,
-    SubscriptionContextPtr& subscriptionContext,
+    SubscriptionContextPtr const& subscriptionContext,
     std::optional<MessageHandler> const& handler,
     Request const& request,
     boost::asio::yield_context yield
@@ -122,7 +122,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
     // Using coroutine group here to wait for stopConnection() to finish before exiting this
     // function and destroying connection.
     util::CoroutineGroup stopTask{yield, 1};
-    auto stopSignalConnection = onStop_.connect([&connectionRef, &stopTask, yield] {
+    auto const stopSignalConnection = onStop_.connect([&connectionRef, &stopTask, yield] {
         stopTask.spawn(yield, [&connectionRef](boost::asio::yield_context innerYield) {
             stopConnection(connectionRef, innerYield);
         });

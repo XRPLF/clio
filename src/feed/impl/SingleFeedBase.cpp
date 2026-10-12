@@ -27,7 +27,7 @@ SingleFeedBase::sub(SubscriberSharedPtr const& subscriber)
     auto const weakPtr = std::weak_ptr(subscriber);
     auto const added = signal_.connectTrackableSlot(
         subscriber, [weakPtr](std::shared_ptr<std::string> const& msg) {
-            if (auto connectionPtr = weakPtr.lock())
+            if (auto const connectionPtr = weakPtr.lock())
                 connectionPtr->send(msg);
         }
     );

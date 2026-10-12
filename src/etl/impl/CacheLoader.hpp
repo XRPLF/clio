@@ -96,7 +96,7 @@ private:
         LOG(log_.info()) << "Loading cache. Num cursors = " << queue_.size();
         tasks_.reserve(numCacheMarkers);
 
-        for ([[maybe_unused]] auto taskId : vs::iota(0u, numCacheMarkers))
+        for ([[maybe_unused]] auto const taskId : vs::iota(0u, numCacheMarkers))
             tasks_.push_back(spawnWorker(seq, cachePageFetchSize));
     }
 
@@ -161,8 +161,8 @@ private:
 
                 if (not res.cursor or res.cursor > end) {
                     if (--remaining_ <= 0) {
-                        auto endTime = std::chrono::steady_clock::now();
-                        auto duration =
+                        auto const endTime = std::chrono::steady_clock::now();
+                        auto const duration =
                             std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime_);
 
                         LOG(log_.info())

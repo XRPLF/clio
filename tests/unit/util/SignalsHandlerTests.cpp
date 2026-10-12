@@ -49,7 +49,7 @@ struct SignalsHandlerAssertTest : common::util::WithMockAssert {};
 
 TEST_F(SignalsHandlerAssertTest, CantCreateTwoSignalsHandlers)
 {
-    auto makeHandler = [] {
+    auto const makeHandler = [] {
         return SignalsHandler{
             ClioConfigDefinition{
                 {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(1.f)}

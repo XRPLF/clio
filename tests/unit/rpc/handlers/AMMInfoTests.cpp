@@ -270,7 +270,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
     auto const ammKeylet = xrpl::keylet::amm(ammId);
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
-    auto ammObj = createAmmObject(
+    auto const ammObj = createAmmObject(
         kAmmAccounT2, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kAmmAccounT2
     );
     accountRoot.setFieldH256(xrpl::sfAMMID, xrpl::uint256{kAmmId});
@@ -355,7 +355,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
         xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
-    auto ammObj = createAmmObject(
+    auto const ammObj = createAmmObject(
         kAmmAccount,
         "XRP",
         xrpl::toBase58(xrpl::xrpAccount()),
@@ -389,7 +389,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kInput, Context{yield});
-        auto expectedResult = boost::json::parse(
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -531,7 +531,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
         xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
-    auto ammObj = createAmmObject(
+    auto const ammObj = createAmmObject(
         kAmmAccount,
         "JPY",
         kAmmAccounT2,
@@ -614,7 +614,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
         xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
-    auto ammObj =
+    auto const ammObj =
         createAmmObject(kAmmAccount, "USD", kAmmAccount, "JPY", kAmmAccounT2, kLpIssueCurrency);
     accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
@@ -700,7 +700,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
         xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
-    auto ammObj =
+    auto const ammObj =
         createAmmObject(kAmmAccount, "USD", kAmmAccount, "JPY", kAmmAccounT2, kLpIssueCurrency);
     accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
@@ -816,7 +816,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
     // asset1 will be frozen because flag set here
     auto accountRoot =
         createAccountRootObject(kAmmAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2);
-    auto ammObj =
+    auto const ammObj =
         createAmmObject(kAmmAccount, "USD", kAmmAccount, "JPY", kAmmAccounT2, kLpIssueCurrency);
     accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
@@ -928,7 +928,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
         xrpl::keylet::trustLine(account1, account2, xrpl::toCurrency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAmmAccount, 0, 2, 200, 2, kIndex1, 2);
-    auto ammObj = createAmmObject(
+    auto const ammObj = createAmmObject(
         kAmmAccount,
         "XRP",
         xrpl::toBase58(xrpl::xrpAccount()),
@@ -965,7 +965,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kInput, Context{yield});
-        auto expectedResult = boost::json::parse(
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -1053,7 +1053,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kInput, Context{yield});
-        auto expectedResult = boost::json::parse(
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -1162,7 +1162,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kInput, Context{yield});
-        auto expectedResult = boost::json::parse(
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -1268,7 +1268,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kInput, Context{yield});
-        auto expectedResult = boost::json::parse(
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{
@@ -1388,7 +1388,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kInput, Context{yield});
-        auto expectedResult = boost::json::parse(
+        auto const expectedResult = boost::json::parse(
             fmt::format(
                 R"JSON({{
                     "amm": {{

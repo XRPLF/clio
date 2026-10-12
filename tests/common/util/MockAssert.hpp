@@ -57,7 +57,7 @@ struct MockGuard {
     } else if (dynamic_cast<common::util::WithMockAssertNoThrow*>(this) != nullptr) {           \
         using MockGuardType = common::util::impl::MockGuard<                                    \
             testing::StrictMock<testing::MockFunction<void(std::string_view)>>>;                \
-        auto mockGuard = std::make_shared<MockGuardType>();                                     \
+        auto const mockGuard = std::make_shared<MockGuardType>();                               \
         ::util::impl::OnAssert::setAction([mockGuard](std::string_view m) {                     \
             mockGuard->mock.Call(m);                                                            \
         });                                                                                     \

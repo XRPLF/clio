@@ -307,7 +307,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     auto const accountRoot = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    auto signersKey = xrpl::keylet::signerList(account).key;
+    auto const signersKey = xrpl::keylet::signerList(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _))
@@ -409,7 +409,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
     auto const accountRoot = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    auto signersKey = xrpl::keylet::signerList(account).key;
+    auto const signersKey = xrpl::keylet::signerList(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(
             Return(createSignerLists({{kAccount1, 1}, {kAccount2, 1}}).getSerializer().peekData())
@@ -585,7 +585,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
     auto const accountRoot = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    auto signersKey = xrpl::keylet::signerList(account).key;
+    auto const signersKey = xrpl::keylet::signerList(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(
             Return(createSignerLists({{kAccount1, 1}, {kAccount2, 1}}).getSerializer().peekData())
@@ -744,7 +744,7 @@ TEST_F(RPCAccountInfoHandlerTest, EmptySignerLists)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _))
         .WillOnce(Return(false));
 
-    auto signersKey = xrpl::keylet::signerList(account).key;
+    auto const signersKey = xrpl::keylet::signerList(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(Return(std::optional<Blob>{}));
 

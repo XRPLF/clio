@@ -28,7 +28,7 @@ PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string
 bool
 PasswordAdminVerificationStrategy::isAdmin(RequestHeader const& request, std::string_view) const
 {
-    auto it = request.find(boost::beast::http::field::authorization);
+    auto const it = request.find(boost::beast::http::field::authorization);
     if (it == request.end()) {
         // No Authorization header
         return false;

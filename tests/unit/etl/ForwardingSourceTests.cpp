@@ -64,7 +64,7 @@ TEST_F(ForwardingSourceOperationsTests, XUserHeader)
         auto connection = serverConnection(yield);
         auto headers = connection.headers();
         ASSERT_FALSE(headers.empty());
-        auto it = std::ranges::find_if(headers, [](auto const& header) {
+        auto const it = std::ranges::find_if(headers, [](auto const& header) {
             return std::holds_alternative<std::string>(header.name) &&
                 std::get<std::string>(header.name) == "X-User";
         });

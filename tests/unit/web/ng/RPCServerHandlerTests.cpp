@@ -103,7 +103,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedWsRequest)
         auto const request = makeWsRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(false));
-        auto response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
+        auto const response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
 
         auto const responseWs = boost::beast::buffers_to_string(response.asWsResponse());
 
@@ -120,7 +120,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedWsJsonRequest)
         auto const request = makeWsRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(false));
-        auto response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
+        auto const response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
 
         auto const responseWs = boost::beast::buffers_to_string(response.asWsResponse());
 

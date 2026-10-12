@@ -273,7 +273,7 @@ TYPED_TEST(AllHandlersAssertTest, NoRangeAvailable)
             auto const context = Context{yield, this->session_};
 
             EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-                { [[maybe_unused]] auto unused = handler.process(input, context); },
+                { [[maybe_unused]] auto const unused = handler.process(input, context); },
                 "Assertion .* failed at .*"
             );
         },

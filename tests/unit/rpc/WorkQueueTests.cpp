@@ -75,7 +75,7 @@ TEST_F(WorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
     std::condition_variable cv;
 
     for (auto i = 0u; i < kTotal; ++i) {
-        auto res = queue.postCoro(
+        auto const res = queue.postCoro(
             [&](auto /* yield */) {
                 std::unique_lock lk{mtx};
                 cv.wait(lk, [&] { return unblocked; });
@@ -269,8 +269,9 @@ TEST_F(WorkQueueMockPrometheusTest, postCoroCounters)
 struct WorkQueueDeathTest : WorkQueueMockPrometheusTest, common::util::WithMockAssert {};
 TEST_F(WorkQueueDeathTest, DISABLED_ExecuteTaskAssertsWhenQueueIsEmpty)
 {
-    [[maybe_unused]] auto& queuedMock = makeMock<CounterInt>("work_queue_queued_total_number", "");
-    [[maybe_unused]] auto& durationMock =
+    [[maybe_unused]] auto const& queuedMock =
+        makeMock<CounterInt>("work_queue_queued_total_number", "");
+    [[maybe_unused]] auto const& durationMock =
         makeMock<CounterInt>("work_queue_cumulative_tasks_duration_us", "");
     auto& curSizeMock = makeMock<GaugeInt>("work_queue_current_size", "");
 

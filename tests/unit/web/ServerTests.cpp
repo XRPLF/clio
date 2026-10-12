@@ -251,7 +251,7 @@ TEST_F(WebServerTest, Http)
 TEST_F(WebServerTest, Ws)
 {
     auto cache = MockLedgerCache();
-    auto e = std::make_shared<EchoExecutor>();
+    auto const e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", port);
@@ -276,7 +276,7 @@ TEST_F(WebServerTest, HttpInternalError)
 TEST_F(WebServerTest, WsInternalError)
 {
     auto cache = MockLedgerCache();
-    auto e = std::make_shared<ExceptionExecutor>();
+    auto const e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", port);
@@ -291,7 +291,7 @@ TEST_F(WebServerTest, WsInternalError)
 TEST_F(WebServerTest, WsInternalErrorNotJson)
 {
     auto cache = MockLedgerCache();
-    auto e = std::make_shared<ExceptionExecutor>();
+    auto const e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", port);
@@ -343,9 +343,9 @@ TEST_F(WebServerTest, Https)
 TEST_F(WebServerTest, Wss)
 {
     auto cache = MockLedgerCache();
-    auto e = std::make_shared<EchoExecutor>();
+    auto const e = std::make_shared<EchoExecutor>();
     cfg = getParseServerConfig(addSslConfig(generateJSONWithDynamicPort(port)));
-    auto server = makeServerSync(cfg, ctx, dosGuard, e, cache);
+    auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     WebServerSslSyncClient wsClient;
     wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost(R"JSON({"Hello":1})JSON");
@@ -358,7 +358,7 @@ TEST_F(WebServerTest, HttpPayloadOverload)
     std::string const s100(100, 'a');
     auto cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
-    auto server = makeServerSync(cfg, ctx, dosGuardOverload, e, cache);
+    auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e, cache);
     auto const [status, res] =
         HttpSyncClient::post("localhost", port, fmt::format(R"JSON({{"payload":"{}"}})JSON", s100));
     EXPECT_EQ(
@@ -373,7 +373,7 @@ TEST_F(WebServerTest, WsPayloadOverload)
     std::string const s100(100, 'a');
     auto cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
-    auto server = makeServerSync(cfg, ctx, dosGuardOverload, e, cache);
+    auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e, cache);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost(fmt::format(R"JSON({{"payload":"{}"}})JSON", s100));
@@ -388,7 +388,7 @@ TEST_F(WebServerTest, WsTooManyConnection)
 {
     auto cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
-    auto server = makeServerSync(cfg, ctx, dosGuardOverload, e, cache);
+    auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e, cache);
     // max connection is 2, exception should happen when the third connection is made
     WebSocketSyncClient wsClient1;
     wsClient1.connect("localhost", port);
@@ -410,7 +410,8 @@ TEST_F(WebServerTest, WsTooManyConnection)
 TEST_F(WebServerTest, HealthCheck)
 {
     auto cache = MockLedgerCache();
-    auto e = std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
+    auto const e =
+        std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::get("localhost", port, "", "/health");
 
@@ -423,7 +424,8 @@ TEST_F(WebServerTest, CacheStateCheckWithLoadedCache)
     auto cache = MockLedgerCache();
     EXPECT_CALL(cache, isFull()).WillRepeatedly(testing::Return(true));
 
-    auto e = std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
+    auto const e =
+        std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::get("localhost", port, "", "/cache_state");
 
@@ -436,7 +438,8 @@ TEST_F(WebServerTest, CacheStateCheckWithoutLoadedCache)
     auto cache = MockLedgerCache();
     EXPECT_CALL(cache, isFull()).WillRepeatedly(testing::Return(false));
 
-    auto e = std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
+    auto const e =
+        std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::get("localhost", port, "", "/cache_state");
 
@@ -447,7 +450,8 @@ TEST_F(WebServerTest, CacheStateCheckWithoutLoadedCache)
 TEST_F(WebServerTest, GetOtherThanHealthCheck)
 {
     auto cache = MockLedgerCache();
-    auto e = std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
+    auto const e =
+        std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
     auto const server = makeServerSync(cfg, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::get("localhost", port, "", "/");
 
@@ -577,11 +581,11 @@ class WebServerAdminTest : public WebServerTest,
 TEST_P(WebServerAdminTest, WsAdminCheck)
 {
     auto cache = MockLedgerCache();
-    auto e = std::make_shared<AdminCheckExecutor>();
+    auto const e = std::make_shared<AdminCheckExecutor>();
     ClioConfigDefinition const serverConfig{
         getParseAdminServerConfig(boost::json::parse(GetParam().config))
     };
-    auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e, cache);
+    auto const server = makeServerSync(serverConfig, ctx, dosGuardOverload, e, cache);
     WebSocketSyncClient wsClient;
     uint32_t const webServerPort = serverConfig.get<uint32_t>("server.port");
     wsClient.connect("localhost", std::to_string(webServerPort), GetParam().headers);
@@ -598,7 +602,7 @@ TEST_P(WebServerAdminTest, HttpAdminCheck)
     ClioConfigDefinition const serverConfig{
         getParseAdminServerConfig(boost::json::parse(GetParam().config))
     };
-    auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e, cache);
+    auto const server = makeServerSync(serverConfig, ctx, dosGuardOverload, e, cache);
     std::string const request = "Why hello";
     uint32_t const webServerPort = serverConfig.get<uint32_t>("server.port");
     auto const [status, res] = HttpSyncClient::post(
@@ -751,7 +755,7 @@ TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
     ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
         boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort))
     )};
-    auto server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
+    auto const server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
     auto const [status, res] =
         HttpSyncClient::get("localhost", std::to_string(webServerPort), "", "/metrics");
 
@@ -781,7 +785,7 @@ TEST_F(WebServerPrometheusDisabledTest, rejectedIfPrometheusIsDisabled)
     ClioConfigDefinition const serverConfig{
         getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithDisabledPrometheus))
     };
-    auto server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
+    auto const server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::get(
         "localhost",
         std::to_string(webServerPort),
@@ -806,7 +810,7 @@ TEST_F(WebServerPrometheusTest, validResponse)
     ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
         boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort))
     )};
-    auto server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
+    auto const server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::get(
         "localhost",
         std::to_string(webServerPort),

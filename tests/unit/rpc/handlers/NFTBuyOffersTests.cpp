@@ -264,7 +264,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerIndex)
 TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 31);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 31);
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
@@ -316,7 +316,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
 // error case when nft is not found
 TEST_F(RPCNFTBuyOffersHandlerTest, NoNFT)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
@@ -427,7 +427,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, DefaultParameters)
         ]
     })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
@@ -457,7 +457,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, DefaultParameters)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
+        auto const handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -468,7 +468,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, DefaultParameters)
 // normal case when provided with nft_id and limit
 TEST_F(RPCNFTBuyOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
@@ -501,7 +501,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
+        auto const handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -517,7 +517,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
 // normal case when provided with nft_id, limit and marker
 TEST_F(RPCNFTBuyOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
@@ -563,7 +563,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
+        auto const handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -581,7 +581,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
 // nothing left after reading remaining 50 entries
 TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimit)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(3);
 
@@ -617,7 +617,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(3);
 
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
+        auto const handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
         auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -670,7 +670,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
 
 TEST_F(RPCNFTBuyOffersHandlerTest, LimitLessThanMin)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
@@ -704,7 +704,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitLessThanMin)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
+        auto const handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -715,7 +715,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitLessThanMin)
 
 TEST_F(RPCNFTBuyOffersHandlerTest, LimitMoreThanMax)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
@@ -749,7 +749,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitMoreThanMax)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
+        auto const handler = AnyHandler{NFTBuyOffersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);

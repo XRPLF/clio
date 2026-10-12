@@ -81,7 +81,7 @@ TEST_P(RequestBuilderTest, SimpleRequest)
                 for (auto const& header : GetParam().headers) {
                     std::visit(
                         [&](auto const& name) {
-                            auto it = request.find(name);
+                            auto const it = request.find(name);
                             ASSERT_NE(it, request.end());
                             EXPECT_EQ(it->value(), header.value);
                         },
@@ -125,7 +125,7 @@ TEST_F(RequestBuilderTest, Timeout)
         }
     );
     runSpawn([this](asio::yield_context yield) {
-        auto response = builder.getPlain(yield);
+        auto const response = builder.getPlain(yield);
         EXPECT_FALSE(response);
     });
 }

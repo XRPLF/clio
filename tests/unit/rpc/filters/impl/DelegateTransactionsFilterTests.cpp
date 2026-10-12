@@ -64,7 +64,7 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_MatchesWhenUserIsSigner)
     };
     DelegateTransactionFilter const filter(filterParams, kAccountDelegator);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
@@ -79,7 +79,7 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_FailsWhenUserIsNotSigner)
     };
     DelegateTransactionFilter const filter(filterParams, kAccountDestination);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     EXPECT_FALSE(result.has_value());
@@ -92,7 +92,7 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Match)
     };
     DelegateTransactionFilter const filter(filterParams, kAccountDelegator);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
@@ -108,7 +108,7 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Mismatch)
     };
     DelegateTransactionFilter const filter(filterParams, kAccountDelegator);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     EXPECT_FALSE(result.has_value());
@@ -121,7 +121,7 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_MatchesWhenUserIsOwner)
     };
     DelegateTransactionFilter const filter(filterParams, kAccountOwner);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
@@ -136,7 +136,7 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_FailsWhenUserIsNotOwner)
     };
     DelegateTransactionFilter const filter(filterParams, kAccountDestination);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     EXPECT_FALSE(result.has_value());
@@ -149,7 +149,7 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Match)
     };
     DelegateTransactionFilter const filter(filterParams, kAccountOwner);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
@@ -164,7 +164,7 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Mismatch)
     };
     DelegateTransactionFilter const filter(filterParams, kAccountOwner);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     EXPECT_FALSE(result.has_value());

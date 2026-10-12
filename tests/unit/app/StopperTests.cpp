@@ -93,7 +93,7 @@ protected:
 
 TEST_F(StopperMakeCallbackTest, makeCallbackTest)
 {
-    auto contextWorkGuard = boost::asio::make_work_guard(ioContextToStop_);
+    auto const contextWorkGuard = boost::asio::make_work_guard(ioContextToStop_);
     std::thread t{[this] { ioContextToStop_.run(); }};
 
     auto callback = Stopper::makeOnStopCallback(

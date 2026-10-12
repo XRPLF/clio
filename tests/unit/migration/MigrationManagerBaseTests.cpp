@@ -35,7 +35,7 @@ struct MigrationManagerBaseTest : public util::prometheus::WithMockPrometheus,
 
     MigrationManagerBaseTest()
     {
-        auto mockBackendPtr = backend_.operator std::shared_ptr<MockMigrationBackend>();
+        auto const mockBackendPtr = backend_.operator std::shared_ptr<MockMigrationBackend>();
         migrationManager = std::make_shared<TestCassandraMigrationManager>(
             mockBackendPtr, cfg.getObject("migration")
         );

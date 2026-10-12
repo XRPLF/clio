@@ -45,7 +45,7 @@ TEST_F(ObservableValueAtomicTest, BasicObservation)
     ObservableValue<std::atomic<int>> obs{10};
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver;
 
-    auto connection = obs.observe(mockObserver.AsStdFunction());
+    auto const connection = obs.observe(mockObserver.AsStdFunction());
 
     EXPECT_CALL(mockObserver, Call(20));
     obs = 20;
@@ -57,7 +57,7 @@ TEST_F(ObservableValueAtomicTest, SetMethod)
     ObservableValue<std::atomic<int>> obs{5};
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver;
 
-    auto connection = obs.observe(mockObserver.AsStdFunction());
+    auto const connection = obs.observe(mockObserver.AsStdFunction());
 
     EXPECT_CALL(mockObserver, Call(15));
     obs.set(15);
@@ -72,7 +72,7 @@ TEST_F(ObservableValueAtomicTest, AtomicBasicUsage)
     ObservableValue<std::atomic<int>> obs{10};
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver;
 
-    auto connection = obs.observe(mockObserver.AsStdFunction());
+    auto const connection = obs.observe(mockObserver.AsStdFunction());
 
     EXPECT_CALL(mockObserver, Call(25));
     obs.set(25);
@@ -85,7 +85,7 @@ TEST_F(ObservableValueAtomicTest, AtomicMultipleChanges)
     ObservableValue<std::atomic<int>> obs{50};
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver;
 
-    auto connection = obs.observe(mockObserver.AsStdFunction());
+    auto const connection = obs.observe(mockObserver.AsStdFunction());
 
     EXPECT_CALL(mockObserver, Call(100));  // First change: 50→100
     EXPECT_CALL(mockObserver, Call(50));   // Second change: 100→50
@@ -100,7 +100,7 @@ TEST_F(ObservableValueAtomicTest, AtomicNoChangeNoNotification)
     ObservableValue<std::atomic<int>> obs{42};
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver;
 
-    auto connection = obs.observe(mockObserver.AsStdFunction());
+    auto const connection = obs.observe(mockObserver.AsStdFunction());
 
     // No EXPECT_CALL since no notification should occur
     obs.set(42);  // Same value, should not notify
@@ -114,7 +114,7 @@ TEST_F(ObservableValueAtomicTest, AtomicSequentialChanges)
     ObservableValue<std::atomic<int>> obs{1};
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver;
 
-    auto connection = obs.observe(mockObserver.AsStdFunction());
+    auto const connection = obs.observe(mockObserver.AsStdFunction());
 
     EXPECT_CALL(mockObserver, Call(2));
     obs.set(2);
@@ -132,8 +132,8 @@ TEST_F(ObservableValueAtomicTest, MultipleObservers)
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver1;
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver2;
 
-    auto conn1 = obs.observe(mockObserver1.AsStdFunction());
-    auto conn2 = obs.observe(mockObserver2.AsStdFunction());
+    auto const conn1 = obs.observe(mockObserver1.AsStdFunction());
+    auto const conn2 = obs.observe(mockObserver2.AsStdFunction());
 
     EXPECT_CALL(mockObserver1, Call(42));
     EXPECT_CALL(mockObserver2, Call(42));
@@ -151,7 +151,7 @@ TEST_F(ObservableValueAtomicTest, ThreadSafetyBasic)
     std::vector<int> values;
     std::mutex valuesMutex;
 
-    auto connection = obs.observe([&](int const& value) {
+    auto const connection = obs.observe([&](int const& value) {
         notificationCount.fetch_add(1);
         std::scoped_lock const lock(valuesMutex);
         values.push_back(value);
@@ -192,7 +192,7 @@ TEST_F(ObservableValueAtomicTest, ThreadSafetyWithDirectAccess)
     ObservableValue<std::atomic<int>> obs{0};
     std::atomic<int> notificationCount{0};
 
-    auto connection = obs.observe([&](int const&) { notificationCount.fetch_add(1); });
+    auto const connection = obs.observe([&](int const&) { notificationCount.fetch_add(1); });
 
     static constexpr auto kNumThreads = 4;
     static constexpr auto kOperationsPerThread = 50;
@@ -222,7 +222,7 @@ TEST_F(ObservableValueAtomicTest, AtomicBoolSpecialization)
     ObservableValue<std::atomic<bool>> obs{false};
     testing::StrictMock<testing::MockFunction<void(bool const&)>> mockObserver;
 
-    auto connection = obs.observe(mockObserver.AsStdFunction());
+    auto const connection = obs.observe(mockObserver.AsStdFunction());
 
     EXPECT_CALL(mockObserver, Call(true));
     obs = true;
@@ -240,7 +240,7 @@ TEST_F(ObservableValueAtomicTest, CompareAndSwapBehavior)
     ObservableValue<std::atomic<int>> obs{10};
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver;
 
-    auto connection = obs.observe(mockObserver.AsStdFunction());
+    auto const connection = obs.observe(mockObserver.AsStdFunction());
 
     // Test that compare-and-swap works correctly in set()
     obs.set(10);  // Same value, should not notify
@@ -256,7 +256,7 @@ TEST_F(ObservableValueAtomicTest, RaceConditionNotificationIntegrity)
     std::vector<int> values;
     std::mutex valuesMutex;
 
-    auto connection = obs.observe([&](int const& value) {
+    auto const connection = obs.observe([&](int const& value) {
         notificationCount.fetch_add(1);
         std::scoped_lock const lock(valuesMutex);
         values.push_back(value);
@@ -300,7 +300,7 @@ TEST_F(ObservableValueAtomicTest, DeterministicNotificationTest)
     std::vector<int> values;
     std::mutex valuesMutex;
 
-    auto connection = obs.observe([&](int const& value) {
+    auto const connection = obs.observe([&](int const& value) {
         notificationCount.fetch_add(1);
         std::scoped_lock const lock(valuesMutex);
         values.push_back(value);
@@ -339,7 +339,7 @@ TEST_F(ObservableValueAtomicTest, NoNotificationForSameValue)
     ObservableValue<std::atomic<int>> obs{42};
     std::atomic<int> notificationCount{0};
 
-    auto connection = obs.observe([&](int const&) { notificationCount.fetch_add(1); });
+    auto const connection = obs.observe([&](int const&) { notificationCount.fetch_add(1); });
 
     static constexpr auto kNumThreads = 10;
 
@@ -364,7 +364,7 @@ TEST_F(ObservableValueAtomicTest, AtomicRaceConditionCorrectness)
     std::vector<int> values;
     std::mutex valuesMutex;
 
-    auto connection = obs.observe([&](int const& value) {
+    auto const connection = obs.observe([&](int const& value) {
         notificationCount.fetch_add(1);
         std::scoped_lock const lock(valuesMutex);
         values.push_back(value);
@@ -406,7 +406,7 @@ TEST_F(ObservableValueAtomicTest, ForceNotify)
 
     obs.forceNotify();
 
-    auto connection = obs.observe(mockObserver.AsStdFunction());
+    auto const connection = obs.observe(mockObserver.AsStdFunction());
 
     EXPECT_CALL(mockObserver, Call(42));
     obs.forceNotify();

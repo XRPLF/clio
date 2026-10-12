@@ -108,7 +108,7 @@ class FullTableScanner {
 
         tasks_.reserve(workerNum);
 
-        for ([[maybe_unused]] auto taskId : vs::iota(0u, workerNum))
+        for ([[maybe_unused]] auto const taskId : vs::iota(0u, workerNum))
             tasks_.push_back(spawnWorker());
     }
 

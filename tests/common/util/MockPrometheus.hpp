@@ -164,7 +164,7 @@ struct MockPrometheusImpl : PrometheusInterface {
     {
         auto labelsString = labels.serialize();
         auto const key = name + labelsString;
-        auto it = metrics.find(key);
+        auto const it = metrics.find(key);
         if (it == metrics.end()) {
             return makeMetric<MetricType>(std::move(name), std::move(labelsString));
         }
@@ -181,22 +181,32 @@ struct MockPrometheusImpl : PrometheusInterface {
         std::unique_ptr<MetricBase> metric;
         auto const key = name + labelsString;
         if constexpr (std::is_same_v<MetricType, GaugeInt> or std::is_same_v<MetricType, Bool>) {
+            // Metric constructors require a non-const mock reference
+            // NOLINTNEXTLINE(misc-const-correctness)
             auto& impl = counterIntImpls[key];
             metric = std::make_unique<GaugeInt>(name, labelsString, impl);
         } else if constexpr (std::is_same_v<MetricType, CounterInt>) {
+            // Metric constructors require a non-const mock reference
+            // NOLINTNEXTLINE(misc-const-correctness)
             auto& impl = counterUintImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
         } else if constexpr (
             std::is_same_v<MetricType, GaugeDouble> || std::is_same_v<MetricType, CounterDouble>
         ) {
+            // Metric constructors require a non-const mock reference
+            // NOLINTNEXTLINE(misc-const-correctness)
             auto& impl = counterDoubleImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
         } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
+            // Metric constructors require a non-const mock reference
+            // NOLINTNEXTLINE(misc-const-correctness)
             auto& impl = histogramIntImpls[key];
             metric = std::make_unique<MetricType>(
                 name, labelsString, std::vector<std::int64_t>{1}, impl
             );
         } else if constexpr (std::is_same_v<MetricType, HistogramDouble>) {
+            // Metric constructors require a non-const mock reference
+            // NOLINTNEXTLINE(misc-const-correctness)
             auto& impl = histogramDoubleImpls[key];
             metric =
                 std::make_unique<MetricType>(name, labelsString, std::vector<double>{1.}, impl);

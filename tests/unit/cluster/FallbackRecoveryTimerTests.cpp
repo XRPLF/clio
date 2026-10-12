@@ -105,7 +105,8 @@ TEST_F(FallbackRecoveryTimerTest, SharedPtrUsageWorks)
     std::binary_semaphore sem{0};
     std::atomic<bool> callbackFired{false};
 
-    auto sharedTimer = std::make_shared<FallbackRecoveryTimer>(ctx_, std::chrono::milliseconds{0});
+    auto const sharedTimer =
+        std::make_shared<FallbackRecoveryTimer>(ctx_, std::chrono::milliseconds{0});
 
     EXPECT_FALSE(sharedTimer->isRunning());
 

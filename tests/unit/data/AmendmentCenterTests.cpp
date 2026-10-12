@@ -188,9 +188,11 @@ struct AmendmentCenterAssertTest : common::util::WithMockAssert, AmendmentCenter
 TEST_F(AmendmentCenterAssertTest, GetInvalidAmendmentAsserts)
 {
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto _ = amendmentCenter.getAmendment("invalidAmendmentKey");
+        [[maybe_unused]] auto const _ = amendmentCenter.getAmendment("invalidAmendmentKey");
     });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = amendmentCenter["invalidAmendmentKey"]; });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const _ = amendmentCenter["invalidAmendmentKey"];
+    });
 }
 
 struct AmendmentKeyTest : testing::Test {};

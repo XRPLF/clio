@@ -260,7 +260,7 @@ protected:
 
 TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForInitialTransaction)
 {
-    auto transactions = std::vector{
+    auto const transactions = std::vector{
         util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
         util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
         util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
@@ -790,7 +790,7 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
     auto transactions = std::vector{
         util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
-    auto objects = std::vector{
+    auto const objects = std::vector{
         util::createObject(),
     };
 
@@ -856,7 +856,7 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
     auto transactions = std::vector{
         util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
-    auto objects = std::vector{
+    auto const objects = std::vector{
         util::createObject(),
     };
 

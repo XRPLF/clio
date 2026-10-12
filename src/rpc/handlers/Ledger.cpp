@@ -148,7 +148,7 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
         output.header["diff"] = boost::json::value(boost::json::array_kind);
 
         boost::json::array& jsonDiff = output.header.at("diff").as_array();
-        auto diff = sharedPtrBackend_->fetchLedgerDiff(lgrInfo.seq, ctx.yield);
+        auto const diff = sharedPtrBackend_->fetchLedgerDiff(lgrInfo.seq, ctx.yield);
 
         for (auto const& obj : diff) {
             boost::json::object entry;

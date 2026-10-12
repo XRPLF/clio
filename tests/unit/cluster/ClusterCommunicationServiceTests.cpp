@@ -156,8 +156,10 @@ TEST_F(ClusterCommunicationServiceTest, MetricsGetsNewStateFromBackend)
         return state;
     }));
 
-    auto& nodesInClusterMetric = PrometheusService::gaugeInt("cluster_nodes_total_number", {});
-    auto isHealthyMetric = PrometheusService::boolMetric("cluster_communication_is_healthy", {});
+    auto const& nodesInClusterMetric =
+        PrometheusService::gaugeInt("cluster_nodes_total_number", {});
+    auto const isHealthyMetric =
+        PrometheusService::boolMetric("cluster_communication_is_healthy", {});
 
     ClusterCommunicationService service{
         backend_,
@@ -297,7 +299,7 @@ TEST_P(ClusterCommunicationServiceMakeTest, LoadingAllowedMatchesConfig)
           )}}
     };
 
-    auto result = ClusterCommunicationService::make(config, backend_, systemState);
+    auto const result = ClusterCommunicationService::make(config, backend_, systemState);
 
     ASSERT_NE(result.cacheLoadingState, nullptr);
     EXPECT_EQ(result.cacheLoadingState->isLoadingAllowed(), not param.limitLoadInCluster);

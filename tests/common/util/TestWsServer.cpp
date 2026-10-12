@@ -113,7 +113,7 @@ TestWsConnection::resetControlFrameCallback()
 
 TestWsServer::TestWsServer(asio::io_context& context, std::string const& host) : acceptor_(context)
 {
-    auto endpoint = asio::ip::tcp::endpoint(boost::asio::ip::make_address(host), 0);
+    auto const endpoint = asio::ip::tcp::endpoint(boost::asio::ip::make_address(host), 0);
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);

@@ -308,7 +308,7 @@ public:
             numReadRequestsOutstanding_ += numStatements;
 
             auto init = [this, &statements, &future]<typename Self>(Self& self) {
-                auto sself = std::make_shared<Self>(std::move(self));
+                auto const sself = std::make_shared<Self>(std::move(self));
 
                 future.emplace(handle_.get().asyncExecute(statements, [sself](auto&& res) mutable {
                     boost::asio::post(
@@ -363,7 +363,7 @@ public:
         while (true) {
             ++numReadRequestsOutstanding_;
             auto init = [this, &statement, &future]<typename Self>(Self& self) {
-                auto sself = std::make_shared<Self>(std::move(self));
+                auto const sself = std::make_shared<Self>(std::move(self));
 
                 future.emplace(handle_.get().asyncExecute(statement, [sself](auto&& res) mutable {
                     boost::asio::post(
@@ -423,7 +423,7 @@ public:
         auto init = [this, &statements, &futures, &errorsCount, &numOutstanding]<typename Self>(
                         Self& self
                     ) {
-            auto sself = std::make_shared<Self>(std::move(self));
+            auto const sself = std::make_shared<Self>(std::move(self));
             auto executionHandler =
                 [&errorsCount, &numOutstanding, sself](auto const& res) mutable {
                     if (not res)
@@ -473,6 +473,8 @@ public:
             std::make_move_iterator(std::end(futures)),
             std::back_inserter(results),
             [](auto&& future) {
+                // Must be non-const so the result can be moved out below
+                // NOLINTNEXTLINE(misc-const-correctness)
                 auto entry = future.get();
                 auto&& res = entry.value();
                 return std::move(res);

@@ -84,7 +84,7 @@ TEST_F(LogServiceInitTests, DefaultLogLevel)
     for (std::string_view const channel : Logger::kChannels) {
         Logger const log{channel};
         log.trace() << logString;
-        auto loggerStr = getLoggerString();
+        auto const loggerStr = getLoggerString();
         ASSERT_TRUE(loggerStr.empty()) << " channel: " << channel << " logger_str: " << loggerStr;
 
         log.debug() << logString;

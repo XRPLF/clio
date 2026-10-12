@@ -24,7 +24,7 @@ ProposedTransactionFeed::ProposedTransactionSlot::operator()(
     AllVersionsMsgsPtrType const& allVersionMsgs
 ) const
 {
-    if (auto connectionPtr = subscriptionContextWeakPtr_.lock()) {
+    if (auto const connectionPtr = subscriptionContextWeakPtr_.lock()) {
         if (feed_.get().notified_.contains(connectionPtr.get()))
             return;
 
@@ -113,7 +113,7 @@ ProposedTransactionFeed::pub(boost::json::object const& receivedTxJson)
     auto const accounts = rpc::getAccountsFromTransaction(transaction);
     auto affectedAccounts = std::unordered_set<xrpl::AccountID>(accounts.cbegin(), accounts.cend());
 
-    [[maybe_unused]] auto task =
+    [[maybe_unused]] auto const task =
         strand_.execute([this, allVersionMsgs, affectedAccounts = std::move(affectedAccounts)] {
             notified_.clear();
             signal_.emit(allVersionMsgs);

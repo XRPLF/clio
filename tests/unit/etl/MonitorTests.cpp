@@ -49,7 +49,7 @@ TEST_F(MonitorTests, ConsumesAndNotifiesForAllOutstandingSequencesAtOnce)
             unblock.release();
     });
 
-    auto subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
+    auto const subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
     monitor_.run(std::chrono::milliseconds{10});
     unblock.acquire();
 }
@@ -72,7 +72,7 @@ TEST_F(MonitorTests, NotifiesForEachSequence)
             unblock.release();
     });
 
-    auto subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
+    auto const subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
     monitor_.run(std::chrono::milliseconds{1});
     unblock.acquire();
 }
@@ -90,7 +90,7 @@ TEST_F(MonitorTests, NotifiesWhenForcedByNewSequenceAvailableFromNetwork)
     EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillOnce(testing::Return(range));
     EXPECT_CALL(actionMock_, Call).WillOnce([&] { unblock.release(); });
 
-    auto subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
+    auto const subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
     monitor_.run(std::chrono::seconds{10});  // expected to be force-invoked sooner than in 10 sec
     pusher(kStartSeq);                       // pretend network validated a new ledger
     unblock.acquire();
@@ -105,7 +105,7 @@ TEST_F(MonitorTests, NotifiesWhenForcedByLedgerLoaded)
     EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillOnce(testing::Return(range));
     EXPECT_CALL(actionMock_, Call).WillOnce([&] { unblock.release(); });
 
-    auto subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
+    auto const subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
     monitor_.run(std::chrono::seconds{10});    // expected to be force-invoked sooner than in 10 sec
     monitor_.notifySequenceLoaded(kStartSeq);  // notify about newly committed ledger
     unblock.acquire();
@@ -135,7 +135,7 @@ TEST_F(MonitorTests, ResumesMonitoringFromNextSequenceAfterWriteConflict)
         unblock.release();
     });
 
-    auto subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
+    auto const subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
     monitor_.run(std::chrono::nanoseconds{100});
     monitor_.notifyWriteConflict(kConflictSeq);
     unblock.acquire();
@@ -150,7 +150,7 @@ TEST_F(MonitorTests, DbStalledChannelTriggeredWhenTimeoutExceeded)
         .WillRepeatedly(testing::Return(std::nullopt));
     EXPECT_CALL(dbStalledMock_, Call()).WillOnce([&] { unblock.release(); });
 
-    auto subscription = monitor_.subscribeToDbStalled(dbStalledMock_.AsStdFunction());
+    auto const subscription = monitor_.subscribeToDbStalled(dbStalledMock_.AsStdFunction());
     monitor_.run(std::chrono::nanoseconds{100});
     unblock.acquire();
 }

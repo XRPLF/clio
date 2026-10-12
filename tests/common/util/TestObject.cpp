@@ -149,7 +149,8 @@ createLegacyFeeSettingBlob(
     uint32_t flag
 )
 {
-    auto lo = createLegacyFeeSettingLedgerObject(base, reserveInc, reserveBase, refFeeUnit, flag);
+    auto const lo =
+        createLegacyFeeSettingLedgerObject(base, reserveInc, reserveBase, refFeeUnit, flag);
     return lo.getSerializer().peekData();
 }
 
@@ -161,7 +162,7 @@ createFeeSettingBlob(
     uint32_t flag
 )
 {
-    auto lo = createFeeSettingLedgerObject(base, reserveInc, reserveBase, flag);
+    auto const lo = createFeeSettingLedgerObject(base, reserveInc, reserveBase, flag);
     return lo.getSerializer().peekData();
 }
 
@@ -291,7 +292,7 @@ createCreateOfferTransactionObject(
     obj.setFieldU16(xrpl::sfTransactionType, xrpl::ttOFFER_CREATE);
     auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
     obj.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = xrpl::STAmount(fee, false);
+    auto const amount = xrpl::STAmount(fee, false);
     obj.setFieldAmount(xrpl::sfFee, amount);
     obj.setFieldU32(xrpl::sfSequence, seq);
     // add amount
@@ -713,7 +714,7 @@ createMintNftTxWithMetadata(
     tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_MINT);
     auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
     tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = xrpl::STAmount(fee, false);
+    auto const amount = xrpl::STAmount(fee, false);
     tx.setFieldAmount(xrpl::sfFee, amount);
     // required field for ttNFTOKEN_MINT
     tx.setFieldU32(xrpl::sfNFTokenTaxon, nfTokenTaxon);
@@ -776,7 +777,7 @@ createMintNftTxWithMetadataOfCreatedNode(
     tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_MINT);
     auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
     tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = xrpl::STAmount(fee, false);
+    auto const amount = xrpl::STAmount(fee, false);
     tx.setFieldAmount(xrpl::sfFee, amount);
     // required field for ttNFTOKEN_MINT
     tx.setFieldU32(xrpl::sfNFTokenTaxon, nfTokenTaxon);
@@ -833,7 +834,7 @@ createNftModifyTxWithMetadata(std::string_view accountId, std::string_view nftID
     tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_MODIFY);
     auto account = xrpl::parseBase58<xrpl::AccountID>(std::string(accountId));
     tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = xrpl::STAmount(10, false);
+    auto const amount = xrpl::STAmount(10, false);
     tx.setFieldAmount(xrpl::sfFee, amount);
     tx.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
     tx.setFieldU32(xrpl::sfSequence, 100);
@@ -889,9 +890,9 @@ createNftBurnTxWithMetadataOfDeletedNode(std::string_view accountId, std::string
     // tx
     xrpl::STObject tx(xrpl::sfTransaction);
     tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_BURN);
-    auto account = getAccountIdWithString(accountId);
+    auto const account = getAccountIdWithString(accountId);
     tx.setAccountID(xrpl::sfAccount, account);
-    auto amount = xrpl::STAmount(10, false);
+    auto const amount = xrpl::STAmount(10, false);
     tx.setFieldAmount(xrpl::sfFee, amount);
     tx.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
     tx.setFieldU32(xrpl::sfSequence, 100);
@@ -934,9 +935,9 @@ createNftBurnTxWithMetadataOfModifiedNode(std::string_view accountId, std::strin
     // tx
     xrpl::STObject tx(xrpl::sfTransaction);
     tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_BURN);
-    auto account = getAccountIdWithString(accountId);
+    auto const account = getAccountIdWithString(accountId);
     tx.setAccountID(xrpl::sfAccount, account);
-    auto amount = xrpl::STAmount(10, false);
+    auto const amount = xrpl::STAmount(10, false);
     tx.setFieldAmount(xrpl::sfFee, amount);
     tx.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
     tx.setFieldU32(xrpl::sfSequence, 100);
@@ -983,7 +984,7 @@ createAcceptNftBuyerOfferTxWithMetadata(
     tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_ACCEPT_OFFER);
     auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
     tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = xrpl::STAmount(fee, false);
+    auto const amount = xrpl::STAmount(fee, false);
     tx.setFieldAmount(xrpl::sfFee, amount);
     tx.setFieldU32(xrpl::sfSequence, seq);
     tx.setFieldH256(xrpl::sfNFTokenBuyOffer, xrpl::uint256{offerId});
@@ -1031,7 +1032,7 @@ createAcceptNftSellerOfferTxWithMetadata(
     tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_ACCEPT_OFFER);
     auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
     tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = xrpl::STAmount(fee, false);
+    auto const amount = xrpl::STAmount(fee, false);
     tx.setFieldAmount(xrpl::sfFee, amount);
     tx.setFieldU32(xrpl::sfSequence, seq);
     tx.setFieldH256(xrpl::sfNFTokenSellOffer, xrpl::uint256{offerId});
@@ -1122,7 +1123,7 @@ createCancelNftOffersTxWithMetadata(
     tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_CANCEL_OFFER);
     auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
     tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = xrpl::STAmount(fee, false);
+    auto const amount = xrpl::STAmount(fee, false);
     tx.setFieldAmount(xrpl::sfFee, amount);
     tx.setFieldU32(xrpl::sfSequence, seq);
     xrpl::STVector256 offers;
@@ -1174,9 +1175,9 @@ createCreateNftOfferTxWithMetadata(
     tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttNFTOKEN_CREATE_OFFER);
     auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
     tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = xrpl::STAmount(fee, false);
+    auto const amount = xrpl::STAmount(fee, false);
     tx.setFieldAmount(xrpl::sfFee, amount);
-    auto price = xrpl::STAmount(offerPrice, false);
+    auto const price = xrpl::STAmount(offerPrice, false);
     tx.setFieldAmount(xrpl::sfAmount, price);
     tx.setFieldU32(xrpl::sfSequence, seq);
     tx.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftId});
@@ -1220,7 +1221,7 @@ createOracleSetTxWithMetadata(
     tx.setFieldU16(xrpl::sfTransactionType, xrpl::ttORACLE_SET);
     auto account = util::parseBase58Wrapper<xrpl::AccountID>(std::string(accountId));
     tx.setAccountID(xrpl::sfAccount, *account);  // NOLINT(bugprone-unchecked-optional-access)
-    auto amount = xrpl::STAmount(fee, false);
+    auto const amount = xrpl::STAmount(fee, false);
     tx.setFieldAmount(xrpl::sfFee, amount);
     tx.setFieldU32(xrpl::sfLastUpdateTime, lastUpdateTime);
     tx.setFieldU32(xrpl::sfOracleDocumentID, docId);

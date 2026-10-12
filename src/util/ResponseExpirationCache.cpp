@@ -78,7 +78,7 @@ ResponseExpirationCache::get(std::string const& cmd, boost::json::object const& 
     if (not isBareRequest(request))
         return std::nullopt;
 
-    auto it = cache_.find(cmd);
+    auto const it = cache_.find(cmd);
     if (it == cache_.end())
         return std::nullopt;
 

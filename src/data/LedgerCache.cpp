@@ -121,7 +121,7 @@ LedgerCache::getSuccessor(xrpl::uint256 const& key, uint32_t seq) const
     ++successorReqCounter_.get();
     if (seq != latestSeq_)
         return {};
-    auto e = map_.upper_bound(key);
+    auto const e = map_.upper_bound(key);
     if (e == map_.end())
         return {};
     ++successorHitCounter_.get();
@@ -154,7 +154,7 @@ LedgerCache::get(xrpl::uint256 const& key, uint32_t seq) const
     if (seq > latestSeq_)
         return {};
     ++objectReqCounter_.get();
-    auto e = map_.find(key);
+    auto const e = map_.find(key);
     if (e == map_.end())
         return {};
     if (seq < e->second.seq)
@@ -175,7 +175,7 @@ LedgerCache::getDeleted(xrpl::uint256 const& key, uint32_t seq) const
 
     ++objectReqCounter_.get();
 
-    auto e = deleted_.find(key);
+    auto const e = deleted_.find(key);
     if (e == deleted_.end())
         return std::nullopt;
 

@@ -303,7 +303,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
 
 TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
@@ -339,7 +339,7 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 
 TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
@@ -393,7 +393,7 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
             "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
         })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
@@ -438,7 +438,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
@@ -493,7 +493,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
@@ -550,7 +550,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
@@ -611,7 +611,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
         kCredentialHash  // CREDENTIALHASH should match credentialIndex
     );
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
     EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
@@ -669,7 +669,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
 
 TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
     EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
@@ -798,7 +798,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
 
 TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30, 34);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30, 34);
 
     EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
@@ -860,7 +860,7 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
 
 TEST_F(RPCDepositAuthorizedTest, NoElementsInCredentialsReturnsFalse)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30, 34);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30, 34);
 
     EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
@@ -911,7 +911,7 @@ TEST_F(RPCDepositAuthorizedTest, NoElementsInCredentialsReturnsFalse)
 
 TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30, 34);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30, 34);
 
     EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));
@@ -979,7 +979,7 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
 
 TEST_F(RPCDepositAuthorizedTest, DifferentSubjectAccountForCredentialReturnsFalse)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
 
     EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillOnce(Return(ledgerHeader));

@@ -291,14 +291,14 @@ struct LedgerCacheFileTestBase : ::testing::Test {
         EXPECT_EQ(expected.deleted.size(), actual.deleted.size());
 
         for (auto const& [key, entry] : expected.map) {
-            auto it = actual.map.find(key);
+            auto const it = actual.map.find(key);
             ASSERT_NE(it, actual.map.end()) << "Key not found in actual map";
             EXPECT_EQ(entry.seq, it->second.seq);
             EXPECT_EQ(entry.blob, it->second.blob);
         }
 
         for (auto const& [key, entry] : expected.deleted) {
-            auto it = actual.deleted.find(key);
+            auto const it = actual.deleted.find(key);
             ASSERT_NE(it, actual.deleted.end()) << "Key not found in actual deleted";
             EXPECT_EQ(entry.seq, it->second.seq);
             EXPECT_EQ(entry.blob, it->second.blob);
@@ -363,12 +363,12 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(LedgerCacheFileTest, WriteAndReadData)
 {
-    auto dataParams = GetParam();
+    auto const dataParams = GetParam();
     LedgerCacheFile cacheFile(tmpFile.path);
 
-    auto testData =
+    auto const testData =
         createTestData(dataParams.mapEntries, dataParams.deletedEntries, dataParams.blobSize);
-    auto dataView = toDataView(testData);
+    auto const dataView = toDataView(testData);
 
     auto writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value()) << "Failed to write: " << writeResult.error();
@@ -401,11 +401,11 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(LedgerCacheFileCorruptionTest, HandleCorruption)
 {
-    auto corruptionParams = GetParam();
+    auto const corruptionParams = GetParam();
     LedgerCacheFile cacheFile(tmpFile.path);
 
-    auto testData = createTestData(3, 2, 100);
-    auto dataView = toDataView(testData);
+    auto const testData = createTestData(3, 2, 100);
+    auto const dataView = toDataView(testData);
 
     auto writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value()) << "Failed to write: " << writeResult.error();
@@ -483,8 +483,8 @@ TEST_F(LedgerCacheFileEdgeCaseTest, NonExistingFile)
 {
     LedgerCacheFile invalidPathFile("/invalid/path/file.cache");
 
-    auto testData = createTestData(1, 1, 10);
-    auto dataView = toDataView(testData);
+    auto const testData = createTestData(1, 1, 10);
+    auto const dataView = toDataView(testData);
 
     auto writeResult = invalidPathFile.write(dataView);
     EXPECT_FALSE(writeResult.has_value());
@@ -501,9 +501,9 @@ TEST_F(LedgerCacheFileEdgeCaseTest, MaxSequenceNumber)
 
     auto testData = createTestData(1, 1, 10);
     testData.latestSeq = std::numeric_limits<uint32_t>::max();
-    auto dataView = toDataView(testData);
+    auto const dataView = toDataView(testData);
 
-    auto writeResult = cacheFile.write(dataView);
+    auto const writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
     auto readResult = cacheFile.read(0);
@@ -516,10 +516,10 @@ TEST_F(LedgerCacheFileEdgeCaseTest, ZeroSizedBlobs)
 {
     LedgerCacheFile cacheFile(tmpFile.path);
 
-    auto testData = createTestData(3, 2, 0);
-    auto dataView = toDataView(testData);
+    auto const testData = createTestData(3, 2, 0);
+    auto const dataView = toDataView(testData);
 
-    auto writeResult = cacheFile.write(dataView);
+    auto const writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
     auto readResult = cacheFile.read(0);
@@ -549,9 +549,9 @@ TEST_F(LedgerCacheFileEdgeCaseTest, SpecialKeyPatterns)
     }
     testData.deleted.emplace(altKey, data::LedgerCache::CacheEntry{.seq = 3, .blob = {7, 8, 9}});
 
-    auto dataView = toDataView(testData);
+    auto const dataView = toDataView(testData);
 
-    auto writeResult = cacheFile.write(dataView);
+    auto const writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
     auto readResult = cacheFile.read(0);
@@ -564,10 +564,10 @@ TEST_F(LedgerCacheFileEdgeCaseTest, LargeBlobs)
 {
     LedgerCacheFile cacheFile(tmpFile.path);
 
-    auto testData = createTestData(1, 1, 1024 * 1024);
-    auto dataView = toDataView(testData);
+    auto const testData = createTestData(1, 1, 1024 * 1024);
+    auto const dataView = toDataView(testData);
 
-    auto writeResult = cacheFile.write(dataView);
+    auto const writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
     auto readResult = cacheFile.read(0);
@@ -598,9 +598,9 @@ TEST_F(LedgerCacheFileEdgeCaseTest, SequenceNumber)
         data::LedgerCache::CacheEntry{.seq = std::numeric_limits<uint32_t>::max() / 2, .blob = {3}}
     );
 
-    auto dataView = toDataView(testData);
+    auto const dataView = toDataView(testData);
 
-    auto writeResult = cacheFile.write(dataView);
+    auto const writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
     auto readResult = cacheFile.read(0);
@@ -613,10 +613,10 @@ TEST_F(LedgerCacheFileEdgeCaseTest, OnlyMapEntries)
 {
     LedgerCacheFile cacheFile(tmpFile.path);
 
-    auto testData = createTestData(5, 0, 100);
-    auto dataView = toDataView(testData);
+    auto const testData = createTestData(5, 0, 100);
+    auto const dataView = toDataView(testData);
 
-    auto writeResult = cacheFile.write(dataView);
+    auto const writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
     auto readResult = cacheFile.read(0);
@@ -629,10 +629,10 @@ TEST_F(LedgerCacheFileEdgeCaseTest, OnlyDeletedEntries)
 {
     LedgerCacheFile cacheFile(tmpFile.path);
 
-    auto testData = createTestData(0, 5, 100);
-    auto dataView = toDataView(testData);
+    auto const testData = createTestData(0, 5, 100);
+    auto const dataView = toDataView(testData);
 
-    auto writeResult = cacheFile.write(dataView);
+    auto const writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
     auto readResult = cacheFile.read(0);
@@ -648,13 +648,13 @@ TEST_F(LedgerCacheFileEdgeCaseTest, WriteCreatesFileWithSuffixNew)
     std::filesystem::create_directory(tmpFile.path);
 
     LedgerCacheFile cacheFile(tmpFile.path);
-    auto testData = createTestData(1, 1, 10);
-    auto dataView = toDataView(testData);
+    auto const testData = createTestData(1, 1, 10);
+    auto const dataView = toDataView(testData);
 
     auto writeResult = cacheFile.write(dataView);
 
     EXPECT_FALSE(writeResult.has_value());
-    auto newFilePath = fmt::format("{}.new", tmpFile.path);
+    auto const newFilePath = fmt::format("{}.new", tmpFile.path);
     EXPECT_THAT(writeResult.error(), ::testing::HasSubstr(newFilePath));
 
     EXPECT_TRUE(std::filesystem::exists(newFilePath));
@@ -714,9 +714,9 @@ TEST_P(LedgerCacheFileMinSequenceValidationTest, ValidateMinSequence)
     LedgerCacheFile cacheFile(tmpFile.path);
     auto testData = createTestData(3, 2, 100);
     testData.latestSeq = latestSeq;
-    auto dataView = toDataView(testData);
+    auto const dataView = toDataView(testData);
 
-    auto writeResult = cacheFile.write(dataView);
+    auto const writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
     auto readResult = cacheFile.read(minLatestSeq);

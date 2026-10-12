@@ -62,7 +62,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
         auto const& deletionBlockers = util::LedgerTypes::getDeletionBlockerLedgerTypes();
         typeFilter->reserve(deletionBlockers.size());
 
-        for (auto type : deletionBlockers) {
+        for (auto const type : deletionBlockers) {
             if (input.type && input.type != type)
                 continue;
 

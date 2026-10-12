@@ -1000,7 +1000,7 @@ TEST_F(LoadBalancerForwardToRippledTests, adminResponseNotCachedForSubsequentUse
 TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheDisabledOnLedgerClosedHookCalled)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-    auto loadBalancer = makeLoadBalancer();
+    auto const loadBalancer = makeLoadBalancer();
     EXPECT_NO_THROW(sourceFactory_.callbacksAt(0).onLedgerClosed());
 }
 

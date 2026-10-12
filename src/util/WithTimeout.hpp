@@ -46,11 +46,12 @@ withTimeout(
     static constexpr auto kMaxRetryInterval = std::chrono::seconds{1};
 
     boost::system::error_code error;
-    auto operationCompleted = std::make_shared<bool>(false);
+    auto const operationCompleted = std::make_shared<bool>(false);
     // Stops the timer handler from using this frame, even if the operation throws
     ScopeGuard const completionGuard{[operationCompleted] { *operationCompleted = true; }};
     boost::asio::cancellation_signal cancellationSignal;
-    auto cyield = boost::asio::bind_cancellation_slot(cancellationSignal.slot(), yield[error]);
+    auto const cyield =
+        boost::asio::bind_cancellation_slot(cancellationSignal.slot(), yield[error]);
 
     boost::asio::steady_timer timer{boost::asio::get_associated_executor(cyield), timeout};
     timer.async_wait(

@@ -50,7 +50,7 @@ struct AnyStopTokenAssertTest : common::util::WithMockAssert {};
 TEST_F(AnyStopTokenAssertTest, ConversionToYieldContextAssertsIfUnsupported)
 {
     EXPECT_CLIO_ASSERT_FAIL(
-        [[maybe_unused]] auto unused =
+        [[maybe_unused]] auto const unused =
             static_cast<boost::asio::yield_context>(AnyStopToken{FakeStopToken{}})
     );
 }

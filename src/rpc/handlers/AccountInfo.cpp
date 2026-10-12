@@ -70,7 +70,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     if (!accountKeylet.check(sle))
         return Error{Status{XrpldError::RpcDbDeserialization}};
 
-    auto isEnabled = [this, &ctx, seq = lgrInfo.seq](auto key) {
+    auto const isEnabled = [this, &ctx, seq = lgrInfo.seq](auto key) {
         return amendmentCenter_->isEnabled(ctx.yield, key, seq);
     };
 

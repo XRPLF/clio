@@ -15,7 +15,7 @@ TEST(MoveTrackerTests, SimpleChecks)
     auto moveMe = MoveMe();
     EXPECT_FALSE(moveMe.wasMoved());
 
-    auto other = std::move(moveMe);
+    auto const other = std::move(moveMe);
     EXPECT_TRUE(moveMe.wasMoved());  // NOLINT(bugprone-use-after-move)
     EXPECT_FALSE(other.wasMoved());
 }
@@ -43,7 +43,7 @@ TEST(MoveTrackerTests, SelfMove)
 TEST(MoveTrackerTests, SelfMoveAfterWasMoved)
 {
     auto original = MoveMe();
-    [[maybe_unused]] auto fake = std::move(original);
+    [[maybe_unused]] auto const fake = std::move(original);
 
     // NOLINTNEXTLINE(bugprone-use-after-move)
     [&](MoveMe& from) {

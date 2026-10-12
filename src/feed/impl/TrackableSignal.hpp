@@ -64,7 +64,7 @@ public:
         connections->emplace(
             trackable.get(),
             signal_.connect([slot, weakTrackable = std::weak_ptr(trackable)](Args&&... args) {
-                if (auto lifeExtender = weakTrackable.lock(); lifeExtender)
+                if (auto const lifeExtender = weakTrackable.lock(); lifeExtender)
                     std::invoke(slot, std::forward<Args...>(args)...);
             })
         );
