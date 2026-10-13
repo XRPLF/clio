@@ -89,7 +89,7 @@ jobs:
           title: "[${{ inputs.compiler }} ${{ inputs.sanitizers }}] reported issues"
           body: "Clio tests failed one or more sanitizers checks when built with `${{ inputs.compiler }}` and the `${{ inputs.sanitizers }}` sanitizers."
           labels: "bug"
-          assignees: "godexsoft,kuznetsss,mathbunnyru"
+          assignees: "godexsoft,mathbunnyru"
 
       - name: Fail the job if clio_tests failed
         if: ${{ steps.run_clio_tests.outcome == 'failure' }}

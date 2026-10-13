@@ -170,4 +170,4 @@ jobs:
           title: "Nightly release failed 🌙"
           body: "Please check the nightly release workflow for details."
           labels: "bug"
-          assignees: "godexsoft,kuznetsss,mathbunnyru"
+          assignees: "godexsoft,mathbunnyru"
