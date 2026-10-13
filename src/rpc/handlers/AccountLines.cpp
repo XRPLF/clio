@@ -131,7 +131,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
 
     auto const& lgrInfo = *expectedLgrInfo;
     // Clio's spec rejects a malformed account, so the deferred accounts always hold one
-    auto const& accountID = input.account.value();
+    auto const& accountID = *input.account;
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
         xrpl::keylet::account(accountID).key, lgrInfo.seq, ctx.yield
     );
@@ -139,7 +139,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
     if (not accountLedgerObject)
         return Error{Status{XrpldError::RpcActNotFound}};
 
-    auto const peerAccountID = input.peer.transform([](auto const& peer) { return peer.value(); });
+    auto const peerAccountID = input.peer.transform([](auto const& peer) { return *peer; });
 
     Output response;
     response.lines.reserve(input.limit);
