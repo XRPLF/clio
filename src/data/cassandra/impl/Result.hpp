@@ -175,9 +175,14 @@ public:
     struct Sentinel {};
 
     struct Iterator {
+        using ValueType = std::tuple<Types...>;
+
+        // Required by the std iterator contract.
+        // NOLINTBEGIN(readability-identifier-naming)
         using iterator_category = std::input_iterator_tag;
         using difference_type = std::size_t;  // rows count
-        using value_type = std::tuple<Types...>;
+        using value_type = ValueType;
+        // NOLINTEND(readability-identifier-naming)
 
         /* implicit */ Iterator(ResultIterator iterator) : iterator_{std::move(iterator)}
         {
@@ -187,13 +192,13 @@ public:
         Iterator&
         operator=(Iterator const&) = delete;
 
-        value_type
+        ValueType
         operator*() const
         {
             return iterator_.extractCurrentRow<Types...>();
         }
 
-        value_type
+        ValueType
         operator->()
         {
             return iterator_.extractCurrentRow<Types...>();
