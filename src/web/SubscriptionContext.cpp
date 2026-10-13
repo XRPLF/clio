@@ -27,7 +27,7 @@ SubscriptionContext::~SubscriptionContext()
 void
 SubscriptionContext::send(std::shared_ptr<std::string> message)
 {
-    if (auto connection = connection_.lock(); connection != nullptr)
+    if (auto const connection = connection_.lock(); connection != nullptr)
         connection->send(std::move(message));
 }
 

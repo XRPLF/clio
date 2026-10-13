@@ -38,7 +38,7 @@ CliArgs::parse(int argc, char const* argv[])
     po::positional_options_description positional;
     positional.add("conf", 1);
 
-    auto const printHelp = [&description]() {
+    auto const printHelp = [&description] {
         std::cout << "Clio server " << util::build::getClioFullVersionString() << "\n\n"
                   << description;
     };

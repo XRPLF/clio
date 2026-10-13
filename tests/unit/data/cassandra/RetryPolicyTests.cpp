@@ -39,7 +39,7 @@ TEST_F(BackendCassandraRetryPolicyTest, RetryCorrectlyExecuted)
     EXPECT_CALL(callback, Call()).Times(3);
 
     for (auto i = 0; i < 3; ++i) {
-        retryPolicy.retry([&callback]() { callback.Call(); });
+        retryPolicy.retry([&callback] { callback.Call(); });
         runContext();
     }
 }
@@ -50,7 +50,7 @@ TEST_F(BackendCassandraRetryPolicyTest, MultipleRetryCancelPreviousCalls)
     EXPECT_CALL(callback, Call());
 
     for (auto i = 0; i < 3; ++i)
-        retryPolicy.retry([&callback]() { callback.Call(); });
+        retryPolicy.retry([&callback] { callback.Call(); });
 
     runContext();
 }
@@ -58,5 +58,5 @@ TEST_F(BackendCassandraRetryPolicyTest, MultipleRetryCancelPreviousCalls)
 TEST_F(BackendCassandraRetryPolicyTest, CallbackIsNotCalledIfContextDies)
 {
     StrictMock<MockFunction<void()>> callback;
-    retryPolicy.retry([&callback]() { callback.Call(); });
+    retryPolicy.retry([&callback] { callback.Call(); });
 }

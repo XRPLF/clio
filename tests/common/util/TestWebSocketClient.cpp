@@ -207,7 +207,7 @@ WebSocketAsyncClient::receive(
 )
 {
     boost::beast::flat_buffer buffer{};
-    auto error = util::withTimeout(
+    auto const error = util::withTimeout(
         [this, &buffer](auto&& cyield) { stream_.async_read(buffer, cyield); }, yield, timeout
     );
     if (error)

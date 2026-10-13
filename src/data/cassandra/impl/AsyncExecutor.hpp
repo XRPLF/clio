@@ -74,7 +74,7 @@ public:
             }
         };
 
-        auto ptr = std::make_shared<EnableMakeShared>(
+        auto const ptr = std::make_shared<EnableMakeShared>(
             ioc, std::move(data), std::move(onComplete), std::move(onRetry)
         );
         ptr->execute(handle);
@@ -106,7 +106,7 @@ private:
             } else {
                 if (retryPolicy_.shouldRetry(res.error())) {
                     onRetry_();
-                    retryPolicy_.retry([self, &handle]() { self->execute(handle); });
+                    retryPolicy_.retry([self, &handle] { self->execute(handle); });
                 } else {
                     onComplete_(std::forward<decltype(res)>(res));  // report error
                 }

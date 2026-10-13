@@ -169,7 +169,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     auto const account2 = getAccountIdWithString(kAccount2);
     subscriptionManagerPtr_->unsubAccount(account2, session1);
     subscriptionManagerPtr_->unsubProposedAccount(account2, session1);
-    auto checkResult = [](boost::json::object reportReturn, int result) {
+    auto const checkResult = [](boost::json::object reportReturn, int result) {
         EXPECT_EQ(reportReturn["book_changes"], result);
         EXPECT_EQ(reportReturn["validations"], result);
         EXPECT_EQ(reportReturn["transactions_proposed"], result);
@@ -332,7 +332,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    auto obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
+    auto const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
 
@@ -480,7 +480,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    auto obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
+    auto const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
 
@@ -508,7 +508,7 @@ TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    auto obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
+    auto const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
 
@@ -536,7 +536,7 @@ TEST_F(SubscriptionManagerTest, NoDuplicateResponseSubAccountAndProposedAccount)
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    auto obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
+    auto const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
 

@@ -49,7 +49,7 @@ public:
         boost::beast::error_code errorCode;
         boost::beast::flat_buffer buffer;
 
-        auto operation = [&](auto&& token) { ws_.async_read(buffer, token); };
+        auto const operation = [&](auto&& token) { ws_.async_read(buffer, token); };
         if (timeout) {
             errorCode = util::withTimeout(operation, yield[errorCode], *timeout);
         } else {
@@ -70,7 +70,7 @@ public:
     ) override
     {
         boost::beast::error_code errorCode;
-        auto operation = [&](auto&& token) {
+        auto const operation = [&](auto&& token) {
             ws_.async_write(boost::asio::buffer(message), token);
         };
         if (timeout) {

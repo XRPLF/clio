@@ -926,8 +926,8 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
 {
     session->upgraded = true;
 
-    auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(
+    auto const localRpcEngine = std::make_shared<MockRPCEngine>();
+    auto const localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(
         cfg, backend_, localRpcEngine, etl, dosguard
     );
     static constexpr auto kRequest = R"JSON({
@@ -959,8 +959,8 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
 
 TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
 {
-    auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(
+    auto const localRpcEngine = std::make_shared<MockRPCEngine>();
+    auto const localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(
         cfg, backend_, localRpcEngine, etl, dosguard
     );
     static constexpr auto kRequest = R"JSON({
@@ -1066,7 +1066,7 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, HTTPInvalidAPIVersion)
 {
-    auto request = fmt::format(
+    auto const request = fmt::format(
         R"JSON({{
             "method": "server_info",
             "params": [{{
@@ -1092,7 +1092,7 @@ TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, HTTPInvalidAPIVersion)
 TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, WSInvalidAPIVersion)
 {
     session->upgraded = true;
-    auto request = fmt::format(
+    auto const request = fmt::format(
         R"JSON({{
             "method": "server_info",
             "api_version": {}

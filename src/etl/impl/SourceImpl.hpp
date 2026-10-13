@@ -130,7 +130,7 @@ public:
         res["ws_port"] = wsPort_;
         res["grpc_port"] = grpcPort_;
 
-        auto last = subscriptionSource_->lastMessageTime();
+        auto const last = subscriptionSource_->lastMessageTime();
         if (last.time_since_epoch().count() != 0) {
             res["last_msg_age_seconds"] = std::to_string(
                 std::chrono::duration_cast<std::chrono::seconds>(

@@ -70,7 +70,7 @@ struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockB
 
     ClusterCommunicationServiceTest()
     {
-        ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([]() {
+        ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([] {
             auto state = std::make_unique<NiceMockWriterState>();
             ON_CALL(*state, isReadOnly()).WillByDefault(testing::Return(false));
             ON_CALL(*state, isWriting()).WillByDefault(testing::Return(true));
@@ -78,7 +78,7 @@ struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockB
         }));
         ON_CALL(writerStateRef, isReadOnly()).WillByDefault(testing::Return(false));
         ON_CALL(writerStateRef, isWriting()).WillByDefault(testing::Return(true));
-        ON_CALL(*cacheLoadingState, clone()).WillByDefault(testing::Invoke([]() {
+        ON_CALL(*cacheLoadingState, clone()).WillByDefault(testing::Invoke([] {
             return std::make_unique<NiceMockLedgerCacheLoadingState>();
         }));
     }
@@ -145,19 +145,22 @@ TEST_F(ClusterCommunicationServiceTest, MetricsGetsNewStateFromBackend)
         return fetchResult;
     }));
 
-    ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([&]() mutable {
+    ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([&] mutable {
         auto state = std::make_unique<NiceMockWriterState>();
-        ON_CALL(*state, startWriting()).WillByDefault(testing::Invoke([&]() {
+        ON_CALL(*state, startWriting()).WillByDefault(testing::Invoke([&] {
             writerActionSemaphore.release();
         }));
-        ON_CALL(*state, giveUpWriting()).WillByDefault(testing::Invoke([&]() {
+        ON_CALL(*state, giveUpWriting()).WillByDefault(testing::Invoke([&] {
             writerActionSemaphore.release();
         }));
         return state;
     }));
 
+    // const& triggers a GCC -Wdangling-reference false positive
+    // NOLINTNEXTLINE(misc-const-correctness)
     auto& nodesInClusterMetric = PrometheusService::gaugeInt("cluster_nodes_total_number", {});
-    auto isHealthyMetric = PrometheusService::boolMetric("cluster_communication_is_healthy", {});
+    auto const isHealthyMetric =
+        PrometheusService::boolMetric("cluster_communication_is_healthy", {});
 
     ClusterCommunicationService service{
         backend_,
@@ -197,12 +200,12 @@ TEST_F(ClusterCommunicationServiceTest, WriterDeciderCallsWriterStateMethodsAcco
 
     ON_CALL(*backend_, writeNodeMessage).WillByDefault(testing::Return());
 
-    ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([&]() mutable {
+    ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([&] mutable {
         auto state = std::make_unique<NiceMockWriterState>();
-        ON_CALL(*state, startWriting()).WillByDefault(testing::Invoke([&]() {
+        ON_CALL(*state, startWriting()).WillByDefault(testing::Invoke([&] {
             writerActionSemaphore.release();
         }));
-        ON_CALL(*state, giveUpWriting()).WillByDefault(testing::Invoke([&]() {
+        ON_CALL(*state, giveUpWriting()).WillByDefault(testing::Invoke([&] {
             writerActionSemaphore.release();
         }));
         return state;
@@ -297,7 +300,7 @@ TEST_P(ClusterCommunicationServiceMakeTest, LoadingAllowedMatchesConfig)
           )}}
     };
 
-    auto result = ClusterCommunicationService::make(config, backend_, systemState);
+    auto const result = ClusterCommunicationService::make(config, backend_, systemState);
 
     ASSERT_NE(result.cacheLoadingState, nullptr);
     EXPECT_EQ(result.cacheLoadingState->isLoadingAllowed(), not param.limitLoadInCluster);

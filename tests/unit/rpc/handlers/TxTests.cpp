@@ -991,6 +991,38 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
     });
 }
 
+TEST_F(RPCTxTest, OmitCTIDWhenNetworkIdExceeds16Bits)
+{
+    TransactionAndMetadata tx;
+    tx.metadata =
+        createMetaDataForCreateOffer(kCurrency, kAccount, 100, 200, 300).getSerializer().peekData();
+    tx.transaction =
+        createCreateOfferTransactionObject(kAccount, 2, 100, kCurrency, kAccount2, 200, 300)
+            .getSerializer()
+            .peekData();
+    tx.ledgerSequence = 100;
+
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTxnId}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(tx.ledgerSequence, _))
+        .WillOnce(Return(std::nullopt));
+
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
+    ASSERT_NE(rawETLPtr, nullptr);
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0x10000}));
+
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
+        auto const req = boost::json::parse(
+            fmt::format(R"JSON({{"command": "tx", "transaction": "{}"}})JSON", kTxnId)
+        );
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        auto const& result = output.result->as_object();
+        EXPECT_FALSE(result.contains("ctid"));
+        EXPECT_FALSE(result.at("tx_json").as_object().contains("ctid"));
+    });
+}
+
 TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvailable)
 {
     static constexpr auto kOut = R"JSON({

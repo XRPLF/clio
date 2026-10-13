@@ -495,12 +495,12 @@ tag_invoke(
     };
 
     if (output.deletedLedgerIndex.has_value())
-        object["deleted_ledger_index"] = *(output.deletedLedgerIndex);
+        object["deleted_ledger_index"] = *output.deletedLedgerIndex;
 
     if (output.nodeBinary.has_value()) {
-        object[JS(node_binary)] = *(output.nodeBinary);
+        object[JS(node_binary)] = *output.nodeBinary;
     } else {
-        object[JS(node)] = *(output.node);  // NOLINT(bugprone-unchecked-optional-access)
+        object[JS(node)] = *output.node;  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     jv = std::move(object);

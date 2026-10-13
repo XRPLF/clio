@@ -62,7 +62,7 @@ public:
         LOG(log_.debug()) << "Travsering token range: " << start << " - " << end
                           << " ; table: " << TableDesc::kTableName;
         // for each table we only have one prepared statement
-        static auto kStatementPrepared = migrationSchema_.getPreparedFullScanStatement(
+        static auto const kStatementPrepared = migrationSchema_.getPreparedFullScanStatement(
             handle_, TableDesc::kTableName, TableDesc::kPartitionKey
         );
 

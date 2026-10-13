@@ -202,7 +202,7 @@ template <typename FnType>
 auto
 synchronousAndRetryOnTimeout(FnType&& func, util::Retry::Delays delays = kDefaultRetryDelays)
 {
-    return retryOnTimeout([&]() { return synchronous(func); }, delays);
+    return retryOnTimeout([&] { return synchronous(func); }, delays);
 }
 
 /**

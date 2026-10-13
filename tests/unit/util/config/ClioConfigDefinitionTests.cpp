@@ -105,7 +105,7 @@ TEST_F(ConfigTest, CheckAllKeys)
     };
 
     for (auto i = configData.begin(); i != configData.end(); ++i) {
-        expected.emplace((i->first));
+        expected.emplace(i->first);
     }
     EXPECT_EQ(expected, actual);
 }
@@ -114,45 +114,53 @@ struct ConfigAssertTest : common::util::WithMockAssert, ConfigTest {};
 
 TEST_F(ConfigAssertTest, GetNonExistentKeys)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("head."); });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("asdf"); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const unused = configData.getValueView("head.");
+    });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const unused = configData.getValueView("asdf");
+    });
 }
 
 TEST_F(ConfigAssertTest, GetValueButIsArray)
 {
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist");
+        [[maybe_unused]] auto const unused = configData.getValueView("dosguard.whitelist");
     });
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist.[]");
+        [[maybe_unused]] auto const unused = configData.getValueView("dosguard.whitelist.[]");
     });
 }
 
 TEST_F(ConfigAssertTest, GetNonExistentObjectKey)
 {
     ASSERT_FALSE(configData.contains("head"));
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("head"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const unused = configData.getObject("head"); });
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto unused = configData.getObject("doesNotExist");
+        [[maybe_unused]] auto const unused = configData.getObject("doesNotExist");
     });
 }
 
 TEST_F(ConfigAssertTest, GetObjectButIsArray)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("array"); });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("array", 2); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const unused = configData.getObject("array");
+    });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const unused = configData.getObject("array", 2);
+    });
 }
 
 TEST_F(ConfigAssertTest, GetArrayButIsValue)
 {
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto unused = configData.getArray("header.text1");
+        [[maybe_unused]] auto const unused = configData.getArray("header.text1");
     });
 }
 
 TEST_F(ConfigAssertTest, GetNonExistentArrayKey)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getArray("asdf"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const unused = configData.getArray("asdf"); });
 }
 
 TEST(ConfigDescription, GetValues)
@@ -176,8 +184,8 @@ TEST_F(ConfigDescriptionAssertTest, NonExistingKeyTest)
 {
     ClioConfigDescription const definition{};
 
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = definition.get("data"); });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = definition.get("etl_sources.[]"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const a = definition.get("data"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const a = definition.get("etl_sources.[]"); });
 }
 
 /**

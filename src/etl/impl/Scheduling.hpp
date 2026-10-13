@@ -128,7 +128,7 @@ public:
     }
 };
 
-static auto
+auto
 makeScheduler(SomeScheduler auto&&... schedulers)
 {
     return std::make_unique<SchedulerChain<std::decay_t<decltype(schedulers)>...>>(

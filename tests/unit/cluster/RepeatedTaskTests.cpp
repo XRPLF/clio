@@ -71,7 +71,7 @@ TYPED_TEST(RepeatedTaskTypedTest, StopsImmediately)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-    auto start = std::chrono::steady_clock::now();
+    auto const start = std::chrono::steady_clock::now();
     task.stop();
     EXPECT_LT(std::chrono::steady_clock::now() - start, interval);
 }
@@ -134,13 +134,13 @@ TEST_F(RepeatedTaskTest, MultipleTasksRunConcurrently)
     std::binary_semaphore semaphore1{0};
     std::binary_semaphore semaphore2{0};
 
-    EXPECT_CALL(mockFn1, Call).Times(AtLeast(10)).WillRepeatedly([&]() {
+    EXPECT_CALL(mockFn1, Call).Times(AtLeast(10)).WillRepeatedly([&] {
         if (++callCount1 >= 10) {
             semaphore1.release();
         }
     });
 
-    EXPECT_CALL(mockFn2, Call).Times(AtLeast(5)).WillRepeatedly([&]() {
+    EXPECT_CALL(mockFn2, Call).Times(AtLeast(5)).WillRepeatedly([&] {
         if (++callCount2 >= 5) {
             semaphore2.release();
         }

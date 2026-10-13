@@ -121,7 +121,7 @@ TEST_F(TaskManagerTests, LoaderGetsDataIfNextSequenceIsExtracted)
     std::vector<uint32_t> loaded;
     std::binary_semaphore done{0};
 
-    EXPECT_CALL(*mockSchedulerPtr_, next()).WillRepeatedly([&]() {
+    EXPECT_CALL(*mockSchedulerPtr_, next()).WillRepeatedly([&] {
         return Task{.priority = Task::Priority::Higher, .seq = seq++};
     });
 
@@ -165,7 +165,7 @@ TEST_F(TaskManagerTests, WriteConflictHandling)
     std::binary_semaphore done{0};
     bool conflictOccurred = false;
 
-    EXPECT_CALL(*mockSchedulerPtr_, next()).WillRepeatedly([&]() {
+    EXPECT_CALL(*mockSchedulerPtr_, next()).WillRepeatedly([&] {
         return Task{.priority = Task::Priority::Higher, .seq = seq++};
     });
 
@@ -219,7 +219,7 @@ TEST_F(TaskManagerTests, AmendmentBlockedHandling)
     std::binary_semaphore done{0};
     bool amendmentBlockedOccurred = false;
 
-    EXPECT_CALL(*mockSchedulerPtr_, next()).WillRepeatedly([&]() {
+    EXPECT_CALL(*mockSchedulerPtr_, next()).WillRepeatedly([&] {
         return Task{.priority = Task::Priority::Higher, .seq = seq++};
     });
 

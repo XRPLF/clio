@@ -94,15 +94,15 @@ struct ValueViewAssertTest : common::util::WithMockAssert, ValueViewTest {};
 TEST_F(ValueViewAssertTest, WrongTypes)
 {
     auto const vv = configData.getValueView("header.port");
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = vv.asBool(); });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = vv.asString(); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const unused = vv.asBool(); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const unused = vv.asString(); });
 
     auto const cv = ConfigValue{ConfigType::Integer}.defaultValue(-5);
     auto const vv2 = ValueView(cv);
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = vv2.asIntType<uint32_t>(); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const unused = vv2.asIntType<uint32_t>(); });
 
     auto const cv2 = ConfigValue{ConfigType::String}.defaultValue("asdf");
     auto const vv3 = ValueView(cv2);
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = vv3.asDouble(); });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = vv3.asFloat(); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const unused = vv3.asDouble(); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const unused = vv3.asFloat(); });
 }

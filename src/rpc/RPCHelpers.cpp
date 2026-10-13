@@ -236,7 +236,7 @@ toExpandedJson(
     data::TransactionAndMetadata const& blobs,
     std::uint32_t const apiVersion,
     NFTokenjson nftEnabled,
-    std::optional<uint16_t> networkId
+    std::optional<uint32_t> networkId
 )
 {
     auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
@@ -269,7 +269,7 @@ toExpandedJson(
 }
 
 std::optional<std::string>
-encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept
+encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint32_t networkId) noexcept
 {
     static constexpr uint32_t kMaxLedgerSeq = 0x0FFF'FFFF;
     static constexpr uint32_t kMaxTxnIndex = 0xFFFF;
@@ -468,7 +468,8 @@ ledgerHeaderFromRequest(
     web::Context const& ctx
 )
 {
-    auto hashValue = ctx.params.contains("ledger_hash") ? ctx.params.at("ledger_hash") : nullptr;
+    auto const hashValue =
+        ctx.params.contains("ledger_hash") ? ctx.params.at("ledger_hash") : nullptr;
 
     if (!hashValue.is_null()) {
         if (!hashValue.is_string())
@@ -486,7 +487,8 @@ ledgerHeaderFromRequest(
         return *lgrInfo;
     }
 
-    auto indexValue = ctx.params.contains("ledger_index") ? ctx.params.at("ledger_index") : nullptr;
+    auto const indexValue =
+        ctx.params.contains("ledger_index") ? ctx.params.at("ledger_index") : nullptr;
 
     std::optional<std::uint32_t> ledgerSequence = {};
     if (!indexValue.is_null()) {
@@ -776,7 +778,7 @@ traverseOwnedNodes(
     static constexpr std::uint32_t kMinNodes = 2048;
     keys.reserve(std::min(kMinNodes, limit));
 
-    auto start = std::chrono::system_clock::now();
+    auto const start = std::chrono::system_clock::now();
 
     // If startAfter is not zero try jumping to that page using the hint
     if (hexMarker.isNonZero()) {
@@ -864,7 +866,7 @@ traverseOwnedNodes(
             currentPage = uNodeNext;
         }
     }
-    auto end = std::chrono::system_clock::now();
+    auto const end = std::chrono::system_clock::now();
 
     static util::Logger const log{"RPC"};  // NOLINT(readability-identifier-naming)
 
@@ -875,7 +877,7 @@ traverseOwnedNodes(
     );
 
     auto [objects, timeDiff] =
-        util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
+        util::timed([&] { return backend.fetchLedgerObjects(keys, sequence, yield); });
 
     LOG(log.debug()) << "Time loading owned entries: " << timeDiff << " milliseconds";
 
@@ -961,7 +963,7 @@ isGlobalFrozen(
     if (xrpl::isXRP(issuer))
         return false;
 
-    auto key = xrpl::keylet::account(issuer).key;
+    auto const key = xrpl::keylet::account(issuer).key;
     auto blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob)
@@ -1086,7 +1088,7 @@ xrpLiquid(
 
     auto balance = sle.getFieldAmount(xrpl::sfBalance);
 
-    xrpl::STAmount const amount = [&]() {
+    xrpl::STAmount const amount = [&] {
         // AMM doesn't require the reserves
         if ((sle.getFlags() & xrpl::lsfAMMNode) != 0u)
             return balance;
@@ -1197,7 +1199,7 @@ accountHolds(
         return amount;
     }
 
-    auto const allowBalance = [&]() {
+    auto const allowBalance = [&] {
         if (!zeroIfFrozen)
             return true;
 
@@ -1271,7 +1273,7 @@ transferRate(
     boost::asio::yield_context yield
 )
 {
-    auto key = xrpl::keylet::account(issuer).key;
+    auto const key = xrpl::keylet::account(issuer).key;
     auto blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (blob) {
@@ -1364,7 +1366,7 @@ postProcessOrderBook(
         isGlobalFrozen(backend, ledgerSequence, book.out.getIssuer(), yield) ||
         isGlobalFrozen(backend, ledgerSequence, book.in.getIssuer(), yield);
 
-    auto rate = transferRate(backend, ledgerSequence, book.out.getIssuer(), yield);
+    auto const rate = transferRate(backend, ledgerSequence, book.out.getIssuer(), yield);
 
     for (auto const& obj : offers) {
         try {
@@ -1392,7 +1394,7 @@ postProcessOrderBook(
                 // that aren't ours to be totally unfunded
                 saOwnerFunds.clear(book.out);
             } else {
-                auto umBalanceEntry = umBalance.find(uOfferOwnerID);
+                auto const umBalanceEntry = umBalance.find(uOfferOwnerID);
                 if (umBalanceEntry != umBalance.end()) {
                     // Found in running balance table.
 
@@ -1718,7 +1720,7 @@ bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request)
 {
     if (request.contains("ledger_index")) {
-        auto indexValue = request.at("ledger_index");
+        auto const indexValue = request.at("ledger_index");
         if (indexValue.is_string()) {
             auto const index = boost::json::value_to<std::string>(indexValue);
             return index == "current" || index == "closed";

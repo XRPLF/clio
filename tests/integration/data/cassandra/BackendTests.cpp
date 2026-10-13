@@ -201,7 +201,7 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_EQ(rng->maxSequence, lgrInfoNext.seq);
         }
         {
-            auto seq = backend_->fetchLatestLedgerSequence(yield);
+            auto const seq = backend_->fetchLatestLedgerSequence(yield);
             EXPECT_EQ(seq, lgrInfoNext.seq);
         }
         {
@@ -216,10 +216,10 @@ TEST_F(BackendCassandraTest, Basic)
             retLgr = backend_->fetchLedgerBySequence(lgrInfoNext.seq - 2, yield);
             EXPECT_FALSE(backend_->fetchLedgerBySequence(lgrInfoNext.seq - 2, yield).has_value());
 
-            auto txns = backend_->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
+            auto const txns = backend_->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(txns.size(), 0);
 
-            auto hashes = backend_->fetchAllTransactionHashesInLedger(lgrInfoNext.seq, yield);
+            auto const hashes = backend_->fetchAllTransactionHashesInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(hashes.size(), 0);
         }
 
@@ -421,8 +421,8 @@ TEST_F(BackendCassandraTest, Basic)
             xrpl::TxMeta const txMeta{
                 hash256, lgrInfoNext.seq, xrpl::Blob{metaBlob.begin(), metaBlob.end()}
             };
-            auto accountsSet = txMeta.getAffectedAccounts();
-            for (auto& a : accountsSet) {
+            auto const accountsSet = txMeta.getAffectedAccounts();
+            for (auto const& a : accountsSet) {
                 affectedAccounts.push_back(a);
             }
             std::vector<AccountTransactionsData> accountTxData;
@@ -493,14 +493,14 @@ TEST_F(BackendCassandraTest, Basic)
             auto hashes = backend_->fetchAllTransactionHashesInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(hashes.size(), 1);
             EXPECT_EQ(xrpl::strHex(hashes[0]), hashHex);
-            for (auto& a : affectedAccounts) {
+            for (auto const& a : affectedAccounts) {
                 auto [accountTransactions, cursor] =
                     backend_->fetchAccountTransactions(a, 100, true, {}, yield);
                 EXPECT_EQ(accountTransactions.size(), 1);
                 EXPECT_EQ(accountTransactions[0], accountTransactions[0]);
                 EXPECT_FALSE(cursor);
             }
-            auto nft = backend_->fetchNFT(nftID, lgrInfoNext.seq, yield);
+            auto const nft = backend_->fetchNFT(nftID, lgrInfoNext.seq, yield);
             EXPECT_TRUE(nft.has_value());
             auto [nftTxns, cursor] = backend_->fetchNFTTransactions(nftID, 100, true, {}, yield);
             EXPECT_EQ(nftTxns.size(), 1);
@@ -549,7 +549,7 @@ TEST_F(BackendCassandraTest, Basic)
             auto retLgr = backend_->fetchLedgerBySequence(lgrInfoNext.seq, yield);
             EXPECT_TRUE(retLgr);
             EXPECT_EQ(ledgerHeaderToBlob(*retLgr), ledgerHeaderToBlob(lgrInfoNext));
-            auto txns = backend_->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
+            auto const txns = backend_->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(txns.size(), 0);
 
             xrpl::uint256 key256;
@@ -600,7 +600,7 @@ TEST_F(BackendCassandraTest, Basic)
             auto retLgr = backend_->fetchLedgerBySequence(lgrInfoNext.seq, yield);
             EXPECT_TRUE(retLgr);
             EXPECT_EQ(ledgerHeaderToBlob(*retLgr), ledgerHeaderToBlob(lgrInfoNext));
-            auto txns = backend_->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
+            auto const txns = backend_->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(txns.size(), 0);
 
             xrpl::uint256 key256;
@@ -619,7 +619,7 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_FALSE(obj);
         }
 
-        auto generateObjects = [](size_t numObjects, uint32_t ledgerSequence) {
+        auto const generateObjects = [](size_t numObjects, uint32_t ledgerSequence) {
             std::vector<std::pair<std::string, std::string>> res{numObjects};
             xrpl::uint256 key;
             key = ledgerSequence * 100000ul;
@@ -634,13 +634,13 @@ TEST_F(BackendCassandraTest, Basic)
             }
             return res;
         };
-        auto updateObjects = [](uint32_t ledgerSequence, auto objs) {
+        auto const updateObjects = [](uint32_t ledgerSequence, auto objs) {
             for (auto& [key, obj] : objs) {
                 obj = std::to_string(ledgerSequence) + obj;
             }
             return objs;
         };
-        auto generateTxns = [](size_t numTxns, uint32_t ledgerSequence) {
+        auto const generateTxns = [](size_t numTxns, uint32_t ledgerSequence) {
             std::vector<std::tuple<std::string, std::string, std::string>> res{numTxns};
             xrpl::uint256 base;
             base = ledgerSequence * 100000ul;
@@ -665,7 +665,7 @@ TEST_F(BackendCassandraTest, Basic)
             }
             return accounts;
         };
-        auto generateAccountTx = [&](uint32_t ledgerSequence, auto txns) {
+        auto const generateAccountTx = [&](uint32_t ledgerSequence, auto txns) {
             std::vector<AccountTransactionsData> ret;
             util::MTRandomGenerator randomGenerator;
             auto accounts = generateAccounts(ledgerSequence, 10);
@@ -685,7 +685,7 @@ TEST_F(BackendCassandraTest, Basic)
             }
             return ret;
         };
-        auto generateNextLedger = [this](auto lgrInfo) {
+        auto const generateNextLedger = [this](auto lgrInfo) {
             ++lgrInfo.seq;
             lgrInfo.parentHash = lgrInfo.hash;
             std::shuffle(lgrInfo.txHash.begin(), lgrInfo.txHash.end(), randomEngine_);
@@ -693,7 +693,9 @@ TEST_F(BackendCassandraTest, Basic)
             std::shuffle(lgrInfo.hash.begin(), lgrInfo.hash.end(), randomEngine_);
             return lgrInfo;
         };
-        auto writeLedger = [&](auto lgrInfo, auto txns, auto objs, auto accountTx, auto state) {
+        auto const writeLedger = [&](
+                                     auto lgrInfo, auto txns, auto objs, auto accountTx, auto state
+                                 ) {
             backend_->startWrites();
 
             backend_->writeLedger(lgrInfo, ledgerHeaderToBinaryString(lgrInfo));
@@ -743,16 +745,16 @@ TEST_F(BackendCassandraTest, Basic)
             ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
         };
 
-        auto checkLedger = [&](auto lgrInfo, auto txns, auto objs, auto accountTx) {
+        auto const checkLedger = [&](auto lgrInfo, auto txns, auto objs, auto accountTx) {
             auto rng = backend_->fetchLedgerRange();
-            auto seq = lgrInfo.seq;
+            auto const seq = lgrInfo.seq;
             EXPECT_TRUE(rng);
             EXPECT_EQ(rng->minSequence, lgrInfoOld.seq);
             EXPECT_GE(rng->maxSequence, seq);
             auto retLgr = backend_->fetchLedgerBySequence(seq, yield);
             EXPECT_TRUE(retLgr);
             EXPECT_EQ(ledgerHeaderToBlob(*retLgr), ledgerHeaderToBlob(lgrInfo));
-            auto retTxns = backend_->fetchAllTransactionsInLedger(seq, yield);
+            auto const retTxns = backend_->fetchAllTransactionsInLedger(seq, yield);
             for (auto [hash, txn, meta] : txns) {
                 bool found = false;
                 for (auto [retTxn, retMeta, retSeq, retDate] : retTxns) {
@@ -786,8 +788,8 @@ TEST_F(BackendCassandraTest, Basic)
                 } while (cursor);
                 EXPECT_EQ(retData.size(), data.size());
                 for (size_t i = 0; i < retData.size(); ++i) {
-                    auto [txn, meta, _, _2] = retData[i];
-                    auto [_3, expTxn, expMeta] = data[i];
+                    auto [txn, meta, ledgerSequence, date] = retData[i];
+                    auto [hash, expTxn, expMeta] = data[i];
                     EXPECT_STREQ(
                         reinterpret_cast<char const*>(txn.data()),
                         static_cast<char const*>(expTxn.data())
@@ -862,9 +864,9 @@ TEST_F(BackendCassandraTest, Basic)
             lgrInfoNext = generateNextLedger(lgrInfoNext);
             auto objs = generateObjects(25, lgrInfoNext.seq);
             auto txns = generateTxns(10, lgrInfoNext.seq);
-            auto accountTx = generateAccountTx(lgrInfoNext.seq, txns);
+            auto const accountTx = generateAccountTx(lgrInfoNext.seq, txns);
             for (auto rec : accountTx) {
-                for (auto account : rec.accounts) {
+                for (auto const account : rec.accounts) {
                     allAccountTx[lgrInfoNext.seq][account].emplace_back(
                         reinterpret_cast<char const*>(rec.txHash.data()), xrpl::uint256::size()
                     );
@@ -893,9 +895,9 @@ TEST_F(BackendCassandraTest, Basic)
                 objs = updateObjects(lgrInfoNext.seq, objs);
             }
             auto txns = generateTxns(10, lgrInfoNext.seq);
-            auto accountTx = generateAccountTx(lgrInfoNext.seq, txns);
+            auto const accountTx = generateAccountTx(lgrInfoNext.seq, txns);
             for (auto rec : accountTx) {
-                for (auto account : rec.accounts) {
+                for (auto const account : rec.accounts) {
                     allAccountTx[lgrInfoNext.seq][account].emplace_back(
                         reinterpret_cast<char const*>(rec.txHash.data()), xrpl::uint256::size()
                     );
@@ -915,7 +917,7 @@ TEST_F(BackendCassandraTest, Basic)
             }
         }
 
-        auto flatten = [&](uint32_t max) {
+        auto const flatten = [&](uint32_t max) {
             std::vector<std::pair<std::string, std::string>> flat;
             std::map<std::string, std::string> objs;
             for (auto const& [seq, diff] : state) {
@@ -935,7 +937,7 @@ TEST_F(BackendCassandraTest, Basic)
             return flat;
         };
 
-        auto flattenAccountTx = [&](uint32_t max) {
+        auto const flattenAccountTx = [&](uint32_t max) {
             std::unordered_map<
                 xrpl::AccountID,
                 std::vector<std::tuple<std::string, std::string, std::string>>>
@@ -956,7 +958,7 @@ TEST_F(BackendCassandraTest, Basic)
         };
 
         for (auto const& [seq, diff] : state) {
-            auto flat = flatten(seq);
+            auto const flat = flatten(seq);
             checkLedger(lgrInfos[seq], allTxns[seq], flat, flattenAccountTx(seq));
         }
 
@@ -1035,7 +1037,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             EXPECT_EQ(rng->maxSequence, lgrInfoNext.seq);
         }
         {
-            auto seq = backend_->fetchLatestLedgerSequence(yield);
+            auto const seq = backend_->fetchLatestLedgerSequence(yield);
             EXPECT_EQ(seq, lgrInfoNext.seq);
         }
         {
@@ -1051,9 +1053,9 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             retLgr = backend_->fetchLedgerBySequence(lgrInfoNext.seq - 2, yield);
             EXPECT_FALSE(backend_->fetchLedgerBySequence(lgrInfoNext.seq - 2, yield).has_value());
 
-            auto txns = backend_->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
+            auto const txns = backend_->fetchAllTransactionsInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(txns.size(), 0);
-            auto hashes = backend_->fetchAllTransactionHashesInLedger(lgrInfoNext.seq, yield);
+            auto const hashes = backend_->fetchAllTransactionHashesInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(hashes.size(), 0);
         }
         {
@@ -1132,7 +1134,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             EXPECT_TRUE(rng);
             EXPECT_EQ(rng->minSequence, lgrInfoOld.seq);
             EXPECT_EQ(rng->maxSequence, lgrInfoNext.seq);
-            auto retLgr = backend_->fetchLedgerBySequence(lgrInfoNext.seq, yield);
+            auto const retLgr = backend_->fetchLedgerBySequence(lgrInfoNext.seq, yield);
             EXPECT_TRUE(retLgr);
 
             xrpl::uint256 key256;
@@ -1183,7 +1185,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             EXPECT_TRUE(rng);
             EXPECT_EQ(rng->minSequence, lgrInfoOld.seq);
             EXPECT_EQ(rng->maxSequence, lgrInfoNext.seq);
-            auto retLgr = backend_->fetchLedgerBySequence(lgrInfoNext.seq, yield);
+            auto const retLgr = backend_->fetchLedgerBySequence(lgrInfoNext.seq, yield);
             EXPECT_TRUE(retLgr);
 
             xrpl::uint256 key256;
@@ -1202,7 +1204,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             EXPECT_FALSE(obj);
         }
 
-        auto generateObjects = [](size_t numObjects, uint64_t ledgerSequence) {
+        auto const generateObjects = [](size_t numObjects, uint64_t ledgerSequence) {
             std::vector<std::pair<std::string, std::string>> res{numObjects};
             xrpl::uint256 key;
             key = ledgerSequence * 100000;
@@ -1217,14 +1219,14 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             }
             return res;
         };
-        auto updateObjects = [](uint32_t ledgerSequence, auto objs) {
+        auto const updateObjects = [](uint32_t ledgerSequence, auto objs) {
             for (auto& [key, obj] : objs) {
                 obj = std::to_string(ledgerSequence) + obj;
             }
             return objs;
         };
 
-        auto generateNextLedger = [this](auto lgrInfo) {
+        auto const generateNextLedger = [this](auto lgrInfo) {
             ++lgrInfo.seq;
             lgrInfo.parentHash = lgrInfo.hash;
             std::shuffle(lgrInfo.txHash.begin(), lgrInfo.txHash.end(), randomEngine_);
@@ -1232,7 +1234,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             std::shuffle(lgrInfo.hash.begin(), lgrInfo.hash.end(), randomEngine_);
             return lgrInfo;
         };
-        auto writeLedger = [&](auto lgrInfo, auto objs, auto state) {
+        auto const writeLedger = [&](auto lgrInfo, auto objs, auto state) {
             backend_->startWrites();
 
             backend_->writeLedger(lgrInfo, std::move(ledgerHeaderToBinaryString(lgrInfo)));
@@ -1276,9 +1278,9 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
         };
 
-        auto checkLedger = [&](auto lgrInfo, auto objs) {
+        auto const checkLedger = [&](auto lgrInfo, auto objs) {
             auto rng = backend_->fetchLedgerRange();
-            auto seq = lgrInfo.seq;
+            auto const seq = lgrInfo.seq;
             EXPECT_TRUE(rng);
             EXPECT_EQ(rng->minSequence, lgrInfoOld.seq);
             EXPECT_GE(rng->maxSequence, seq);
@@ -1375,7 +1377,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             lgrInfos[lgrInfoNext.seq] = lgrInfoNext;
         }
 
-        auto flatten = [&](uint32_t max) {
+        auto const flatten = [&](uint32_t max) {
             std::vector<std::pair<std::string, std::string>> flat;
             std::map<std::string, std::string> objs;
             for (auto const& [seq, diff] : state) {
@@ -1396,7 +1398,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         };
 
         for (auto const& [seq, diff] : state) {
-            auto flat = flatten(seq);
+            auto const flat = flatten(seq);
             checkLedger(lgrInfos[seq], flat);
         }
 
@@ -1531,7 +1533,7 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, RoundTripIssuanceAndAccountIndexes)
         auto const expectedTxBlob = "tx_" + xrpl::strHex(hash);
         auto const expectedMetaBlob = "meta_" + xrpl::strHex(hash);
 
-        auto expectFetchedSingle = [&](auto const& txns) {
+        auto const expectFetchedSingle = [&](auto const& txns) {
             ASSERT_EQ(txns.size(), 1);
             EXPECT_EQ(
                 std::string(txns[0].transaction.begin(), txns[0].transaction.end()), expectedTxBlob
@@ -1585,7 +1587,7 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, RoundTripIssuanceAndAccountIndexes)
             writeTxBlob(secondHash, seq);
             auto const expectedSecondTxBlob = "tx_" + xrpl::strHex(secondHash);
             auto const expectedSecondMetaBlob = "meta_" + xrpl::strHex(secondHash);
-            auto expectFetchedSecond = [&](auto const& txns) {
+            auto const expectFetchedSecond = [&](auto const& txns) {
                 ASSERT_EQ(txns.size(), 1);
                 EXPECT_EQ(
                     std::string(txns[0].transaction.begin(), txns[0].transaction.end()),
@@ -1653,10 +1655,10 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, DescendingOrderForwardAndReverse)
         }
         backend_->waitForWritesToFinish();
 
-        auto txBlobToString = [](data::TransactionAndMetadata const& tx) {
+        auto const txBlobToString = [](data::TransactionAndMetadata const& tx) {
             return std::string(tx.transaction.begin(), tx.transaction.end());
         };
-        auto expectedBlob = [&](std::uint8_t i) { return "tx_" + xrpl::strHex(makeHash(i)); };
+        auto const expectedBlob = [&](std::uint8_t i) { return "tx_" + xrpl::strHex(makeHash(i)); };
 
         // Reverse (forward=false): newest first -> rows 3, 2, 1.
         {
@@ -1706,7 +1708,7 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, MarkerPaginationRoundTrip)
 
         // Writes `total` rows, each in its own ledger and at a distinct transaction index,
         // so paging covers ordering across both.
-        auto setup =
+        auto const setup =
             [&](xrpl::uint192 const& issuanceId, std::uint8_t total, std::uint32_t firstSeq) {
                 std::set<std::string> expected;
                 for (std::uint8_t i = 1; i <= total; ++i) {
@@ -1731,11 +1733,11 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, MarkerPaginationRoundTrip)
         // Page through every row; assert page order plus that the union of pages equals `expected`
         // exactly: every row seen exactly once (no duplicates from a repeated cursor row, no gaps
         // from a dropped row). Each full page (one that returns a cursor) must be exactly `limit`.
-        auto pageThrough = [&](xrpl::uint192 const& issuanceId,
-                               bool forward,
-                               std::uint32_t limit,
-                               std::set<std::string> const& expected,
-                               ExpectedPaginationEnd expectedEnd) {
+        auto const pageThrough = [&](xrpl::uint192 const& issuanceId,
+                                     bool forward,
+                                     std::uint32_t limit,
+                                     std::set<std::string> const& expected,
+                                     ExpectedPaginationEnd expectedEnd) {
             ASSERT_NE(limit, 0u);
             auto const limitSize = static_cast<std::size_t>(limit);
 

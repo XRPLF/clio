@@ -164,7 +164,7 @@ auto
 Extractor::unpack()
 {
     return [](auto&& data) {
-        auto header = ::util::deserializeHeader(xrpl::makeSlice(data.ledger_header()));
+        auto const header = ::util::deserializeHeader(xrpl::makeSlice(data.ledger_header()));
 
         return std::make_optional<model::LedgerData>({
             .transactions = extractTxs(

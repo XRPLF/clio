@@ -106,15 +106,16 @@ void
 Cluster::setupContactPoints(Settings::ContactPoints const& points)
 {
     using std::to_string;
-    auto throwErrorIfNeeded = [](CassError rc, std::string const& label, std::string const& value) {
-        if (rc != CASS_OK) {
-            throw std::runtime_error(
-                fmt::format(
-                    "Cassandra: Error setting {} [{}]: {}", label, value, cass_error_desc(rc)
-                )
-            );
-        }
-    };
+    auto const throwErrorIfNeeded =
+        [](CassError rc, std::string const& label, std::string const& value) {
+            if (rc != CASS_OK) {
+                throw std::runtime_error(
+                    fmt::format(
+                        "Cassandra: Error setting {} [{}]: {}", label, value, cass_error_desc(rc)
+                    )
+                );
+            }
+        };
 
     {
         LOG(log_.debug()) << "Attempt connection using contact points: " << points.contactPoints;

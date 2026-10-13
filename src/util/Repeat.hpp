@@ -90,7 +90,7 @@ private:
     )
     {
         boost::asio::post(
-            control->strand, [control, interval, action = std::forward<Action>(action)]() mutable {
+            control->strand, [control, interval, action = std::forward<Action>(action)] mutable {
                 if (control->stopping) {
                     control->semaphore.release();
                     return;

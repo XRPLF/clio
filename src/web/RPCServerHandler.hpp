@@ -195,7 +195,7 @@ private:
             }
 
             auto [result, timeDiff] =
-                util::timed([&]() { return rpcEngine_->buildResponse(*context); });
+                util::timed([&] { return rpcEngine_->buildResponse(*context); });
 
             auto const us = std::chrono::duration<int, std::milli>(timeDiff);
             rpc::logDuration(request, context->tag(), us);

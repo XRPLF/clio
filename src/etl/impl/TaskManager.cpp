@@ -58,7 +58,7 @@ TaskManager::run(std::size_t numExtractors)
     LOG(log_.debug()) << "Starting task manager with " << numExtractors << " extractors...\n";
 
     extractors_.reserve(numExtractors);
-    for ([[maybe_unused]] auto _ : std::views::iota(0uz, numExtractors))
+    for ([[maybe_unused]] auto const _ : std::views::iota(0uz, numExtractors))
         extractors_.push_back(spawnExtractor(queue_));
 
     // Only one forward loader for now. Backfill to be added here later

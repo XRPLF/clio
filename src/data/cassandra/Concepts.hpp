@@ -64,7 +64,7 @@ concept SomeRetryPolicy =
         { T(ioc) };
         { a.shouldRetry(err) } -> std::same_as<bool>;
         {
-            a.retry([]() {})
+            a.retry([] {})
         } -> std::same_as<void>;
     };
 

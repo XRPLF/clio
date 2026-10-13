@@ -69,7 +69,7 @@ TEST_F(LoggerTest, LOGMacro)
     Logger const log{"General"};
 
     auto computeCalled = false;
-    auto compute = [&computeCalled]() {
+    auto const compute = [&computeCalled] {
         computeCalled = true;
         return "computed";
     };
@@ -86,7 +86,7 @@ TEST_F(LoggerTest, ManyDynamicLoggers)
 {
     static constexpr size_t kNumLoggers = 10'000;
 
-    auto initialLoggers = loggersNum();
+    auto const initialLoggers = loggersNum();
 
     for (size_t i = 0; i < kNumLoggers; ++i) {
         std::string const loggerName = "DynamicLogger" + std::to_string(i);

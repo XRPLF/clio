@@ -71,7 +71,7 @@ public:
     data::cassandra::PreparedStatement const&
     getPreparedInsertMigratedMigrator(data::cassandra::Handle const& handler)
     {
-        static auto kPrepared = handler.prepare(
+        static auto const kPrepared = handler.prepare(
             fmt::format(
                 R"(
             INSERT INTO {}

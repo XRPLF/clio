@@ -38,7 +38,7 @@ TEST(TimeUtilTests, SystemTpToUtcStr)
     timeStruct.tm_hour = 14;
     timeStruct.tm_min = 30;
     timeStruct.tm_sec = 45;
-    auto timePoint = std::chrono::system_clock::from_time_t(timegm(&timeStruct));
+    auto const timePoint = std::chrono::system_clock::from_time_t(timegm(&timeStruct));
 
     std::string const isoFormat = "%Y-%m-%dT%H:%M:%SZ";
     std::string const isoStr = util::systemTpToUtcStr(timePoint, isoFormat);

@@ -48,7 +48,7 @@ Backend::run()
         onNewState_(selfUuid_, std::make_shared<ClusterData>(std::move(clusterData)));
     });
 
-    writerTask_.run([this]() { doWrite(); });
+    writerTask_.run([this] { doWrite(); });
 }
 
 Backend::~Backend()

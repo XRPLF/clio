@@ -222,7 +222,7 @@ private:
     }
 };
 
-static auto
+auto
 makeRegistry(SystemState const& state, auto&&... exts)
 {
     return std::make_unique<Registry<std::decay_t<decltype(exts)>...>>(

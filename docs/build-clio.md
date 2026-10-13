@@ -12,7 +12,18 @@
 - [**Optional**] [CCache](https://ccache.dev/): speeds up compilation if you are going to compile Clio often
 
 We use the Nix-based Docker image `ghcr.io/xrplf/xrpld/nix-ubuntu` to build `Clio`, see [Building Clio with Docker](#building-clio-with-docker).
-This image is produced by [rippled](https://github.com/XRPLF/rippled) and ships the compilers and tools listed below.
+This image is produced by [xrpld](https://github.com/XRPLF/rippled) and ships the compilers and tools listed below.
+
+The same environment is available locally as a [Nix](https://nixos.org/) dev shell, reused from `xrpld` through [`flake.nix`](../flake.nix):
+
+```sh
+nix develop          # Clang on macOS, GCC on Linux
+nix develop .#clang  # or .#gcc, .#apple-clang
+```
+
+The shell uses its own Conan home, `~/.conan2-nix`, and sets it up on entry.
+With [direnv](https://direnv.net/), run `direnv allow` once to enter the shell automatically, using the provided `.envrc`.
+See [xrpld's Nix guide](https://github.com/XRPLF/rippled/blob/develop/docs/build/nix.md) for more details.
 
 The following compiler version are guaranteed to work.
 Any compiler with lower version may not be able to build Clio:
@@ -31,7 +42,7 @@ You can change it by using `$CONAN_HOME` env variable.
 
 > [!TIP]
 > To setup Conan automatically, you can run `conan/init.sh`.
-> This will delete Conan home directory (if it exists), set up profiles and add Artifactory remote.
+> This will set up the global configuration and profiles, and add the `xrplf` remote. It never deletes the Conan home directory.
 
 The instruction below assumes that `$CONAN_HOME` is not set.
 
@@ -175,7 +186,7 @@ Open the `index.html` file in your browser to see the documentation pages.
 It is also possible to build Clio using [Docker](https://www.docker.com/) if you don't want to install all the dependencies on your machine.
 
 ```sh
-docker run -it ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
+docker run -it ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8
 git clone https://github.com/XRPLF/clio
 cd clio
 ```

@@ -88,7 +88,7 @@ TEST_F(ArrayViewTest, ArrayWithObj)
 
 TEST_F(ArrayViewTest, IterateArray)
 {
-    auto arr = configData.getArray("dosguard.whitelist");
+    auto const arr = configData.getArray("dosguard.whitelist");
     EXPECT_EQ(2, arr.size());
     EXPECT_EQ(arr.valueAt(0).asString(), "125.5.5.1");
     EXPECT_EQ(arr.valueAt(1).asString(), "204.2.2.1");
@@ -113,7 +113,7 @@ TEST_F(ArrayViewTest, CompareDifferentArrayIterators)
 
 TEST_F(ArrayViewTest, IterateObject)
 {
-    auto arr = configData.getArray("array");
+    auto const arr = configData.getArray("array");
     EXPECT_EQ(3, arr.size());
 
     auto it = arr.begin<ObjectView>();
@@ -135,7 +135,7 @@ TEST_F(ArrayViewAssertTest, AccessArrayOutOfBounce)
 {
     // dies because higher only has 1 object (trying to access 2nd element)
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto _ = configData.getArray("higher").objectAt(1);
+        [[maybe_unused]] auto const _ = configData.getArray("higher").objectAt(1);
     });
 }
 
@@ -145,17 +145,19 @@ TEST_F(ArrayViewAssertTest, AccessIndexOfWrongType)
     auto const& tempVal = arrVals2.valueAt(0);
 
     // dies as value is not of type int
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = tempVal.asIntType<int>(); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const _ = tempVal.asIntType<int>(); });
 }
 
 TEST_F(ArrayViewAssertTest, GetValueWhenItIsObject)
 {
     ArrayView const arr = configData.getArray("higher");
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = arr.begin<ValueView>(); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const _ = arr.begin<ValueView>(); });
 }
 
 TEST_F(ArrayViewAssertTest, GetObjectWhenItIsValue)
 {
     ArrayView const dosguardWhitelist = configData.getArray("dosguard.whitelist");
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = dosguardWhitelist.begin<ObjectView>(); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const _ = dosguardWhitelist.begin<ObjectView>();
+    });
 }

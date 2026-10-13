@@ -121,7 +121,7 @@ WriterDecider::onNewState(
                      node.dbRole == ClioNode::DbRole::Writer);
             });
 
-            auto electNode = [&selfId, &writerState](auto it) {
+            auto const electNode = [&selfId, &writerState](auto it) {
                 if (*it->uuid == *selfId) {
                     writerState->startWriting();
                 } else {

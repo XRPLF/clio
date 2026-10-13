@@ -103,7 +103,8 @@ class HttpBase : public ConnectionBase {
 
             // The lifetime of the message has to extend for the duration of the async operation so
             // we use a shared_ptr to manage it.
-            auto sp = std::make_shared<http::message<IsRequest, Body, Fields>>(std::move(msg));
+            auto const sp =
+                std::make_shared<http::message<IsRequest, Body, Fields>>(std::move(msg));
 
             // Store a type-erased version of the shared pointer in the class to keep it alive.
             self.res_ = sp;

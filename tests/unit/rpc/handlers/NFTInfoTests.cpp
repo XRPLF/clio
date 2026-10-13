@@ -268,7 +268,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 31);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 31);
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
@@ -320,7 +320,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
 // error case nft does not exist
 TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
@@ -364,7 +364,7 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
         "validated": true
     })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
@@ -382,7 +382,7 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTInfoHandler{this->backend_}};
+        auto const handler = AnyHandler{NFTInfoHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(kCurrentOutput), *output.result);
@@ -406,7 +406,7 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
         "validated": true
     })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
@@ -426,7 +426,7 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTInfoHandler{this->backend_}};
+        auto const handler = AnyHandler{NFTInfoHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(kCurrentOutput), *output.result);
@@ -450,7 +450,7 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
         "validated": true
     })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
@@ -469,7 +469,7 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTInfoHandler{this->backend_}};
+        auto const handler = AnyHandler{NFTInfoHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(kCurrentOutput), *output.result);
@@ -493,7 +493,7 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
         "validated": true
     })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
@@ -511,7 +511,7 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTInfoHandler{this->backend_}};
+        auto const handler = AnyHandler{NFTInfoHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(kCurrentOutput), *output.result);

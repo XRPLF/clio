@@ -93,8 +93,8 @@ protected:
 
 TEST_F(StopperMakeCallbackTest, makeCallbackTest)
 {
-    auto contextWorkGuard = boost::asio::make_work_guard(ioContextToStop_);
-    std::thread t{[this]() { ioContextToStop_.run(); }};
+    auto const contextWorkGuard = boost::asio::make_work_guard(ioContextToStop_);
+    std::thread t{[this] { ioContextToStop_.run(); }};
 
     auto callback = Stopper::makeOnStopCallback(
         serverMock_,
@@ -108,28 +108,28 @@ TEST_F(StopperMakeCallbackTest, makeCallbackTest)
     );
 
     testing::Sequence const s1, s2;
-    EXPECT_CALL(cacheSaverMock_, save).InSequence(s1).WillOnce([this]() {
+    EXPECT_CALL(cacheSaverMock_, save).InSequence(s1).WillOnce([this] {
         EXPECT_FALSE(isContextStopped());
     });
-    EXPECT_CALL(serverMock_, stop).InSequence(s1).WillOnce([this]() {
+    EXPECT_CALL(serverMock_, stop).InSequence(s1).WillOnce([this] {
         EXPECT_FALSE(isContextStopped());
     });
-    EXPECT_CALL(loadBalancerMock_, stop).InSequence(s2).WillOnce([this]() {
+    EXPECT_CALL(loadBalancerMock_, stop).InSequence(s2).WillOnce([this] {
         EXPECT_FALSE(isContextStopped());
     });
-    EXPECT_CALL(clusterCommunicationServiceMock_, stop).InSequence(s1, s2).WillOnce([this]() {
+    EXPECT_CALL(clusterCommunicationServiceMock_, stop).InSequence(s1, s2).WillOnce([this] {
         EXPECT_FALSE(isContextStopped());
     });
-    EXPECT_CALL(etlServiceMock_, stop).InSequence(s1, s2).WillOnce([this]() {
+    EXPECT_CALL(etlServiceMock_, stop).InSequence(s1, s2).WillOnce([this] {
         EXPECT_FALSE(isContextStopped());
     });
-    EXPECT_CALL(subscriptionManagerMock_, stop).InSequence(s1, s2).WillOnce([this]() {
+    EXPECT_CALL(subscriptionManagerMock_, stop).InSequence(s1, s2).WillOnce([this] {
         EXPECT_FALSE(isContextStopped());
     });
-    EXPECT_CALL(backendMock_, waitForWritesToFinish).InSequence(s1, s2).WillOnce([this]() {
+    EXPECT_CALL(backendMock_, waitForWritesToFinish).InSequence(s1, s2).WillOnce([this] {
         EXPECT_FALSE(isContextStopped());
     });
-    EXPECT_CALL(cacheSaverMock_, waitToFinish).InSequence(s1).WillOnce([this]() {
+    EXPECT_CALL(cacheSaverMock_, waitToFinish).InSequence(s1).WillOnce([this] {
         EXPECT_FALSE(isContextStopped());
     });
 

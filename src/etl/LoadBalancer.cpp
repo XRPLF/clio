@@ -146,7 +146,7 @@ LoadBalancer::LoadBalancer(
             subscriptions,
             validatedLedgers,
             forwardingTimeout,
-            [this]() {
+            [this] {
                 if (not hasForwardingSource_.lock().get())
                     chooseForwardingSource();
             },
@@ -154,7 +154,7 @@ LoadBalancer::LoadBalancer(
                 if (wasForwarding)
                     chooseForwardingSource();
             },
-            [this]() {
+            [this] {
                 if (forwardingCache_.has_value())
                     forwardingCache_->invalidate();
             }
@@ -294,7 +294,7 @@ LoadBalancer::forwardToRippled(
     std::optional<boost::json::object> response;
     rpc::ClioError error = rpc::ClioError::RpcForwardingConnectionError;
     while (numAttempts < sources_.size()) {
-        auto [res, duration] = util::timed([&]() {
+        auto [res, duration] = util::timed([&] {
             return sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield);
         });
         if (res) {

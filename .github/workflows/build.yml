@@ -47,7 +47,7 @@ jobs:
         os: [heavy]
         compiler: [gcc, clang]
         build_type: [Release, Debug]
-        container: ['{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }']
+        container: ['{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8" }']
 
         include:
           - os: macos-26-apple-clang-21
@@ -73,7 +73,7 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e" }'
+      container: '{ "image": "ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8" }'
       compiler: gcc
       build_type: Debug
       download_ccache: true
@@ -90,12 +90,12 @@ jobs:
     needs: build-and-test
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: clio_server_Linux_Release_gcc
 

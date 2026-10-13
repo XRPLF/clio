@@ -57,7 +57,7 @@ DOSGuard::isOk(std::string const& ip) const noexcept
                 return false;
             }
         }
-        auto it = lock->ipConnCount.find(ip);
+        auto const it = lock->ipConnCount.find(ip);
         if (it != lock->ipConnCount.end()) {
             if (it->second > maxConnCount_) {
                 LOG(log_.warn()) << "Dosguard: Client surpassed the rate limit. ip = " << ip

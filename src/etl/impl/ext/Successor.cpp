@@ -63,6 +63,8 @@ SuccessorExt::onLedgerData(model::LedgerData const& data) const
                      << "; got successors = " << data.successors.has_value() << "; cache is "
                      << (cache_.get().isFull() ? "FULL" : "Not full");
 
+    // filter_view is not iterable when const
+    // NOLINTNEXTLINE(misc-const-correctness)
     auto filteredObjects = data.objects  //
         | vs::filter([](auto const& obj) { return obj.type != model::Object::ModType::Modified; });
 
@@ -150,7 +152,7 @@ SuccessorExt::updateSuccessorFromCache(uint32_t seq, model::Object const& obj) c
             auto const successor = cache_.get().getSuccessor(bookBase, seq);
             ASSERT(successor.has_value(), "Book base must have a successor for seq = {}", seq);
 
-            if (successor->key == obj.key) {
+            if (successor->key == obj.key) {  // NOLINT(bugprone-unchecked-optional-access)
                 updateBookSuccessor(successor, seq, bookBase);
             }
         }
@@ -182,7 +184,7 @@ SuccessorExt::writeSuccessors(uint32_t seq) const
             backend_->writeSuccessor(uint256ToString(prev), seq, uint256ToString(cur->key));
 
         if (isBookDir(cur->key, cur->blob)) {
-            auto base = getBookBase(cur->key);
+            auto const base = getBookBase(cur->key);
 
             // make sure the base is not an actual object
             if (not cache_.get().get(base, seq)) {

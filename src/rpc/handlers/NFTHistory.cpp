@@ -94,7 +94,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
     auto const limit = input.limit.value_or(kLimitDefault);
     auto const& tokenID = input.nftID;
 
-    auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
+    auto const [txnsAndCursor, timeDiff] = util::timed([&] {
         return sharedPtrBackend_->fetchNFTTransactions(
             tokenID, limit, input.forward, cursor, ctx.yield
         );
@@ -177,10 +177,10 @@ tag_invoke(
     };
 
     if (output.marker)
-        jv.as_object()[JS(marker)] = boost::json::value_from(*(output.marker));
+        jv.as_object()[JS(marker)] = boost::json::value_from(*output.marker);
 
     if (output.limit)
-        jv.as_object()[JS(limit)] = *(output.limit);
+        jv.as_object()[JS(limit)] = *output.limit;
 }
 
 }  // namespace rpc

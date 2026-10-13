@@ -322,22 +322,22 @@ TEST_P(ConstraintAssertTest, TestEachConstraint)
 TEST_F(ConstraintAssertTest, SetInvalidValueTypeStringAndBool)
 {
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto a =
+        [[maybe_unused]] auto const a =
             ConfigValue{ConfigType::String}.defaultValue(33).withConstraint(gValidateLoadMode);
     });
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto a = ConfigValue{ConfigType::Boolean}.defaultValue(-66);
+        [[maybe_unused]] auto const a = ConfigValue{ConfigType::Boolean}.defaultValue(-66);
     });
 }
 
 TEST_F(ConstraintAssertTest, OutOfBounceIntegerConstraint)
 {
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto a =
+        [[maybe_unused]] auto const a =
             ConfigValue{ConfigType::Integer}.defaultValue(999999).withConstraint(gValidateUint16);
     });
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto a =
+        [[maybe_unused]] auto const a =
             ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(gValidateUint32);
     });
 }

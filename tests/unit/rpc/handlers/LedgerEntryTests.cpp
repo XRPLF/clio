@@ -2601,8 +2601,8 @@ struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest,
 static auto
 generateTestValuesForNormalPathTest()
 {
-    auto account1 = getAccountIdWithString(kAccount);
-    auto account2 = getAccountIdWithString(kAccount2);
+    auto const account1 = getAccountIdWithString(kAccount);
+    auto const account2 = getAccountIdWithString(kAccount2);
     xrpl::Currency currency;
     xrpl::toCurrency(currency, "USD");
 

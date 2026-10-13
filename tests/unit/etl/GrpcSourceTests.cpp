@@ -83,14 +83,14 @@ struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXr
             auto store = store_.lock<std::scoped_lock>();
 
             auto const mapKey = xrpl::strHex(marker).substr(0, 2);
-            auto it = store->lower_bound(mapKey);
+            auto const it = store->lower_bound(mapKey);
             ASSERT(it != store->end(), "Lower bound not found for '{}'", mapKey);
 
             auto& queue = it->second;
             if (queue.empty())
                 return std::nullopt;
 
-            auto data = queue.front();
+            auto const data = queue.front();
             queue.pop();
 
             return std::make_optional(uint256ToString(data));
@@ -102,14 +102,14 @@ struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXr
             auto store = store_.lock<std::scoped_lock>();
 
             auto const mapKey = xrpl::strHex(marker).substr(0, 2);
-            auto it = store->lower_bound(mapKey);
+            auto const it = store->lower_bound(mapKey);
             ASSERT(it != store->end(), "Lower bound not found for '{}'", mapKey);
 
             auto& queue = it->second;
             if (queue.empty())
                 return std::nullopt;
 
-            auto data = queue.front();
+            auto const data = queue.front();
             return std::make_optional(uint256ToString(data));
         };
     };
@@ -323,7 +323,7 @@ TEST_F(GrpcSourceStopTests, LoadInitialLedgerStopsWhenRequested)
 
     EXPECT_CALL(observer_, onInitialLoadGotMoreObjects).Times(0);
 
-    auto loadTask = std::async(std::launch::async, [&]() {
+    auto loadTask = std::async(std::launch::async, [&] {
         return grpcSource_.loadInitialLedger(sequence, numMarkers, observer_);
     });
 

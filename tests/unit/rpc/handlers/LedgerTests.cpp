@@ -309,7 +309,7 @@ TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
                 "queue": false
             })JSON"
         );
-        auto output = handler.process(req, Context{yield});
+        auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
     });
 }
@@ -1071,7 +1071,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
         .WillByDefault(Return(accountObject));
 
     // fee object 2*2+3->7 ; balance 200 - 7 -> 193
-    auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
+    auto const feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
     ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kRangeMax, _))
         .WillByDefault(Return(feeBlob));
 
@@ -1146,7 +1146,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
         .WillByDefault(Return(accountObject));
 
     // fee object 2*2+3->7 ; balance 200 - 7 -> 193
-    auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
+    auto const feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
     ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kRangeMax, _))
         .WillByDefault(Return(feeBlob));
 
@@ -1260,7 +1260,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
         .WillByDefault(Return(accountObject));
 
     // fee object 2*2+3->7 ; balance 6 - 7 -> -1
-    auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
+    auto const feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
     ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kRangeMax, _))
         .WillByDefault(Return(feeBlob));
 
@@ -1307,12 +1307,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
     auto const line = createRippleStateLedgerObject(
         kCurrency, kAccount2, 50 /*balance*/, kAccount, 10, kAccount2, 20, kIndex1, 123
     );
-    auto lineKey = xrpl::keylet::trustLine(
-                       getAccountIdWithString(kAccount),
-                       getAccountIdWithString(kAccount2),
-                       xrpl::toCurrency(std::string(kCurrency))
+    auto const lineKey = xrpl::keylet::trustLine(
+                             getAccountIdWithString(kAccount),
+                             getAccountIdWithString(kAccount2),
+                             xrpl::toCurrency(std::string(kCurrency))
     )
-                       .key;
+                             .key;
     ON_CALL(*backend_, doFetchLedgerObject(lineKey, kRangeMax, _))
         .WillByDefault(Return(line.getSerializer().peekData()));
 
@@ -1375,12 +1375,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
         123,
         xrpl::lsfLowFreeze | xrpl::lsfHighFreeze
     );
-    auto lineKey = xrpl::keylet::trustLine(
-                       getAccountIdWithString(kAccount),
-                       getAccountIdWithString(kAccount2),
-                       xrpl::toCurrency(std::string(kCurrency))
+    auto const lineKey = xrpl::keylet::trustLine(
+                             getAccountIdWithString(kAccount),
+                             getAccountIdWithString(kAccount2),
+                             xrpl::toCurrency(std::string(kCurrency))
     )
-                       .key;
+                             .key;
     ON_CALL(*backend_, doFetchLedgerObject(lineKey, kRangeMax, _))
         .WillByDefault(Return(line.getSerializer().peekData()));
 

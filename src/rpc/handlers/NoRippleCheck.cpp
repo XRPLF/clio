@@ -59,7 +59,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
         return Error{Status{XrpldError::RpcActNotFound}};
 
     auto it = xrpl::SerialIter{accountObj->data(), accountObj->size()};
-    auto sle = xrpl::SLE{it, keylet};
+    auto const sle = xrpl::SLE{it, keylet};
     auto accountSeq = sle.getFieldU32(xrpl::sfSequence);
     bool const bDefaultRipple = (sle.getFieldU32(xrpl::sfFlags) & xrpl::lsfDefaultRipple) != 0u;
     auto const fees =
@@ -187,7 +187,7 @@ tag_invoke(
     };
 
     if (output.transactions)
-        obj.emplace(JS(transactions), *(output.transactions));
+        obj.emplace(JS(transactions), *output.transactions);
 
     jv = std::move(obj);
 }

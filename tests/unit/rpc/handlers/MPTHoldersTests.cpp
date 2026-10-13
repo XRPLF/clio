@@ -299,7 +299,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIntIndex)
 TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
-    auto ledgerinfo = createLedgerHeader(kLedgerHash, 31);
+    auto const ledgerinfo = createLedgerHeader(kLedgerHash, 31);
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
@@ -351,7 +351,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIndex2)
 // normal case when MPT does not exist
 TEST_F(RPCMPTHoldersHandlerTest, MPTNotFound)
 {
-    auto ledgerinfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerinfo = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
@@ -369,7 +369,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTNotFound)
         )
     );
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -393,7 +393,7 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
         kMptOut1
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -420,7 +420,7 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -447,7 +447,7 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
         kMptId
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -474,7 +474,7 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -522,7 +522,7 @@ TEST_F(RPCMPTHoldersHandlerTest, ConfidentialFields)
         xrpl::strHex(std::string_view{kHolderEncryptionKey})
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -561,7 +561,7 @@ TEST_F(RPCMPTHoldersHandlerTest, ConfidentialFields)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -584,7 +584,7 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
         kMptOut1
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, specificLedger);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, specificLedger);
     ON_CALL(*backend_, fetchLedgerBySequence(specificLedger, _)).WillByDefault(Return(ledgerInfo));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
@@ -618,7 +618,7 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -641,7 +641,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
         xrpl::strHex(getAccountIdWithString(kHolder1Account))
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -672,7 +672,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -694,7 +694,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
         kMptOut2
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -724,7 +724,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -894,7 +894,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilter)
         kMptOut2
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -926,7 +926,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilter)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -946,7 +946,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterMissingHolderOmitted)
         kMptOut1
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -971,7 +971,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterMissingHolderOmitted)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -1010,7 +1010,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsMaxAllowed)
         accountsList += fmt::format(R"("{}",)", kHolder1Account);
     accountsList.pop_back();  // drop trailing comma
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -1035,7 +1035,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsMaxAllowed)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("mptokens").as_array().size(), 1u);
@@ -1054,7 +1054,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterAllAbsent)
         kMptId
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -1077,7 +1077,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterAllAbsent)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -1124,7 +1124,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterConfidentialFields)
         xrpl::strHex(std::string_view{kHolderEncryptionKey})
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -1159,7 +1159,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterConfidentialFields)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -1168,7 +1168,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterConfidentialFields)
 
 TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterMPTNotFound)
 {
-    auto ledgerinfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerinfo = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
@@ -1190,7 +1190,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterMPTNotFound)
         )
     );
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -1214,7 +1214,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterSpecificLedger)
         kMptOut1
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, specificLedger);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, specificLedger);
     ON_CALL(*backend_, fetchLedgerBySequence(specificLedger, _)).WillByDefault(Return(ledgerInfo));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
@@ -1243,7 +1243,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterSpecificLedger)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -1264,7 +1264,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterDuplicates)
         kMptOut2
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -1295,7 +1295,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterDuplicates)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);
@@ -1316,7 +1316,7 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
         kMptOut1
     );
 
-    auto ledgerInfo = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerInfo = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const issuanceKk = xrpl::keylet::mptokenIssuance(xrpl::uint192(kMptId)).key;
     ON_CALL(*backend_, doFetchLedgerObject(issuanceKk, 30, _))
@@ -1349,7 +1349,7 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
         )
     );
     runSpawn([&, this](auto& yield) {
-        auto handler = AnyHandler{MPTHoldersHandler{this->backend_}};
+        auto const handler = AnyHandler{MPTHoldersHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(currentOutput), *output.result);

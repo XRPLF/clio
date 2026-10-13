@@ -112,7 +112,7 @@ makeConnection(
     SslDetectionResult sslDetectionResult,
     std::optional<boost::asio::ssl::context>& sslContext,
     std::string ip,
-    util::TagDecoratorFactory& tagDecoratorFactory,
+    util::TagDecoratorFactory const& tagDecoratorFactory,
     Server::OnConnectCheck onConnectCheck,
     size_t maxSendingQueueSize,
     boost::asio::yield_context yield
@@ -165,7 +165,7 @@ makeConnection(
 std::expected<ConnectionPtr, std::string>
 tryUpgradeConnection(
     impl::UpgradableConnectionPtr connection,
-    util::TagDecoratorFactory& tagDecoratorFactory,
+    util::TagDecoratorFactory const& tagDecoratorFactory,
     size_t maxSendingQueueSize,
     boost::asio::yield_context yield
 )

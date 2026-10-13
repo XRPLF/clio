@@ -15,8 +15,8 @@ TEST(SslContext, Create)
 
 TEST(SslContext, IsCached)
 {
-    auto& first = getClientSslContext();
-    auto& second = getClientSslContext();
+    auto const& first = getClientSslContext();
+    auto const& second = getClientSslContext();
 
     // Same shared instance is returned on every call
     EXPECT_EQ(&first, &second);

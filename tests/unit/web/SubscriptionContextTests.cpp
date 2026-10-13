@@ -29,14 +29,14 @@ protected:
 
 TEST_F(SubscriptionContextTests, send)
 {
-    auto message = std::make_shared<std::string>("message");
+    auto const message = std::make_shared<std::string>("message");
     EXPECT_CALL(*connection_, send(message));
     subscriptionContext_.send(message);
 }
 
 TEST_F(SubscriptionContextTests, sendConnectionExpired)
 {
-    auto message = std::make_shared<std::string>("message");
+    auto const message = std::make_shared<std::string>("message");
     connection_.reset();
     subscriptionContext_.send(message);
 }

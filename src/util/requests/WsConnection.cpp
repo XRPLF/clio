@@ -125,7 +125,7 @@ template <typename StreamDataType>
 std::expected<WsConnectionPtr, RequestError>
 WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_context yield) const
 {
-    auto context = asio::get_associated_executor(yield);
+    auto const context = asio::get_associated_executor(yield);
     beast::error_code errorCode;
 
     asio::ip::tcp::resolver resolver(context);
@@ -136,7 +136,7 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
     auto& ws = streamData.stream;
 
     beast::get_lowest_layer(ws).expires_after(connectionTimeout_);
-    auto endpoint = beast::get_lowest_layer(ws).async_connect(results, yield[errorCode]);
+    auto const endpoint = beast::get_lowest_layer(ws).async_connect(results, yield[errorCode]);
     if (errorCode)
         return std::unexpected{RequestError{"Connect error", errorCode}};
 

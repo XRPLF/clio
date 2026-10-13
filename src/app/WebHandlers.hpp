@@ -232,7 +232,7 @@ public:
                                   << "Received request from ip = " << connectionMetadata.ip()
                                   << " - posting to WorkQueue";
 
-        connectionMetadata.setIsAdmin([this, &request, &connectionMetadata]() {
+        connectionMetadata.setIsAdmin([this, &request, &connectionMetadata] {
             return adminVerifier_->isAdmin(request.httpHeaders(), connectionMetadata.ip());
         });
 

@@ -75,7 +75,7 @@ TEST_F(WorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
     std::condition_variable cv;
 
     for (auto i = 0u; i < kTotal; ++i) {
-        auto res = queue.postCoro(
+        auto const res = queue.postCoro(
             [&](auto /* yield */) {
                 std::unique_lock lk{mtx};
                 cv.wait(lk, [&] { return unblocked; });
@@ -208,7 +208,7 @@ TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingAndQueueIsEmpty)
         queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false)
     );
 
-    EXPECT_CALL(onTasksComplete, Call()).WillOnce([&]() { EXPECT_EQ(queue.size(), 0u); });
+    EXPECT_CALL(onTasksComplete, Call()).WillOnce([&] { EXPECT_EQ(queue.size(), 0u); });
     queue.requestStop(onTasksComplete.AsStdFunction());
     queue.stop();
 }
@@ -226,7 +226,7 @@ TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingOnLastTask)
         /* isWhiteListed = */ false
     ));
 
-    EXPECT_CALL(onTasksComplete, Call()).WillOnce([&]() { EXPECT_EQ(queue.size(), 0u); });
+    EXPECT_CALL(onTasksComplete, Call()).WillOnce([&] { EXPECT_EQ(queue.size(), 0u); });
     queue.requestStop(onTasksComplete.AsStdFunction());
     semaphore.release();
 
@@ -269,9 +269,12 @@ TEST_F(WorkQueueMockPrometheusTest, postCoroCounters)
 struct WorkQueueDeathTest : WorkQueueMockPrometheusTest, common::util::WithMockAssert {};
 TEST_F(WorkQueueDeathTest, DISABLED_ExecuteTaskAssertsWhenQueueIsEmpty)
 {
+    // const& triggers a GCC -Wdangling-reference false positive
+    // NOLINTBEGIN(misc-const-correctness)
     [[maybe_unused]] auto& queuedMock = makeMock<CounterInt>("work_queue_queued_total_number", "");
     [[maybe_unused]] auto& durationMock =
         makeMock<CounterInt>("work_queue_cumulative_tasks_duration_us", "");
+    // NOLINTEND(misc-const-correctness)
     auto& curSizeMock = makeMock<GaugeInt>("work_queue_current_size", "");
 
     EXPECT_CALL(curSizeMock, value()).WillRepeatedly(::testing::Return(1));  // lie about the size

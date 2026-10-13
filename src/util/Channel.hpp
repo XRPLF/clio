@@ -143,7 +143,7 @@ public:
          * @param shared The shared control block managing the channel state
          */
         Sender(std::shared_ptr<ControlBlock> shared)
-            : shared_(shared), guard_([shared = std::move(shared)]() {
+            : shared_(shared), guard_([shared = std::move(shared)] {
                 if constexpr (kIsMultiProducer) {
                     return std::make_shared<Guard>(std::move(shared));
                 } else {
@@ -268,7 +268,7 @@ public:
          * @param shared The shared control block managing the channel state
          */
         Receiver(std::shared_ptr<ControlBlock> shared)
-            : shared_(shared), guard_([shared = std::move(shared)]() {
+            : shared_(shared), guard_([shared = std::move(shared)] {
                 if constexpr (kIsMultiConsumer) {
                     return std::make_shared<Guard>(std::move(shared));
                 } else {

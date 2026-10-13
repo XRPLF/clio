@@ -99,7 +99,7 @@ public:
     void
     emit(Key const& key, Args const&... args)
     {
-        auto const signal = [this, &key]() -> SignalPtr {
+        auto const signal = [this, &key] -> SignalPtr {
             auto map = signalsMap_.template lock<std::scoped_lock>();
             auto const it = map->find(key);
             return it == map->end() ? nullptr : it->second;

@@ -50,14 +50,14 @@ TYPED_TEST(ExecutionContextTests, move)
 
 TYPED_TEST(ExecutionContextTests, execute)
 {
-    auto res = this->ctx.execute([]() { return 42; });
+    auto res = this->ctx.execute([] { return 42; });
     EXPECT_EQ(res.get().value(), 42);
 }
 
 TYPED_TEST(ExecutionContextTests, executeVoid)
 {
     auto value = 0;
-    auto res = this->ctx.execute([&value]() { value = 42; });
+    auto res = this->ctx.execute([&value] { value = 42; });
 
     res.wait();
     ASSERT_EQ(value, 42);
@@ -65,7 +65,7 @@ TYPED_TEST(ExecutionContextTests, executeVoid)
 
 TYPED_TEST(ExecutionContextTests, executeStdException)
 {
-    auto res = this->ctx.execute([]() { throw std::runtime_error("test"); });
+    auto res = this->ctx.execute([] { throw std::runtime_error("test"); });
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("test"));
@@ -74,7 +74,7 @@ TYPED_TEST(ExecutionContextTests, executeStdException)
 
 TYPED_TEST(ExecutionContextTests, executeUnknownException)
 {
-    auto res = this->ctx.execute([]() { throw 0; });
+    auto res = this->ctx.execute([] { throw 0; });
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("unknown"));
@@ -147,7 +147,7 @@ TYPED_TEST(ExecutionContextTests, timerAutoCancels)
     auto value = 0;
     std::binary_semaphore sem{0};
     {
-        auto res = this->ctx.scheduleAfter(
+        auto const res = this->ctx.scheduleAfter(
             std::chrono::milliseconds(1),
             [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
                 if (cancelled)
@@ -199,7 +199,7 @@ TYPED_TEST(ExecutionContextTests, repeatingOperation)
     std::atomic_size_t callCount = 0uz;
 
     auto res = this->ctx.executeRepeatedly(repeatDelay, [&] { ++callCount; });
-    auto timeSpent = util::timed([timeout] {
+    auto const timeSpent = util::timed([timeout] {
         std::this_thread::sleep_for(timeout);
     });  // calculate actual time spent
 
@@ -222,7 +222,7 @@ TYPED_TEST(ExecutionContextTests, repeatingOperationForceInvoke)
         if (--callCount == 0uz)
             unblock.release();
     });
-    for ([[maybe_unused]] auto unused : std::views::iota(0uz, callCount.load()))
+    for ([[maybe_unused]] auto const unused : std::views::iota(0uz, callCount.load()))
         res.invoke();
 
     unblock.acquire();
@@ -277,7 +277,7 @@ TYPED_TEST(ExecutionContextTests, strand)
 TYPED_TEST(ExecutionContextTests, strandStdException)
 {
     auto strand = this->ctx.makeStrand();
-    auto res = strand.execute([]() { throw std::runtime_error("test"); });
+    auto res = strand.execute([] { throw std::runtime_error("test"); });
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("test"));
@@ -287,7 +287,7 @@ TYPED_TEST(ExecutionContextTests, strandStdException)
 TYPED_TEST(ExecutionContextTests, strandUnknownException)
 {
     auto strand = this->ctx.makeStrand();
-    auto res = strand.execute([]() { throw 0; });
+    auto res = strand.execute([] { throw 0; });
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("unknown"));
@@ -318,7 +318,7 @@ TYPED_TEST(ExecutionContextTests, strandedRepeatingOperation)
     auto callCount = 0uz;
 
     auto res = strand.executeRepeatedly(repeatDelay, [&] { ++callCount; });
-    auto timeSpent = util::timed([timeout] {
+    auto const timeSpent = util::timed([timeout] {
         std::this_thread::sleep_for(timeout);
     });  // calculate actual time spent
 
@@ -342,7 +342,7 @@ TYPED_TEST(ExecutionContextTests, strandedRepeatingOperationForceInvoke)
         if (--callCount == 0uz)
             unblock.release();
     });
-    for ([[maybe_unused]] auto unused : std::views::iota(0uz, callCount))
+    for ([[maybe_unused]] auto const unused : std::views::iota(0uz, callCount))
         res.invoke();
 
     unblock.acquire();
@@ -386,7 +386,7 @@ TYPED_TEST(AsyncExecutionContextTests, executeAutoAborts)
     std::binary_semaphore sem{0};
 
     {
-        auto res = this->ctx.execute([&](auto stopRequested) {
+        auto const res = this->ctx.execute([&](auto stopRequested) {
             while (not stopRequested)
                 ;
             value = 42;
@@ -406,7 +406,7 @@ TYPED_TEST(AsyncExecutionContextTests, repeatingOperationAutoAborts)
     auto timeSpentMs = 0u;
 
     {
-        auto res = this->ctx.executeRepeatedly(repeatDelay, [&] { ++callCount; });
+        auto const res = this->ctx.executeRepeatedly(repeatDelay, [&] { ++callCount; });
         timeSpentMs = util::timed([timeout] {
             std::this_thread::sleep_for(timeout);
         });  // calculate actual time spent

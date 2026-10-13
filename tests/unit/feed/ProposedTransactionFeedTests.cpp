@@ -286,7 +286,7 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransactionV2)
 
 TEST_F(FeedProposedTransactionTest, MixedVersionSubscribers)
 {
-    auto sessionV2Ptr = std::make_shared<MockSession>();
+    auto const sessionV2Ptr = std::make_shared<MockSession>();
     auto* mockSessionV2Ptr = dynamic_cast<MockSession*>(sessionV2Ptr.get());
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);

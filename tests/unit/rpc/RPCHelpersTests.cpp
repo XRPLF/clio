@@ -90,7 +90,7 @@ protected:
 TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidIndexNotHex)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
-        auto account = getAccountIdWithString(kAccount);
+        auto const account = getAccountIdWithString(kAccount);
         auto ret = traverseOwnedNodes(*backend_, account, 9, 10, "nothex,10", yield, [](auto) {
 
         });
@@ -104,7 +104,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidIndexNotHex)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
-        auto account = getAccountIdWithString(kAccount);
+        auto const account = getAccountIdWithString(kAccount);
         auto ret = traverseOwnedNodes(*backend_, account, 9, 10, "nothex,abc", yield, [](auto) {
 
         });
@@ -119,7 +119,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 {
     auto account = getAccountIdWithString(kAccount);
-    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     // return owner index
@@ -153,7 +153,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 {
     auto account = getAccountIdWithString(kAccount);
-    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     std::vector<Blob> bbs;
@@ -191,10 +191,10 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 {
     auto account = getAccountIdWithString(kAccount);
-    auto ownerDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     static constexpr auto kNextPage = 99;
     static constexpr auto kLimit = 15;
-    auto ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNextPage).key;
+    auto const ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNextPage).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
@@ -244,7 +244,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 {
     auto account = getAccountIdWithString(kAccount);
-    auto ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), 99).key;
+    auto const ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), 99).key;
     static constexpr auto kLimit = 8;
     static constexpr auto kPageNum = 99;
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -298,7 +298,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
 {
     auto account = getAccountIdWithString(kAccount);
-    auto ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), 99).key;
+    auto const ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), 99).key;
     static constexpr auto kLimit = 8;
     static constexpr auto kPageNum = 99;
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
@@ -342,6 +342,12 @@ TEST_F(RPCHelpersTest, EncodeCTID)
     ASSERT_TRUE(ctid);
     EXPECT_EQ(*ctid, "C000123400670089");  // NOLINT(bugprone-unchecked-optional-access)
     EXPECT_FALSE(encodeCTID(0x1FFFFFFF, 0x67, 0x89));
+}
+
+TEST_F(RPCHelpersTest, EncodeCTIDRejectsNetworkIdAbove16Bits)
+{
+    uint32_t const networkId = 0x10000;
+    EXPECT_FALSE(encodeCTID(0x1234, 0x67, networkId));
 }
 
 TEST_F(RPCHelpersTest, DecodeCTIDString)
@@ -1395,7 +1401,7 @@ TEST_F(RPCHelpersTest, AccountHoldsFixLPTAmendmentDisabled)
         .WillOnce(Return(false));
 
     util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
-        auto ret = accountHolds(
+        auto const ret = accountHolds(
             *backend_,
             *mockAmendmentCenterPtr_,
             0,
@@ -1440,7 +1446,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenNotAMMAccount)
         .WillRepeatedly(Return(account2Root.getSerializer().peekData()));
 
     util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
-        auto ret = accountHolds(
+        auto const ret = accountHolds(
             *backend_,
             *mockAmendmentCenterPtr_,
             0,
@@ -1459,7 +1465,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
 {
     auto ammAccount = getAccountIdWithString(kAmmAccount);
     auto account = getAccountIdWithString(kAccount);
-    auto issuer = getAccountIdWithString(kIssuer);
+    auto const issuer = getAccountIdWithString(kIssuer);
 
     auto const lptRippleState = createRippleStateLedgerObject(
         kLptokenCurrency, kAmmAccount, 100, kAccount, 100, kAmmAccount, 100, kTxnId, 3
@@ -1503,7 +1509,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
         .WillOnce(Return(issuerAccountRoot.getSerializer().peekData()));
 
     util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
-        auto ret = accountHolds(
+        auto const ret = accountHolds(
             *backend_,
             *mockAmendmentCenterPtr_,
             0,
@@ -1522,7 +1528,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset2Frozen)
 {
     auto ammAccount = getAccountIdWithString(kAmmAccount);
     auto account = getAccountIdWithString(kAccount);
-    auto issuer = getAccountIdWithString(kIssuer);
+    auto const issuer = getAccountIdWithString(kIssuer);
 
     auto const lptRippleState = createRippleStateLedgerObject(
         kLptokenCurrency, kAmmAccount, 100, kAccount, 100, kAmmAccount, 100, kTxnId, 3
@@ -1565,7 +1571,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset2Frozen)
         .WillOnce(Return(issuerAccountRoot.getSerializer().peekData()));
 
     util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
-        auto ret = accountHolds(
+        auto const ret = accountHolds(
             *backend_,
             *mockAmendmentCenterPtr_,
             0,
@@ -1584,7 +1590,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
 {
     auto ammAccount = getAccountIdWithString(kAmmAccount);
     auto account = getAccountIdWithString(kAccount);
-    auto issuer = getAccountIdWithString(kIssuer);
+    auto const issuer = getAccountIdWithString(kIssuer);
 
     auto const lptRippleState = createRippleStateLedgerObject(
         kLptokenCurrency, kAmmAccount, 100, kAccount, 100, kAmmAccount, 100, kTxnId, 3
@@ -1634,7 +1640,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
         .WillOnce(Return(usdRippleState.getSerializer().peekData()));
 
     util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
-        auto ret = accountHolds(
+        auto const ret = accountHolds(
             *backend_,
             *mockAmendmentCenterPtr_,
             0,

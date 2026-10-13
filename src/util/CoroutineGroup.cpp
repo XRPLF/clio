@@ -53,7 +53,7 @@ CoroutineGroup::registerForeign(boost::asio::yield_context yield)
     ++childrenCounter_;
     // It is important to spawn onCoroutineCompleted() to the same coroutine as will be calling
     // asyncWait(). timer_ here is not thread safe, so without spawn there could be a data race.
-    return [this, yield]() { util::spawn(yield, [this](auto&&) { onCoroutineCompleted(); }); };
+    return [this, yield] { util::spawn(yield, [this](auto&&) { onCoroutineCompleted(); }); };
 }
 
 void

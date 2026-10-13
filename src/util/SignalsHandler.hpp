@@ -113,7 +113,7 @@ private:
     void
     runStateMachine();
 
-    static constexpr auto kDefaultForceExitHandler = []() { std::exit(EXIT_FAILURE); };
+    static constexpr auto kDefaultForceExitHandler = [] { std::exit(EXIT_FAILURE); };
 };
 
 }  // namespace util

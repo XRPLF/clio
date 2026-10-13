@@ -25,16 +25,16 @@ UnsubscribeHandler::Result
 UnsubscribeHandler::process(Input const& input, Context const& ctx) const
 {
     if (input.streams)
-        unsubscribeFromStreams(*(input.streams), ctx.session);
+        unsubscribeFromStreams(*input.streams, ctx.session);
 
     if (input.accounts)
-        unsubscribeFromAccounts(*(input.accounts), ctx.session);
+        unsubscribeFromAccounts(*input.accounts, ctx.session);
 
     if (input.accountsProposed)
-        unsubscribeFromProposedAccounts(*(input.accountsProposed), ctx.session);
+        unsubscribeFromProposedAccounts(*input.accountsProposed, ctx.session);
 
     if (input.books)
-        unsubscribeFromBooks(*(input.books), ctx.session);
+        unsubscribeFromBooks(*input.books, ctx.session);
 
     return Output{};
 }
