@@ -2598,7 +2598,7 @@ struct NormalPathTestBundle {
 namespace {
 
 // Tests only compare serialized fields, so the STObject part of the entry is enough
-xrpl::STObject
+[[nodiscard]] xrpl::STObject
 makeSponsorshipObject()
 {
     xrpl::STLedgerEntry const entry{xrpl::ltSPONSORSHIP, xrpl::uint256{kIndex1}};

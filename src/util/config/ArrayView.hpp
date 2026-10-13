@@ -243,13 +243,13 @@ private:
     ArrayView array_;
 };
 
-inline ArrayView::Elements<ValueView>
+[[nodiscard]] inline ArrayView::Elements<ValueView>
 ArrayView::values() const
 {
     return Elements<ValueView>{*this};
 }
 
-inline ArrayView::Elements<ObjectView>
+[[nodiscard]] inline ArrayView::Elements<ObjectView>
 ArrayView::objects() const
 {
     return Elements<ObjectView>{*this};
