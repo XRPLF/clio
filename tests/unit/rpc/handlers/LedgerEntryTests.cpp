@@ -2898,12 +2898,8 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::keylet::credential(
                                  account1,
                                  account2,
-                                 xrpl::Slice(
-                                     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                                     xrpl::strUnHex(kCredentialType)->data(),
-                                     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-                                     xrpl::strUnHex(kCredentialType)->size()
-                                 )
+                                 // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+                                 xrpl::makeSlice(*xrpl::strUnHex(kCredentialType))
             )
                                  .key,
             .mockedEntity = createCredentialObject(kAccount, kAccount2, kCredentialType),

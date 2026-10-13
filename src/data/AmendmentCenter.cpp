@@ -210,7 +210,7 @@ AmendmentCenter::operator[](AmendmentKey const& key) const
 xrpl::uint256
 Amendment::getAmendmentId(std::string_view name)
 {
-    return xrpl::sha512Half(xrpl::Slice(name.data(), name.size()));
+    return xrpl::sha512Half(xrpl::makeSlice(name));
 }
 
 std::optional<std::vector<xrpl::uint256>>

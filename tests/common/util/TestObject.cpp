@@ -693,7 +693,7 @@ createNftTokenPage(
     for (auto const& token : tokens) {
         auto entry = xrpl::STObject(xrpl::sfNFToken);
         entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{std::string_view{token.first}});
-        entry.setFieldVL(xrpl::sfURI, xrpl::Slice(token.second.c_str(), token.second.size()));
+        entry.setFieldVL(xrpl::sfURI, xrpl::makeSlice(token.second));
         list.push_back(std::move(entry));
     }
     tokenPage.setFieldArray(xrpl::sfNFTokens, list);
@@ -733,13 +733,13 @@ createMintNftTxWithMetadata(
     // finalFields contain new NFT while previousFields does not
     auto entry = xrpl::STObject(xrpl::sfNFToken);
     entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
-    char const* url = "testurl";
-    entry.setFieldVL(xrpl::sfURI, xrpl::Slice(url, 7));
+    std::string_view const url = "testurl";
+    entry.setFieldVL(xrpl::sfURI, xrpl::makeSlice(url));
     nftArray1.push_back(entry);
 
     auto entry2 = xrpl::STObject(xrpl::sfNFToken);
     entry2.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{kIndex1});
-    entry2.setFieldVL(xrpl::sfURI, xrpl::Slice(url, 7));
+    entry2.setFieldVL(xrpl::sfURI, xrpl::makeSlice(url));
     nftArray1.push_back(entry2);
 
     finalFields.setFieldArray(xrpl::sfNFTokens, nftArray1);
@@ -784,7 +784,7 @@ createMintNftTxWithMetadataOfCreatedNode(
     tx.setFieldU32(xrpl::sfSequence, seq);
     tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
     if (uri)
-        tx.setFieldVL(xrpl::sfURI, xrpl::Slice(uri->data(), uri->size()));
+        tx.setFieldVL(xrpl::sfURI, xrpl::makeSlice(*uri));
 
     // meta
     xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
@@ -800,7 +800,7 @@ createMintNftTxWithMetadataOfCreatedNode(
         auto entry = xrpl::STObject(xrpl::sfNFToken);
         entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{*nftID});
         if (uri)
-            entry.setFieldVL(xrpl::sfURI, xrpl::Slice(uri->data(), uri->size()));
+            entry.setFieldVL(xrpl::sfURI, xrpl::makeSlice(*uri));
 
         nftArray1.push_back(entry);
     }
@@ -862,8 +862,8 @@ createNftModifyTxWithMetadata(std::string_view accountId, std::string_view nftID
 
     auto entry2 = xrpl::STObject(xrpl::sfNFToken);
     entry2.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftID});
-    char const* url = "previous";
-    entry2.setFieldVL(xrpl::sfURI, xrpl::Slice(url, 7));
+    std::string_view const url = "previous";
+    entry2.setFieldVL(xrpl::sfURI, xrpl::makeSlice(url));
     nftArray2.push_back(entry2);
 
     finalFields.setFieldArray(xrpl::sfNFTokens, nftArray1);
@@ -1912,7 +1912,7 @@ createDelegateBlob(std::string_view owner, std::string_view delegate)
     obj.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(100));
     obj.setFieldAmount(xrpl::sfFee, xrpl::STAmount(10));
     obj.setFieldU32(xrpl::sfSequence, 1);
-    obj.setFieldVL(xrpl::sfSigningPubKey, xrpl::Slice(nullptr, 0));
+    obj.setFieldVL(xrpl::sfSigningPubKey, xrpl::Slice{});
 
     xrpl::STTx const tx(std::move(obj));
     xrpl::Serializer s;
