@@ -29,9 +29,11 @@ ExampleObjectsMigrator::runMigration(
 
     std::unordered_set<xrpl::uint256> idx;
     migration::cassandra::impl::ObjectsScanner scanner(
-        {.ctxThreadsNum = ctxFullScanThreads,
-         .jobsNum = jobsFullScan,
-         .cursorsPerJob = cursorPerJobsFullScan},
+        {
+            .ctxThreadsNum = ctxFullScanThreads,
+            .jobsNum = jobsFullScan,
+            .cursorsPerJob = cursorPerJobsFullScan,
+        },
         migration::cassandra::impl::ObjectsAdapter(
             backend, [&](std::uint32_t, std::optional<xrpl::SLE> sle) {
                 if (sle.has_value()) {

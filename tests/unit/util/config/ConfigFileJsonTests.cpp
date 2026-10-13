@@ -501,14 +501,14 @@ TEST_F(ConfigFileJsonTest, getAllKeys)
     std::ranges::sort(allKeys);
     EXPECT_EQ(allKeys.size(), 6);
 
-    std::vector<std::string> const expectedKeys{
-        {"array2.[]",
-         "array_of_objects.[].int",
-         "array_of_objects.[].string",
-         "int",
-         "object.array.[]",
-         "object.string"}
-    };
+    std::vector<std::string> const expectedKeys{{
+        "array2.[]",
+        "array_of_objects.[].int",
+        "array_of_objects.[].string",
+        "int",
+        "object.array.[]",
+        "object.string",
+    }};
     EXPECT_EQ(allKeys, expectedKeys);
 }
 

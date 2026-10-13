@@ -568,7 +568,7 @@ getParseAdminServerConfig(boost::json::value val)
         {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
         {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
         {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     };
     auto const errors = config.parse(jsonVal);
     [&] { ASSERT_FALSE(errors.has_value()); }();
@@ -583,7 +583,7 @@ TEST_P(WebServerAdminTest, WsAdminCheck)
     auto const cache = MockLedgerCache();
     auto const e = std::make_shared<AdminCheckExecutor>();
     ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(GetParam().config))
+        getParseAdminServerConfig(boost::json::parse(GetParam().config)),
     };
     auto const server = makeServerSync(serverConfig, ctx, dosGuardOverload, e, cache);
     WebSocketSyncClient wsClient;
@@ -600,7 +600,7 @@ TEST_P(WebServerAdminTest, HttpAdminCheck)
     auto const cache = MockLedgerCache();
     auto const e = std::make_shared<AdminCheckExecutor>();
     ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(GetParam().config))
+        getParseAdminServerConfig(boost::json::parse(GetParam().config)),
     };
     auto const server = makeServerSync(serverConfig, ctx, dosGuardOverload, e, cache);
     std::string const request = "Why hello";
@@ -712,9 +712,11 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
     );
 
     auto const e = std::make_shared<AdminCheckExecutor>();
-    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
-        boost::json::parse(jsonServerConfigWithBothAdminPasswordAndLocalAdmin)
-    )};
+    ClioConfigDefinition const serverConfig{
+        getParseAdminServerConfig(
+            boost::json::parse(jsonServerConfigWithBothAdminPasswordAndLocalAdmin)
+        ),
+    };
 
     MockLedgerCache const cache;
     auto const result = web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache);
@@ -736,9 +738,11 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
     );
 
     auto const e = std::make_shared<AdminCheckExecutor>();
-    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
-        boost::json::parse(jsonServerConfigWithNoAdminPasswordAndLocalAdminFalse)
-    )};
+    ClioConfigDefinition const serverConfig{
+        getParseAdminServerConfig(
+            boost::json::parse(jsonServerConfigWithNoAdminPasswordAndLocalAdminFalse)
+        ),
+    };
 
     MockLedgerCache const cache;
     auto const result = web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache);
@@ -752,9 +756,11 @@ TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
     auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     uint32_t const webServerPort = tests::util::generateFreePort();
-    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
-        boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort))
-    )};
+    ClioConfigDefinition const serverConfig{
+        getParseAdminServerConfig(
+            boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort))
+        ),
+    };
     auto const server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
     auto const [status, res] =
         HttpSyncClient::get("localhost", std::to_string(webServerPort), "", "/metrics");
@@ -783,7 +789,7 @@ TEST_F(WebServerPrometheusDisabledTest, rejectedIfPrometheusIsDisabled)
     auto const cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithDisabledPrometheus))
+        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithDisabledPrometheus)),
     };
     auto const server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::get(
@@ -791,10 +797,14 @@ TEST_F(WebServerPrometheusDisabledTest, rejectedIfPrometheusIsDisabled)
         std::to_string(webServerPort),
         "",
         "/metrics",
-        {WebHeader(
-            http::field::authorization,
-            fmt::format("{}{}", PasswordAdminVerificationStrategy::kPasswordPrefix, kSecretShA256)
-        )}
+        {
+            WebHeader(
+                http::field::authorization,
+                fmt::format(
+                    "{}{}", PasswordAdminVerificationStrategy::kPasswordPrefix, kSecretShA256
+                )
+            ),
+        }
     );
     EXPECT_EQ(res, "Prometheus is disabled in clio config");
     EXPECT_EQ(status, boost::beast::http::status::forbidden);
@@ -807,19 +817,25 @@ TEST_F(WebServerPrometheusTest, validResponse)
     auto& testCounter = PrometheusService::counterInt("test_counter", util::prometheus::Labels());
     ++testCounter;
     auto const e = std::make_shared<EchoExecutor>();
-    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
-        boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort))
-    )};
+    ClioConfigDefinition const serverConfig{
+        getParseAdminServerConfig(
+            boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort))
+        ),
+    };
     auto const server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::get(
         "localhost",
         std::to_string(webServerPort),
         "",
         "/metrics",
-        {WebHeader(
-            http::field::authorization,
-            fmt::format("{}{}", PasswordAdminVerificationStrategy::kPasswordPrefix, kSecretShA256)
-        )}
+        {
+            WebHeader(
+                http::field::authorization,
+                fmt::format(
+                    "{}{}", PasswordAdminVerificationStrategy::kPasswordPrefix, kSecretShA256
+                )
+            ),
+        }
     );
     EXPECT_EQ(res, "# TYPE test_counter counter\ntest_counter 1\n\n");
     EXPECT_EQ(status, boost::beast::http::status::ok);

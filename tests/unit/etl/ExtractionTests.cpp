@@ -40,16 +40,18 @@ TEST_F(ExtractionModelTests, LedgerDataCopyableAndEquatable)
 {
     auto const first = etl::model::LedgerData{
         .transactions =
-            {util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
-             util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
-             util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER)},
+            {
+                util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+                util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+                util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
+            },
         .objects = {util::createObject(), util::createObject(), util::createObject()},
         .successors =
             std::vector<etl::model::BookSuccessor>{{.firstBook = "first", .bookBase = "base"}},
         .edgeKeys = std::vector<std::string>{"key1", "key2"},
         .header = createLedgerHeader(kLedgerHash, kSeq, 1),
         .rawHeader = {1, 2, 3},
-        .seq = kSeq
+        .seq = kSeq,
     };
 
     auto const second = first;

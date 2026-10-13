@@ -75,7 +75,7 @@ LedgerCacheFile::write(DataView dataView)
     Header const header{
         .latestSeq = dataView.latestSeq,
         .mapSize = dataView.map.size(),
-        .deletedSize = dataView.deleted.size()
+        .deletedSize = dataView.deleted.size(),
     };
     file.write(header);
     file.write(kSeparator);

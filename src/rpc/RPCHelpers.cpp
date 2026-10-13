@@ -725,7 +725,8 @@ traverseOwnedNodes(
         // if limit reach , we return the next page and max as marker
         if (nftsCount >= limit) {
             return AccountCursor{
-                .index = nextNFTPage, .hint = std::numeric_limits<uint32_t>::max()
+                .index = nextNFTPage,
+                .hint = std::numeric_limits<uint32_t>::max(),
             };
         }
 

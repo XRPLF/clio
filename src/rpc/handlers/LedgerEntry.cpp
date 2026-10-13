@@ -250,7 +250,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
         return locatorFrom(*input.offer, xrpl::ltOFFER, [](le::OfferEntry const& entry) {
             return LocatorOrStatus{Locator{
                 .key =
-                    xrpl::keylet::offer(entry.account, xrpl::SeqProxy::rawSequence(entry.seq)).key
+                    xrpl::keylet::offer(entry.account, xrpl::SeqProxy::rawSequence(entry.seq)).key,
             }};
         });
     }
@@ -262,7 +262,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
                     .key = xrpl::keylet::trustLine(
                                entry.accounts[0], entry.accounts[1], entry.currency
                     )
-                               .key
+                               .key,
                 }};
             }
         );
@@ -271,7 +271,8 @@ resolveLocator(Input const& input, uint32_t apiVersion)
     if (input.escrow.has_value()) {
         return locatorFrom(*input.escrow, xrpl::ltESCROW, [](le::EscrowEntry const& entry) {
             return LocatorOrStatus{Locator{
-                .key = xrpl::keylet::escrow(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key
+                .key =
+                    xrpl::keylet::escrow(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key,
             }};
         });
     }
@@ -284,7 +285,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
             return LocatorOrStatus{Locator{
                 .key =
                     xrpl::keylet::ticket(entry.account, xrpl::SeqProxy::rawTicket(entry.ticketSeq))
-                        .key
+                        .key,
             }};
         });
     }
@@ -306,7 +307,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
             xrpl::ltXCHAIN_OWNED_CLAIM_ID,
             [](le::XChainClaimIdEntry const& entry) {
                 return LocatorOrStatus{Locator{
-                    .key = xrpl::keylet::xChainClaimID(makeBridge(entry.bridge), entry.claimId).key
+                    .key = xrpl::keylet::xChainClaimID(makeBridge(entry.bridge), entry.claimId).key,
                 }};
             }
         );
@@ -321,7 +322,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
                     .key = xrpl::keylet::xChainCreateAccountClaimID(
                                makeBridge(entry.bridge), entry.claimId
                     )
-                               .key
+                               .key,
                 }};
             }
         );
@@ -355,7 +356,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
                     .key = xrpl::keylet::permissionedDomain(
                                entry.account, xrpl::SeqProxy::rawSequence(entry.seq)
                     )
-                               .key
+                               .key,
                 }};
             }
         );
@@ -364,7 +365,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
     if (input.vault.has_value()) {
         return locatorFrom(*input.vault, xrpl::ltVAULT, [](le::VaultEntry const& entry) {
             return LocatorOrStatus{Locator{
-                .key = xrpl::keylet::vault(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key
+                .key = xrpl::keylet::vault(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key,
             }};
         });
     }
@@ -376,7 +377,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
                     .key = xrpl::keylet::loanBroker(
                                entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)
                     )
-                               .key
+                               .key,
                 }};
             }
         );
@@ -388,7 +389,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
                 .key = xrpl::keylet::loan(
                            entry.loanBrokerId, xrpl::SeqProxy::rawSequence(entry.loanSeq)
                 )
-                           .key
+                           .key,
             }};
         });
     }

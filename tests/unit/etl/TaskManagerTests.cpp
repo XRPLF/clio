@@ -106,7 +106,7 @@ createTestData(uint32_t seq)
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = seq
+        .seq = seq,
     };
 }
 

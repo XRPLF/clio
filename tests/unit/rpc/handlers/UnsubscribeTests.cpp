@@ -60,91 +60,91 @@ generateTestValuesForParametersTest()
             .testName = "AccountsNotArray",
             .testJson = R"JSON({"accounts": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "accountsNotArray"
+            .expectedErrorMessage = "accountsNotArray",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "AccountsItemNotString",
             .testJson = R"JSON({"accounts": [123]})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "accounts'sItemNotString"
+            .expectedErrorMessage = "accounts'sItemNotString",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "AccountsItemInvalidString",
             .testJson = R"JSON({"accounts": ["123"]})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "accounts'sItemMalformed"
+            .expectedErrorMessage = "accounts'sItemMalformed",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "AccountsEmptyArray",
             .testJson = R"JSON({"accounts": []})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "accounts malformed."
+            .expectedErrorMessage = "accounts malformed.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "AccountsProposedNotArray",
             .testJson = R"JSON({"accounts_proposed": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "accounts_proposedNotArray"
+            .expectedErrorMessage = "accounts_proposedNotArray",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "AccountsProposedItemNotString",
             .testJson = R"JSON({"accounts_proposed": [123]})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "accounts_proposed'sItemNotString"
+            .expectedErrorMessage = "accounts_proposed'sItemNotString",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "AccountsProposedItemInvalidString",
             .testJson = R"JSON({"accounts_proposed": ["123"]})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "accounts_proposed'sItemMalformed"
+            .expectedErrorMessage = "accounts_proposed'sItemMalformed",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "AccountsProposedEmptyArray",
             .testJson = R"JSON({"accounts_proposed": []})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "accounts_proposed malformed."
+            .expectedErrorMessage = "accounts_proposed malformed.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "StreamsNotArray",
             .testJson = R"JSON({"streams": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "streamsNotArray"
+            .expectedErrorMessage = "streamsNotArray",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "StreamNotString",
             .testJson = R"JSON({"streams": [1]})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "streamNotString"
+            .expectedErrorMessage = "streamNotString",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "StreamNotValid",
             .testJson = R"JSON({"streams": ["1"]})JSON",
             .expectedError = "malformedStream",
-            .expectedErrorMessage = "Stream malformed."
+            .expectedErrorMessage = "Stream malformed.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksNotArray",
             .testJson = R"JSON({"books": "1"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "booksNotArray"
+            .expectedErrorMessage = "booksNotArray",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemNotObject",
             .testJson = R"JSON({"books": ["1"]})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "booksItemNotObject"
+            .expectedErrorMessage = "booksItemNotObject",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemMissingTakerPays",
             .testJson = R"JSON({"books": [{"taker_gets": {"currency": "XRP"}}]})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Missing field 'taker_pays'"
+            .expectedErrorMessage = "Missing field 'taker_pays'",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemMissingTakerGets",
             .testJson = R"JSON({"books": [{"taker_pays": {"currency": "XRP"}}]})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Missing field 'taker_gets'"
+            .expectedErrorMessage = "Missing field 'taker_gets'",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsNotObject",
@@ -159,7 +159,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Field 'taker_gets' is not an object"
+            .expectedErrorMessage = "Field 'taker_gets' is not an object",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysNotObject",
@@ -174,7 +174,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Field 'taker_pays' is not an object"
+            .expectedErrorMessage = "Field 'taker_pays' is not an object",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysMissingCurrency",
@@ -189,7 +189,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "srcCurMalformed",
-            .expectedErrorMessage = "Source currency is malformed."
+            .expectedErrorMessage = "Source currency is malformed.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsMissingCurrency",
@@ -204,7 +204,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "dstAmtMalformed",
-            .expectedErrorMessage = "Destination amount/currency/issuer is malformed."
+            .expectedErrorMessage = "Destination amount/currency/issuer is malformed.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysCurrencyNotString",
@@ -222,7 +222,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "srcCurMalformed",
-            .expectedErrorMessage = "Source currency is malformed."
+            .expectedErrorMessage = "Source currency is malformed.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsCurrencyNotString",
@@ -240,7 +240,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "dstAmtMalformed",
-            .expectedErrorMessage = "Destination amount/currency/issuer is malformed."
+            .expectedErrorMessage = "Destination amount/currency/issuer is malformed.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysInvalidCurrency",
@@ -258,7 +258,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "srcCurMalformed",
-            .expectedErrorMessage = "Source currency is malformed."
+            .expectedErrorMessage = "Source currency is malformed.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsInvalidCurrency",
@@ -276,7 +276,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "dstAmtMalformed",
-            .expectedErrorMessage = "Destination amount/currency/issuer is malformed."
+            .expectedErrorMessage = "Destination amount/currency/issuer is malformed.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysMissingIssuer",
@@ -293,7 +293,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "srcIsrMalformed",
-            .expectedErrorMessage = "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
+            .expectedErrorMessage = "Invalid field 'taker_pays.issuer', expected non-XRP issuer.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsMissingIssuer",
@@ -310,7 +310,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "dstIsrMalformed",
-            .expectedErrorMessage = "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
+            .expectedErrorMessage = "Invalid field 'taker_gets.issuer', expected non-XRP issuer.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysIssuerNotString",
@@ -328,7 +328,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "takerPaysIssuerNotString"
+            .expectedErrorMessage = "takerPaysIssuerNotString",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsIssuerNotString",
@@ -346,7 +346,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "taker_gets.issuer should be string"
+            .expectedErrorMessage = "taker_gets.issuer should be string",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysInvalidIssuer",
@@ -364,7 +364,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "srcIsrMalformed",
-            .expectedErrorMessage = "Source issuer is malformed."
+            .expectedErrorMessage = "Source issuer is malformed.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsInvalidIssuer",
@@ -382,7 +382,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "dstIsrMalformed",
-            .expectedErrorMessage = "Invalid field 'taker_gets.issuer', bad issuer."
+            .expectedErrorMessage = "Invalid field 'taker_gets.issuer', bad issuer.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsXRPHasIssuer",
@@ -402,7 +402,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "dstIsrMalformed",
             .expectedErrorMessage =
-                "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+                "Unneeded field 'taker_gets.issuer' for XRP currency specification.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysXRPHasIssuer",
@@ -422,7 +422,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "srcIsrMalformed",
             .expectedErrorMessage =
-                "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+                "Unneeded field 'taker_pays.issuer' for XRP currency specification.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemBadMartket",
@@ -439,7 +439,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "No such market."
+            .expectedErrorMessage = "No such market.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemInvalidBoth",
@@ -458,25 +458,25 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "bothNotBool"
+            .expectedErrorMessage = "bothNotBool",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "StreamPeerStatusNotSupport",
             .testJson = R"JSON({"streams": ["peer_status"]})JSON",
             .expectedError = "notSupported",
-            .expectedErrorMessage = "Operation not supported."
+            .expectedErrorMessage = "Operation not supported.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "StreamConsensusNotSupport",
             .testJson = R"JSON({"streams": ["consensus"]})JSON",
             .expectedError = "notSupported",
-            .expectedErrorMessage = "Operation not supported."
+            .expectedErrorMessage = "Operation not supported.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "StreamServerNotSupport",
             .testJson = R"JSON({"streams": ["server"]})JSON",
             .expectedError = "notSupported",
-            .expectedErrorMessage = "Operation not supported."
+            .expectedErrorMessage = "Operation not supported.",
         },
     };
 }

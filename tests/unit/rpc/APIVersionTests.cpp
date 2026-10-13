@@ -85,7 +85,7 @@ TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
     ClioConfigDefinition const cfg{
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(kMinApiVersion)},
         {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(kMaxApiVersion)},
-        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(kDefaultApiVersion)}
+        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(kDefaultApiVersion)},
     };
 
     ProductionAPIVersionParser const configuredParser{cfg.getObject("api_version")};

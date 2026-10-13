@@ -93,7 +93,7 @@ generateTestValuesForParametersTest()
                 "binary": "invalid"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
 
         ParamTestCaseBundle{
@@ -102,7 +102,7 @@ generateTestValuesForParametersTest()
                 "account_root": "invalid"
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
 
         ParamTestCaseBundle{
@@ -111,7 +111,7 @@ generateTestValuesForParametersTest()
                 "did": "invalid"
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
 
         ParamTestCaseBundle{
@@ -120,7 +120,7 @@ generateTestValuesForParametersTest()
                 "account_root": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "account_rootNotString"
+            .expectedErrorMessage = "account_rootNotString",
         },
 
         ParamTestCaseBundle{
@@ -129,14 +129,14 @@ generateTestValuesForParametersTest()
                 "ledger_index": "wrong"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
 
         ParamTestCaseBundle{
             .testName = "UnknownOption",
             .testJson = R"JSON({})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "No ledger_entry params provided."
+            .expectedErrorMessage = "No ledger_entry params provided.",
         },
 
         ParamTestCaseBundle{
@@ -145,7 +145,7 @@ generateTestValuesForParametersTest()
                 "deposit_preauth": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
 
         ParamTestCaseBundle{
@@ -154,7 +154,7 @@ generateTestValuesForParametersTest()
                 "deposit_preauth": "invalid"
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -163,7 +163,7 @@ generateTestValuesForParametersTest()
                 "deposit_preauth": {}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'owner' missing"
+            .expectedErrorMessage = "Required field 'owner' missing",
         },
 
         ParamTestCaseBundle{
@@ -175,7 +175,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedOwner",
-            .expectedErrorMessage = "Malformed owner."
+            .expectedErrorMessage = "Malformed owner.",
         },
 
         ParamTestCaseBundle{
@@ -187,7 +187,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedOwner",
-            .expectedErrorMessage = "Malformed owner."
+            .expectedErrorMessage = "Malformed owner.",
         },
 
         ParamTestCaseBundle{
@@ -202,7 +202,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "authorizedNotString"
+            .expectedErrorMessage = "authorizedNotString",
         },
 
         ParamTestCaseBundle{
@@ -217,7 +217,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "authorized_credentials not array"
+            .expectedErrorMessage = "authorized_credentials not array",
         },
 
         ParamTestCaseBundle{
@@ -232,7 +232,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "authorized_credentials elements in array are not objects."
+            .expectedErrorMessage = "authorized_credentials elements in array are not objects.",
         },
 
         ParamTestCaseBundle{
@@ -246,7 +246,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Must have one of authorized or authorized_credentials."
+            .expectedErrorMessage = "Must have one of authorized or authorized_credentials.",
         },
 
         ParamTestCaseBundle{
@@ -270,7 +270,7 @@ generateTestValuesForParametersTest()
                 kCredentialType
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Must have one of authorized or authorized_credentials."
+            .expectedErrorMessage = "Must have one of authorized or authorized_credentials.",
         },
 
         ParamTestCaseBundle{
@@ -286,7 +286,8 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "Requires at least one element in authorized_credentials array."
+            .expectedErrorMessage =
+                "Requires at least one element in authorized_credentials array.",
         },
 
         ParamTestCaseBundle{
@@ -306,7 +307,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "Field 'CredentialType' is required but missing."
+            .expectedErrorMessage = "Field 'CredentialType' is required but missing.",
         },
 
         ParamTestCaseBundle{
@@ -326,7 +327,7 @@ generateTestValuesForParametersTest()
                 kCredentialType
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "Field 'Issuer' is required but missing."
+            .expectedErrorMessage = "Field 'Issuer' is required but missing.",
         },
 
         ParamTestCaseBundle{
@@ -347,7 +348,7 @@ generateTestValuesForParametersTest()
                 kCredentialType
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "issuer NotString"
+            .expectedErrorMessage = "issuer NotString",
         },
 
         ParamTestCaseBundle{
@@ -368,7 +369,7 @@ generateTestValuesForParametersTest()
                 kCredentialType
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "issuer NotString"
+            .expectedErrorMessage = "issuer NotString",
         },
 
         ParamTestCaseBundle{
@@ -389,7 +390,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "credential_type NotString"
+            .expectedErrorMessage = "credential_type NotString",
         },
 
         ParamTestCaseBundle{
@@ -410,7 +411,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "credential_type NotHexString"
+            .expectedErrorMessage = "credential_type NotHexString",
         },
 
         ParamTestCaseBundle{
@@ -431,7 +432,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "credential_type is empty"
+            .expectedErrorMessage = "credential_type is empty",
         },
 
         ParamTestCaseBundle{
@@ -459,7 +460,7 @@ generateTestValuesForParametersTest()
                 kCredentialType
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "duplicates in credentials."
+            .expectedErrorMessage = "duplicates in credentials.",
         },
 
         ParamTestCaseBundle{
@@ -468,7 +469,7 @@ generateTestValuesForParametersTest()
                 "ticket": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
 
         ParamTestCaseBundle{
@@ -477,7 +478,7 @@ generateTestValuesForParametersTest()
                 "ticket": "invalid"
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -486,7 +487,7 @@ generateTestValuesForParametersTest()
                 "ticket": {}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'account' missing"
+            .expectedErrorMessage = "Required field 'account' missing",
         },
 
         ParamTestCaseBundle{
@@ -498,7 +499,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "accountNotString"
+            .expectedErrorMessage = "accountNotString",
         },
 
         ParamTestCaseBundle{
@@ -510,7 +511,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
 
         ParamTestCaseBundle{
@@ -525,7 +526,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -534,7 +535,7 @@ generateTestValuesForParametersTest()
                 "offer": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
 
         ParamTestCaseBundle{
@@ -543,7 +544,7 @@ generateTestValuesForParametersTest()
                 "offer": "invalid"
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -552,7 +553,7 @@ generateTestValuesForParametersTest()
                 "offer": {}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'account' missing"
+            .expectedErrorMessage = "Required field 'account' missing",
         },
 
         ParamTestCaseBundle{
@@ -564,7 +565,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "accountNotString"
+            .expectedErrorMessage = "accountNotString",
         },
 
         ParamTestCaseBundle{
@@ -576,7 +577,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
 
         ParamTestCaseBundle{
@@ -591,7 +592,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -600,7 +601,7 @@ generateTestValuesForParametersTest()
                 "escrow": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
 
         ParamTestCaseBundle{
@@ -609,7 +610,7 @@ generateTestValuesForParametersTest()
                 "escrow": "invalid"
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -618,7 +619,7 @@ generateTestValuesForParametersTest()
                 "escrow": {}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'owner' missing"
+            .expectedErrorMessage = "Required field 'owner' missing",
         },
 
         ParamTestCaseBundle{
@@ -630,7 +631,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedOwner",
-            .expectedErrorMessage = "Malformed owner."
+            .expectedErrorMessage = "Malformed owner.",
         },
 
         ParamTestCaseBundle{
@@ -642,7 +643,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedOwner",
-            .expectedErrorMessage = "Malformed owner."
+            .expectedErrorMessage = "Malformed owner.",
         },
 
         ParamTestCaseBundle{
@@ -657,7 +658,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -666,7 +667,7 @@ generateTestValuesForParametersTest()
                 "ripple_state": "123"
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -677,7 +678,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'accounts' missing"
+            .expectedErrorMessage = "Required field 'accounts' missing",
         },
 
         ParamTestCaseBundle{
@@ -686,7 +687,7 @@ generateTestValuesForParametersTest()
                 "ripple_state": {}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'accounts' missing"
+            .expectedErrorMessage = "Required field 'accounts' missing",
         },
 
         ParamTestCaseBundle{
@@ -700,7 +701,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "malformedAccounts"
+            .expectedErrorMessage = "malformedAccounts",
         },
 
         ParamTestCaseBundle{
@@ -716,7 +717,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "malformedAccounts"
+            .expectedErrorMessage = "malformedAccounts",
         },
 
         ParamTestCaseBundle{
@@ -731,7 +732,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "malformedAccounts"
+            .expectedErrorMessage = "malformedAccounts",
         },
 
         ParamTestCaseBundle{
@@ -746,7 +747,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "malformedAddresses"
+            .expectedErrorMessage = "malformedAddresses",
         },
 
         ParamTestCaseBundle{
@@ -762,7 +763,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedCurrency",
-            .expectedErrorMessage = "malformedCurrency"
+            .expectedErrorMessage = "malformedCurrency",
         },
 
         ParamTestCaseBundle{
@@ -778,7 +779,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "currencyNotString"
+            .expectedErrorMessage = "currencyNotString",
         },
 
         ParamTestCaseBundle{
@@ -787,7 +788,7 @@ generateTestValuesForParametersTest()
                 "directory": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
 
         ParamTestCaseBundle{
@@ -796,7 +797,7 @@ generateTestValuesForParametersTest()
                 "directory": "123"
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -805,7 +806,7 @@ generateTestValuesForParametersTest()
                 "directory": {}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "missingOwnerOrDirRoot"
+            .expectedErrorMessage = "missingOwnerOrDirRoot",
         },
 
         ParamTestCaseBundle{
@@ -816,7 +817,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ownerNotString"
+            .expectedErrorMessage = "ownerNotString",
         },
 
         ParamTestCaseBundle{
@@ -827,7 +828,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
 
         ParamTestCaseBundle{
@@ -838,7 +839,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "dir_rootMalformed"
+            .expectedErrorMessage = "dir_rootMalformed",
         },
 
         ParamTestCaseBundle{
@@ -849,7 +850,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "dir_rootNotString"
+            .expectedErrorMessage = "dir_rootNotString",
         },
 
         ParamTestCaseBundle{
@@ -865,7 +866,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "mayNotSpecifyBothDirRootAndOwner"
+            .expectedErrorMessage = "mayNotSpecifyBothDirRootAndOwner",
         },
 
         ParamTestCaseBundle{
@@ -880,7 +881,7 @@ generateTestValuesForParametersTest()
                 kIndex1
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -889,7 +890,7 @@ generateTestValuesForParametersTest()
                 "amm": "invalid"
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -898,7 +899,7 @@ generateTestValuesForParametersTest()
                 "amm": {}
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -910,7 +911,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -928,7 +929,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -946,7 +947,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -963,7 +964,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -980,7 +981,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -998,7 +999,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -1016,7 +1017,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -1036,7 +1037,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -1056,7 +1057,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -1076,7 +1077,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -1098,7 +1099,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
 
         ParamTestCaseBundle{
@@ -1117,7 +1118,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeMissingBridgeAccount",
@@ -1141,7 +1142,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeCurrencyIsNumber",
@@ -1167,7 +1168,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeIssuerIsNumber",
@@ -1193,7 +1194,7 @@ generateTestValuesForParametersTest()
                 2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeIssuingChainIssueIsNotObject",
@@ -1214,7 +1215,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeWithInvalidBridgeAccount",
@@ -1239,7 +1240,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeDoorInvalid",
@@ -1264,7 +1265,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeIssuerInvalid",
@@ -1289,7 +1290,7 @@ generateTestValuesForParametersTest()
                 "JPY"
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeIssueCurrencyInvalid",
@@ -1314,7 +1315,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeIssueXRPCurrencyInvalid",
@@ -1341,7 +1342,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeIssueJPYCurrencyInvalid",
@@ -1364,7 +1365,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeMissingLockingChainDoor",
@@ -1389,7 +1390,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeMissingIssuingChainDoor",
@@ -1412,7 +1413,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeMissingLockingChainIssue",
@@ -1434,7 +1435,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeMissingIssuingChainIssue",
@@ -1456,7 +1457,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "BridgeInvalidType",
@@ -1468,7 +1469,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedClaimIdInvalidType",
@@ -1476,7 +1477,7 @@ generateTestValuesForParametersTest()
                 "xchain_owned_claim_id": 123
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedClaimIdJsonMissingClaimId",
@@ -1500,7 +1501,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedClaimIdJsonMissingDoor",
@@ -1523,7 +1524,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedClaimIdJsonMissingIssue",
@@ -1543,7 +1544,7 @@ generateTestValuesForParametersTest()
             ),
 
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedClaimIdJsonInvalidDoor",
@@ -1567,7 +1568,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedClaimIdJsonInvalidIssue",
@@ -1590,7 +1591,7 @@ generateTestValuesForParametersTest()
                 "JPY"
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedCreateAccountClaimIdInvalidType",
@@ -1598,7 +1599,7 @@ generateTestValuesForParametersTest()
                 "xchain_owned_create_account_claim_id": 123
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedCreateAccountClaimIdJsonMissingClaimId",
@@ -1622,7 +1623,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedCreateAccountClaimIdJsonMissingDoor",
@@ -1645,7 +1646,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedCreateAccountClaimIdJsonMissingIssue",
@@ -1665,7 +1666,7 @@ generateTestValuesForParametersTest()
             ),
 
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedCreateAccountClaimIdJsonInvalidDoor",
@@ -1689,7 +1690,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OwnedCreateAccountClaimIdJsonInvalidIssue",
@@ -1712,7 +1713,7 @@ generateTestValuesForParametersTest()
                 "JPY"
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectDocumentIdMissing",
@@ -1725,7 +1726,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectDocumentIdInvalidNegative",
@@ -1739,7 +1740,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedDocumentID",
-            .expectedErrorMessage = "Malformed oracle_document_id."
+            .expectedErrorMessage = "Malformed oracle_document_id.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectDocumentIdInvalidTypeString",
@@ -1753,7 +1754,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedDocumentID",
-            .expectedErrorMessage = "Malformed oracle_document_id."
+            .expectedErrorMessage = "Malformed oracle_document_id.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectDocumentIdInvalidTypeDouble",
@@ -1767,7 +1768,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedDocumentID",
-            .expectedErrorMessage = "Malformed oracle_document_id."
+            .expectedErrorMessage = "Malformed oracle_document_id.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectDocumentIdInvalidTypeObject",
@@ -1781,7 +1782,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedDocumentID",
-            .expectedErrorMessage = "Malformed oracle_document_id."
+            .expectedErrorMessage = "Malformed oracle_document_id.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectDocumentIdInvalidTypeArray",
@@ -1795,7 +1796,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedDocumentID",
-            .expectedErrorMessage = "Malformed oracle_document_id."
+            .expectedErrorMessage = "Malformed oracle_document_id.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectDocumentIdInvalidTypeNull",
@@ -1809,7 +1810,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedDocumentID",
-            .expectedErrorMessage = "Malformed oracle_document_id."
+            .expectedErrorMessage = "Malformed oracle_document_id.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectAccountMissing",
@@ -1819,7 +1820,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectAccountInvalidTypeInteger",
@@ -1830,7 +1831,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectAccountInvalidTypeDouble",
@@ -1841,7 +1842,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectAccountInvalidTypeNull",
@@ -1852,7 +1853,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectAccountInvalidTypeObject",
@@ -1863,7 +1864,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectAccountInvalidTypeArray",
@@ -1874,7 +1875,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "OracleObjectAccountInvalidFormat",
@@ -1885,7 +1886,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "OracleStringInvalidFormat",
@@ -1893,7 +1894,7 @@ generateTestValuesForParametersTest()
                 "oracle": "NotHex"
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "OracleStringInvalidTypeInteger",
@@ -1901,7 +1902,7 @@ generateTestValuesForParametersTest()
                 "oracle": 123
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OracleStringInvalidTypeDouble",
@@ -1909,7 +1910,7 @@ generateTestValuesForParametersTest()
                 "oracle": 123.45
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OracleStringInvalidTypeArray",
@@ -1917,7 +1918,7 @@ generateTestValuesForParametersTest()
                 "oracle": [{"test": "test"}]
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "OracleStringInvalidTypeNull",
@@ -1925,7 +1926,7 @@ generateTestValuesForParametersTest()
                 "oracle": null
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "CredentialInvalidSubjectType",
@@ -1935,7 +1936,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "CredentialInvalidIssuerType",
@@ -1948,7 +1949,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidMPTIssuanceStringIndex",
@@ -1956,7 +1957,7 @@ generateTestValuesForParametersTest()
                 "mpt_issuance": "invalid"
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidMPTIssuanceType",
@@ -1964,7 +1965,7 @@ generateTestValuesForParametersTest()
                 "mpt_issuance": 0
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidMPTokenStringIndex",
@@ -1972,7 +1973,7 @@ generateTestValuesForParametersTest()
                 "mptoken": "invalid"
             })JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidMPTokenObject",
@@ -1982,7 +1983,7 @@ generateTestValuesForParametersTest()
                 }})JSON"
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "MissingMPTokenID",
@@ -1995,7 +1996,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "CredentialInvalidCredentialType",
@@ -2011,7 +2012,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "CredentialMissingIssuerField",
@@ -2026,7 +2027,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "CredentialCredentialTypeNotHex",
@@ -2042,7 +2043,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "credential_type NotHexString"
+            .expectedErrorMessage = "credential_type NotHexString",
         },
         ParamTestCaseBundle{
             .testName = "CredentialCredentialTypeEmpty",
@@ -2058,7 +2059,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedAuthorizedCredentials",
-            .expectedErrorMessage = "credential_type is empty"
+            .expectedErrorMessage = "credential_type is empty",
         },
         ParamTestCaseBundle{
             .testName = "InvalidMPTokenAccount",
@@ -2071,7 +2072,7 @@ generateTestValuesForParametersTest()
                 }})JSON"
             ),
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidMPTokenType",
@@ -2081,7 +2082,7 @@ generateTestValuesForParametersTest()
                 }})JSON"
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidPermissionedDomain_NotObject",
@@ -2363,19 +2364,19 @@ generateTestValuesForParametersTest()
             .testName = "Delegate_InvalidType",
             .testJson = R"JSON({"delegate": 123})JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "Delegate_InvalidStringIndex",
             .testJson = R"JSON({"delegate": "invalid_hex_string"})JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "Delegate_EmptyObject",
             .testJson = R"JSON({"delegate": {}})JSON",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "Delegate_MissingAccount",
@@ -2388,7 +2389,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "Delegate_AccountNotString",
@@ -2402,7 +2403,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "Delegate_AccountInvalid",
@@ -2416,7 +2417,7 @@ generateTestValuesForParametersTest()
                 kAccount2
             ),
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "Delegate_MissingAuthorize",
@@ -2429,7 +2430,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "Delegate_AuthorizeNotString",
@@ -2443,7 +2444,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "Delegate_AuthorizeInvalid",
@@ -2457,7 +2458,7 @@ generateTestValuesForParametersTest()
                 kAccount
             ),
             .expectedError = "malformedAddress",
-            .expectedErrorMessage = "Malformed address."
+            .expectedErrorMessage = "Malformed address.",
         },
     };
 }
@@ -2618,7 +2619,7 @@ generateTestValuesForNormalPathTest()
             ),
             .expectedIndex = xrpl::uint256{kIndex1},
             .mockedEntity =
-                createAccountRootObject(kAccount2, xrpl::lsfGlobalFreeze, 1, 10, 2, kIndex1, 3)
+                createAccountRootObject(kAccount2, xrpl::lsfGlobalFreeze, 1, 10, 2, kIndex1, 3),
         },
         NormalPathTestBundle{
             .testName = "Payment_channel",
@@ -2631,7 +2632,7 @@ generateTestValuesForNormalPathTest()
             ),
             .expectedIndex = xrpl::uint256{kIndex1},
             .mockedEntity =
-                createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 200, 300, kIndex1, 400)
+                createPaymentChannelLedgerObject(kAccount, kAccount2, 100, 200, 300, kIndex1, 400),
         },
         NormalPathTestBundle{
             .testName = "Nft_page",
@@ -2646,7 +2647,7 @@ generateTestValuesForNormalPathTest()
             .mockedEntity = createNftTokenPage(
                 std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")},
                 std::nullopt
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "Check",
@@ -2658,7 +2659,7 @@ generateTestValuesForNormalPathTest()
                 kIndex1
             ),
             .expectedIndex = xrpl::uint256{kIndex1},
-            .mockedEntity = createCheckLedgerObject(kAccount, kAccount2)
+            .mockedEntity = createCheckLedgerObject(kAccount, kAccount2),
         },
         NormalPathTestBundle{
             .testName = "DirectoryIndex",
@@ -2672,7 +2673,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::uint256{kIndex1},
             .mockedEntity = createOwnerDirLedgerObject(
                 std::vector<xrpl::uint256>{xrpl::uint256{kIndex1}}, kIndex1
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "OfferIndex",
@@ -2693,7 +2694,7 @@ generateTestValuesForNormalPathTest()
                 kAccount2,
                 xrpl::toBase58(xrpl::xrpAccount()),
                 kIndex1
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "EscrowIndex",
@@ -2705,7 +2706,7 @@ generateTestValuesForNormalPathTest()
                 kIndex1
             ),
             .expectedIndex = xrpl::uint256{kIndex1},
-            .mockedEntity = createEscrowLedgerObject(kAccount, kAccount2)
+            .mockedEntity = createEscrowLedgerObject(kAccount, kAccount2),
         },
         NormalPathTestBundle{
             .testName = "TicketIndex",
@@ -2717,7 +2718,7 @@ generateTestValuesForNormalPathTest()
                 kIndex1
             ),
             .expectedIndex = xrpl::uint256{kIndex1},
-            .mockedEntity = createTicketLedgerObject(kAccount, 0)
+            .mockedEntity = createTicketLedgerObject(kAccount, 0),
         },
         NormalPathTestBundle{
             .testName = "DepositPreauthIndex",
@@ -2729,7 +2730,7 @@ generateTestValuesForNormalPathTest()
                 kIndex1
             ),
             .expectedIndex = xrpl::uint256{kIndex1},
-            .mockedEntity = createDepositPreauthLedgerObjectByAuth(kAccount, kAccount2)
+            .mockedEntity = createDepositPreauthLedgerObjectByAuth(kAccount, kAccount2),
         },
         NormalPathTestBundle{
             .testName = "AccountRoot",
@@ -2741,7 +2742,7 @@ generateTestValuesForNormalPathTest()
                 kAccount
             ),
             .expectedIndex = xrpl::keylet::account(getAccountIdWithString(kAccount)).key,
-            .mockedEntity = createAccountRootObject(kAccount, 0, 1, 1, 1, kIndex1, 1)
+            .mockedEntity = createAccountRootObject(kAccount, 0, 1, 1, 1, kIndex1, 1),
         },
         NormalPathTestBundle{
             .testName = "DID",
@@ -2753,7 +2754,7 @@ generateTestValuesForNormalPathTest()
                 kAccount
             ),
             .expectedIndex = xrpl::keylet::did(getAccountIdWithString(kAccount)).key,
-            .mockedEntity = createDidObject(kAccount, "mydocument", "myURI", "mydata")
+            .mockedEntity = createDidObject(kAccount, "mydocument", "myURI", "mydata"),
         },
         NormalPathTestBundle{
             .testName = "DirectoryViaDirRoot",
@@ -2770,7 +2771,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::keylet::page(xrpl::uint256{kIndex1}, 2).key,
             .mockedEntity = createOwnerDirLedgerObject(
                 std::vector<xrpl::uint256>{xrpl::uint256{kIndex1}}, kIndex1
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "DirectoryViaOwner",
@@ -2787,7 +2788,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::keylet::page(xrpl::keylet::ownerDir(account1), 2).key,
             .mockedEntity = createOwnerDirLedgerObject(
                 std::vector<xrpl::uint256>{xrpl::uint256{kIndex1}}, kIndex1
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "DirectoryViaDefaultSubIndex",
@@ -2804,7 +2805,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::keylet::page(xrpl::keylet::ownerDir(account1), 0).key,
             .mockedEntity = createOwnerDirLedgerObject(
                 std::vector<xrpl::uint256>{xrpl::uint256{kIndex1}}, kIndex1
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "Escrow",
@@ -2819,7 +2820,7 @@ generateTestValuesForNormalPathTest()
                 kAccount
             ),
             .expectedIndex = xrpl::keylet::escrow(account1, xrpl::SeqProxy::rawSequence(1)).key,
-            .mockedEntity = createEscrowLedgerObject(kAccount, kAccount2)
+            .mockedEntity = createEscrowLedgerObject(kAccount, kAccount2),
         },
         NormalPathTestBundle{
             .testName = "DepositPreauthByAuth",
@@ -2835,7 +2836,7 @@ generateTestValuesForNormalPathTest()
                 kAccount2
             ),
             .expectedIndex = xrpl::keylet::depositPreauth(account1, account2).key,
-            .mockedEntity = createDepositPreauthLedgerObjectByAuth(kAccount, kAccount2)
+            .mockedEntity = createDepositPreauthLedgerObjectByAuth(kAccount, kAccount2),
         },
         NormalPathTestBundle{
             .testName = "DepositPreauthByAuthCredentials",
@@ -2866,7 +2867,7 @@ generateTestValuesForNormalPathTest()
                                  .key,
             .mockedEntity = createDepositPreauthLedgerObjectByAuthCredentials(
                 kAccount, kAccount2, kCredentialType
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "Credentials",
@@ -2894,7 +2895,7 @@ generateTestValuesForNormalPathTest()
                                  )
             )
                                  .key,
-            .mockedEntity = createCredentialObject(kAccount, kAccount2, kCredentialType)
+            .mockedEntity = createCredentialObject(kAccount, kAccount2, kCredentialType),
         },
         NormalPathTestBundle{
             .testName = "RippleState",
@@ -2912,7 +2913,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::keylet::trustLine(account1, account2, currency).key,
             .mockedEntity = createRippleStateLedgerObject(
                 "USD", kAccount2, 100, kAccount, 10, kAccount2, 20, kIndex1, 123, 0
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "Ticket",
@@ -2927,7 +2928,7 @@ generateTestValuesForNormalPathTest()
                 kAccount
             ),
             .expectedIndex = xrpl::keylet::ticket(account1, xrpl::SeqProxy::rawTicket(2)).key,
-            .mockedEntity = createTicketLedgerObject(kAccount, 0)
+            .mockedEntity = createTicketLedgerObject(kAccount, 0),
         },
         NormalPathTestBundle{
             .testName = "Offer",
@@ -2951,7 +2952,7 @@ generateTestValuesForNormalPathTest()
                 kAccount2,
                 xrpl::toBase58(xrpl::xrpAccount()),
                 kIndex1
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "AMMViaIndex",
@@ -2965,7 +2966,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::uint256{kIndex1},
             .mockedEntity = createAmmObject(
                 kAccount, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kAccount2
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "AMMViaJson",
@@ -2992,7 +2993,7 @@ generateTestValuesForNormalPathTest()
                     .key,
             .mockedEntity = createAmmObject(
                 kAccount, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kAccount2
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "BridgeLocking",
@@ -3027,7 +3028,7 @@ generateTestValuesForNormalPathTest()
                                  xrpl::STXChainBridge::ChainType::Locking
             )
                                  .key,
-            .mockedEntity = createBridgeObject(kAccount, kAccount, kAccount2, "JPY", kAccount3)
+            .mockedEntity = createBridgeObject(kAccount, kAccount, kAccount2, "JPY", kAccount3),
         },
         NormalPathTestBundle{
             .testName = "BridgeIssuing",
@@ -3062,7 +3063,7 @@ generateTestValuesForNormalPathTest()
                                  xrpl::STXChainBridge::ChainType::Issuing
             )
                                  .key,
-            .mockedEntity = createBridgeObject(kAccount, kAccount, kAccount2, "JPY", kAccount3)
+            .mockedEntity = createBridgeObject(kAccount, kAccount, kAccount2, "JPY", kAccount3),
         },
         NormalPathTestBundle{
             .testName = "XChainOwnedClaimId",
@@ -3098,7 +3099,7 @@ generateTestValuesForNormalPathTest()
                                  .key,
             .mockedEntity = createChainOwnedClaimIdObject(
                 kAccount, kAccount, kAccount2, "JPY", kAccount3, kAccount
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "XChainOwnedCreateAccountClaimId",
@@ -3134,7 +3135,7 @@ generateTestValuesForNormalPathTest()
                                  .key,
             .mockedEntity = createChainOwnedClaimIdObject(
                 kAccount, kAccount, kAccount2, "JPY", kAccount3, kAccount
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "OracleEntryFoundViaIntOracleDocumentId",
@@ -3158,10 +3159,10 @@ generateTestValuesForNormalPathTest()
                 xrpl::Blob(8, 's'),
                 kRangeMax - 2,
                 xrpl::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                createPriceDataSeries({createOraclePriceData(
-                    2e4, xrpl::toCurrency("XRP"), xrpl::toCurrency("USD"), 3
-                )})
-            )
+                createPriceDataSeries({
+                    createOraclePriceData(2e4, xrpl::toCurrency("XRP"), xrpl::toCurrency("USD"), 3),
+                })
+            ),
         },
         NormalPathTestBundle{
             .testName = "OracleEntryFoundViaStrOracleDocumentId",
@@ -3185,10 +3186,10 @@ generateTestValuesForNormalPathTest()
                 xrpl::Blob(8, 's'),
                 kRangeMax - 2,
                 xrpl::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                createPriceDataSeries({createOraclePriceData(
-                    2e4, xrpl::toCurrency("XRP"), xrpl::toCurrency("USD"), 3
-                )})
-            )
+                createPriceDataSeries({
+                    createOraclePriceData(2e4, xrpl::toCurrency("XRP"), xrpl::toCurrency("USD"), 3),
+                })
+            ),
         },
         NormalPathTestBundle{
             .testName = "OracleEntryFoundViaString",
@@ -3209,10 +3210,10 @@ generateTestValuesForNormalPathTest()
                 xrpl::Blob(8, 'a'),
                 kRangeMax - 4,
                 xrpl::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                createPriceDataSeries({createOraclePriceData(
-                    1e3, xrpl::toCurrency("USD"), xrpl::toCurrency("XRP"), 2
-                )})
-            )
+                createPriceDataSeries({
+                    createOraclePriceData(1e3, xrpl::toCurrency("USD"), xrpl::toCurrency("XRP"), 2),
+                })
+            ),
         },
         NormalPathTestBundle{
             .testName = "MPTIssuance",
@@ -3224,7 +3225,7 @@ generateTestValuesForNormalPathTest()
                 xrpl::to_string(xrpl::makeMptID(2, account1))
             ),
             .expectedIndex = xrpl::keylet::mptokenIssuance(xrpl::makeMptID(2, account1)).key,
-            .mockedEntity = createMptIssuanceObject(kAccount, 2, "metadata")
+            .mockedEntity = createMptIssuanceObject(kAccount, 2, "metadata"),
         },
         NormalPathTestBundle{
             .testName = "MPTokenViaIndex",
@@ -3236,7 +3237,7 @@ generateTestValuesForNormalPathTest()
                 kIndex1
             ),
             .expectedIndex = xrpl::uint256{kIndex1},
-            .mockedEntity = createMpTokenObject(kAccount, xrpl::makeMptID(2, account1))
+            .mockedEntity = createMpTokenObject(kAccount, xrpl::makeMptID(2, account1)),
         },
         NormalPathTestBundle{
             .testName = "MPTokenViaObject",
@@ -3252,7 +3253,7 @@ generateTestValuesForNormalPathTest()
                 xrpl::to_string(xrpl::makeMptID(2, account1))
             ),
             .expectedIndex = xrpl::keylet::mptoken(xrpl::makeMptID(2, account1), account1).key,
-            .mockedEntity = createMpTokenObject(kAccount, xrpl::makeMptID(2, account1))
+            .mockedEntity = createMpTokenObject(kAccount, xrpl::makeMptID(2, account1)),
         },
         NormalPathTestBundle{
             .testName = "PermissionedDomainViaString",
@@ -3264,8 +3265,9 @@ generateTestValuesForNormalPathTest()
                 kIndex1
             ),
             .expectedIndex = xrpl::uint256(kIndex1),
-            .mockedEntity =
-                createPermissionedDomainObject(kAccount, kIndex1, kRangeMax, 0, xrpl::uint256{0}, 0)
+            .mockedEntity = createPermissionedDomainObject(
+                kAccount, kIndex1, kRangeMax, 0, xrpl::uint256{0}, 0
+            ),
         },
         NormalPathTestBundle{
             .testName = "PermissionedDomainViaObject",
@@ -3286,8 +3288,9 @@ generateTestValuesForNormalPathTest()
                                  xrpl::SeqProxy::rawSequence(kRangeMax)
             )
                                  .key,
-            .mockedEntity =
-                createPermissionedDomainObject(kAccount, kIndex1, kRangeMax, 0, xrpl::uint256{0}, 0)
+            .mockedEntity = createPermissionedDomainObject(
+                kAccount, kIndex1, kRangeMax, 0, xrpl::uint256{0}, 0
+            ),
         },
         NormalPathTestBundle{
             .testName = "CreateVaultObjectByHexString",
@@ -3309,7 +3312,7 @@ generateTestValuesForNormalPathTest()
                 0,
                 xrpl::uint256{0},
                 0
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "CreateVaultObjectByAccount",
@@ -3340,7 +3343,7 @@ generateTestValuesForNormalPathTest()
                 0,
                 xrpl::uint256{0},
                 0
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "CreateLoanBrokerObjectByHexString",
@@ -3354,7 +3357,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::uint256(kIndex1),
             .mockedEntity = createLoanBroker(
                 kAccount, kAccount, kRangeMax, xrpl::uint256{kIndex1}, 1, xrpl::uint256{0}, 0
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "CreateLoanBrokerObjectByOwnerAndSeq",
@@ -3377,7 +3380,7 @@ generateTestValuesForNormalPathTest()
                                  .key,
             .mockedEntity = createLoanBroker(
                 kAccount, kAccount, kRangeMax, xrpl::uint256{kIndex1}, 1, xrpl::uint256{0}, 0
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "CreateLoanObjectByHexString",
@@ -3391,7 +3394,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = xrpl::uint256(kIndex1),
             .mockedEntity = createLoan(
                 kAccount, xrpl::uint256{kIndex1}, 1, 1000, 86400, 100, xrpl::uint256{0}, 0
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "CreateLoanObjectByLoanBrokerIdAndSeq",
@@ -3409,7 +3412,7 @@ generateTestValuesForNormalPathTest()
                 xrpl::keylet::loan(xrpl::uint256{kIndex1}, xrpl::SeqProxy::rawSequence(1)).key,
             .mockedEntity = createLoan(
                 kAccount, xrpl::uint256{kIndex1}, 1, 1000, 86400, 100, xrpl::uint256{0}, 0
-            )
+            ),
         },
         NormalPathTestBundle{
             .testName = "DelegateViaStringIndex",
@@ -3422,7 +3425,7 @@ generateTestValuesForNormalPathTest()
             ),
             .expectedIndex = xrpl::uint256{kIndex1},
             .mockedEntity =
-                createDelegateObject(kAccount, kAccount2, kIndex1, 0, xrpl::uint256{0}, 0)
+                createDelegateObject(kAccount, kAccount2, kIndex1, 0, xrpl::uint256{0}, 0),
         },
         NormalPathTestBundle{
             .testName = "DelegateViaObject",
@@ -3442,7 +3445,7 @@ generateTestValuesForNormalPathTest()
             )
                                  .key,
             .mockedEntity =
-                createDelegateObject(kAccount, kAccount2, kIndex1, 0, xrpl::uint256{0}, 0)
+                createDelegateObject(kAccount, kAccount2, kIndex1, 0, xrpl::uint256{0}, 0),
         },
         NormalPathTestBundle{
             .testName = "SponsorshipViaStringIndex",
@@ -3454,7 +3457,7 @@ generateTestValuesForNormalPathTest()
                 kIndex1
             ),
             .expectedIndex = xrpl::uint256{kIndex1},
-            .mockedEntity = xrpl::STLedgerEntry{xrpl::ltSPONSORSHIP, xrpl::uint256{kIndex1}}
+            .mockedEntity = xrpl::STLedgerEntry{xrpl::ltSPONSORSHIP, xrpl::uint256{kIndex1}},
         },
         NormalPathTestBundle{
             .testName = "SponsorshipViaObject",
@@ -3473,7 +3476,7 @@ generateTestValuesForNormalPathTest()
                                  getAccountIdWithString(kAccount), getAccountIdWithString(kAccount2)
             )
                                  .key,
-            .mockedEntity = xrpl::STLedgerEntry{xrpl::ltSPONSORSHIP, xrpl::uint256{kIndex1}}
+            .mockedEntity = xrpl::STLedgerEntry{xrpl::ltSPONSORSHIP, xrpl::uint256{kIndex1}},
         },
     };
 }

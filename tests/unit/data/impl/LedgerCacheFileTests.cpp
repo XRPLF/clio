@@ -43,7 +43,7 @@ struct LedgerCacheFileTestBase : ::testing::Test {
         DeletedSeqCorrupted,
         DeletedBlobSizeCorrupted,
         DeletedBlobDataCorrupted,
-        HeaderLatestSeqCorrupted
+        HeaderLatestSeqCorrupted,
     };
 
     struct CorruptionParams {
@@ -172,7 +172,9 @@ struct LedgerCacheFileTestBase : ::testing::Test {
     toDataView(LedgerCacheFile::Data const& data)
     {
         return LedgerCacheFile::DataView{
-            .latestSeq = data.latestSeq, .map = data.map, .deleted = data.deleted
+            .latestSeq = data.latestSeq,
+            .map = data.map,
+            .deleted = data.deleted,
         };
     }
 
@@ -310,18 +312,24 @@ std::vector<
     LedgerCacheFileTestBase::DataSizeParams> const LedgerCacheFileTestBase::kDataSizeParams = {
     {.mapEntries = 0, .deletedEntries = 0, .blobSize = 0, .description = "empty"},
     {.mapEntries = 1, .deletedEntries = 0, .blobSize = 10, .description = "single_map_small_blob"},
-    {.mapEntries = 0,
-     .deletedEntries = 1,
-     .blobSize = 100,
-     .description = "single_deleted_medium_blob"},
-    {.mapEntries = 5,
-     .deletedEntries = 3,
-     .blobSize = 1000,
-     .description = "multiple_entries_large_blob"},
-    {.mapEntries = 10,
-     .deletedEntries = 10,
-     .blobSize = 50000,
-     .description = "many_entries_huge_blob"}
+    {
+        .mapEntries = 0,
+        .deletedEntries = 1,
+        .blobSize = 100,
+        .description = "single_deleted_medium_blob",
+    },
+    {
+        .mapEntries = 5,
+        .deletedEntries = 3,
+        .blobSize = 1000,
+        .description = "multiple_entries_large_blob",
+    },
+    {
+        .mapEntries = 10,
+        .deletedEntries = 10,
+        .blobSize = 50000,
+        .description = "many_entries_huge_blob",
+    },
 };
 
 std::vector<LedgerCacheFileTestBase::CorruptionParams> const
@@ -336,12 +344,18 @@ std::vector<LedgerCacheFileTestBase::CorruptionParams> const
         {.type = CorruptionType::MapBlobDataCorrupted, .description = "map_blob_data_corrupted"},
         {.type = CorruptionType::DeletedKeyCorrupted, .description = "deleted_key_corrupted"},
         {.type = CorruptionType::DeletedSeqCorrupted, .description = "deleted_seq_corrupted"},
-        {.type = CorruptionType::DeletedBlobSizeCorrupted,
-         .description = "deleted_blob_size_corrupted"},
-        {.type = CorruptionType::DeletedBlobDataCorrupted,
-         .description = "deleted_blob_data_corrupted"},
-        {.type = CorruptionType::HeaderLatestSeqCorrupted,
-         .description = "header_latest_seq_corrupted"}
+        {
+            .type = CorruptionType::DeletedBlobSizeCorrupted,
+            .description = "deleted_blob_size_corrupted",
+        },
+        {
+            .type = CorruptionType::DeletedBlobDataCorrupted,
+            .description = "deleted_blob_data_corrupted",
+        },
+        {
+            .type = CorruptionType::HeaderLatestSeqCorrupted,
+            .description = "header_latest_seq_corrupted",
+        },
 };
 
 struct LedgerCacheFileTest

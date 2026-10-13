@@ -703,7 +703,8 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
     auto const mptoken1 = createMpTokenObject(kHolder1Account, xrpl::uint192(kMptId));
     auto const mptoken2 = createMpTokenObject(kHolder2Account, xrpl::uint192(kMptId));
     std::vector<Blob> const mpts = {
-        mptoken1.getSerializer().peekData(), mptoken2.getSerializer().peekData()
+        mptoken1.getSerializer().peekData(),
+        mptoken2.getSerializer().peekData(),
     };
     ON_CALL(*backend_, fetchMPTHolders)
         .WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
@@ -903,12 +904,13 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilter)
     auto const mptoken1 = createMpTokenObject(kHolder1Account, xrpl::uint192(kMptId));
     auto const mptoken2 = createMpTokenObject(kHolder2Account, xrpl::uint192(kMptId));
     std::vector<Blob> const objs = {
-        mptoken1.getSerializer().peekData(), mptoken2.getSerializer().peekData()
+        mptoken1.getSerializer().peekData(),
+        mptoken2.getSerializer().peekData(),
     };
     // The handler must query exactly the MPToken keys for the requested accounts, in order.
     std::vector<xrpl::uint256> const expectedKeys = {
         xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHolder1Account)).key,
-        xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHolder2Account)).key
+        xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHolder2Account)).key,
     };
     EXPECT_CALL(*backend_, doFetchLedgerObjects(expectedKeys, 30, _)).WillOnce(Return(objs));
     // The accounts filter must not fall back to the holder-index scan.
@@ -1224,7 +1226,7 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterSpecificLedger)
     auto const mptoken1 = createMpTokenObject(kHolder1Account, xrpl::uint192(kMptId));
     std::vector<Blob> const objs = {mptoken1.getSerializer().peekData()};
     std::vector<xrpl::uint256> const expectedKeys = {
-        xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHolder1Account)).key
+        xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHolder1Account)).key,
     };
     EXPECT_CALL(*backend_, doFetchLedgerObjects(expectedKeys, specificLedger, _))
         .WillOnce(Return(objs));
@@ -1273,11 +1275,12 @@ TEST_F(RPCMPTHoldersHandlerTest, AccountsFilterDuplicates)
     auto const mptoken1 = createMpTokenObject(kHolder1Account, xrpl::uint192(kMptId));
     auto const mptoken2 = createMpTokenObject(kHolder2Account, xrpl::uint192(kMptId));
     std::vector<Blob> const objs = {
-        mptoken1.getSerializer().peekData(), mptoken2.getSerializer().peekData()
+        mptoken1.getSerializer().peekData(),
+        mptoken2.getSerializer().peekData(),
     };
     std::vector<xrpl::uint256> const expectedKeys = {
         xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHolder1Account)).key,
-        xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHolder2Account)).key
+        xrpl::keylet::mptoken(xrpl::uint192(kMptId), getAccountIdWithString(kHolder2Account)).key,
     };
     EXPECT_CALL(*backend_, doFetchLedgerObjects(expectedKeys, 30, _)).WillOnce(Return(objs));
     EXPECT_CALL(*backend_, fetchMPTHolders).Times(0);

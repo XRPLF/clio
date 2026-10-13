@@ -122,10 +122,10 @@ struct MakeAdminVerificationStrategyFromConfigTest
 inline static ClioConfigDefinition
 generateDefaultAdminConfig()
 {
-    return ClioConfigDefinition{
-        {{"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
-         {"server.admin_password", ConfigValue{ConfigType::String}.optional()}}
-    };
+    return ClioConfigDefinition{{
+        {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+        {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
+    }};
 }
 
 TEST_P(MakeAdminVerificationStrategyFromConfigTest, ChecksConfig)

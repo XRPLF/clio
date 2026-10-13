@@ -153,7 +153,8 @@ private:
                     },
                     token,
                     util::Retry::Delays{
-                        .initial = backend_->initialRetryDelay(), .max = backend_->maxRetryDelay()
+                        .initial = backend_->initialRetryDelay(),
+                        .max = backend_->maxRetryDelay(),
                     }
                 );
 

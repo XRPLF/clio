@@ -30,7 +30,7 @@ TEST_F(RPCVersionHandlerTest, Default)
     ClioConfigDefinition cfg{
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(kMinApiVersion)},
         {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(kMaxApiVersion)},
-        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(kDefaultApiVersion)}
+        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(kDefaultApiVersion)},
     };
 
     boost::json::value jsonData = boost::json::parse(

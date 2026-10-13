@@ -832,7 +832,7 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
             .key = xrpl::uint256{kIndex1},
             .blob = createAccountRootObject(kAccount, xrpl::lsfGlobalFreeze, 1, 10, 2, kIndex1, 3)
                         .getSerializer()
-                        .peekData()
+                        .peekData(),
         }
     );
 
@@ -881,7 +881,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
             .key = xrpl::uint256{kIndex1},
             .blob = createAccountRootObject(kAccount, xrpl::lsfGlobalFreeze, 1, 10, 2, kIndex1, 3)
                         .getSerializer()
-                        .peekData()
+                        .peekData(),
         }
     );
 

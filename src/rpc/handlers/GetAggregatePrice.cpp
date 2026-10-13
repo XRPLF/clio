@@ -116,7 +116,7 @@ GetAggregatePriceHandler::process(
         .trimStats = std::nullopt,
         .ledgerHash = xrpl::to_string(lgrInfo.hash),
         .ledgerIndex = lgrInfo.seq,
-        .median = ""
+        .median = "",
     };
 
     if (input.timeThreshold) {
@@ -256,20 +256,22 @@ tag_invoke(
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
         {JS(time), output.time},
-        {JS(entire_set),
-         boost::json::object{
-             {JS(mean), output.extireStats.avg.getText()},
-             {JS(standard_deviation), xrpl::to_string(output.extireStats.sd)},
-             {JS(size), output.extireStats.size}
-         }},
-        {JS(median), output.median}
+        {
+            JS(entire_set),
+            boost::json::object{
+                {JS(mean), output.extireStats.avg.getText()},
+                {JS(standard_deviation), xrpl::to_string(output.extireStats.sd)},
+                {JS(size), output.extireStats.size},
+            },
+        },
+        {JS(median), output.median},
     };
 
     if (output.trimStats) {
         jv.as_object()[JS(trimmed_set)] = boost::json::object{
             {JS(mean), output.trimStats->avg.getText()},
             {JS(standard_deviation), xrpl::to_string(output.trimStats->sd)},
-            {JS(size), output.trimStats->size}
+            {JS(size), output.trimStats->size},
         };
     }
 }

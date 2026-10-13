@@ -29,16 +29,26 @@ getParseSettingsConfig(boost::json::value val)
 {
     ConfigFileJson const jsonVal{val.as_object()};
     auto config = ClioConfigDefinition{
-        {"database.cassandra.threads",
-         ConfigValue{ConfigType::Integer}.defaultValue(std::thread::hardware_concurrency())},
-        {"database.cassandra.contact_points",
-         ConfigValue{ConfigType::String}.defaultValue("127.0.0.1")},
-        {"database.cassandra.max_write_requests_outstanding",
-         ConfigValue{ConfigType::Integer}.defaultValue(10000)},
-        {"database.cassandra.max_read_requests_outstanding",
-         ConfigValue{ConfigType::Integer}.defaultValue(100000)},
-        {"database.cassandra.core_connections_per_host",
-         ConfigValue{ConfigType::Integer}.defaultValue(1)},
+        {
+            "database.cassandra.threads",
+            ConfigValue{ConfigType::Integer}.defaultValue(std::thread::hardware_concurrency()),
+        },
+        {
+            "database.cassandra.contact_points",
+            ConfigValue{ConfigType::String}.defaultValue("127.0.0.1"),
+        },
+        {
+            "database.cassandra.max_write_requests_outstanding",
+            ConfigValue{ConfigType::Integer}.defaultValue(10000),
+        },
+        {
+            "database.cassandra.max_read_requests_outstanding",
+            ConfigValue{ConfigType::Integer}.defaultValue(100000),
+        },
+        {
+            "database.cassandra.core_connections_per_host",
+            ConfigValue{ConfigType::Integer}.defaultValue(1),
+        },
         {"database.cassandra.certificate", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
@@ -47,10 +57,14 @@ getParseSettingsConfig(boost::json::value val)
         {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
         {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
-        {"database.cassandra.initial_request_retry_delay",
-         ConfigValue{ConfigType::Double}.defaultValue(0.5)},
-        {"database.cassandra.max_request_retry_delay",
-         ConfigValue{ConfigType::Double}.defaultValue(5.0)},
+        {
+            "database.cassandra.initial_request_retry_delay",
+            ConfigValue{ConfigType::Double}.defaultValue(0.5),
+        },
+        {
+            "database.cassandra.max_request_retry_delay",
+            ConfigValue{ConfigType::Double}.defaultValue(5.0),
+        },
         {"database.cassandra.request_timeout", ConfigValue{ConfigType::Double}.optional()},
         {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},

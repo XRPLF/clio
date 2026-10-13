@@ -21,13 +21,14 @@ TEST_F(MetricBuilderAssertTest, build)
     std::string const name = "name";
     std::string const labelsString = "{label1=\"value1\"}";
     MetricBuilder builder;
-    for (auto const type :
-         {MetricType::CounterInt,
-          MetricType::CounterDouble,
-          MetricType::GaugeInt,
-          MetricType::GaugeDouble,
-          MetricType::HistogramInt,
-          MetricType::HistogramDouble}) {
+    for (auto const type : {
+             MetricType::CounterInt,
+             MetricType::CounterDouble,
+             MetricType::GaugeInt,
+             MetricType::GaugeDouble,
+             MetricType::HistogramInt,
+             MetricType::HistogramDouble,
+         }) {
         std::unique_ptr<MetricBase> metric = [&] {
             if (type == MetricType::HistogramInt)
                 return builder(name, labelsString, type, std::vector<std::int64_t>{1});

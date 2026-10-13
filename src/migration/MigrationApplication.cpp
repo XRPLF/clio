@@ -44,7 +44,7 @@ MigratorApplication::run()
             [this](MigrateSubCmd::Status const&) { return printStatus(); },
             [this](MigrateSubCmd::Migration const& cmdBundle) {
                 return migrate(cmdBundle.migratorName);
-            }
+            },
         },
         cmd_.state
     );

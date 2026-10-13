@@ -28,10 +28,10 @@ SettingsProvider::SettingsProvider(util::config::ObjectView const& cfg)
     , replicationFactor_{cfg.get<uint16_t>("replication_factor")}
     , initialRetryDelay_{util::config::ClioConfigDefinition::toMilliseconds(
           cfg.get<float>("initial_request_retry_delay")
-      )}
+      ),}
     , maxRetryDelay_{util::config::ClioConfigDefinition::toMilliseconds(
           cfg.get<float>("max_request_retry_delay")
-      )}
+      ),}
     , settings_{parseSettings()}
 {
 }

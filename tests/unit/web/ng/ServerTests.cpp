@@ -77,7 +77,7 @@ TEST_P(MakeServerTest, Make)
         {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
-        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()}
+        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
 
     };
     auto const errors = config.parse(json);
@@ -160,10 +160,16 @@ protected:
     uint32_t const serverPort_ = tests::util::generateFreePort();
 
     ClioConfigDefinition const config_{
-        {"server.ip",
-         ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(gValidateIp)},
-        {"server.port",
-         ConfigValue{ConfigType::Integer}.defaultValue(serverPort_).withConstraint(gValidatePort)},
+        {
+            "server.ip",
+            ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(gValidateIp),
+        },
+        {
+            "server.port",
+            ConfigValue{ConfigType::Integer}
+                .defaultValue(serverPort_)
+                .withConstraint(gValidatePort),
+        },
         {"server.processing_policy", ConfigValue{ConfigType::String}.defaultValue("parallel")},
         {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
         {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
@@ -173,7 +179,7 @@ protected:
         {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
-        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()}
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
     };
 
     Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::expected<void, Response> {
@@ -213,7 +219,7 @@ TEST_F(ServerTest, BadEndpoint)
 {
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address("1.2.3.4"), 0};
     util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
     Server server{
         ctx_,
@@ -227,7 +233,7 @@ TEST_F(ServerTest, BadEndpoint)
         Server::Hooks{
             .onConnectCheck = emptyOnConnectCheck_,
             .onIpChangeHook = [](auto&&, auto&&) {},
-            .onDisconnectHook = [](auto&&) {}
+            .onDisconnectHook = [](auto&&) {},
         }
     };
 
@@ -282,7 +288,7 @@ TEST_F(ServerHttpTest, OnConnectCheck)
         boost::asio::ip::make_address("0.0.0.0"), serverPort
     };
     util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
 
     testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>>
@@ -300,7 +306,7 @@ TEST_F(ServerHttpTest, OnConnectCheck)
         Server::Hooks{
             .onConnectCheck = onConnectCheck.AsStdFunction(),
             .onIpChangeHook = [](auto&&, auto&&) {},
-            .onDisconnectHook = [](auto&&) {}
+            .onDisconnectHook = [](auto&&) {},
         }
     };
 
@@ -352,7 +358,7 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         boost::asio::ip::make_address("0.0.0.0"), serverPort
     };
     util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
 
     testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>>
@@ -370,7 +376,7 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         Server::Hooks{
             .onConnectCheck = onConnectCheck.AsStdFunction(),
             .onIpChangeHook = [](auto&&, auto&&) {},
-            .onDisconnectHook = [](auto&&) {}
+            .onDisconnectHook = [](auto&&) {},
         }
     };
 
@@ -423,7 +429,7 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
         boost::asio::ip::make_address("0.0.0.0"), serverPort
     };
     util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
 
     testing::StrictMock<testing::MockFunction<void(Connection const&)>> onDisconnectHookMock;
@@ -440,7 +446,7 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
         Server::Hooks{
             .onConnectCheck = emptyOnConnectCheck_,
             .onIpChangeHook = [](auto&&, auto&&) {},
-            .onDisconnectHook = onDisconnectHookMock.AsStdFunction()
+            .onDisconnectHook = onDisconnectHookMock.AsStdFunction(),
         }
     };
 

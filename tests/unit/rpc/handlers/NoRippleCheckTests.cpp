@@ -64,7 +64,7 @@ generateTestValuesForParametersTest()
                 "role": "gateway"
              })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'account' missing"
+            .expectedErrorMessage = "Required field 'account' missing",
         },
         NoRippleParamTestCaseBundle{
             .testName = "AccountNotString",
@@ -73,7 +73,7 @@ generateTestValuesForParametersTest()
                 "role": "gateway"
              })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "accountNotString"
+            .expectedErrorMessage = "accountNotString",
         },
         NoRippleParamTestCaseBundle{
             .testName = "InvalidAccount",
@@ -82,7 +82,7 @@ generateTestValuesForParametersTest()
                 "role": "gateway"
              })JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "accountMalformed"
+            .expectedErrorMessage = "accountMalformed",
         },
         NoRippleParamTestCaseBundle{
             .testName = "InvalidRole",
@@ -91,7 +91,7 @@ generateTestValuesForParametersTest()
                 "role": "notrole"
              })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "role field is invalid"
+            .expectedErrorMessage = "role field is invalid",
         },
         NoRippleParamTestCaseBundle{
             .testName = "RoleNotExists",
@@ -99,7 +99,7 @@ generateTestValuesForParametersTest()
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
              })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'role' missing"
+            .expectedErrorMessage = "Required field 'role' missing",
         },
         NoRippleParamTestCaseBundle{
             .testName = "LimitNotInt",
@@ -109,7 +109,7 @@ generateTestValuesForParametersTest()
                 "limit": "gg"
              })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NoRippleParamTestCaseBundle{
             .testName = "LimitNegative",
@@ -119,7 +119,7 @@ generateTestValuesForParametersTest()
                 "limit": -1
              })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NoRippleParamTestCaseBundle{
             .testName = "LimitZero",
@@ -129,7 +129,7 @@ generateTestValuesForParametersTest()
                 "limit": 0
              })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NoRippleParamTestCaseBundle{
             .testName = "TransactionsNotBool",
@@ -139,7 +139,7 @@ generateTestValuesForParametersTest()
                 "transactions": "gg"
              })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
     };
 }

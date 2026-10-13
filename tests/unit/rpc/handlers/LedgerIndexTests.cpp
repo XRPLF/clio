@@ -146,30 +146,42 @@ public:
     {
         // start from 2024-06-25T12:23:10Z to 2024-06-25T12:23:50Z with step 2
         return std::vector<LedgerIndexTestsCaseBundle>{
-            {.testName = "LaterThanMaxLedger",
-             .json = R"JSON({"date": "2024-06-25T12:23:55Z"})JSON",
-             .expectedLedgerIndex = kRangeMax,
-             .closeTimeIso = "2024-06-25T12:23:50Z"},
-            {.testName = "GreaterThanMinLedger",
-             .json = R"JSON({"date": "2024-06-25T12:23:11Z"})JSON",
-             .expectedLedgerIndex = kRangeMin,
-             .closeTimeIso = "2024-06-25T12:23:10Z"},
-            {.testName = "IsMinLedger",
-             .json = R"JSON({"date": "2024-06-25T12:23:10Z"})JSON",
-             .expectedLedgerIndex = kRangeMin,
-             .closeTimeIso = "2024-06-25T12:23:10Z"},
-            {.testName = "IsMaxLedger",
-             .json = R"JSON({"date": "2024-06-25T12:23:50Z"})JSON",
-             .expectedLedgerIndex = kRangeMax,
-             .closeTimeIso = "2024-06-25T12:23:50Z"},
-            {.testName = "IsMidLedger",
-             .json = R"JSON({"date": "2024-06-25T12:23:30Z"})JSON",
-             .expectedLedgerIndex = 20,
-             .closeTimeIso = "2024-06-25T12:23:30Z"},
-            {.testName = "BetweenLedgers",
-             .json = R"JSON({"date": "2024-06-25T12:23:29Z"})JSON",
-             .expectedLedgerIndex = 19,
-             .closeTimeIso = "2024-06-25T12:23:28Z"}
+            {
+                .testName = "LaterThanMaxLedger",
+                .json = R"JSON({"date": "2024-06-25T12:23:55Z"})JSON",
+                .expectedLedgerIndex = kRangeMax,
+                .closeTimeIso = "2024-06-25T12:23:50Z",
+            },
+            {
+                .testName = "GreaterThanMinLedger",
+                .json = R"JSON({"date": "2024-06-25T12:23:11Z"})JSON",
+                .expectedLedgerIndex = kRangeMin,
+                .closeTimeIso = "2024-06-25T12:23:10Z",
+            },
+            {
+                .testName = "IsMinLedger",
+                .json = R"JSON({"date": "2024-06-25T12:23:10Z"})JSON",
+                .expectedLedgerIndex = kRangeMin,
+                .closeTimeIso = "2024-06-25T12:23:10Z",
+            },
+            {
+                .testName = "IsMaxLedger",
+                .json = R"JSON({"date": "2024-06-25T12:23:50Z"})JSON",
+                .expectedLedgerIndex = kRangeMax,
+                .closeTimeIso = "2024-06-25T12:23:50Z",
+            },
+            {
+                .testName = "IsMidLedger",
+                .json = R"JSON({"date": "2024-06-25T12:23:30Z"})JSON",
+                .expectedLedgerIndex = 20,
+                .closeTimeIso = "2024-06-25T12:23:30Z",
+            },
+            {
+                .testName = "BetweenLedgers",
+                .json = R"JSON({"date": "2024-06-25T12:23:29Z"})JSON",
+                .expectedLedgerIndex = 19,
+                .closeTimeIso = "2024-06-25T12:23:28Z",
+            },
         };
     }
 };

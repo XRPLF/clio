@@ -170,9 +170,11 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineThrowsOnQuorumRe
         asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>())
     )
         .WillByDefault([](auto const&, auto&& cb) {
-            auto const res = FakeResultOrError{CassandraError{
-                "received 1 responses and 1 failures", CASS_ERROR_SERVER_READ_FAILURE
-            }};
+            auto const res = FakeResultOrError{
+                CassandraError{
+                    "received 1 responses and 1 failures", CASS_ERROR_SERVER_READ_FAILURE
+                },
+            };
             cb(res);  // notify that item is ready
             return FakeFutureWithCallback{res};
         });

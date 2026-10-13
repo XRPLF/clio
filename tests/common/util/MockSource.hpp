@@ -185,7 +185,7 @@ public:
                 it->callbacks = MockSourceCallbacks{
                     .onDisconnect = std::move(onDisconnect),
                     .onConnect = std::move(onConnect),
-                    .onLedgerClosed = std::move(onLedgerClosed)
+                    .onLedgerClosed = std::move(onLedgerClosed),
                 };
 
                 return std::make_unique<MockSourceWrapper<MockType>>(it->source);

@@ -217,33 +217,33 @@ BENCHMARK(benchmarkThreads)->Arg(1)->Arg(2)->Arg(4)->Arg(8);
 // Same implementation using each of the available execution contexts
 BENCHMARK(benchmarkExecutionContextBatched<PoolExecutionContext>)
     ->ArgsProduct({
-        {1, 2, 4, 8},             // threads
-        {500, 1000, 5000, 10000}  // batch size
+        {1, 2, 4, 8},              // threads
+        {500, 1000, 5000, 10000},  // batch size
     });
 BENCHMARK(benchmarkExecutionContextBatched<CoroExecutionContext>)
     ->ArgsProduct({
-        {1, 2, 4, 8},             // threads
-        {500, 1000, 5000, 10000}  // batch size
+        {1, 2, 4, 8},              // threads
+        {500, 1000, 5000, 10000},  // batch size
     });
 BENCHMARK(benchmarkExecutionContextBatched<SyncExecutionContext>)
     ->ArgsProduct({
-        {1, 2, 4, 8},             // threads
-        {500, 1000, 5000, 10000}  // batch size
+        {1, 2, 4, 8},              // threads
+        {500, 1000, 5000, 10000},  // batch size
     });
 
 // Same implementations going thru AnyExecutionContext
 BENCHMARK(benchmarkAnyExecutionContextBatched<PoolExecutionContext>)
     ->ArgsProduct({
-        {1, 2, 4, 8},             // threads
-        {500, 1000, 5000, 10000}  // batch size
+        {1, 2, 4, 8},              // threads
+        {500, 1000, 5000, 10000},  // batch size
     });
 BENCHMARK(benchmarkAnyExecutionContextBatched<CoroExecutionContext>)
     ->ArgsProduct({
-        {1, 2, 4, 8},             // threads
-        {500, 1000, 5000, 10000}  // batch size
+        {1, 2, 4, 8},              // threads
+        {500, 1000, 5000, 10000},  // batch size
     });
 BENCHMARK(benchmarkAnyExecutionContextBatched<SyncExecutionContext>)
     ->ArgsProduct({
-        {1, 2, 4, 8},             // threads
-        {500, 1000, 5000, 10000}  // batch size
+        {1, 2, 4, 8},              // threads
+        {500, 1000, 5000, 10000},  // batch size
     });

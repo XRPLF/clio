@@ -93,7 +93,7 @@ Request::httpHeaders() const
     return std::visit(
         util::OverloadSet{
             [](HttpRequest const& httpRequest) -> HttpHeaders const& { return httpRequest; },
-            [](WsData const& wsData) -> HttpHeaders const& { return wsData.headers.get(); }
+            [](WsData const& wsData) -> HttpHeaders const& { return wsData.headers.get(); },
         },
         data_
     );

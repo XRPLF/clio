@@ -72,55 +72,55 @@ generateTestValuesForParametersTest()
             .testName = "MissingAMMAccountOrAssets",
             .testJson = "{}",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAccountNotString",
             .testJson = R"JSON({"amm_account": 1})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "Account malformed."
+            .expectedErrorMessage = "Account malformed.",
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AccountNotString",
             .testJson = R"JSON({"account": 1})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "Account malformed."
+            .expectedErrorMessage = "Account malformed.",
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAccountInvalid",
             .testJson = R"JSON({"amm_account": "xxx"})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "Account malformed."
+            .expectedErrorMessage = "Account malformed.",
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AccountInvalid",
             .testJson = R"JSON({"account": "xxx"})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "Account malformed."
+            .expectedErrorMessage = "Account malformed.",
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAssetNotStringOrObject",
             .testJson = R"JSON({"asset": 1})JSON",
             .expectedError = "issueMalformed",
-            .expectedErrorMessage = "Issue is malformed."
+            .expectedErrorMessage = "Issue is malformed.",
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAssetEmptyObject",
             .testJson = R"JSON({"asset": {}})JSON",
             .expectedError = "issueMalformed",
-            .expectedErrorMessage = "Issue is malformed."
+            .expectedErrorMessage = "Issue is malformed.",
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAsset2NotStringOrObject",
             .testJson = R"JSON({"asset2": 1})JSON",
             .expectedError = "issueMalformed",
-            .expectedErrorMessage = "Issue is malformed."
+            .expectedErrorMessage = "Issue is malformed.",
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAsset2EmptyObject",
             .testJson = R"JSON({"asset2": {}})JSON",
             .expectedError = "issueMalformed",
-            .expectedErrorMessage = "Issue is malformed."
+            .expectedErrorMessage = "Issue is malformed.",
         },
     };
 }

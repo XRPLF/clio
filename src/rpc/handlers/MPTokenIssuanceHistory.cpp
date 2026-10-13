@@ -185,7 +185,8 @@ MPTokenIssuanceHistoryHandler::processTransactionsPage(
 {
     if (page.cursor.has_value()) {
         response.marker = {
-            .ledger = page.cursor->ledgerSequence, .seq = page.cursor->transactionIndex
+            .ledger = page.cursor->ledgerSequence,
+            .seq = page.cursor->transactionIndex,
         };
     }
 

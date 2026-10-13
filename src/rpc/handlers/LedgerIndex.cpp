@@ -33,7 +33,7 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
         return Output{
             .ledgerIndex = index,
             .ledgerHash = xrpl::strHex(ledger->hash),
-            .closeTimeIso = xrpl::toStringIso(ledger->closeTime)
+            .closeTimeIso = xrpl::toStringIso(ledger->closeTime),
         };
     };
 

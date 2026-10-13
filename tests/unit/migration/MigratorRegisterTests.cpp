@@ -20,20 +20,26 @@
 using EmptyMigratorRegister = migration::impl::MigratorsRegister<MockMigrationBackend>;
 
 namespace {
-util::config::ClioConfigDefinition gCfg{
-    {{"migration.full_scan_threads",
-      util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(2).withConstraint(
-          util::config::gValidateUint32
-      )},
-     {"migration.full_scan_jobs",
-      util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(4).withConstraint(
-          util::config::gValidateUint32
-      )},
-     {"migration.cursors_per_job",
-      util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(100).withConstraint(
-          util::config::gValidateUint32
-      )}}
-};
+util::config::ClioConfigDefinition gCfg{{
+    {
+        "migration.full_scan_threads",
+        util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(2).withConstraint(
+            util::config::gValidateUint32
+        ),
+    },
+    {
+        "migration.full_scan_jobs",
+        util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(4).withConstraint(
+            util::config::gValidateUint32
+        ),
+    },
+    {
+        "migration.cursors_per_job",
+        util::config::ConfigValue{util::config::ConfigType::Integer}
+            .defaultValue(100)
+            .withConstraint(util::config::gValidateUint32),
+    },
+}};
 }  // namespace
 
 struct MigratorRegisterTests : public util::prometheus::WithMockPrometheus,

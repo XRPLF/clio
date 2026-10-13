@@ -56,18 +56,32 @@ generateDefaultRPCEngineConfig()
 {
     return ClioConfigDefinition{
         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-        {"workers",
-         ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
-        {"rpc.cache_timeout",
-         ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(gValidatePositiveDouble)},
+        {
+            "workers",
+            ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16),
+        },
+        {
+            "rpc.cache_timeout",
+            ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(
+                gValidatePositiveDouble
+            ),
+        },
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
-        {"dos_guard.max_fetches",
-         ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(gValidateUint32)},
-        {"dos_guard.max_connections",
-         ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
-        {"dos_guard.max_requests",
-         ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)}
+        {
+            "dos_guard.max_fetches",
+            ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(
+                gValidateUint32
+            ),
+        },
+        {
+            "dos_guard.max_connections",
+            ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32),
+        },
+        {
+            "dos_guard.max_requests",
+            ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32),
+        },
     };
 }
 
@@ -110,66 +124,78 @@ generateTestValuesForParametersTest()
     auto const neverCalled = std::nullopt;
 
     return std::vector<RPCEngineFlowTestCaseBundle>{
-        {.testName = "ForwardedSubmit",
-         .isAdmin = true,
-         .method = "submit",
-         .params = "{}",
-         .forwarded = true,
-         .isTooBusy = neverCalled,
-         .isUnknownCmd = neverCalled,
-         .handlerReturnError = false,
-         .status = rpc::Status{},
-         .response = boost::json::parse(kForwardReply).as_object()},
-        {.testName = "ForwardAdminCmd",
-         .isAdmin = false,
-         .method = "ledger",
-         .params = R"JSON({"full": true, "ledger_index": "current"})JSON",
-         .forwarded = false,
-         .isTooBusy = neverCalled,
-         .isUnknownCmd = neverCalled,
-         .handlerReturnError = false,
-         .status = rpc::Status{XrpldError::RpcNoPermission},
-         .response = std::nullopt},
-        {.testName = "BackendTooBusy",
-         .isAdmin = false,
-         .method = "ledger",
-         .params = "{}",
-         .forwarded = false,
-         .isTooBusy = true,
-         .isUnknownCmd = neverCalled,
-         .handlerReturnError = false,
-         .status = rpc::Status{XrpldError::RpcTooBusy},
-         .response = std::nullopt},
-        {.testName = "HandlerUnknown",
-         .isAdmin = false,
-         .method = "ledger",
-         .params = "{}",
-         .forwarded = false,
-         .isTooBusy = false,
-         .isUnknownCmd = true,
-         .handlerReturnError = false,
-         .status = rpc::Status{XrpldError::RpcUnknownCommand},
-         .response = std::nullopt},
-        {.testName = "HandlerReturnError",
-         .isAdmin = false,
-         .method = "ledger",
-         .params = R"JSON({"hello": "world", "limit": 50})JSON",
-         .forwarded = false,
-         .isTooBusy = false,
-         .isUnknownCmd = false,
-         .handlerReturnError = true,
-         .status = rpc::Status{"Very custom error"},
-         .response = std::nullopt},
-        {.testName = "HandlerReturnResponse",
-         .isAdmin = false,
-         .method = "ledger",
-         .params = R"JSON({"hello": "world", "limit": 50})JSON",
-         .forwarded = false,
-         .isTooBusy = false,
-         .isUnknownCmd = false,
-         .handlerReturnError = false,
-         .status = std::nullopt,
-         .response = boost::json::parse(R"JSON({"computed": "world_50"})JSON").as_object()},
+        {
+            .testName = "ForwardedSubmit",
+            .isAdmin = true,
+            .method = "submit",
+            .params = "{}",
+            .forwarded = true,
+            .isTooBusy = neverCalled,
+            .isUnknownCmd = neverCalled,
+            .handlerReturnError = false,
+            .status = rpc::Status{},
+            .response = boost::json::parse(kForwardReply).as_object(),
+        },
+        {
+            .testName = "ForwardAdminCmd",
+            .isAdmin = false,
+            .method = "ledger",
+            .params = R"JSON({"full": true, "ledger_index": "current"})JSON",
+            .forwarded = false,
+            .isTooBusy = neverCalled,
+            .isUnknownCmd = neverCalled,
+            .handlerReturnError = false,
+            .status = rpc::Status{XrpldError::RpcNoPermission},
+            .response = std::nullopt,
+        },
+        {
+            .testName = "BackendTooBusy",
+            .isAdmin = false,
+            .method = "ledger",
+            .params = "{}",
+            .forwarded = false,
+            .isTooBusy = true,
+            .isUnknownCmd = neverCalled,
+            .handlerReturnError = false,
+            .status = rpc::Status{XrpldError::RpcTooBusy},
+            .response = std::nullopt,
+        },
+        {
+            .testName = "HandlerUnknown",
+            .isAdmin = false,
+            .method = "ledger",
+            .params = "{}",
+            .forwarded = false,
+            .isTooBusy = false,
+            .isUnknownCmd = true,
+            .handlerReturnError = false,
+            .status = rpc::Status{XrpldError::RpcUnknownCommand},
+            .response = std::nullopt,
+        },
+        {
+            .testName = "HandlerReturnError",
+            .isAdmin = false,
+            .method = "ledger",
+            .params = R"JSON({"hello": "world", "limit": 50})JSON",
+            .forwarded = false,
+            .isTooBusy = false,
+            .isUnknownCmd = false,
+            .handlerReturnError = true,
+            .status = rpc::Status{"Very custom error"},
+            .response = std::nullopt,
+        },
+        {
+            .testName = "HandlerReturnResponse",
+            .isAdmin = false,
+            .method = "ledger",
+            .params = R"JSON({"hello": "world", "limit": 50})JSON",
+            .forwarded = false,
+            .isTooBusy = false,
+            .isUnknownCmd = false,
+            .handlerReturnError = false,
+            .status = std::nullopt,
+            .response = boost::json::parse(R"JSON({"computed": "world_50"})JSON").as_object(),
+        },
     };
 }
 
@@ -332,60 +358,72 @@ static auto
 generateCacheTestValuesForParametersTest()
 {
     return std::vector<RPCEngineCacheTestCaseBundle>{
-        {.testName = "CacheEnabled",
-         .config = R"JSON({
-             "server": {"max_queue_size": 2},
-             "workers": 4,
-             "rpc": {"cache_timeout": 10}
-         })JSON",
-         .method = "server_info",
-         .isAdmin = false,
-         .expectedCacheEnabled = true},
-        {.testName = "CacheDisabledWhenNoConfig",
-         .config = R"JSON({
-             "server": {"max_queue_size": 2},
-             "workers": 4,
-             "rpc": {"cache_timeout": 0}
-         })JSON",
-         .method = "server_info",
-         .isAdmin = false,
-         .expectedCacheEnabled = false},
-        {.testName = "CacheDisabledWhenNoTimeout",
-         .config = R"JSON({
-             "server": {"max_queue_size": 2},
-             "workers": 4,
-             "rpc": {"cache_timeout": 0}
-         })JSON",
-         .method = "server_info",
-         .isAdmin = false,
-         .expectedCacheEnabled = false},
-        {.testName = "CacheDisabledWhenTimeoutIsZero",
-         .config = R"JSON({
-             "server": {"max_queue_size": 2},
-             "workers": 4,
-             "rpc": {"cache_timeout": 0}
-         })JSON",
-         .method = "server_info",
-         .isAdmin = false,
-         .expectedCacheEnabled = false},
-        {.testName = "CacheNotWorkForAdmin",
-         .config = R"JSON({
-             "server": {"max_queue_size": 2},
-             "workers": 4,
-             "rpc": { "cache_timeout": 10}
-         })JSON",
-         .method = "server_info",
-         .isAdmin = true,
-         .expectedCacheEnabled = false},
-        {.testName = "CacheDisabledWhenCmdNotMatch",
-         .config = R"JSON({
-             "server": {"max_queue_size": 2},
-             "workers": 4,
-             "rpc": {"cache_timeout": 10}
-         })JSON",
-         .method = "server_info2",
-         .isAdmin = false,
-         .expectedCacheEnabled = false},
+        {
+            .testName = "CacheEnabled",
+            .config = R"JSON({
+                "server": {"max_queue_size": 2},
+                "workers": 4,
+                "rpc": {"cache_timeout": 10}
+            })JSON",
+            .method = "server_info",
+            .isAdmin = false,
+            .expectedCacheEnabled = true,
+        },
+        {
+            .testName = "CacheDisabledWhenNoConfig",
+            .config = R"JSON({
+                "server": {"max_queue_size": 2},
+                "workers": 4,
+                "rpc": {"cache_timeout": 0}
+            })JSON",
+            .method = "server_info",
+            .isAdmin = false,
+            .expectedCacheEnabled = false,
+        },
+        {
+            .testName = "CacheDisabledWhenNoTimeout",
+            .config = R"JSON({
+                "server": {"max_queue_size": 2},
+                "workers": 4,
+                "rpc": {"cache_timeout": 0}
+            })JSON",
+            .method = "server_info",
+            .isAdmin = false,
+            .expectedCacheEnabled = false,
+        },
+        {
+            .testName = "CacheDisabledWhenTimeoutIsZero",
+            .config = R"JSON({
+                "server": {"max_queue_size": 2},
+                "workers": 4,
+                "rpc": {"cache_timeout": 0}
+            })JSON",
+            .method = "server_info",
+            .isAdmin = false,
+            .expectedCacheEnabled = false,
+        },
+        {
+            .testName = "CacheNotWorkForAdmin",
+            .config = R"JSON({
+                "server": {"max_queue_size": 2},
+                "workers": 4,
+                "rpc": { "cache_timeout": 10}
+            })JSON",
+            .method = "server_info",
+            .isAdmin = true,
+            .expectedCacheEnabled = false,
+        },
+        {
+            .testName = "CacheDisabledWhenCmdNotMatch",
+            .config = R"JSON({
+                "server": {"max_queue_size": 2},
+                "workers": 4,
+                "rpc": {"cache_timeout": 10}
+            })JSON",
+            .method = "server_info2",
+            .isAdmin = false,
+            .expectedCacheEnabled = false,
+        },
     };
 }
 
@@ -460,10 +498,16 @@ TEST_F(RPCEngineTest, NonBareRequestBypassesCache)
 {
     auto const cfgCache = ClioConfigDefinition{
         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-        {"workers",
-         ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
-        {"rpc.cache_timeout",
-         ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(gValidatePositiveDouble)}
+        {
+            "workers",
+            ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16),
+        },
+        {
+            "rpc.cache_timeout",
+            ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
+                gValidatePositiveDouble
+            ),
+        },
     };
 
     auto const notAdmin = false;
@@ -516,10 +560,16 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
 {
     auto const cfgCache = ClioConfigDefinition{
         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-        {"workers",
-         ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
-        {"rpc.cache_timeout",
-         ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(gValidatePositiveDouble)}
+        {
+            "workers",
+            ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16),
+        },
+        {
+            "rpc.cache_timeout",
+            ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
+                gValidatePositiveDouble
+            ),
+        },
     };
 
     auto const notAdmin = false;

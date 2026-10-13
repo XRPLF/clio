@@ -31,9 +31,11 @@ ExampleTransactionsMigrator::runMigration(
     using HashSet = std::unordered_set<std::string>;
     util::Mutex<HashSet> hashSet;
     migration::cassandra::impl::TransactionsScanner scanner(
-        {.ctxThreadsNum = ctxFullScanThreads,
-         .jobsNum = jobsFullScan,
-         .cursorsPerJob = cursorPerJobsFullScan},
+        {
+            .ctxThreadsNum = ctxFullScanThreads,
+            .jobsNum = jobsFullScan,
+            .cursorsPerJob = cursorPerJobsFullScan,
+        },
         migration::cassandra::impl::TransactionsAdapter(
             backend, [&](xrpl::STTx const& tx, xrpl::TxMeta const&) {
                 hashSet.lock()->insert(xrpl::to_string(tx.getTransactionID()));

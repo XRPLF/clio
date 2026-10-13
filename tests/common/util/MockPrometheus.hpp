@@ -242,10 +242,14 @@ struct WithMockPrometheus : virtual ::testing::Test {
             std::cerr << "\n";
         }
         config::ClioConfigDefinition const config{
-            {"prometheus.compress_reply",
-             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)},
-            {"prometheus.enabled",
-             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)}
+            {
+                "prometheus.compress_reply",
+                config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true),
+            },
+            {
+                "prometheus.enabled",
+                config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true),
+            },
         };
         PrometheusService::replaceInstance(nullptr);
     }
@@ -298,10 +302,14 @@ struct WithPrometheusImpl : virtual ::testing::Test {
     WithPrometheusImpl()
     {
         config::ClioConfigDefinition const config{
-            {"prometheus.compress_reply",
-             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(false)},
-            {"prometheus.enabled",
-             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(IsEnabled)}
+            {
+                "prometheus.compress_reply",
+                config::ConfigValue{config::ConfigType::Boolean}.defaultValue(false),
+            },
+            {
+                "prometheus.enabled",
+                config::ConfigValue{config::ConfigType::Boolean}.defaultValue(IsEnabled),
+            },
         };
         PrometheusService::init(config);
     }

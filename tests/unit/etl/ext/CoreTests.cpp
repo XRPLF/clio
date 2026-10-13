@@ -37,7 +37,7 @@ createTestData()
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 }
 

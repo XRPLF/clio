@@ -101,7 +101,7 @@ TEST_F(ConfigTest, CheckAllKeys)
         "dosguard.port",
         "optional.withDefault",
         "optional.withNoDefault",
-        "requireValue"
+        "requireValue",
     };
 
     for (auto i = configData.begin(); i != configData.end(); ++i) {
@@ -317,7 +317,7 @@ TEST_F(IncorrectOverrideValues, InvalidJsonErrors)
         "dosguard.whitelist.[] value does not match type string",
         "header.port value does not match type integer",
         "header.admin value does not match type boolean",
-        "optional.withDefault value does not match type double"
+        "optional.withDefault value does not match type double",
     };
 
     std::set<std::string_view> actualErrors;
@@ -330,7 +330,7 @@ TEST_F(IncorrectOverrideValues, InvalidJsonErrors)
 struct ClioConfigDefinitionParseArrayTest : public virtual ::testing::Test {
     ClioConfigDefinition config{
         {"array.[].int", Array{ConfigValue{ConfigType::Integer}}},
-        {"array.[].string", Array{ConfigValue{ConfigType::String}.optional()}}
+        {"array.[].string", Array{ConfigValue{ConfigType::String}.optional()}},
     };
 };
 

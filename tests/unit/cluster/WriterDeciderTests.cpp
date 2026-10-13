@@ -25,8 +25,9 @@ enum class ExpectedAction {
     GiveUpWriting,
     NoAction,
     SetFallback,
-    SetFallbackRecoveryTrue,        // contagion: clone receives setFallbackRecovery(true)
-    GiveUpAndClearFallbackRecovery  // recovery complete: giveUpWriting + setFallbackRecovery(false)
+    SetFallbackRecoveryTrue,         // contagion: clone receives setFallbackRecovery(true)
+    GiveUpAndClearFallbackRecovery,  // recovery complete: giveUpWriting +
+                                     // setFallbackRecovery(false)
 };
 
 struct NodeParams {
@@ -72,7 +73,7 @@ struct WriterDeciderTest : testing::TestWithParam<WriterDeciderTestParams> {
             .dbRole = role,
             .etlStarted = etlStarted,
             .cacheIsFull = cacheIsFull,
-            .cacheIsCurrentlyLoading = false
+            .cacheIsCurrentlyLoading = false,
         };
     }
 

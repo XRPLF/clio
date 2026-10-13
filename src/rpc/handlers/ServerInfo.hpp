@@ -187,7 +187,7 @@ public:
                 .backendCounters =
                     input.backendCounters ? std::make_optional(backend_->stats()) : std::nullopt,
                 .subscriptions = subscriptions_->report(),
-                .etl = etl_->getInfo()
+                .etl = etl_->getInfo(),
             };
         }
 

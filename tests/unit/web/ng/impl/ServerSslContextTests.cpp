@@ -48,7 +48,7 @@ TEST_P(MakeServerSslContextFromConfigTest, makeFromConfig)
     // generate cert and key file
     auto config = ClioConfigDefinition{
         {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
-        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()}
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
     };
     auto const errors = config.parse(js);
     ASSERT_TRUE(!errors.has_value());
@@ -112,7 +112,7 @@ TEST_F(MakeServerSslContextFromConfigRealFilesTest, WrongKeyFile)
 
     ClioConfigDefinition const config{
         {"ssl_cert_file", ConfigValue{ConfigType::String}.defaultValue(certFile.path)},
-        {"ssl_key_file", ConfigValue{ConfigType::String}.defaultValue("some_path")}
+        {"ssl_key_file", ConfigValue{ConfigType::String}.defaultValue("some_path")},
     };
     auto const expectedServerSslContext = makeServerSslContext(config);
     ASSERT_FALSE(expectedServerSslContext.has_value());
@@ -126,7 +126,7 @@ TEST_F(MakeServerSslContextFromConfigRealFilesTest, BothFilesValid)
 
     ClioConfigDefinition const config{
         {"ssl_cert_file", ConfigValue{ConfigType::String}.defaultValue(certFile.path)},
-        {"ssl_key_file", ConfigValue{ConfigType::String}.defaultValue(keyFile.path)}
+        {"ssl_key_file", ConfigValue{ConfigType::String}.defaultValue(keyFile.path)},
     };
     auto const expectedServerSslContext = makeServerSslContext(config);
     EXPECT_TRUE(expectedServerSslContext.has_value());

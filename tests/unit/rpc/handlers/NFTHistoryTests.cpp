@@ -61,84 +61,84 @@ generateTestValuesForParametersTest()
             .testName = "MissingNFTID",
             .testJson = R"JSON({})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'nft_id' missing"
+            .expectedErrorMessage = "Required field 'nft_id' missing",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "BinaryNotBool",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "binary": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "ForwardNotBool",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "forward": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "ledger_index_minNotInt",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index_min": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "ledger_index_maxNotInt",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index_max": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "ledger_indexInvalid",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "ledger_hashInvalid",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "ledger_hashNotString",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "limitNotInt",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": "123"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "limitNegative",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": -1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "limitZero",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": 0})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "MarkerNotObject",
             .testJson =
                 R"JSON({"nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "marker": 101})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "invalidMarker"
+            .expectedErrorMessage = "invalidMarker",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "MarkerMissingSeq",
@@ -147,7 +147,7 @@ generateTestValuesForParametersTest()
                 "marker": {"ledger": 123}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'seq' missing"
+            .expectedErrorMessage = "Required field 'seq' missing",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "MarkerMissingLedger",
@@ -156,7 +156,7 @@ generateTestValuesForParametersTest()
                 "marker": {"seq": 123}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'ledger' missing"
+            .expectedErrorMessage = "Required field 'ledger' missing",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "MarkerLedgerNotInt",
@@ -168,7 +168,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "MarkerSeqNotInt",
@@ -180,7 +180,7 @@ generateTestValuesForParametersTest()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "LedgerIndexMinLessThanMinSeq",
@@ -189,7 +189,7 @@ generateTestValuesForParametersTest()
                 "ledger_index_min": 9
             })JSON",
             .expectedError = "lgrIdxMalformed",
-            .expectedErrorMessage = "ledgerSeqMinOutOfRange"
+            .expectedErrorMessage = "ledgerSeqMinOutOfRange",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "LedgerIndexMaxLargeThanMaxSeq",
@@ -198,7 +198,7 @@ generateTestValuesForParametersTest()
                 "ledger_index_max": 31
             })JSON",
             .expectedError = "lgrIdxMalformed",
-            .expectedErrorMessage = "ledgerSeqMaxOutOfRange"
+            .expectedErrorMessage = "ledgerSeqMaxOutOfRange",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "LedgerIndexMaxLessThanLedgerIndexMin",
@@ -208,7 +208,7 @@ generateTestValuesForParametersTest()
                 "ledger_index_min": 20
             })JSON",
             .expectedError = "lgrIdxsInvalid",
-            .expectedErrorMessage = "Ledger indexes invalid."
+            .expectedErrorMessage = "Ledger indexes invalid.",
         },
         NFTHistoryParamTestCaseBundle{
             .testName = "LedgerIndexMaxMinAndLedgerIndex",
@@ -219,7 +219,7 @@ generateTestValuesForParametersTest()
                 "ledger_index": 10
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "containsLedgerSpecifierAndRange"
+            .expectedErrorMessage = "containsLedgerSpecifierAndRange",
         },
     };
 }

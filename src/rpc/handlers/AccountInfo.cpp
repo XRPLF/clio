@@ -86,7 +86,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         .isClawbackEnabled = isClawbackEnabled,
         .isTokenEscrowEnabled = isTokenEscrowEnabled,
         .apiVersion = ctx.apiVersion,
-        .signerLists = std::nullopt
+        .signerLists = std::nullopt,
     };
 
     // Return SignerList(s) if that is requested.

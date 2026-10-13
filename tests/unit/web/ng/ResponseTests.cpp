@@ -131,7 +131,7 @@ TEST_F(ResponseTest, asConstBufferJson)
 TEST_F(ResponseTest, createFromStringAndConnection)
 {
     util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
     StrictMockConnection const connection{
         "some ip", boost::beast::flat_buffer{}, tagDecoratorFactory
@@ -152,7 +152,7 @@ TEST_F(ResponseTest, createFromStringAndConnection)
 TEST_F(ResponseTest, createFromJsonAndConnection)
 {
     util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
     StrictMockConnection const connection{
         "some ip", boost::beast::flat_buffer{}, tagDecoratorFactory

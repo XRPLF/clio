@@ -30,9 +30,11 @@ public:
         SomeHandler HandlerType,
         typename ProcessingStrategy = impl::DefaultProcessor<HandlerType>>
     /* implicit */ AnyHandler(HandlerType&& handler)
-        : pimpl_{std::make_unique<Model<HandlerType, ProcessingStrategy>>(
-              std::forward<HandlerType>(handler)
-          )}
+        : pimpl_{
+              std::make_unique<Model<HandlerType, ProcessingStrategy>>(
+                  std::forward<HandlerType>(handler)
+              ),
+          }
     {
     }
 

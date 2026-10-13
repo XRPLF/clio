@@ -73,40 +73,60 @@ protected:
 
     ClioConfigDefinition cfg_{
         {"database.type", ConfigValue{ConfigType::String}.defaultValue(kCassandra)},
-        {"database.cassandra.contact_points",
-         ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
+        {
+            "database.cassandra.contact_points",
+            ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost),
+        },
         {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.port", ConfigValue{ConfigType::Integer}.optional()},
-        {"database.cassandra.keyspace",
-         ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
+        {
+            "database.cassandra.keyspace",
+            ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace),
+        },
         {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kCassandra)},
         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
         {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
-        {"database.cassandra.max_write_requests_outstanding",
-         ConfigValue{ConfigType::Integer}.defaultValue(10'000)},
-        {"database.cassandra.max_read_requests_outstanding",
-         ConfigValue{ConfigType::Integer}.defaultValue(100'000)},
-        {"database.cassandra.threads",
-         ConfigValue{ConfigType::Integer}.defaultValue(
-             static_cast<uint32_t>(std::thread::hardware_concurrency())
-         )},
-        {"database.cassandra.core_connections_per_host",
-         ConfigValue{ConfigType::Integer}.defaultValue(1)},
+        {
+            "database.cassandra.max_write_requests_outstanding",
+            ConfigValue{ConfigType::Integer}.defaultValue(10'000),
+        },
+        {
+            "database.cassandra.max_read_requests_outstanding",
+            ConfigValue{ConfigType::Integer}.defaultValue(100'000),
+        },
+        {
+            "database.cassandra.threads",
+            ConfigValue{ConfigType::Integer}.defaultValue(
+                static_cast<uint32_t>(std::thread::hardware_concurrency())
+            ),
+        },
+        {
+            "database.cassandra.core_connections_per_host",
+            ConfigValue{ConfigType::Integer}.defaultValue(1),
+        },
         {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
-        {"database.cassandra.connect_timeout",
-         ConfigValue{ConfigType::Integer}.defaultValue(10).optional()},
-        {"database.cassandra.initial_request_retry_delay",
-         ConfigValue{ConfigType::Double}.defaultValue(0.5)},
-        {"database.cassandra.max_request_retry_delay",
-         ConfigValue{ConfigType::Double}.defaultValue(5.0)},
-        {"database.cassandra.request_timeout",
-         ConfigValue{ConfigType::Double}.defaultValue(10.0).optional()},
+        {
+            "database.cassandra.connect_timeout",
+            ConfigValue{ConfigType::Integer}.defaultValue(10).optional(),
+        },
+        {
+            "database.cassandra.initial_request_retry_delay",
+            ConfigValue{ConfigType::Double}.defaultValue(0.5),
+        },
+        {
+            "database.cassandra.max_request_retry_delay",
+            ConfigValue{ConfigType::Double}.defaultValue(5.0),
+        },
+        {
+            "database.cassandra.request_timeout",
+            ConfigValue{ConfigType::Double}.defaultValue(10.0).optional(),
+        },
         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
 
-        {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)}
+        {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
     };
 
     static constexpr auto kRawheader =
@@ -1549,7 +1569,7 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, RoundTripIssuanceAndAccountIndexes)
             .accounts = {account, secondAccount},
             .ledgerSequence = seq,
             .transactionIndex = 1,
-            .txHash = hash
+            .txHash = hash,
         };
         backend_->writeMPTokenIssuanceTransactions({record});
         backend_->writeAccountMPTokenIssuanceTransactions({record});
@@ -1604,7 +1624,7 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, RoundTripIssuanceAndAccountIndexes)
                 .accounts = {account},
                 .ledgerSequence = seq,
                 .transactionIndex = 2,
-                .txHash = secondHash
+                .txHash = secondHash,
             };
             backend_->writeMPTokenIssuanceTransactions({secondRecord});
             backend_->writeAccountMPTokenIssuanceTransactions({secondRecord});
@@ -1649,7 +1669,7 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, DescendingOrderForwardAndReverse)
                 .accounts = {},
                 .ledgerSequence = seq,
                 .transactionIndex = i,
-                .txHash = hash
+                .txHash = hash,
             };
             backend_->writeMPTokenIssuanceTransactions({record});
         }
@@ -1721,7 +1741,7 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, MarkerPaginationRoundTrip)
                         .accounts = {},
                         .ledgerSequence = seq,
                         .transactionIndex = i,
-                        .txHash = hash
+                        .txHash = hash,
                     };
                     backend_->writeMPTokenIssuanceTransactions({record});
                     expected.insert(expectedBlob(i));
@@ -1824,27 +1844,33 @@ TEST_F(BackendCassandraMPTokenIssuanceTest, MissingBlobYieldsInPositionEmptyReco
         writeTxBlob(h1, seq);
         writeTxBlob(h3, seq);
 
-        backend_->writeMPTokenIssuanceTransactions({MPTokenIssuanceTransactionsData{
-            .mptIssuanceID = mptIssuanceId,
-            .accounts = {},
-            .ledgerSequence = seq,
-            .transactionIndex = 1,
-            .txHash = h1
-        }});
-        backend_->writeMPTokenIssuanceTransactions({MPTokenIssuanceTransactionsData{
-            .mptIssuanceID = mptIssuanceId,
-            .accounts = {},
-            .ledgerSequence = seq,
-            .transactionIndex = 2,
-            .txHash = h2
-        }});
-        backend_->writeMPTokenIssuanceTransactions({MPTokenIssuanceTransactionsData{
-            .mptIssuanceID = mptIssuanceId,
-            .accounts = {},
-            .ledgerSequence = seq,
-            .transactionIndex = 3,
-            .txHash = h3
-        }});
+        backend_->writeMPTokenIssuanceTransactions({
+            MPTokenIssuanceTransactionsData{
+                .mptIssuanceID = mptIssuanceId,
+                .accounts = {},
+                .ledgerSequence = seq,
+                .transactionIndex = 1,
+                .txHash = h1,
+            },
+        });
+        backend_->writeMPTokenIssuanceTransactions({
+            MPTokenIssuanceTransactionsData{
+                .mptIssuanceID = mptIssuanceId,
+                .accounts = {},
+                .ledgerSequence = seq,
+                .transactionIndex = 2,
+                .txHash = h2,
+            },
+        });
+        backend_->writeMPTokenIssuanceTransactions({
+            MPTokenIssuanceTransactionsData{
+                .mptIssuanceID = mptIssuanceId,
+                .accounts = {},
+                .ledgerSequence = seq,
+                .transactionIndex = 3,
+                .txHash = h3,
+            },
+        });
         backend_->waitForWritesToFinish();
 
         auto [txns, cursor] =
@@ -1890,7 +1916,7 @@ TEST_F(BackendCassandraNodeMessageTest, UpdateFetchMultipleMessages)
     std::unordered_map<boost::uuids::uuid, std::string> kData = {
         {generateUuid(), std::string{"some message"}},
         {generateUuid(), std::string{"other message"}},
-        {generateUuid(), std::string{"message 3"}}
+        {generateUuid(), std::string{"message 3"}},
     };
 
     EXPECT_NO_THROW({

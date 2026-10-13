@@ -104,7 +104,7 @@ LoadBalancer::LoadBalancer(
               "forwarding_cache_miss_counter",
               Labels(),
               "The number of requests that were not served from the cache"
-          )
+          ),
       }
 {
     auto const forwardingCacheTimeout = config.get<float>("forwarding.cache_timeout");

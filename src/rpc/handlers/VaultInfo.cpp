@@ -144,7 +144,7 @@ tag_invoke(
     jv = boost::json::object{
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
-        {JS(vault), output.vault}
+        {JS(vault), output.vault},
     };
 }
 

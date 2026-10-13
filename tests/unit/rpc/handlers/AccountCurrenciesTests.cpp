@@ -392,7 +392,7 @@ TEST(RPCAccountCurrenciesHandlerSpecTest, DeprecatedFields)
         {"ledger_hash", "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"},
         {"ledger_index", 30},
         {"account_index", 1},
-        {"strict", true}
+        {"strict", true},
     };
     auto const spec = AccountCurrenciesHandler::spec(2);
     auto const warnings = rpc::spec::toJsonArray(spec.check(json));

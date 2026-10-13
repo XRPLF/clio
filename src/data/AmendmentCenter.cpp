@@ -99,7 +99,7 @@ AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& 
                 .feature = Amendment::getAmendmentId(name),
                 .isSupportedByXRPL = support != xrpl::AmendmentSupport::Unsupported,
                 .isSupportedByClio = rg::contains(supportedAmendments(), name),
-                .isRetired = support == xrpl::AmendmentSupport::Retired
+                .isRetired = support == xrpl::AmendmentSupport::Retired,
             };
         }),
         std::back_inserter(all_)

@@ -26,10 +26,12 @@ using TestCassandraMigrationManager = migration::impl::MigrationManagerBase<Test
 struct MigrationManagerBaseTest : public util::prometheus::WithMockPrometheus,
                                   public MockMigrationBackendTestStrict {
     util::config::ClioConfigDefinition cfg{
-        {"migration.full_scan_threads",
-         util::config::ConfigValue{util::config::ConfigType::Integer}
-             .defaultValue(2)
-             .withConstraint(util::config::gValidateUint32)}
+        {
+            "migration.full_scan_threads",
+            util::config::ConfigValue{util::config::ConfigType::Integer}
+                .defaultValue(2)
+                .withConstraint(util::config::gValidateUint32),
+        },
     };
     std::shared_ptr<TestCassandraMigrationManager> migrationManager;
 

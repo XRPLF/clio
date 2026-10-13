@@ -68,12 +68,14 @@ private:
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output)
     {
         jv = {
-            {"version",
-             {
-                 {"first", output.minVersion},
-                 {"last", output.maxVersion},
-                 {"good", output.currVersion},
-             }},
+            {
+                "version",
+                {
+                    {"first", output.minVersion},
+                    {"last", output.maxVersion},
+                    {"good", output.currVersion},
+                },
+            },
         };
     }
 };
