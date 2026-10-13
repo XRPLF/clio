@@ -12,7 +12,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -2596,6 +2595,18 @@ struct NormalPathTestBundle {
     xrpl::STObject mockedEntity;
 };
 
+namespace {
+
+// Tests only compare serialized fields, so the STObject part of the entry is enough
+xrpl::STObject
+makeSponsorshipObject()
+{
+    xrpl::STLedgerEntry const entry{xrpl::ltSPONSORSHIP, xrpl::uint256{kIndex1}};
+    return static_cast<xrpl::STObject const&>(entry);
+}
+
+}  // namespace
+
 struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest,
                                       public WithParamInterface<NormalPathTestBundle> {};
 
@@ -3457,7 +3468,7 @@ generateTestValuesForNormalPathTest()
                 kIndex1
             ),
             .expectedIndex = xrpl::uint256{kIndex1},
-            .mockedEntity = xrpl::STLedgerEntry{xrpl::ltSPONSORSHIP, xrpl::uint256{kIndex1}},
+            .mockedEntity = makeSponsorshipObject(),
         },
         NormalPathTestBundle{
             .testName = "SponsorshipViaObject",
@@ -3476,7 +3487,7 @@ generateTestValuesForNormalPathTest()
                                  getAccountIdWithString(kAccount), getAccountIdWithString(kAccount2)
             )
                                  .key,
-            .mockedEntity = xrpl::STLedgerEntry{xrpl::ltSPONSORSHIP, xrpl::uint256{kIndex1}},
+            .mockedEntity = makeSponsorshipObject(),
         },
     };
 }
@@ -3514,7 +3525,7 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
             xrpl::strHex(testBundle.mockedEntity.getSerializer().peekData())
         );
         EXPECT_EQ(
-            xrpl::uint256(boost::json::value_to<std::string>(outputJson.at("index")).data()),
+            xrpl::uint256{std::string_view{outputJson.at("index").as_string()}},
             testBundle.expectedIndex
         );
     });

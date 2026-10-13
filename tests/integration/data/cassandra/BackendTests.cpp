@@ -142,7 +142,8 @@ protected:
     // recreated for each test
     data::LedgerCache cache_;
 
-    std::default_random_engine randomEngine_{0};
+    // Fixed seed keeps the generated test data reproducible between runs
+    std::default_random_engine randomEngine_{0};  // NOLINT(bugprone-random-generator-seed)
 
 public:
     ~BackendCassandraTestBase() override
@@ -656,7 +657,7 @@ TEST_F(BackendCassandraTest, Basic)
         };
         auto const updateObjects = [](uint32_t ledgerSequence, auto objs) {
             for (auto& [key, obj] : objs) {
-                obj = std::to_string(ledgerSequence) + obj;
+                obj.insert(0, std::to_string(ledgerSequence));
             }
             return objs;
         };
@@ -1241,7 +1242,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         };
         auto const updateObjects = [](uint32_t ledgerSequence, auto objs) {
             for (auto& [key, obj] : objs) {
-                obj = std::to_string(ledgerSequence) + obj;
+                obj.insert(0, std::to_string(ledgerSequence));
             }
             return objs;
         };
@@ -1953,7 +1954,7 @@ TEST_F(BackendCassandraNodeMessageTest, MessageDisappearsAfterTTL)
 
 TEST_F(BackendCassandraNodeMessageTest, UpdatingMessageKeepsItAlive)
 {
-#if defined(__APPLE__)
+#ifdef __APPLE__
     GTEST_SKIP() << "Skipping test on Apple platform due to slow DB";
 #else
     static boost::uuids::uuid const kUuid = generateUuid();

@@ -282,9 +282,9 @@ TEST_F(ObservableValueTest, NonDefaultInitializableTypeWithParameterizedConstruc
 
 TEST_F(ObservableValueTest, MoveSemantics)
 {
-    ObservableValue<int> const obs1{100};
+    ObservableValue<int> obs1{100};
 
-    ObservableValue<int> const obs2 = std::move(obs1);
+    ObservableValue<int> obs2 = std::move(obs1);
     EXPECT_EQ(obs2.get(), 100);
 
     ObservableValue<int> obs3{200};

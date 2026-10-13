@@ -139,9 +139,9 @@ LoadBalancer::LoadBalancer(
     auto const forwardingTimeout =
         ClioConfigDefinition::toMilliseconds(config.get<float>("forwarding.request_timeout"));
     auto const etlArray = config.getArray("etl_sources");
-    for (auto it = etlArray.begin<ObjectView>(); it != etlArray.end<ObjectView>(); ++it) {
+    for (auto const& sourceConfig : etlArray.objects()) {
         auto source = sourceFactory(
-            *it,
+            sourceConfig,
             ioc,
             subscriptions,
             validatedLedgers,

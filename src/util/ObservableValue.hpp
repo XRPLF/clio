@@ -207,10 +207,12 @@ public:
      *
      * @throws Any exception thrown by observer callbacks will propagate
      */
+    template <std::convertible_to<T> U>
+        requires(not std::same_as<std::remove_cvref_t<U>, ObservableValue>)
     ObservableValue&
-    operator=(std::convertible_to<T> auto&& val)
+    operator=(U&& val)
     {
-        set(val);
+        set(std::forward<U>(val));
         return *this;
     }
 
@@ -343,10 +345,12 @@ public:
      * @param val New value
      * @return Reference to this object for chaining
      */
+    template <std::convertible_to<T> U>
+        requires(not std::same_as<std::remove_cvref_t<U>, ObservableValue>)
     ObservableValue&
-    operator=(std::convertible_to<T> auto&& val)
+    operator=(U&& val)
     {
-        set(std::forward<decltype(val)>(val));
+        set(std::forward<U>(val));
         return *this;
     }
 

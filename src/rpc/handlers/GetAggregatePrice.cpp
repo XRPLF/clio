@@ -58,7 +58,7 @@ GetAggregatePriceHandler::process(
 
     // sorted descending by lastUpdateTime, ascending by AssetPrice
     using TimestampPricesBiMap = boost::bimaps::bimap<
-        boost::bimaps::multiset_of<std::uint32_t, std::greater<std::uint32_t>>,
+        boost::bimaps::multiset_of<std::uint32_t, std::greater<>>,
         boost::bimaps::multiset_of<xrpl::STAmount>>;
 
     TimestampPricesBiMap timestampPricesBiMap;

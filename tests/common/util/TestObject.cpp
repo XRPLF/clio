@@ -692,7 +692,7 @@ createNftTokenPage(
     xrpl::STArray list;
     for (auto const& token : tokens) {
         auto entry = xrpl::STObject(xrpl::sfNFToken);
-        entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{token.first.c_str()});
+        entry.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{std::string_view{token.first}});
         entry.setFieldVL(xrpl::sfURI, xrpl::Slice(token.second.c_str(), token.second.size()));
         list.push_back(std::move(entry));
     }
@@ -1129,7 +1129,7 @@ createCancelNftOffersTxWithMetadata(
     xrpl::STVector256 offers;
     offers.resize(nftOffers.size());
     std::ranges::transform(nftOffers, offers.begin(), [&](auto const& nftId) {
-        return xrpl::uint256{nftId.c_str()};
+        return xrpl::uint256{std::string_view{nftId}};
     });
     tx.setFieldV256(xrpl::sfNFTokenOffers, offers);
     tx.setFieldVL(xrpl::sfSigningPubKey, kSlice);
@@ -1144,7 +1144,7 @@ createCancelNftOffersTxWithMetadata(
         node.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltNFTOKEN_OFFER);
 
         xrpl::STObject finalFields(xrpl::sfFinalFields);
-        finalFields.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{nftId.c_str()});
+        finalFields.setFieldH256(xrpl::sfNFTokenID, xrpl::uint256{std::string_view{nftId}});
 
         node.set(std::move(finalFields));
         metaArray.push_back(node);
@@ -1853,7 +1853,7 @@ createAuthCredentialArray(
         credential.setFieldVL(
             xrpl::sfCredentialType,
             // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            *xrpl::strUnHex(std::string(credType[i]))
+            *xrpl::strUnHex(credType[i])
         );
         arr.push_back(credential);
     }

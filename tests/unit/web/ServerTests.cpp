@@ -587,7 +587,7 @@ TEST_P(WebServerAdminTest, WsAdminCheck)
     };
     auto const server = makeServerSync(serverConfig, ctx, dosGuardOverload, e, cache);
     WebSocketSyncClient wsClient;
-    uint32_t const webServerPort = serverConfig.get<uint32_t>("server.port");
+    auto const webServerPort = serverConfig.get<uint32_t>("server.port");
     wsClient.connect("localhost", std::to_string(webServerPort), GetParam().headers);
     std::string const request = "Why hello";
     auto const res = wsClient.syncPost(request);
@@ -604,7 +604,7 @@ TEST_P(WebServerAdminTest, HttpAdminCheck)
     };
     auto const server = makeServerSync(serverConfig, ctx, dosGuardOverload, e, cache);
     std::string const request = "Why hello";
-    uint32_t const webServerPort = serverConfig.get<uint32_t>("server.port");
+    auto const webServerPort = serverConfig.get<uint32_t>("server.port");
     auto const [status, res] = HttpSyncClient::post(
         "localhost", std::to_string(webServerPort), request, GetParam().headers
     );
