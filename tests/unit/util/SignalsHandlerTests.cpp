@@ -52,7 +52,7 @@ TEST_F(SignalsHandlerAssertTest, CantCreateTwoSignalsHandlers)
     auto const makeHandler = [] {
         return SignalsHandler{
             ClioConfigDefinition{
-                {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(1.f)}
+                {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(1.f)},
             },
             [] {}
         };
@@ -65,7 +65,7 @@ struct SignalsHandlerTests : SignalsHandlerTestsBase {
 protected:
     SignalsHandler handler_{
         ClioConfigDefinition{
-            {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(3.0)}
+            {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(3.0)},
         },
         forceExitHandler_.AsStdFunction()
     };
@@ -96,7 +96,7 @@ struct SignalsHandlerTimeoutTests : SignalsHandlerTestsBase {
 protected:
     SignalsHandler handler_{
         ClioConfigDefinition{
-            {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(0.001)}
+            {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(0.001)},
         },
         forceExitHandler_.AsStdFunction()
     };

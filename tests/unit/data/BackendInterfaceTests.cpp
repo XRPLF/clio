@@ -124,7 +124,7 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
                 Blob{'s'},
                 Blob{'s'},
                 Blob{'s'},
-                Blob{}
+                Blob{},
             }
         ));
 
@@ -159,7 +159,7 @@ TEST_F(
                 Blob{'s'},
                 Blob{'s'},
                 Blob{'s'},
-                Blob{}
+                Blob{},
             }
         ));
 
@@ -202,7 +202,8 @@ TEST(BackendInterfaceRetryTest, RetryOnTimeoutBlockingRetriesUntilSuccess)
             return 42;
         },
         util::Retry::Delays{
-            .initial = std::chrono::milliseconds{1}, .max = std::chrono::milliseconds{2}
+            .initial = std::chrono::milliseconds{1},
+            .max = std::chrono::milliseconds{2},
         }
     );
 
@@ -238,7 +239,8 @@ TEST_F(BackendInterfaceRetryCoroTest, RetryOnTimeoutCoroRetriesUntilSuccess)
             },
             yield,
             util::Retry::Delays{
-                .initial = std::chrono::milliseconds{1}, .max = std::chrono::milliseconds{2}
+                .initial = std::chrono::milliseconds{1},
+                .max = std::chrono::milliseconds{2},
             }
         );
 
@@ -286,7 +288,8 @@ TEST_F(BackendInterfaceRetryCoroTest, RetryOnTimeoutCoroDoesNotWaitInsideCatchHa
             },
             yield,
             util::Retry::Delays{
-                .initial = std::chrono::milliseconds{1}, .max = std::chrono::milliseconds{1}
+                .initial = std::chrono::milliseconds{1},
+                .max = std::chrono::milliseconds{1},
             }
         );
     });
@@ -314,7 +317,8 @@ TEST_F(BackendInterfaceRetryCoroTest, RetryOnTimeoutCoroDoesNotBlockItsThread)
             },
             yield,
             util::Retry::Delays{
-                .initial = std::chrono::milliseconds{1}, .max = std::chrono::milliseconds{1}
+                .initial = std::chrono::milliseconds{1},
+                .max = std::chrono::milliseconds{1},
             }
         );
 

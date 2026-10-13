@@ -171,7 +171,7 @@ class TagDecoratorFactory final {
     enum class Type {
         NONE,  ///< No decoration and no tag
         UUID,  ///< Tag based on `boost::uuids::uuid`, thread-safe via mutex
-        UINT   ///< atomic_uint64_t tag, thread-safe, lock-free
+        UINT,  ///< atomic_uint64_t tag, thread-safe, lock-free
     };
 
     Type type_;                        /*< The type of TagDecorator this factory produces */

@@ -30,38 +30,54 @@ struct BackendCassandraFactoryTest : SyncAsioContextTest, util::prometheus::With
 protected:
     ClioConfigDefinition cfg_{
         {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
-        {"database.cassandra.contact_points",
-         ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
+        {
+            "database.cassandra.contact_points",
+            ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost),
+        },
         {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.port", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue(kKeyspace)},
         {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kProvider)},
         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
         {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
-        {"database.cassandra.max_write_requests_outstanding",
-         ConfigValue{ConfigType::Integer}.defaultValue(10'000)},
-        {"database.cassandra.max_read_requests_outstanding",
-         ConfigValue{ConfigType::Integer}.defaultValue(100'000)},
-        {"database.cassandra.threads",
-         ConfigValue{ConfigType::Integer}.defaultValue(
-             static_cast<uint32_t>(std::thread::hardware_concurrency())
-         )},
-        {"database.cassandra.core_connections_per_host",
-         ConfigValue{ConfigType::Integer}.defaultValue(1)},
+        {
+            "database.cassandra.max_write_requests_outstanding",
+            ConfigValue{ConfigType::Integer}.defaultValue(10'000),
+        },
+        {
+            "database.cassandra.max_read_requests_outstanding",
+            ConfigValue{ConfigType::Integer}.defaultValue(100'000),
+        },
+        {
+            "database.cassandra.threads",
+            ConfigValue{ConfigType::Integer}.defaultValue(
+                static_cast<uint32_t>(std::thread::hardware_concurrency())
+            ),
+        },
+        {
+            "database.cassandra.core_connections_per_host",
+            ConfigValue{ConfigType::Integer}.defaultValue(1),
+        },
         {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
-        {"database.cassandra.connect_timeout",
-         ConfigValue{ConfigType::Integer}.defaultValue(1).optional()},
-        {"database.cassandra.initial_request_retry_delay",
-         ConfigValue{ConfigType::Double}.defaultValue(0.5)},
-        {"database.cassandra.max_request_retry_delay",
-         ConfigValue{ConfigType::Double}.defaultValue(5.0)},
+        {
+            "database.cassandra.connect_timeout",
+            ConfigValue{ConfigType::Integer}.defaultValue(1).optional(),
+        },
+        {
+            "database.cassandra.initial_request_retry_delay",
+            ConfigValue{ConfigType::Double}.defaultValue(0.5),
+        },
+        {
+            "database.cassandra.max_request_retry_delay",
+            ConfigValue{ConfigType::Double}.defaultValue(5.0),
+        },
         {"database.cassandra.request_timeout", ConfigValue{ConfigType::Double}.optional()},
         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
 
-        {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)}
+        {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
     };
 
     void

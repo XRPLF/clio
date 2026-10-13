@@ -67,49 +67,49 @@ generateTestValuesForParametersTest()
             .testName = "ledger_indexInvalid",
             .testJson = R"JSON({"ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "ledger_hashInvalid",
             .testJson = R"JSON({"ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "ledger_hashNotString",
             .testJson = R"JSON({"ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "binaryNotBool",
             .testJson = R"JSON({"binary": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "limitNotInt",
             .testJson = R"JSON({"limit": "xxx"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "limitNegative",
             .testJson = R"JSON({"limit": -1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "limitZero",
             .testJson = R"JSON({"limit": 0})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "markerInvalid",
             .testJson = R"JSON({"marker": "xxx"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "markerMalformed"
+            .expectedErrorMessage = "markerMalformed",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "markerOutOfOrder",
@@ -118,25 +118,25 @@ generateTestValuesForParametersTest()
                 "out_of_order": true
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "outOfOrderMarkerNotInt"
+            .expectedErrorMessage = "outOfOrderMarkerNotInt",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "markerNotString",
             .testJson = R"JSON({"marker": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "markerNotString"
+            .expectedErrorMessage = "markerNotString",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "typeNotString",
             .testJson = R"JSON({"type": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'type', not string."
+            .expectedErrorMessage = "Invalid field 'type', not string.",
         },
         LedgerDataParamTestCaseBundle{
             .testName = "typeNotValid",
             .testJson = R"JSON({"type": "xxx"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'type'."
+            .expectedErrorMessage = "Invalid field 'type'.",
         },
     };
 }
@@ -926,7 +926,7 @@ TEST(RPCLedgerDataHandlerSpecTest, DeprecatedFields)
         {"limit", 10},
         {"marker", "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"},
         {"type", "state"},
-        {"ledger", "some"}
+        {"ledger", "some"},
     };
     auto const spec = LedgerDataHandler::spec(2);
     auto const warnings = rpc::spec::toJsonArray(spec.check(json));

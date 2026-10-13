@@ -78,62 +78,62 @@ generateTestValuesForParametersTest()
             .testName = "MissingMptIssuanceID",
             .testJson = R"JSON({})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'mpt_issuance_id' missing"
+            .expectedErrorMessage = "Required field 'mpt_issuance_id' missing",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "MalformedMptIssuanceID",
             .testJson = R"JSON({"mpt_issuance_id": "NOTAHEXSTRING"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "mpt_issuance_idMalformed"
+            .expectedErrorMessage = "mpt_issuance_idMalformed",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "BinaryNotBool",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "binary": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "ForwardNotBool",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "forward": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LedgerIndexMinNotInt",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "ledger_index_min": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LedgerIndexMaxNotInt",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "ledger_index_max": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "BadAccount",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "account": "not_a_valid_account"})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "accountMalformed"
+            .expectedErrorMessage = "accountMalformed",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "UnknownTxType",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "tx_type": "NotARealType"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'tx_type'."
+            .expectedErrorMessage = "Invalid field 'tx_type'.",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "MarkerNotObject",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "marker": 101})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "invalidMarker"
+            .expectedErrorMessage = "invalidMarker",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "MarkerMissingSeq",
@@ -142,7 +142,7 @@ generateTestValuesForParametersTest()
                 "marker": {"ledger": 123}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'seq' missing"
+            .expectedErrorMessage = "Required field 'seq' missing",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "MarkerMissingLedger",
@@ -151,49 +151,49 @@ generateTestValuesForParametersTest()
                 "marker": {"seq": 123}
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'ledger' missing"
+            .expectedErrorMessage = "Required field 'ledger' missing",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LedgerHashInvalid",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LimitNotInt",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "limit": "123"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LimitNegative",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "limit": -1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         MPTokenIssuanceHistoryParamTestCaseBundle{
             .testName = "LimitZero",
             .testJson =
                 R"JSON({"mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E", "limit": 0})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
     };
 }

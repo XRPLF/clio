@@ -101,7 +101,7 @@ TEST_F(ClusterCommunicationServiceTest, BackendReadsAndWritesData)
 
     BackendInterface::ClioNodesDataFetchResult fetchResult{
         std::vector<std::pair<boost::uuids::uuid, std::string>>{
-            {otherUuid, nodeToJson(makeNode(otherUuid, ClioNode::DbRole::Writer))}
+            {otherUuid, nodeToJson(makeNode(otherUuid, ClioNode::DbRole::Writer))},
         }
     };
 
@@ -137,7 +137,7 @@ TEST_F(ClusterCommunicationServiceTest, MetricsGetsNewStateFromBackend)
 
     BackendInterface::ClioNodesDataFetchResult fetchResult{
         std::vector<std::pair<boost::uuids::uuid, std::string>>{
-            {otherUuid, nodeToJson(makeNode(otherUuid, ClioNode::DbRole::Writer))}
+            {otherUuid, nodeToJson(makeNode(otherUuid, ClioNode::DbRole::Writer))},
         }
     };
 
@@ -189,7 +189,7 @@ TEST_F(ClusterCommunicationServiceTest, WriterDeciderCallsWriterStateMethodsAcco
 
     BackendInterface::ClioNodesDataFetchResult fetchResult{
         std::vector<std::pair<boost::uuids::uuid, std::string>>{
-            {smallerUuid, nodeToJson(makeNode(smallerUuid, ClioNode::DbRole::Writer))}
+            {smallerUuid, nodeToJson(makeNode(smallerUuid, ClioNode::DbRole::Writer))},
         }
     };
 
@@ -293,12 +293,14 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(ClusterCommunicationServiceMakeTest, LoadingAllowedMatchesConfig)
 {
     auto const& param = GetParam();
-    util::config::ClioConfigDefinition const config{
-        {{"cache.limit_load_in_cluster",
-          util::config::ConfigValue{util::config::ConfigType::Boolean}.defaultValue(
-              param.limitLoadInCluster
-          )}}
-    };
+    util::config::ClioConfigDefinition const config{{
+        {
+            "cache.limit_load_in_cluster",
+            util::config::ConfigValue{util::config::ConfigType::Boolean}.defaultValue(
+                param.limitLoadInCluster
+            ),
+        },
+    }};
 
     auto const result = ClusterCommunicationService::make(config, backend_, systemState);
 

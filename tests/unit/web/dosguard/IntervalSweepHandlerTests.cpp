@@ -26,7 +26,7 @@ protected:
     DOSGuardStrictMock guardMock_;
 
     ClioConfigDefinition cfg_{
-        {"dos_guard.sweep_interval", ConfigValue{ConfigType::Integer}.defaultValue(0)}
+        {"dos_guard.sweep_interval", ConfigValue{ConfigType::Integer}.defaultValue(0)},
     };
     IntervalSweepHandler sweepHandler_{cfg_, ctx_, guardMock_};
 };

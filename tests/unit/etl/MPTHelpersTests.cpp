@@ -351,7 +351,10 @@ TEST_F(MPTHelpersTest, MultipleIssuancesFanOutAndDedup)
 TEST_F(MPTHelpersTest, IndexesMPTNodesRegardlessOfTransactionType)
 {
     constexpr xrpl::TxType kTypes[] = {
-        xrpl::ttPAYMENT, xrpl::ttCLAWBACK, xrpl::ttOFFER_CREATE, xrpl::ttAMM_DEPOSIT
+        xrpl::ttPAYMENT,
+        xrpl::ttCLAWBACK,
+        xrpl::ttOFFER_CREATE,
+        xrpl::ttAMM_DEPOSIT,
     };
 
     for (auto const type : kTypes) {

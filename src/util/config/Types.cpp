@@ -35,7 +35,7 @@ operator<<(std::ostream& stream, Value value)
     std::visit(
         util::OverloadSet{
             [&stream](bool const& val) { stream << (val ? "True" : "False"); },
-            [&stream](auto const& val) { stream << val; }
+            [&stream](auto const& val) { stream << val; },
         },
         value
     );

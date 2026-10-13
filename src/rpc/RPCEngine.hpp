@@ -165,7 +165,7 @@ public:
                 .session = ctx.session,
                 .isAdmin = ctx.isAdmin,
                 .clientIp = ctx.clientIp,
-                .apiVersion = ctx.apiVersion
+                .apiVersion = ctx.apiVersion,
             };
             auto v = method->process(ctx.params, context);
 
@@ -350,7 +350,7 @@ private:
                 .session = ctx.session,
                 .isAdmin = ctx.isAdmin,
                 .clientIp = ctx.clientIp,
-                .apiVersion = ctx.apiVersion
+                .apiVersion = ctx.apiVersion,
             };
             auto v = method->process(ctx.params, context);
 

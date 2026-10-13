@@ -75,13 +75,13 @@ public:
                           },
                           [](std::shared_ptr<std::string> const& m) -> boost::asio::const_buffer {
                               return boost::asio::buffer(*m);
-                          }
+                          },
                       },
                       message
                   );
                   stream_.async_write(buffer, yield);
               },
-              maxSendingQueueSize
+              maxSendingQueueSize,
           }
     {
         setupWsStream();

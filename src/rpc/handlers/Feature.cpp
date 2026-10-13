@@ -88,7 +88,7 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
         .features = std::move(features),
         .ledgerHash = xrpl::strHex(lgrInfo.hash),
         .ledgerIndex = lgrInfo.seq,
-        .inlineResult = input.feature.has_value()
+        .inlineResult = input.feature.has_value(),
     };
 }
 

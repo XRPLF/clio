@@ -37,7 +37,7 @@ getMPTHolderFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const&)
             holders.push_back(
                 MPTHolderData{
                     .mptID = newMPT[xrpl::sfMPTokenIssuanceID],
-                    .holder = newMPT.getAccountID(xrpl::sfAccount)
+                    .holder = newMPT.getAccountID(xrpl::sfAccount),
                 }
             );
         }
@@ -78,7 +78,7 @@ getMPTokenIssuanceTxsFromTx(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
                 .accounts = accounts,
                 .ledgerSequence = txMeta.getLgrSeq(),
                 .transactionIndex = txMeta.getIndex(),
-                .txHash = sttx.getTransactionID()
+                .txHash = sttx.getTransactionID(),
             }
         );
     }

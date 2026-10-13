@@ -103,7 +103,9 @@ detectSsl(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
         return std::unexpected{fmt::format("Detector failed (detect): {}", errorCode.message())};
 
     return SslDetectionResult{
-        .socket = tcpStream.release_socket(), .isSsl = isSsl, .buffer = std::move(buffer)
+        .socket = tcpStream.release_socket(),
+        .isSsl = isSsl,
+        .buffer = std::move(buffer),
     };
 }
 
@@ -395,7 +397,7 @@ makeServer(
         Server::Hooks{
             .onConnectCheck = std::move(onConnectCheck),
             .onIpChangeHook = std::move(onIpChangeHook),
-            .onDisconnectHook = std::move(onDisconnectHook)
+            .onDisconnectHook = std::move(onDisconnectHook),
         }
     };
 }

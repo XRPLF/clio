@@ -203,7 +203,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
             testing::Return(
                 BackendInterface::ClioNodesDataFetchResult{
                     std::vector<std::pair<boost::uuids::uuid, std::string>>{
-                        {otherUuid, otherNodeJson}
+                        {otherUuid, otherNodeJson},
                     }
                 }
             )
@@ -282,7 +282,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsOnlySelfData)
     EXPECT_CALL(*backend_, fetchClioNodesData).Times(testing::AtLeast(1)).WillRepeatedly([&] {
         return BackendInterface::ClioNodesDataFetchResult{
             std::vector<std::pair<boost::uuids::uuid, std::string>>{
-                {*clusterBackend.selfId(), selfNodeJson}
+                {*clusterBackend.selfId(), selfNodeJson},
             }
         };
     });
@@ -337,7 +337,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsInvalidJson)
             testing::Return(
                 BackendInterface::ClioNodesDataFetchResult{
                     std::vector<std::pair<boost::uuids::uuid, std::string>>{
-                        {otherUuid, invalidJson}
+                        {otherUuid, invalidJson},
                     }
                 }
             )
@@ -393,7 +393,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsValidJsonButCannotConvertToC
             testing::Return(
                 BackendInterface::ClioNodesDataFetchResult{
                     std::vector<std::pair<boost::uuids::uuid, std::string>>{
-                        {otherUuid, validJsonMissingField}
+                        {otherUuid, validJsonMissingField},
                     }
                 }
             )

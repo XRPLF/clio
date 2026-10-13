@@ -149,7 +149,7 @@ createMultiIssuanceTransaction()
         .meta = txMeta,
         .id = sttx.getTransactionID(),
         .key = "0000000000000000000000000000000000000000000000000000000000000002",
-        .type = sttx.getTxnType()
+        .type = sttx.getTxnType(),
     };
 }
 
@@ -191,7 +191,7 @@ createHighFanoutIssuanceTransaction()
         .meta = txMeta,
         .id = sttx.getTransactionID(),
         .key = "0000000000000000000000000000000000000000000000000000000000000003",
-        .type = sttx.getTxnType()
+        .type = sttx.getTxnType(),
     };
 }
 
@@ -215,7 +215,7 @@ createTransactionFromObjects(
         .meta = xrpl::TxMeta{id, kSeq, metaBlob},
         .id = id,
         .key = std::string{kHash},
-        .type = type
+        .type = type,
     };
 }
 
@@ -241,11 +241,13 @@ createPaymentMetaWithNewMPTokens(xrpl::TER result = xrpl::tesSUCCESS)
 auto
 createPaymentWithMultipleHoldersTestData(xrpl::TER result = xrpl::tesSUCCESS)
 {
-    auto transactions = std::vector{createTransactionFromObjects(
-        createPaymentTransactionObject(kHolderAccount, kHolderAccount2, 1, 1, 1),
-        createPaymentMetaWithNewMPTokens(result),
-        xrpl::TxType::ttPAYMENT
-    )};
+    auto transactions = std::vector{
+        createTransactionFromObjects(
+            createPaymentTransactionObject(kHolderAccount, kHolderAccount2, 1, 1, 1),
+            createPaymentMetaWithNewMPTokens(result),
+            xrpl::TxType::ttPAYMENT
+        ),
+    };
 
     auto const header = createLedgerHeader(kLedgerHash, kSeq);
     return etl::model::LedgerData{
@@ -255,7 +257,7 @@ createPaymentWithMultipleHoldersTestData(xrpl::TER result = xrpl::tesSUCCESS)
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 }
 
@@ -277,7 +279,7 @@ createTestDataWithoutMPToken()
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 }
 
@@ -304,7 +306,7 @@ createTestData()
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 }
 
@@ -334,7 +336,7 @@ createMultipleHoldersTestData()
     auto transactions = std::vector{
         createAuthorizeTransactionWithIndex(kHash, 0),
         createAuthorizeTransactionWithIndex(kHash2, 1),
-        createAuthorizeTransactionWithIndex(kHash3, 2)
+        createAuthorizeTransactionWithIndex(kHash3, 2),
     };
 
     auto const header = createLedgerHeader(kLedgerHash, kSeq);
@@ -345,7 +347,7 @@ createMultipleHoldersTestData()
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 }
 
@@ -454,7 +456,7 @@ TEST_F(MPTExtTests, NoMPTTransactionsWritesNothing)
 {
     auto transactions = std::vector{
         util::createTransaction(xrpl::TxType::ttAMM_CREATE),
-        util::createTransaction(xrpl::TxType::ttAMM_CREATE)
+        util::createTransaction(xrpl::TxType::ttAMM_CREATE),
     };
 
     auto const header = createLedgerHeader(kLedgerHash, kSeq);
@@ -465,7 +467,7 @@ TEST_F(MPTExtTests, NoMPTTransactionsWritesNothing)
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 
     EXPECT_CALL(*backend_, writeMPTHolders).Times(0);
@@ -487,7 +489,7 @@ TEST_F(MPTExtTests, OnLedgerDataDedupsMultiIssuanceFanout)
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 
     std::vector<MPTokenIssuanceTransactionsData> issuanceTxs;
@@ -527,7 +529,7 @@ TEST_F(MPTExtTests, OnLedgerDataWritesHighFanoutIssuanceIndexWithoutHolders)
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 
     EXPECT_CALL(*backend_, writeMPTHolders).Times(0);

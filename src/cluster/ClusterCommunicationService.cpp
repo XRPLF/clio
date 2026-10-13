@@ -77,7 +77,7 @@ ClusterCommunicationService::make(
             std::make_unique<etl::WriterState>(std::move(state), cache),
             std::move(cacheLoadingState)
         ),
-        .cacheLoadingState = std::move(cacheLoadingStateClone)
+        .cacheLoadingState = std::move(cacheLoadingStateClone),
     };
 }
 

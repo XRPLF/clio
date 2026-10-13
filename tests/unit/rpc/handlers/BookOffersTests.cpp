@@ -108,7 +108,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'taker_gets' missing"
+            .expectedErrorMessage = "Required field 'taker_gets' missing",
         },
         ParameterTestBundle{
             .testName = "MissingTakerPays",
@@ -119,7 +119,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'taker_pays' missing"
+            .expectedErrorMessage = "Required field 'taker_pays' missing",
         },
         ParameterTestBundle{
             .testName = "WrongTypeTakerPays",
@@ -130,7 +130,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         ParameterTestBundle{
             .testName = "WrongTypeTakerGets",
@@ -141,7 +141,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         ParameterTestBundle{
             .testName = "TakerPaysMissingCurrency",
@@ -152,7 +152,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Missing field 'taker_pays.currency'."
+            .expectedErrorMessage = "Missing field 'taker_pays.currency'.",
         },
         ParameterTestBundle{
             .testName = "TakerGetsMissingCurrency",
@@ -163,7 +163,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Missing field 'taker_gets.currency'."
+            .expectedErrorMessage = "Missing field 'taker_gets.currency'.",
         },
         ParameterTestBundle{
             .testName = "TakerGetsWrongCurrency",
@@ -177,7 +177,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "dstAmtMalformed",
-            .expectedErrorMessage = "Destination amount/currency/issuer is malformed."
+            .expectedErrorMessage = "Destination amount/currency/issuer is malformed.",
         },
         ParameterTestBundle{
             .testName = "TakerPaysWrongCurrency",
@@ -191,7 +191,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "srcCurMalformed",
-            .expectedErrorMessage = "Source currency is malformed."
+            .expectedErrorMessage = "Source currency is malformed.",
         },
         ParameterTestBundle{
             // Clio deliberately skips the early "is currency a string" check (see kTakerValidator)
@@ -209,7 +209,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker_gets.currency', not string."
+            .expectedErrorMessage = "Invalid field 'taker_gets.currency', not string.",
         },
         ParameterTestBundle{
             .testName = "TakerPaysCurrencyNotString",
@@ -223,7 +223,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker_pays.currency', not string."
+            .expectedErrorMessage = "Invalid field 'taker_pays.currency', not string.",
         },
         ParameterTestBundle{
             .testName = "TakerGetsWrongIssuer",
@@ -237,7 +237,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "dstIsrMalformed",
-            .expectedErrorMessage = "Destination issuer is malformed."
+            .expectedErrorMessage = "Destination issuer is malformed.",
         },
         ParameterTestBundle{
             .testName = "TakerPaysWrongIssuer",
@@ -251,7 +251,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "srcIsrMalformed",
-            .expectedErrorMessage = "Source issuer is malformed."
+            .expectedErrorMessage = "Source issuer is malformed.",
         },
         ParameterTestBundle{
             .testName = "InvalidTaker",
@@ -266,7 +266,7 @@ generateParameterBookOffersTestBundles()
                 "taker": "123"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker'."
+            .expectedErrorMessage = "Invalid field 'taker'.",
         },
         ParameterTestBundle{
             .testName = "TakerNotString",
@@ -281,7 +281,7 @@ generateParameterBookOffersTestBundles()
                 "taker": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker'."
+            .expectedErrorMessage = "Invalid field 'taker'.",
         },
         ParameterTestBundle{
             .testName = "Domain_InvalidType",
@@ -296,7 +296,7 @@ generateParameterBookOffersTestBundles()
                 "domain": 0
             })JSON",
             .expectedError = "domainMalformed",
-            .expectedErrorMessage = "Unable to parse domain."
+            .expectedErrorMessage = "Unable to parse domain.",
         },
         ParameterTestBundle{
             .testName = "Domain_InvalidInt",
@@ -311,7 +311,7 @@ generateParameterBookOffersTestBundles()
                 "domain": "123"
             })JSON",
             .expectedError = "domainMalformed",
-            .expectedErrorMessage = "Unable to parse domain."
+            .expectedErrorMessage = "Unable to parse domain.",
         },
         ParameterTestBundle{
             .testName = "Domain_InvalidObject",
@@ -326,7 +326,7 @@ generateParameterBookOffersTestBundles()
                 "domain": {}
             })JSON",
             .expectedError = "domainMalformed",
-            .expectedErrorMessage = "Unable to parse domain."
+            .expectedErrorMessage = "Unable to parse domain.",
         },
         ParameterTestBundle{
             .testName = "LimitNotInt",
@@ -341,7 +341,7 @@ generateParameterBookOffersTestBundles()
                 "limit": "123"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         ParameterTestBundle{
             .testName = "LimitNegative",
@@ -356,7 +356,7 @@ generateParameterBookOffersTestBundles()
                 "limit": -1
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         ParameterTestBundle{
             .testName = "LimitZero",
@@ -371,7 +371,7 @@ generateParameterBookOffersTestBundles()
                 "limit": 0
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         ParameterTestBundle{
             .testName = "LedgerIndexInvalid",
@@ -386,7 +386,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_index": "xxx"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         ParameterTestBundle{
             .testName = "LedgerHashInvalid",
@@ -401,7 +401,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_hash": "xxx"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
@@ -416,7 +416,7 @@ generateParameterBookOffersTestBundles()
                 "ledger_hash": 123
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         ParameterTestBundle{
             .testName = "GetsPaysXRPWithIssuer",
@@ -432,7 +432,7 @@ generateParameterBookOffersTestBundles()
             })JSON",
             .expectedError = "srcIsrMalformed",
             .expectedErrorMessage =
-                "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+                "Unneeded field 'taker_pays.issuer' for XRP currency specification.",
         },
         ParameterTestBundle{
             .testName = "PaysCurrencyWithXRPIssuer",
@@ -446,7 +446,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "srcIsrMalformed",
-            .expectedErrorMessage = "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
+            .expectedErrorMessage = "Invalid field 'taker_pays.issuer', expected non-XRP issuer.",
         },
         ParameterTestBundle{
             .testName = "GetsCurrencyWithXRPIssuer",
@@ -459,7 +459,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "dstIsrMalformed",
-            .expectedErrorMessage = "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
+            .expectedErrorMessage = "Invalid field 'taker_gets.issuer', expected non-XRP issuer.",
         },
         ParameterTestBundle{
             .testName = "GetsXRPWithIssuer",
@@ -475,7 +475,7 @@ generateParameterBookOffersTestBundles()
             })JSON",
             .expectedError = "dstIsrMalformed",
             .expectedErrorMessage =
-                "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+                "Unneeded field 'taker_gets.issuer' for XRP currency specification.",
         },
         ParameterTestBundle{
             .testName = "BadMarket",
@@ -490,7 +490,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "No such market."
+            .expectedErrorMessage = "No such market.",
         },
         ParameterTestBundle{
             .testName = "TakerGetsMptIdNotString",
@@ -503,7 +503,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker_gets.mpt_issuance_id', not string."
+            .expectedErrorMessage = "Invalid field 'taker_gets.mpt_issuance_id', not string.",
         },
         ParameterTestBundle{
             .testName = "TakerPaysMptIdNotString",
@@ -516,7 +516,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker_pays.mpt_issuance_id', not string."
+            .expectedErrorMessage = "Invalid field 'taker_pays.mpt_issuance_id', not string.",
         },
         ParameterTestBundle{
             .testName = "TakerGetsMptIdAndCurrency",
@@ -530,7 +530,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker_gets'."
+            .expectedErrorMessage = "Invalid field 'taker_gets'.",
         },
         ParameterTestBundle{
             .testName = "TakerPaysMptIdAndCurrency",
@@ -544,7 +544,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker_pays'."
+            .expectedErrorMessage = "Invalid field 'taker_pays'.",
         },
         ParameterTestBundle{
             .testName = "TakerGetsMptIdAndIssuer",
@@ -558,7 +558,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker_gets'."
+            .expectedErrorMessage = "Invalid field 'taker_gets'.",
         },
         ParameterTestBundle{
             .testName = "TakerPaysMptIdAndIssuer",
@@ -572,7 +572,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'taker_pays'."
+            .expectedErrorMessage = "Invalid field 'taker_pays'.",
         },
         ParameterTestBundle{
             .testName = "TakerGetsMalformedMptId",
@@ -585,7 +585,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "dstAmtMalformed",
-            .expectedErrorMessage = "Destination amount/currency/issuer is malformed."
+            .expectedErrorMessage = "Destination amount/currency/issuer is malformed.",
         },
         ParameterTestBundle{
             .testName = "TakerPaysMalformedMptId",
@@ -598,7 +598,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "srcCurMalformed",
-            .expectedErrorMessage = "Source currency is malformed."
+            .expectedErrorMessage = "Source currency is malformed.",
         },
         ParameterTestBundle{
             .testName = "MPTBadMarket",
@@ -611,7 +611,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "badMarket",
-            .expectedErrorMessage = "No such market."
+            .expectedErrorMessage = "No such market.",
         },
         // The "account one" issuer (rrrrrrrrrrrrrrrrrrrrBZbvji == xrpl::noAccount()) is rejected,
         // mirroring rippled's parseTakerIssuerJSON "bad issuer account one" check.
@@ -627,7 +627,7 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "dstIsrMalformed",
-            .expectedErrorMessage = "Destination issuer is malformed."
+            .expectedErrorMessage = "Destination issuer is malformed.",
         },
         ParameterTestBundle{
             .testName = "TakerPaysIssuerAccountOne",
@@ -641,8 +641,8 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "srcIsrMalformed",
-            .expectedErrorMessage = "Source issuer is malformed."
-        }
+            .expectedErrorMessage = "Source issuer is malformed.",
+        },
     };
 }
 
@@ -846,29 +846,35 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsXRPPaysUSDBook, xrpl::uint256{kPayS20UsdGetS10XrpBookDir}},
-                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir},
-                     createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20UsdGetS10XrpBookDir},
+                        createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // pays issuer account object
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // owner account object
-                    {xrpl::keylet::account(account2).key,
-                     createAccountRootObject(kAccount2, 0, 2, 200, 2, kIndex1, 2)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::keylet::account(account2).key,
+                        createAccountRootObject(kAccount2, 0, 2, 200, 2, kIndex1, 2)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // fee settings: base ->3 inc->2, account2 has 2 objects ,total
                     // reserve ->7
                     // owner_funds should be 193
-                    {xrpl::keylet::feeSettings().key, feeLedgerObject}
+                    {xrpl::keylet::feeSettings().key, feeLedgerObject},
                 },
             .ledgerObjectCalls = 5,
             .mockedOffers = std::vector<xrpl::STObject>{gets10XRPPays20USDOffer},
@@ -903,7 +909,7 @@ generateNormalPathBookOffersTestBundles()
                 kAccount2,
                 193,
                 2
-            )
+            ),
         },
         BookOffersNormalTestBundle{
             .testName = "PaysUSDGetsXRPNoFrozenOwnerFundNotEnough",
@@ -912,29 +918,35 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsXRPPaysUSDBook, xrpl::uint256{kPayS20UsdGetS10XrpBookDir}},
-                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir},
-                     createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20UsdGetS10XrpBookDir},
+                        createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // pays issuer account object
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // owner account object, hold
-                    {xrpl::keylet::account(account2).key,
-                     createAccountRootObject(kAccount2, 0, 2, 5 + 7, 2, kIndex1, 2)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::keylet::account(account2).key,
+                        createAccountRootObject(kAccount2, 0, 2, 5 + 7, 2, kIndex1, 2)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // fee settings: base ->3 inc->2, account2 has 2 objects
                     // ,total
                     // reserve ->7
-                    {xrpl::keylet::feeSettings().key, feeLedgerObject}
+                    {xrpl::keylet::feeSettings().key, feeLedgerObject},
                 },
             .ledgerObjectCalls = 5,
             .mockedOffers = std::vector<xrpl::STObject>{gets10XRPPays20USDOffer},
@@ -975,7 +987,7 @@ generateNormalPathBookOffersTestBundles()
                 kAccount2,
                 5,
                 2
-            )
+            ),
         },
         BookOffersNormalTestBundle{
             .testName = "PaysUSDGetsXRPFrozen",
@@ -984,20 +996,26 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsXRPPaysUSDBook, xrpl::uint256{kPayS20UsdGetS10XrpBookDir}},
-                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir},
-                     createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20UsdGetS10XrpBookDir},
+                        createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // pays issuer account object
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(kAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2)
-                         .getSerializer()
-                         .peekData()}
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(
+                            kAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2
+                        )
+                            .getSerializer()
+                            .peekData(),
+                    },
                 },
             .ledgerObjectCalls = 3,
             .mockedOffers = std::vector<xrpl::STObject>{gets10XRPPays20USDOffer},
@@ -1038,7 +1056,7 @@ generateNormalPathBookOffersTestBundles()
                 kAccount2,
                 0,
                 2
-            )
+            ),
         },
         BookOffersNormalTestBundle{
             .testName = "PaysUSDGetsXRPFrozenWithDomain",
@@ -1047,20 +1065,26 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsXRPPaysUSDBookWithDomain, xrpl::uint256{kPayS20UsdGetS10XrpBookDir}},
-                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20UsdGetS10XrpBookDir},
-                     createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20UsdGetS10XrpBookDir},
+                        createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // pays issuer account object
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(kAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2)
-                         .getSerializer()
-                         .peekData()}
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(
+                            kAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2
+                        )
+                            .getSerializer()
+                            .peekData(),
+                    },
                 },
             .ledgerObjectCalls = 3,
             .mockedOffers = std::vector<xrpl::STObject>{gets10XRPPays20USDOfferWithDomain},
@@ -1102,7 +1126,7 @@ generateNormalPathBookOffersTestBundles()
                 kAccount2,
                 0,
                 2
-            )
+            ),
         },
         BookOffersNormalTestBundle{
             .testName = "GetsUSDPaysXRPFrozen",
@@ -1111,22 +1135,26 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsUSDPaysXRPBook, xrpl::uint256{kPayS20XrpGetS10UsdBookDir}},
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
-                     createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
+                        createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // gets issuer account object
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(
-                         kAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2, kTransferRateX2
-                     )
-                         .getSerializer()
-                         .peekData()}
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(
+                            kAccount, xrpl::lsfGlobalFreeze, 2, 200, 2, kIndex1, 2, kTransferRateX2
+                        )
+                            .getSerializer()
+                            .peekData(),
+                    },
                 },
             .ledgerObjectCalls = 3,
             .mockedOffers = std::vector<xrpl::STObject>{gets10USDPays20XRPOffer},
@@ -1168,7 +1196,7 @@ generateNormalPathBookOffersTestBundles()
                 kPayS20XrpGetS10UsdBookDir,
                 0,
                 2
-            )
+            ),
         },
         BookOffersNormalTestBundle{
             .testName = "PaysXRPGetsUSDWithTransferFee",
@@ -1177,23 +1205,29 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsUSDPaysXRPBook, xrpl::uint256{kPayS20XrpGetS10UsdBookDir}},
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
-                     createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
+                        createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // gets issuer account object, rate is 1/2
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2, kTransferRateX2)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2, kTransferRateX2)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // trust line between gets issuer and owner,owner has 8 USD
-                    {xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
-                     trustline8Balance.getSerializer().peekData()},
+                    {
+                        xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
+                        trustline8Balance.getSerializer().peekData(),
+                    },
                 },
             .ledgerObjectCalls = 6,
             .mockedOffers = std::vector<xrpl::STObject>{gets10USDPays20XRPOffer},
@@ -1245,25 +1279,31 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsUSDPaysXRPBook, xrpl::uint256{kPayS20XrpGetS10UsdBookDir}},
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
-                     createOwnerDirLedgerObject(
-                         {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
-                     )
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
+                        createOwnerDirLedgerObject(
+                            {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
+                        )
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // gets issuer account object
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2, kTransferRateX2)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2, kTransferRateX2)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // trust line between gets issuer and owner,owner has 30 USD
-                    {xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
-                     trustline30Balance.getSerializer().peekData()},
+                    {
+                        xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
+                        trustline30Balance.getSerializer().peekData(),
+                    },
                 },
             .ledgerObjectCalls = 6,
             .mockedOffers =
@@ -1272,7 +1312,7 @@ generateNormalPathBookOffersTestBundles()
                     gets10USDPays20XRPOffer,
                     // offer2 not fully funded, balance is 10, rate is 2, so only
                     // gets 5
-                    gets10USDPays20XRPOffer
+                    gets10USDPays20XRPOffer,
                 },
             .expectedJson = fmt::format(
                 R"JSON({{
@@ -1344,20 +1384,24 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsUSDPaysXRPBook, xrpl::uint256{kPayS20XrpGetS10UsdBookDir}},
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
-                     createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
+                        createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // gets issuer account object, rate is 1/2
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2, kTransferRateX2)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2, kTransferRateX2)
+                            .getSerializer()
+                            .peekData(),
+                    },
                 },
             .ledgerObjectCalls = 3,
             .mockedOffers = std::vector<xrpl::STObject>{gets10USDPays20XRPOwnerOffer},
@@ -1393,7 +1437,7 @@ generateNormalPathBookOffersTestBundles()
                 kPayS20XrpGetS10UsdBookDir,
                 10,
                 2
-            )
+            ),
         },
         BookOffersNormalTestBundle{
             .testName = "PaysXRPGetsUSDTrustLineFrozen",
@@ -1402,23 +1446,29 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsUSDPaysXRPBook, xrpl::uint256{kPayS20XrpGetS10UsdBookDir}},
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
-                     createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
+                        createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // gets issuer account object, rate is 1/2
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2, kTransferRateX2)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2, kTransferRateX2)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // trust line between gets issuer and owner,owner has 8 USD
-                    {xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
-                     frozenTrustLine.getSerializer().peekData()},
+                    {
+                        xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
+                        frozenTrustLine.getSerializer().peekData(),
+                    },
                 },
             .ledgerObjectCalls = 6,
             .mockedOffers = std::vector<xrpl::STObject>{gets10USDPays20XRPOffer},
@@ -1469,22 +1519,26 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsUSDPaysXRPBook, xrpl::uint256{kPayS20XrpGetS10UsdBookDir}},
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
-                     createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
+                        createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // gets issuer account object, is deep frozen so unfunded
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(
-                         kAccount, xrpl::lsfLowDeepFreeze, 2, 200, 2, kIndex1, 2, kTransferRateX2
-                     )
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(
+                            kAccount, xrpl::lsfLowDeepFreeze, 2, 200, 2, kIndex1, 2, kTransferRateX2
+                        )
+                            .getSerializer()
+                            .peekData(),
+                    },
                 },
             .ledgerObjectCalls = 4,
             .mockedOffers = std::vector<xrpl::STObject>{gets10USDPays20XRPOffer},
@@ -1526,7 +1580,7 @@ generateNormalPathBookOffersTestBundles()
                 kPayS20XrpGetS10UsdBookDir,
                 0,
                 2
-            )
+            ),
         },
         BookOffersNormalTestBundle{
             .testName = "PaysXRPGetsUSDTrustLineFrozenAndIsDeepFrozen",
@@ -1535,24 +1589,30 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<xrpl::uint256, std::optional<xrpl::uint256>>{
                     {getsUSDPaysXRPBook, xrpl::uint256{kPayS20XrpGetS10UsdBookDir}},
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}}
+                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir}, std::optional<xrpl::uint256>{}},
                 },
             .mockedLedgerObjects =
                 std::map<xrpl::uint256, xrpl::Blob>{
                     // book dir object
-                    {xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
-                     createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
-                         .getSerializer()
-                         .peekData()},
+                    {
+                        xrpl::uint256{kPayS20XrpGetS10UsdBookDir},
+                        createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1)
+                            .getSerializer()
+                            .peekData(),
+                    },
                     // gets issuer account object, is deep frozen so unfunded
-                    {xrpl::keylet::account(account).key,
-                     createAccountRootObject(
-                         kAccount, xrpl::lsfLowDeepFreeze, 2, 200, 2, kIndex1, 2, kTransferRateX2
-                     )
-                         .getSerializer()
-                         .peekData()},
-                    {xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
-                     frozenTrustLine.getSerializer().peekData()},
+                    {
+                        xrpl::keylet::account(account).key,
+                        createAccountRootObject(
+                            kAccount, xrpl::lsfLowDeepFreeze, 2, 200, 2, kIndex1, 2, kTransferRateX2
+                        )
+                            .getSerializer()
+                            .peekData(),
+                    },
+                    {
+                        xrpl::keylet::trustLine(account2, account, xrpl::toCurrency("USD")).key,
+                        frozenTrustLine.getSerializer().peekData(),
+                    },
 
                 },
             .ledgerObjectCalls = 6,
@@ -1595,8 +1655,8 @@ generateNormalPathBookOffersTestBundles()
                 kPayS20XrpGetS10UsdBookDir,
                 0,
                 2
-            )
-        }
+            ),
+        },
     };
 }
 

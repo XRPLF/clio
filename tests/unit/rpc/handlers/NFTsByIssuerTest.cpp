@@ -587,7 +587,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
     std::vector<NFT> const nfts = {
         createNft(kNftID1, kAccount, 29),
         createNft(kNftID2, kAccount, 29),
-        createNft(kNftID3, kAccount, 29)
+        createNft(kNftID3, kAccount, 29),
     };
     auto const account = getAccountIdWithString(kAccount);
     ON_CALL(*backend_, fetchNFTsByIssuer)

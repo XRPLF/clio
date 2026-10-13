@@ -49,8 +49,10 @@ namespace websocket = boost::beast::websocket;
 struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     ConnectionHandlerTest(ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
         : tagFactory{util::config::ClioConfigDefinition{
-              {"log.tag_style",
-               config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
+              {
+                  "log.tag_style",
+                  config::ConfigValue{config::ConfigType::String}.defaultValue("uint"),
+              },
           }}
         , connectionHandler{
               policy,
@@ -102,7 +104,7 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     ConnectionHandler connectionHandler;
 
     util::TagDecoratorFactory tagDecoratorFactory{config::ClioConfigDefinition{
-        {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")},
     }};
     StrictMockHttpConnectionPtr mockHttpConnection = std::make_unique<StrictMockHttpConnection>(
         clientIp,

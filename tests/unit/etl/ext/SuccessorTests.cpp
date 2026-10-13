@@ -50,7 +50,7 @@ createTestData(std::vector<etl::model::Object> objects)
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 }
 

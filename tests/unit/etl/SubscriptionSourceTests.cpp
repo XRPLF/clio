@@ -499,7 +499,8 @@ TEST_F(SubscriptionSourceReadTests, GotTransactionWithMetaIsForwardingFalse)
 {
     subscriptionSource_.setForwarding(true);
     boost::json::object const message = {
-        {"transaction", "some_transaction_data"}, {"meta", "some_meta_data"}
+        {"transaction", "some_transaction_data"},
+        {"meta", "some_meta_data"},
     };
 
     util::spawn(ctx_, [&message, this](boost::asio::yield_context yield) {

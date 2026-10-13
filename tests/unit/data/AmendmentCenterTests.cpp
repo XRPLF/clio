@@ -86,7 +86,9 @@ TEST_F(AmendmentCenterTest, IsMultipleEnabled)
 
     runSpawn([this](auto yield) {
         std::vector<data::AmendmentKey> const keys{
-            "fixUniversalNumber", "unknown", "ImmediateOfferKilled"
+            "fixUniversalNumber",
+            "unknown",
+            "ImmediateOfferKilled",
         };
         auto const result = amendmentCenter.isEnabled(yield, keys, kSeq);
 

@@ -71,11 +71,12 @@ TEST_F(CliArgsTests, Parse_NgWebServer)
 
 TEST_F(CliArgsTests, Parse_VersionHelp)
 {
-    for (auto& argv :
-         {std::array{"clio_server", "--version"},
-          std::array{"clio_server", "-v"},
-          std::array{"clio_server", "--help"},
-          std::array{"clio_server", "-h"}}) {
+    for (auto& argv : {
+             std::array{"clio_server", "--version"},
+             std::array{"clio_server", "-v"},
+             std::array{"clio_server", "--help"},
+             std::array{"clio_server", "-h"},
+         }) {
         auto const action = CliArgs::parse(argv.size(), const_cast<char const**>(argv.data()));
 
         EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) {
@@ -99,7 +100,7 @@ TEST_F(CliArgsTests, Parse_Config)
     std::array argv{
         "clio_server",
         "--conf",
-        configPath.data()  // NOLINT(bugprone-suspicious-stringview-data-usage)
+        configPath.data(),  // NOLINT(bugprone-suspicious-stringview-data-usage)
     };
     auto const action = CliArgs::parse(argv.size(), argv.data());
 
@@ -125,7 +126,7 @@ TEST_F(CliArgsTests, Parse_VerifyConfig)
     std::array argv{
         "clio_server",
         configPath.data(),  // NOLINT(bugprone-suspicious-stringview-data-usage)
-        "--verify"
+        "--verify",
     };
     auto const action = CliArgs::parse(argv.size(), argv.data());
 

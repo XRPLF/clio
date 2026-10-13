@@ -78,7 +78,7 @@ static constexpr std::chrono::milliseconds kMaxWaitBetweenRetry{5'000};
  */
 static constexpr util::Retry::Delays kDefaultRetryDelays{
     .initial = kDefaultWaitBetweenRetry,
-    .max = kDefaultWaitBetweenRetry
+    .max = kDefaultWaitBetweenRetry,
 };
 
 /**

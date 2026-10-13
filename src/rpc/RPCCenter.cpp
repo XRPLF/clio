@@ -72,7 +72,7 @@ forwardedRpcs()
         "channel_authorize",
         "channel_verify",
         "simulate",
-        "batch"
+        "batch",
     };
     return kForwardedRpcs;
 }

@@ -84,10 +84,12 @@ struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus,
                                  SyncAsioContextTest {
     util::config::ClioConfigDefinition cfg{
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
-        {"api_version.default",
-         ConfigValue{ConfigType::Integer}.defaultValue(rpc::kApiVersionDefault)},
+        {
+            "api_version.default",
+            ConfigValue{ConfigType::Integer}.defaultValue(rpc::kApiVersionDefault),
+        },
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kApiVersionMin)},
-        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kApiVersionMax)}
+        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kApiVersionMax)},
     };
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine = std::make_shared<MockAsyncRPCEngine>();
     std::shared_ptr<MockETLService> etl = std::make_shared<MockETLService>();
@@ -1040,16 +1042,20 @@ auto
 generateInvalidVersions()
 {
     return std::vector<InvalidAPIVersionTestBundle>{
-        {.testName = "v0",
-         .version = "0",
-         .wsMessage = fmt::format(
-             "Requested API version is lower than minimum supported ({})", rpc::kApiVersionMin
-         )},
-        {.testName = "v4",
-         .version = "4",
-         .wsMessage = fmt::format(
-             "Requested API version is higher than maximum supported ({})", rpc::kApiVersionMax
-         )},
+        {
+            .testName = "v0",
+            .version = "0",
+            .wsMessage = fmt::format(
+                "Requested API version is lower than minimum supported ({})", rpc::kApiVersionMin
+            ),
+        },
+        {
+            .testName = "v4",
+            .version = "4",
+            .wsMessage = fmt::format(
+                "Requested API version is higher than maximum supported ({})", rpc::kApiVersionMax
+            ),
+        },
         {.testName = "null", .version = "null", .wsMessage = "API version must be an integer"},
         {.testName = "str", .version = "\"bogus\"", .wsMessage = "API version must be an integer"},
         {.testName = "bool", .version = "false", .wsMessage = "API version must be an integer"},

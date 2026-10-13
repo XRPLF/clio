@@ -87,14 +87,14 @@ generateParameterTestBundles()
                 "account": 1213
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "accountNotString"
+            .expectedErrorMessage = "accountNotString",
         },
         ParameterTestBundle{
             .testName = "AccountMissing",
             .testJson = R"JSON({
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'account' missing"
+            .expectedErrorMessage = "Required field 'account' missing",
         },
         ParameterTestBundle{
             .testName = "AccountInvalid",
@@ -102,7 +102,7 @@ generateParameterTestBundles()
                 "account": "1213"
             })JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "accountMalformed"
+            .expectedErrorMessage = "accountMalformed",
         },
         ParameterTestBundle{
             .testName = "LedgerIndexInvalid",
@@ -114,7 +114,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         ParameterTestBundle{
             .testName = "LedgerHashInvalid",
@@ -126,7 +126,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
@@ -138,7 +138,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         ParameterTestBundle{
             .testName = "WalletsNotStringOrArrayV1",
@@ -150,7 +150,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidHotWallet",
-            .expectedErrorMessage = "hotwalletNotStringOrArray"
+            .expectedErrorMessage = "hotwalletNotStringOrArray",
         },
         ParameterTestBundle{
             .testName = "WalletsNotStringAccountV1",
@@ -162,7 +162,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidHotWallet",
-            .expectedErrorMessage = "hotwalletMalformed"
+            .expectedErrorMessage = "hotwalletMalformed",
         },
         ParameterTestBundle{
             .testName = "WalletsInvalidAccountV1",
@@ -174,7 +174,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidHotWallet",
-            .expectedErrorMessage = "hotwalletMalformed"
+            .expectedErrorMessage = "hotwalletMalformed",
         },
         ParameterTestBundle{
             .testName = "WalletInvalidAccountV1",
@@ -186,7 +186,7 @@ generateParameterTestBundles()
                 kAccount
             ),
             .expectedError = "invalidHotWallet",
-            .expectedErrorMessage = "hotwalletMalformed"
+            .expectedErrorMessage = "hotwalletMalformed",
         },
         ParameterTestBundle{
             .testName = "WalletsNotStringOrArrayV2",
@@ -199,7 +199,7 @@ generateParameterTestBundles()
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "hotwalletNotStringOrArray",
-            .apiVersion = kApiVersion
+            .apiVersion = kApiVersion,
         },
         ParameterTestBundle{
             .testName = "WalletsNotStringAccountV2",
@@ -212,7 +212,7 @@ generateParameterTestBundles()
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "hotwalletMalformed",
-            .apiVersion = kApiVersion
+            .apiVersion = kApiVersion,
         },
         ParameterTestBundle{
             .testName = "WalletsInvalidAccountV2",
@@ -225,7 +225,7 @@ generateParameterTestBundles()
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "hotwalletMalformed",
-            .apiVersion = kApiVersion
+            .apiVersion = kApiVersion,
         },
         ParameterTestBundle{
             .testName = "WalletInvalidAccountV2",
@@ -238,7 +238,7 @@ generateParameterTestBundles()
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "hotwalletMalformed",
-            .apiVersion = kApiVersion
+            .apiVersion = kApiVersion,
         },
     };
 }
@@ -441,12 +441,14 @@ generateNormalPathTestBundles()
         NormalTestBundle{
             .testName = "AllBranches",
             .mockedDir = createOwnerDirLedgerObject(
-                {xrpl::uint256{kIndex2},
-                 xrpl::uint256{kIndex2},
-                 xrpl::uint256{kIndex2},
-                 xrpl::uint256{kIndex2},
-                 xrpl::uint256{kIndex2},
-                 xrpl::uint256{kIndex2}},
+                {
+                    xrpl::uint256{kIndex2},
+                    xrpl::uint256{kIndex2},
+                    xrpl::uint256{kIndex2},
+                    xrpl::uint256{kIndex2},
+                    xrpl::uint256{kIndex2},
+                    xrpl::uint256{kIndex2},
+                },
                 kIndex1
             ),
             .mockedObjects =
@@ -471,7 +473,7 @@ generateNormalPathTestBundles()
                     createRippleStateLedgerObject(
                         "JPY", kIssuer, -50, kAccount, 10, kAccount3, 20, kTxnId, 123
                     ),
-                    frozenState
+                    frozenState,
 
                 },
             .expectedJson = fmt::format(
@@ -520,14 +522,17 @@ generateNormalPathTestBundles()
                 kAccount3,
                 kAccount
             ),
-            .hotwallet = fmt::format(R"("hotwallet": "{}")", kAccount2)
+            .hotwallet = fmt::format(R"("hotwallet": "{}")", kAccount2),
         },
         NormalTestBundle{
             .testName = "NoHotwallet",
             .mockedDir = createOwnerDirLedgerObject({xrpl::uint256{kIndex2}}, kIndex1),
-            .mockedObjects = std::vector{createRippleStateLedgerObject(
-                "JPY", kIssuer, -50, kAccount, 10, kAccount3, 20, kTxnId, 123
-            )},
+            .mockedObjects =
+                std::vector{
+                    createRippleStateLedgerObject(
+                        "JPY", kIssuer, -50, kAccount, 10, kAccount3, 20, kTxnId, 123
+                    ),
+                },
             .expectedJson = fmt::format(
                 R"JSON({{
                     "obligations": {{
@@ -539,7 +544,7 @@ generateNormalPathTestBundles()
                 }})JSON",
                 kAccount
             ),
-            .hotwallet = R"("ledger_index" : "validated")"
+            .hotwallet = R"("ledger_index" : "validated")",
         },
         NormalTestBundle{
             .testName = "ObligationOverflow",
@@ -558,15 +563,17 @@ generateNormalPathTestBundles()
                 }})JSON",
                 kAccount
             ),
-            .hotwallet = R"("ledger_index" : "validated")"
+            .hotwallet = R"("ledger_index" : "validated")",
         },
         NormalTestBundle{
             .testName = "HighID",
             .mockedDir = createOwnerDirLedgerObject(
-                {xrpl::uint256{kIndex2},
-                 xrpl::uint256{kIndex2},
-                 xrpl::uint256{kIndex2},
-                 xrpl::uint256{kIndex2}},
+                {
+                    xrpl::uint256{kIndex2},
+                    xrpl::uint256{kIndex2},
+                    xrpl::uint256{kIndex2},
+                    xrpl::uint256{kIndex2},
+                },
                 kIndex1
             ),
             .mockedObjects =
@@ -584,7 +591,7 @@ generateNormalPathTestBundles()
                     ),
                     createRippleStateLedgerObject(
                         "JPY", kIssuer, -50, kAccount3, 10, kAccount, 20, kTxnId, 123
-                    )
+                    ),
                 },
             .expectedJson = fmt::format(
                 R"JSON({{
@@ -619,7 +626,7 @@ generateNormalPathTestBundles()
                 kAccount3,
                 kAccount
             ),
-            .hotwallet = fmt::format(R"("hotwallet": "{}")", kAccount2)
+            .hotwallet = fmt::format(R"("hotwallet": "{}")", kAccount2),
         },
         NormalTestBundle{
             .testName = "HotWalletArray",
@@ -636,7 +643,7 @@ generateNormalPathTestBundles()
                     ),
                     createRippleStateLedgerObject(
                         "EUR", kIssuer, -30, kAccount, 100, kAccount3, 200, kTxnId, 123
-                    )
+                    ),
 
                 },
             .expectedJson = fmt::format(
@@ -667,7 +674,7 @@ generateNormalPathTestBundles()
                 kAccount2,
                 kAccount
             ),
-            .hotwallet = fmt::format(R"("hotwallet": ["{}", "{}"])", kAccount2, kAccount3)
+            .hotwallet = fmt::format(R"("hotwallet": ["{}", "{}"])", kAccount2, kAccount3),
         },
     };
 }
@@ -758,7 +765,7 @@ generateEscrowTestBundles()
                 }})JSON",
                 kAccount,
                 kLedgerHash
-            )
+            ),
         },
         EscrowTestBundle{
             .testName = "MultipleEscrowXRP",
@@ -775,7 +782,7 @@ generateEscrowTestBundles()
                 }})JSON",
                 kAccount,
                 kLedgerHash
-            )
+            ),
         },
         EscrowTestBundle{
             .testName = "EscrowNonXRP",
@@ -790,7 +797,7 @@ generateEscrowTestBundles()
                 }})JSON",
                 kAccount,
                 kLedgerHash
-            )
+            ),
         },
         EscrowTestBundle{
             .testName = "EscrowMixedCurrencies",
@@ -807,8 +814,8 @@ generateEscrowTestBundles()
                 }})JSON",
                 kAccount,
                 kLedgerHash
-            )
-        }
+            ),
+        },
     };
 }
 

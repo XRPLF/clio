@@ -178,10 +178,14 @@ protected:
     SameThreadTestContext ctx_;
     util::config::ClioConfigDefinition config_{
         {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-        {"start_sequence",
-         ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
-        {"finish_sequence",
-         ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
+        {
+            "start_sequence",
+            ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32),
+        },
+        {
+            "finish_sequence",
+            ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32),
+        },
         {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(4)},
         {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
         {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32)},
@@ -189,7 +193,7 @@ protected:
         {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0)},
         {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
         {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
-        {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")}
+        {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
     };
     MockSubscriptionManagerSharedPtr subscriptions_;
     std::shared_ptr<testing::NiceMock<MockLoadBalancer>> balancer_ =

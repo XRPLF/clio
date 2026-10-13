@@ -76,7 +76,8 @@ private:
             }();
             queue.push(
                 TaskWithTimestamp{
-                    .task = std::move(task), .queuedAt = std::chrono::system_clock::now()
+                    .task = std::move(task),
+                    .queuedAt = std::chrono::system_clock::now(),
                 }
             );
         }

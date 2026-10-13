@@ -1252,7 +1252,7 @@ TEST(RPCAccountLinesHandlerSpecTest, DeprecatedFields)
         {"marker", "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun,0"},
         {"ledger", 123},
         {"strict", true},
-        {"peer_index", 456}
+        {"peer_index", 456},
     };
     auto const spec = AccountLinesHandler::spec(2);
     auto const warnings = rpc::spec::toJsonArray(spec.check(json));

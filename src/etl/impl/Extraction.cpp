@@ -68,7 +68,7 @@ extractTx(PBTxType tx, uint32_t seq)
         .meta = std::move(meta),
         .id = sttx.getTransactionID(),
         .key = uint256ToString(sttx.getTransactionID()),
-        .type = sttx.getTxnType()
+        .type = sttx.getTxnType(),
     };
 }
 

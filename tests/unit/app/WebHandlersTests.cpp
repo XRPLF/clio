@@ -38,7 +38,7 @@ using namespace util::config;
 struct WebHandlersTest : virtual public ::testing::Test {
     DOSGuardStrictMock dosGuardMock;
     util::TagDecoratorFactory const tagFactory{ClioConfigDefinition{
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
     std::string const ip = "some ip";
     StrictMockConnection connectionMock{ip, boost::beast::flat_buffer{}, tagFactory};
@@ -103,7 +103,7 @@ struct MetricsHandlerTests : util::prometheus::WithPrometheus,
                              SyncAsioContextTest,
                              WebHandlersTest {
     AdminVerificationStrategyStrictMockPtr adminVerifier{
-        std::make_shared<testing::StrictMock<AdminVerificationStrategyMock>>()
+        std::make_shared<testing::StrictMock<AdminVerificationStrategyMock>>(),
     };
 
     rpc::WorkQueue workQueue{1};
@@ -164,7 +164,7 @@ TEST_F(CacheStateHandlerTests, CallWithoutCacheLoaded)
 
 struct RequestHandlerTest : SyncAsioContextTest, WebHandlersTest {
     AdminVerificationStrategyStrictMockPtr adminVerifier{
-        std::make_shared<testing::StrictMock<AdminVerificationStrategyMock>>()
+        std::make_shared<testing::StrictMock<AdminVerificationStrategyMock>>(),
     };
 
     struct RpcHandlerMock {

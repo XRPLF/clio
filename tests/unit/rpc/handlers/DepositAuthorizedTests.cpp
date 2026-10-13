@@ -186,7 +186,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Item is not a valid uint256 type.",
-        }
+        },
     };
 }
 

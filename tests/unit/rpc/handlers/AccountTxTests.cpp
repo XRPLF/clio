@@ -68,14 +68,14 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "MissingAccount",
                 .testJson = R"JSON({})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Required field 'account' missing"
+                .expectedErrorMessage = "Required field 'account' missing",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "BinaryNotBool",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Invalid parameters."
+                .expectedErrorMessage = "Invalid parameters.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "BinaryNotBool_API_v1",
@@ -83,14 +83,14 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})JSON",
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
-                .apiVersion = 1u
+                .apiVersion = 1u,
             },
             AccountTxParamTestCaseBundle{
                 .testName = "ForwardNotBool",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Invalid parameters."
+                .expectedErrorMessage = "Invalid parameters.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "ForwardNotBool_API_v1",
@@ -98,70 +98,70 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})JSON",
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
-                .apiVersion = 1u
+                .apiVersion = 1u,
             },
             AccountTxParamTestCaseBundle{
                 .testName = "ledger_index_minNotInt",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_min": "x"})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Invalid parameters."
+                .expectedErrorMessage = "Invalid parameters.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "ledger_index_maxNotInt",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_max": "x"})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Invalid parameters."
+                .expectedErrorMessage = "Invalid parameters.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "ledger_indexInvalid",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "ledgerIndexMalformed"
+                .expectedErrorMessage = "ledgerIndexMalformed",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "ledger_hashInvalid",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "ledger_hashMalformed"
+                .expectedErrorMessage = "ledger_hashMalformed",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "ledger_hashNotString",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "ledger_hashNotString"
+                .expectedErrorMessage = "ledger_hashNotString",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "limitNotInt",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "123"})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Invalid parameters."
+                .expectedErrorMessage = "Invalid parameters.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "limitNegative",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": -1})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Invalid parameters."
+                .expectedErrorMessage = "Invalid parameters.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "limitZero",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Invalid parameters."
+                .expectedErrorMessage = "Invalid parameters.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MarkerNotObject",
                 .testJson =
                     R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 101})JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "invalidMarker"
+                .expectedErrorMessage = "invalidMarker",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MarkerMissingSeq",
@@ -170,7 +170,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "marker": {"ledger": 123}
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Required field 'seq' missing"
+                .expectedErrorMessage = "Required field 'seq' missing",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MarkerMissingLedger",
@@ -179,7 +179,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "marker": {"seq": 123}
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Required field 'ledger' missing"
+                .expectedErrorMessage = "Required field 'ledger' missing",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MarkerLedgerNotInt",
@@ -191,7 +191,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     }
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Invalid parameters."
+                .expectedErrorMessage = "Invalid parameters.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MarkerSeqNotInt",
@@ -203,7 +203,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     }
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Invalid parameters."
+                .expectedErrorMessage = "Invalid parameters.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMinLessThanMinSeq",
@@ -212,7 +212,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "ledger_index_min": 9
                 })JSON",
                 .expectedError = "lgrIdxMalformed",
-                .expectedErrorMessage = "ledgerSeqMinOutOfRange"
+                .expectedErrorMessage = "ledgerSeqMinOutOfRange",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxLargeThanMaxSeq",
@@ -221,7 +221,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "ledger_index_max": 31
                 })JSON",
                 .expectedError = "lgrIdxMalformed",
-                .expectedErrorMessage = "ledgerSeqMaxOutOfRange"
+                .expectedErrorMessage = "ledgerSeqMaxOutOfRange",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxLargeThanMaxSeq_API_v1",
@@ -231,7 +231,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
-                .apiVersion = 1u
+                .apiVersion = 1u,
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxSmallerThanMinSeq",
@@ -240,7 +240,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "ledger_index_max": 9
                 })JSON",
                 .expectedError = "lgrIdxMalformed",
-                .expectedErrorMessage = "ledgerSeqMaxOutOfRange"
+                .expectedErrorMessage = "ledgerSeqMaxOutOfRange",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxSmallerThanMinSeq_API_v1",
@@ -250,7 +250,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = "lgrIdxsInvalid",
                 .expectedErrorMessage = "Ledger indexes invalid.",
-                .apiVersion = 1u
+                .apiVersion = 1u,
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMinSmallerThanMinSeq",
@@ -259,7 +259,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "ledger_index_min": 9
                 })JSON",
                 .expectedError = "lgrIdxMalformed",
-                .expectedErrorMessage = "ledgerSeqMinOutOfRange"
+                .expectedErrorMessage = "ledgerSeqMinOutOfRange",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMinSmallerThanMinSeq_API_v1",
@@ -269,7 +269,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
-                .apiVersion = 1u
+                .apiVersion = 1u,
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMinLargerThanMaxSeq",
@@ -278,7 +278,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "ledger_index_min": 31
                 })JSON",
                 .expectedError = "lgrIdxMalformed",
-                .expectedErrorMessage = "ledgerSeqMinOutOfRange"
+                .expectedErrorMessage = "ledgerSeqMinOutOfRange",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMinLargerThanMaxSeq_API_v1",
@@ -288,7 +288,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = "lgrIdxsInvalid",
                 .expectedErrorMessage = "Ledger indexes invalid.",
-                .apiVersion = 1u
+                .apiVersion = 1u,
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxLessThanLedgerIndexMin",
@@ -298,7 +298,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "ledger_index_min": 20
                 })JSON",
                 .expectedError = "invalidLgrRange",
-                .expectedErrorMessage = "Ledger range is invalid."
+                .expectedErrorMessage = "Ledger range is invalid.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxLessThanLedgerIndexMin_API_v1",
@@ -309,7 +309,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = "lgrIdxsInvalid",
                 .expectedErrorMessage = "Ledger indexes invalid.",
-                .apiVersion = 1u
+                .apiVersion = 1u,
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerIndex",
@@ -320,7 +320,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "ledger_index": 10
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "containsLedgerSpecifierAndRange"
+                .expectedErrorMessage = "containsLedgerSpecifierAndRange",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerIndexValidated",
@@ -331,7 +331,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "ledger_index": "validated"
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "containsLedgerSpecifierAndRange"
+                .expectedErrorMessage = "containsLedgerSpecifierAndRange",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerIndex_API_v1",
@@ -343,7 +343,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
-                .apiVersion = 1u
+                .apiVersion = 1u,
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerHash",
@@ -357,7 +357,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     kLedgerHash
                 ),
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "containsLedgerSpecifierAndRange"
+                .expectedErrorMessage = "containsLedgerSpecifierAndRange",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerHash_API_v1",
@@ -372,7 +372,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 ),
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
-                .apiVersion = 1u
+                .apiVersion = 1u,
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerIndexValidated_API_v1",
@@ -384,7 +384,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
-                .apiVersion = 1u
+                .apiVersion = 1u,
             },
             AccountTxParamTestCaseBundle{
                 .testName = "InvalidTxType",
@@ -393,7 +393,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "tx_type": "unknown"
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Invalid field 'tx_type'."
+                .expectedErrorMessage = "Invalid field 'tx_type'.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "DelegateNotObject",
@@ -402,7 +402,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "delegate": 123
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "delegateNotObject"
+                .expectedErrorMessage = "delegateNotObject",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "DelegateFilterMissing",
@@ -411,7 +411,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "delegate": { "other_field": "value" }
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Field 'delegate_filter' is required but missing."
+                .expectedErrorMessage = "Field 'delegate_filter' is required but missing.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "DelegateFilterInvalidValue",
@@ -421,7 +421,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage =
-                    "Field 'delegate_filter' value must be 'actor' or 'authorizer'."
+                    "Field 'delegate_filter' value must be 'actor' or 'authorizer'.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "DelegateCounterpartyInvalid",
@@ -433,7 +433,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     }
                 })JSON",
                 .expectedError = "actMalformed",
-                .expectedErrorMessage = "Field 'counter_party' value must be a valid account."
+                .expectedErrorMessage = "Field 'counter_party' value must be a valid account.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "DelegateOnlyCounterparty",
@@ -444,7 +444,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     }
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "Field 'delegate_filter' is required but missing."
+                .expectedErrorMessage = "Field 'delegate_filter' is required but missing.",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MPTIssuanceIdMalformed",
@@ -453,7 +453,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "mpt_issuance_id": "xxx"
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "mpt_issuance_idMalformed"
+                .expectedErrorMessage = "mpt_issuance_idMalformed",
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MPTIssuanceIdNotString",
@@ -462,8 +462,8 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                     "mpt_issuance_id": 12
                 })JSON",
                 .expectedError = "invalidParams",
-                .expectedErrorMessage = "mpt_issuance_idNotString"
-            }
+                .expectedErrorMessage = "mpt_issuance_idNotString",
+            },
         };
     };
 };
@@ -2282,7 +2282,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "DIDSet"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "DIDDelete",
@@ -2291,7 +2291,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "DIDDelete"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "AccountSet",
@@ -2300,7 +2300,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "AccountSet"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "AccountDelete",
@@ -2309,7 +2309,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "AccountDelete"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "AMMBid",
@@ -2318,7 +2318,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "AMMBid"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "AMMCreate",
@@ -2327,7 +2327,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "AMMCreate"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "AMMDelete",
@@ -2336,7 +2336,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "AMMDelete"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "AMMDeposit",
@@ -2345,7 +2345,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "AMMDeposit"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "AMMVote",
@@ -2354,7 +2354,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "AMMVote"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "CheckCancel",
@@ -2363,7 +2363,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "CheckCancel"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "CheckCash",
@@ -2372,7 +2372,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "CheckCash"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "CheckCreate",
@@ -2381,7 +2381,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "CheckCreate"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "Clawback",
@@ -2390,7 +2390,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "Clawback"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "DepositPreauth",
@@ -2399,7 +2399,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "DepositPreauth"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "EscrowCancel",
@@ -2408,7 +2408,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "EscrowCancel"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "EscrowCreate",
@@ -2417,7 +2417,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "EscrowCreate"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "EscrowFinish",
@@ -2426,7 +2426,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "EscrowFinish"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "NFTokenAcceptOffer",
@@ -2435,7 +2435,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "NFTokenAcceptOffer"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "NFTokenBurn",
@@ -2444,7 +2444,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "NFTokenBurn"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "NFTokenCancelOffer",
@@ -2453,7 +2453,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "NFTokenCancelOffer"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "NFTokenCreateOffer",
@@ -2462,7 +2462,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "NFTokenCreateOffer"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "NFTokenMint",
@@ -2471,7 +2471,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "NFTokenMint"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "OfferCancel",
@@ -2480,7 +2480,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "OfferCancel"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "OfferCreate",
@@ -2489,7 +2489,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "OfferCreate"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "Payment_API_v1",
@@ -2542,7 +2542,7 @@ generateTransactionTypeTestValues()
                     "validated": true
                 }
             ])JSON",
-            .apiVersion = 1u
+            .apiVersion = 1u,
         },
         AccountTxTransactionBundle{
             .testName = "Lowercase_Payment",
@@ -2595,7 +2595,7 @@ generateTransactionTypeTestValues()
                     "validated": true
                 }
             ])JSON",
-            .apiVersion = 1u
+            .apiVersion = 1u,
         },
         AccountTxTransactionBundle{
             .testName = "Payment_API_v2",
@@ -2649,7 +2649,7 @@ generateTransactionTypeTestValues()
                 "validated": true
                 }
             ])JSON",
-            .apiVersion = 2u
+            .apiVersion = 2u,
         },
         AccountTxTransactionBundle{
             .testName = "FilterWhenBinaryTrue",
@@ -2665,7 +2665,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": 30,
                 "validated": true
             }])JSON",
-            .apiVersion = 1u
+            .apiVersion = 1u,
         },
         AccountTxTransactionBundle{
             .testName = "PaymentChannelClaim",
@@ -2675,7 +2675,7 @@ generateTransactionTypeTestValues()
                 "tx_type": "PaymentChannelClaim",
                 "binary": true
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "FilterWhenBinaryTrueEmptyResult",
@@ -2684,7 +2684,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "PaymentChannelClaim"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "PaymentChannelCreate",
@@ -2693,7 +2693,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "PaymentChannelCreate"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "PaymentChannelFund",
@@ -2702,7 +2702,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "PaymentChannelFund"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "SetRegularKey",
@@ -2711,7 +2711,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "SetRegularKey"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "SignerListSet",
@@ -2720,7 +2720,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "SignerListSet"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "TicketCreate",
@@ -2729,7 +2729,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "TicketCreate"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
         AccountTxTransactionBundle{
             .testName = "TrustSet",
@@ -2738,7 +2738,7 @@ generateTransactionTypeTestValues()
                 "ledger_index": "validated",
                 "tx_type": "TrustSet"
             })JSON",
-            .result = "[]"
+            .result = "[]",
         },
     };
 }

@@ -46,7 +46,7 @@ TEST(LedgerUtilsTests, LedgerObjectTypeList)
         JS(loan),
         JS(nunl),
         JS(delegate),
-        JS(sponsorship)
+        JS(sponsorship),
     };
 
     static_assert(std::size(kTypesList) == kTypes.size());
@@ -87,7 +87,7 @@ TEST(LedgerUtilsTests, DeletionBlockerTypes)
         xrpl::ltMPTOKEN,
         xrpl::ltPERMISSIONED_DOMAIN,
         xrpl::ltLOAN,
-        xrpl::ltSPONSORSHIP
+        xrpl::ltSPONSORSHIP,
     };
 
     static_assert(std::size(kDeletionBlockers) == kTestedTypes.size());
@@ -117,7 +117,7 @@ static LedgerEntryTypeParam const kChainTestCases[] = {
     {.input = "DirectoryNode", .expected = xrpl::ltDIR_NODE},
     {.input = "FeeSettings", .expected = xrpl::ltFEE_SETTINGS},
     {.input = "LedgerHashes", .expected = xrpl::ltLEDGER_HASHES},
-    {.input = "NegativeUNL", .expected = xrpl::ltNEGATIVE_UNL}
+    {.input = "NegativeUNL", .expected = xrpl::ltNEGATIVE_UNL},
 };
 
 static LedgerEntryTypeParam const kAccountOwnedTestCases[] = {
@@ -136,8 +136,10 @@ static LedgerEntryTypeParam const kAccountOwnedTestCases[] = {
     {.input = "amm", .expected = xrpl::ltAMM},
     {.input = "bridge", .expected = xrpl::ltBRIDGE},
     {.input = "xchain_owned_claim_id", .expected = xrpl::ltXCHAIN_OWNED_CLAIM_ID},
-    {.input = "xchain_owned_create_account_claim_id",
-     .expected = xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
+    {
+        .input = "xchain_owned_create_account_claim_id",
+        .expected = xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID,
+    },
     {.input = "did", .expected = xrpl::ltDID},
     {.input = "oracle", .expected = xrpl::ltORACLE},
     {.input = "credential", .expected = xrpl::ltCREDENTIAL},
@@ -164,8 +166,10 @@ static LedgerEntryTypeParam const kAccountOwnedTestCases[] = {
     {.input = "AMM", .expected = xrpl::ltAMM},
     {.input = "Bridge", .expected = xrpl::ltBRIDGE},
     {.input = "XChainOwnedClaimID", .expected = xrpl::ltXCHAIN_OWNED_CLAIM_ID},
-    {.input = "XChainOwnedCreateAccountClaimID",
-     .expected = xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
+    {
+        .input = "XChainOwnedCreateAccountClaimID",
+        .expected = xrpl::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID,
+    },
     {.input = "DID", .expected = xrpl::ltDID},
     {.input = "Oracle", .expected = xrpl::ltORACLE},
     {.input = "Credential", .expected = xrpl::ltCREDENTIAL},
@@ -175,7 +179,7 @@ static LedgerEntryTypeParam const kAccountOwnedTestCases[] = {
     {.input = "Vault", .expected = xrpl::ltVAULT},
     {.input = "LoanBroker", .expected = xrpl::ltLOAN_BROKER},
     {.input = "Loan", .expected = xrpl::ltLOAN},
-    {.input = "Delegate", .expected = xrpl::ltDELEGATE}
+    {.input = "Delegate", .expected = xrpl::ltDELEGATE},
 };
 
 static LedgerEntryTypeParam const kCaseInsensitiveTestCases[] = {
@@ -190,7 +194,7 @@ static LedgerEntryTypeParam const kInvalidTestCases[] = {
     {.input = "1234", .expected = xrpl::ltANY},
     {.input = "unknown", .expected = xrpl::ltANY},
     // With RPC name with inexact match
-    {.input = "MPT_Issuance", .expected = xrpl::ltANY}
+    {.input = "MPT_Issuance", .expected = xrpl::ltANY},
 };
 
 class LedgerEntryTypeFromStrTest : public ::testing::TestWithParam<LedgerEntryTypeParam> {};

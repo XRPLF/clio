@@ -72,7 +72,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorCode = rpc::ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         VaultInfoParamTestCaseBundle{
             .testName = "MissingOwnerInVault",
@@ -81,7 +81,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorCode = rpc::ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         VaultInfoParamTestCaseBundle{
             .testName = "MissingSeqInVault",
@@ -90,7 +90,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorCode = rpc::ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         VaultInfoParamTestCaseBundle{
             .testName = "SeqNotAnInteger",
@@ -100,7 +100,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorCode = rpc::ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         VaultInfoParamTestCaseBundle{
             .testName = "OwnerNotAString",
@@ -110,7 +110,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorCode = rpc::ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "OwnerNotHexString"
+            .expectedErrorMessage = "OwnerNotHexString",
         },
         VaultInfoParamTestCaseBundle{
             .testName = "OwnerNotAHexString",
@@ -120,7 +120,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorCode = rpc::ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "OwnerNotHexString"
+            .expectedErrorMessage = "OwnerNotHexString",
         },
         VaultInfoParamTestCaseBundle{
             .testName = "vaultIDNotString",
@@ -129,7 +129,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorCode = rpc::ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         VaultInfoParamTestCaseBundle{
             .testName = "vaultIDNotHex256",
@@ -138,7 +138,7 @@ generateTestValuesForParametersTest()
             })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorCode = rpc::ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
+            .expectedErrorMessage = "Malformed request.",
         },
         VaultInfoParamTestCaseBundle{
             .testName = "vaultIDWithOwner",
@@ -152,8 +152,8 @@ generateTestValuesForParametersTest()
             ),
             .expectedError = "malformedRequest",
             .expectedErrorCode = rpc::ClioError::RpcMalformedRequest,
-            .expectedErrorMessage = "Malformed request."
-        }
+            .expectedErrorMessage = "Malformed request.",
+        },
     };
 }
 

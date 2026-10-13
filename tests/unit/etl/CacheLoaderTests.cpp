@@ -39,17 +39,17 @@ namespace {
 inline ClioConfigDefinition
 generateDefaultCacheConfig()
 {
-    return ClioConfigDefinition{
-        {{"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-         {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32)},
-         {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48)},
-         {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0)},
-         {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
-         {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
-         {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
-         {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
-         {"cache.file.max_sequence_age", ConfigValue{ConfigType::Integer}.defaultValue(10)}}
-    };
+    return ClioConfigDefinition{{
+        {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32)},
+        {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48)},
+        {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+        {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+        {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
+        {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
+        {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
+        {"cache.file.max_sequence_age", ConfigValue{ConfigType::Integer}.defaultValue(10)},
+    }};
 }
 
 inline ClioConfigDefinition

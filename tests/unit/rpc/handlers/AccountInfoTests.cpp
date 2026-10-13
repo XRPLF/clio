@@ -69,59 +69,59 @@ generateTestValuesForParametersTest()
             .testName = "MissingAccountAndIdent",
             .testJson = R"JSON({})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Missing field 'account'."
+            .expectedErrorMessage = "Missing field 'account'.",
         },
         AccountInfoParamTestCaseBundle{
             .testName = "AccountNotString",
             .testJson = R"JSON({"account": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "accountNotString"
+            .expectedErrorMessage = "accountNotString",
         },
         AccountInfoParamTestCaseBundle{
             .testName = "AccountInvalid",
             .testJson = R"JSON({"account": "xxx"})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "accountMalformed"
+            .expectedErrorMessage = "accountMalformed",
         },
         AccountInfoParamTestCaseBundle{
             .testName = "IdentNotString",
             .testJson = R"JSON({"ident": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "identNotString"
+            .expectedErrorMessage = "identNotString",
         },
         AccountInfoParamTestCaseBundle{
             .testName = "IdentInvalid",
             .testJson = R"JSON({"ident": "xxx"})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "identMalformed"
+            .expectedErrorMessage = "identMalformed",
         },
         AccountInfoParamTestCaseBundle{
             .testName = "SignerListsInvalid",
             .testJson =
                 R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerHashInvalid",
             .testJson =
                 R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": "1"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
             .testJson =
                 R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index": "a"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
     };
 }
@@ -950,7 +950,7 @@ TEST(RPCAccountInfoHandlerSpecTest, DeprecatedFields)
         {"ledger_index", 30},
         {"ledger_hash", kLedgerHash},
         {"ledger", "some"},
-        {"strict", true}
+        {"strict", true},
     };
     auto const spec = AccountInfoHandler::spec(2);
     auto const warnings = rpc::spec::toJsonArray(spec.check(json));

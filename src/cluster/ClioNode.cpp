@@ -58,7 +58,7 @@ ClioNode::from(
         .dbRole = dbRole,
         .etlStarted = writerState.isEtlStarted(),
         .cacheIsFull = writerState.isCacheFull(),
-        .cacheIsCurrentlyLoading = cacheLoadingState.isCurrentlyLoading()
+        .cacheIsCurrentlyLoading = cacheLoadingState.isCurrentlyLoading(),
     };
 }
 
@@ -70,7 +70,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ClioNode const& 
         {JsonFields::kDbRole, static_cast<int64_t>(node.dbRole)},
         {JsonFields::kEtlStarted, node.etlStarted},
         {JsonFields::kCacheIsFull, node.cacheIsFull},
-        {JsonFields::kCacheIsCurrentlyLoading, node.cacheIsCurrentlyLoading}
+        {JsonFields::kCacheIsCurrentlyLoading, node.cacheIsCurrentlyLoading},
     };
 }
 
@@ -110,7 +110,7 @@ tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
         .dbRole = dbRole,
         .etlStarted = etlStarted,
         .cacheIsFull = cacheIsFull,
-        .cacheIsCurrentlyLoading = cacheIsCurrentlyLoading
+        .cacheIsCurrentlyLoading = cacheIsCurrentlyLoading,
     };
 }
 

@@ -139,7 +139,7 @@ tag_invoke(
         {JS(destination_account), output.destinationAccount},
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
-        {JS(validated), output.validated}
+        {JS(validated), output.validated},
     };
     if (output.credentials.has_value()) {
         jv.as_object()[JS(credentials)] = *output.credentials                             //

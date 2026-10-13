@@ -250,7 +250,9 @@ LedgerCache::saveToFile(std::string const& path) const
     impl::LedgerCacheFile file{path};
     std::shared_lock const lock{mtx_};
     impl::LedgerCacheFile::DataView const data{
-        .latestSeq = latestSeq_, .map = map_, .deleted = deleted_
+        .latestSeq = latestSeq_,
+        .map = map_,
+        .deleted = deleted_,
     };
     return file.write(data);
 }

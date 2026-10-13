@@ -62,19 +62,19 @@ generateTestValuesForParametersTest()
             .testName = "LedgerHashInvalid",
             .testJson = R"JSON({"ledger_hash": "1"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         BookChangesParamTestCaseBundle{
             .testName = "LedgerHashNotString",
             .testJson = R"JSON({"ledger_hash": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         BookChangesParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
             .testJson = R"JSON({"ledger_index": "a"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
     };
 }

@@ -35,9 +35,11 @@ getNftokenModifyData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
     auto const tokenID = sttx.getFieldH256(xrpl::sfNFTokenID);
     // note: sfURI is optional, if it is absent, we will update the uri as empty string
     return {
-        {NFTTransactionsData(
-            sttx.getFieldH256(xrpl::sfNFTokenID), txMeta, sttx.getTransactionID()
-        )},
+        {
+            NFTTransactionsData(
+                sttx.getFieldH256(xrpl::sfNFTokenID), txMeta, sttx.getTransactionID()
+            ),
+        },
         NFTsData(tokenID, txMeta, sttx.getFieldVL(xrpl::sfURI))
     };
 }
@@ -139,7 +141,7 @@ getNFTokenBurnData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
 {
     xrpl::uint256 const tokenID = sttx.getFieldH256(xrpl::sfNFTokenID);
     std::vector<NFTTransactionsData> const txs = {
-        NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())
+        NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID()),
     };
 
     // Determine who owned the token when it was burned by finding an
@@ -325,9 +327,11 @@ std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenCreateOfferData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
 {
     return {
-        {NFTTransactionsData(
-            sttx.getFieldH256(xrpl::sfNFTokenID), txMeta, sttx.getTransactionID()
-        )},
+        {
+            NFTTransactionsData(
+                sttx.getFieldH256(xrpl::sfNFTokenID), txMeta, sttx.getTransactionID()
+            ),
+        },
         {}
     };
 }

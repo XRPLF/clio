@@ -19,10 +19,12 @@ Coroutine::Coroutine(
     : yield_(std::move(yield))
     , cyield_(boost::asio::bind_cancellation_slot(cancellationSignal_.slot(), yield_[error_]))
     , familySignal_{std::move(signal)}
-    , connection_{familySignal_->connect([this](boost::asio::cancellation_type_t cancellationType) {
-        cancellationSignal_.emit(cancellationType);
-        isCancelled_ = true;
-    })}
+    , connection_{
+          familySignal_->connect([this](boost::asio::cancellation_type_t cancellationType) {
+              cancellationSignal_.emit(cancellationType);
+              isCancelled_ = true;
+          }),
+      }
 
 {
 }

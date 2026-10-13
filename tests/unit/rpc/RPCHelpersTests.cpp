@@ -398,7 +398,7 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
             "Amount1": {
                 "test": "test"
             }
-        })JSON"
+        })JSON",
     };
 
     std::array<std::string, 3> outputArray = {
@@ -422,7 +422,7 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
             "Amount1": {
                 "test": "test"
             }
-        })JSON"
+        })JSON",
     };
 
     for (size_t i = 0; i < inputArray.size(); i++) {
@@ -1891,15 +1891,21 @@ struct RPCHelpersLogDurationTest : LoggerFixture,
                                    testing::WithParamInterface<RPCHelpersLogDurationTestBundle> {
     boost::json::object const request = {
         {"method", "account_info"},
-        {"params",
-         boost::json::array{boost::json::object{
-             {"account", "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"},
-             {"secret", "should be deleted"}
-         }}}
+        {
+            "params",
+            boost::json::array{
+                boost::json::object{
+                    {"account", "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"},
+                    {"secret", "should be deleted"},
+                },
+            },
+        },
     };
     util::TagDecoratorFactory tagFactory{util::config::ClioConfigDefinition{
-        {"log.tag_style",
-         util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("none")}
+        {
+            "log.tag_style",
+            util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("none"),
+        },
     }};
     struct DummyTaggable : util::Taggable {
         DummyTaggable(util::TagDecoratorFactory& f) : util::Taggable(f)
@@ -2096,7 +2102,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierUnspecifiedResolvesToMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const res = getLedgerHeaderFromLedgerSpecifier(
-            *backend_, yield, rpc::spec::LedgerSpecifier{}, kSpecifierRangeMax
+            *backend_, yield, rpc::spec::LedgerSpecifier(), kSpecifierRangeMax
         );
         ASSERT_TRUE(res.has_value());
         EXPECT_EQ(res->seq, kSpecifierRangeMax);
