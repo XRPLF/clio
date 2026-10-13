@@ -190,7 +190,7 @@ private:
             std::optional<std::expected<ValueType, ErrorType>> result;
         };
 
-        auto sharedContext = std::make_shared<SharedContext>(yield);
+        auto const sharedContext = std::make_shared<SharedContext>(yield);
         boost::system::error_code errorCode;
 
         boost::signals2::scoped_connection const slot =

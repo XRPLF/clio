@@ -62,7 +62,8 @@ ForwardingSource::forwardToRippled(
     }
     auto& connection = expectedConnection.value();
 
-    auto writeError = connection->write(boost::json::serialize(request), yield, forwardingTimeout_);
+    auto const writeError =
+        connection->write(boost::json::serialize(request), yield, forwardingTimeout_);
     if (writeError) {
         LOG(log_.debug()) << "Error sending request to rippled to forward request.";
         return std::unexpected{rpc::ClioError::RpcForwardingRequestError};

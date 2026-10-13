@@ -41,7 +41,7 @@ NetworkValidatedLedgers::waitUntilValidatedByNetwork(
 )
 {
     std::unique_lock lck(mtx_);
-    auto pred = [sequence, this] -> bool { return (latest_ && sequence <= *latest_); };
+    auto const pred = [sequence, this] -> bool { return (latest_ && sequence <= *latest_); };
     if (maxWaitMs) {
         cv_.wait_for(lck, std::chrono::milliseconds(*maxWaitMs));
     } else {

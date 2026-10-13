@@ -43,14 +43,14 @@ TEST_F(AnyOperationTests, Move)
 {
     EXPECT_CALL(mockOp, get()).WillOnce(Return(impl::Any{}));
     auto yoink = std::move(voidOp);
-    auto res = yoink.get();
+    auto const res = yoink.get();
     ASSERT_TRUE(res);
 }
 
 TEST_F(AnyOperationTests, VoidDataYieldsNoError)
 {
     EXPECT_CALL(mockOp, get()).WillOnce(Return(impl::Any{}));
-    auto res = voidOp.get();
+    auto const res = voidOp.get();
     ASSERT_TRUE(res);
 }
 

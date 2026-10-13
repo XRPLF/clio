@@ -74,7 +74,7 @@ public:
             }
         };
 
-        auto ptr = std::make_shared<EnableMakeShared>(
+        auto const ptr = std::make_shared<EnableMakeShared>(
             ioc, std::move(data), std::move(onComplete), std::move(onRetry)
         );
         ptr->execute(handle);

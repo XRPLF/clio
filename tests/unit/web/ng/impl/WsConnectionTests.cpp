@@ -193,7 +193,7 @@ TEST_F(WebWsConnectionTests, MultipleSend)
         );
         [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             auto const expectedMessage = wsClient_.receive(yield, std::chrono::milliseconds{100});
             [&] {
                 ASSERT_TRUE(expectedMessage.has_value()) << expectedMessage.error().message();
@@ -205,7 +205,7 @@ TEST_F(WebWsConnectionTests, MultipleSend)
     runSpawn([this, &response](boost::asio::yield_context yield) {
         auto wsConnection = acceptConnection(yield);
 
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             auto expectedSuccess = wsConnection->send(response, yield);
             [&] {
                 ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
@@ -224,7 +224,7 @@ TEST_F(WebWsConnectionTests, MultipleSendFromMultipleCoroutines)
         );
         [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             auto const expectedMessage = wsClient_.receive(yield, std::chrono::milliseconds{100});
             [&] {
                 ASSERT_TRUE(expectedMessage.has_value()) << expectedMessage.error().message();
@@ -237,7 +237,7 @@ TEST_F(WebWsConnectionTests, MultipleSendFromMultipleCoroutines)
         auto wsConnection = acceptConnection(yield);
 
         util::CoroutineGroup group{yield};
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             group.spawn(yield, [&wsConnection, &response](boost::asio::yield_context innerYield) {
                 auto expectedSuccess = wsConnection->send(response, innerYield);
                 [&] {
@@ -336,7 +336,7 @@ TEST_F(WebWsConnectionTests, MultipleReceive)
         );
         [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             expectedSuccess =
                 wsClient_.send(yield, request_.message(), std::chrono::milliseconds{100});
             EXPECT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
@@ -346,7 +346,7 @@ TEST_F(WebWsConnectionTests, MultipleReceive)
     runSpawn([this](boost::asio::yield_context yield) {
         auto wsConnection = acceptConnection(yield);
 
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             auto maybeRequest = wsConnection->receive(yield);
             [&] { ASSERT_TRUE(maybeRequest.has_value()) << maybeRequest.error().message(); }();
             EXPECT_EQ(maybeRequest->message(), request_.message());

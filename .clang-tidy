@@ -169,10 +169,6 @@ CheckOptions:
   bugprone-unsafe-functions.ReportMoreUnsafeFunctions: true
   bugprone-unused-return-value.CheckedReturnTypes: ::std::error_code;::std::error_condition;::std::errc
 
-  misc-const-correctness.AnalyzeAutoVariables: false
-  misc-const-correctness.AnalyzeLambdas: false
-  misc-const-correctness.AnalyzeParameters: false
-
   misc-include-cleaner.IgnoreHeaders: '.*/(detail|impl)/.*;.*(expected|unexpected).*;.*ranges_lower_bound\.h;time.h;stdlib.h;__chrono/.*;fmt/chrono.h;boost/uuid/uuid_hash.hpp;.*boost/.*fwd\.hpp'
 
   readability-braces-around-statements.ShortStatementLines: 2

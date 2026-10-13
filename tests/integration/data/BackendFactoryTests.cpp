@@ -67,7 +67,7 @@ protected:
     void
     useConfig(std::string config)
     {
-        auto jsonConfig = boost::json::parse(config).as_object();
+        auto const jsonConfig = boost::json::parse(config).as_object();
         auto const parseErrors = cfg_.parse(ConfigFileJson{jsonConfig});
         if (parseErrors) {
             std::ranges::for_each(*parseErrors, [](auto const& error) {
@@ -115,7 +115,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 {
     {
         auto cache = data::LedgerCache{};
-        auto backend = data::makeBackend(cfg_, cache);
+        auto const backend = data::makeBackend(cfg_, cache);
         EXPECT_TRUE(backend);
 
         // empty db does not have ledger range
@@ -138,7 +138,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 
     {
         auto cache = data::LedgerCache{};
-        auto backend = data::makeBackend(cfg_, cache);
+        auto const backend = data::makeBackend(cfg_, cache);
         EXPECT_TRUE(backend);
 
         auto const range = backend->fetchLedgerRange();

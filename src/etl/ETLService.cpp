@@ -71,19 +71,20 @@ ETLService::makeETLService(
 {
     std::shared_ptr<ETLServiceInterface> ret;
 
-    auto fetcher = std::make_shared<impl::LedgerFetcher>(backend, balancer);
-    auto amendmentBlockHandler = std::make_shared<impl::AmendmentBlockHandler>(ctx, *state);
-    auto extractor = std::make_shared<impl::Extractor>(fetcher, amendmentBlockHandler);
-    auto publisher = std::make_shared<impl::LedgerPublisher>(ctx, backend, subscriptions, *state);
-    auto cacheLoader = std::make_shared<CacheLoader<>>(
+    auto const fetcher = std::make_shared<impl::LedgerFetcher>(backend, balancer);
+    auto const amendmentBlockHandler = std::make_shared<impl::AmendmentBlockHandler>(ctx, *state);
+    auto const extractor = std::make_shared<impl::Extractor>(fetcher, amendmentBlockHandler);
+    auto const publisher =
+        std::make_shared<impl::LedgerPublisher>(ctx, backend, subscriptions, *state);
+    auto const cacheLoader = std::make_shared<CacheLoader<>>(
         config, backend, backend->cache(), std::move(cacheLoadingState)
     );
-    auto cacheUpdater = std::make_shared<impl::CacheUpdater>(backend->cache());
-    auto monitorProvider = std::make_shared<impl::MonitorProvider>();
+    auto const cacheUpdater = std::make_shared<impl::CacheUpdater>(backend->cache());
+    auto const monitorProvider = std::make_shared<impl::MonitorProvider>();
 
     backend->setCorruptionDetector(CorruptionDetector{*state, backend->cache()});
 
-    auto loader = std::make_shared<impl::Loader>(
+    auto const loader = std::make_shared<impl::Loader>(
         backend,
         impl::makeRegistry(
             *state,
@@ -97,7 +98,7 @@ ETLService::makeETLService(
         state
     );
 
-    auto taskManagerProvider =
+    auto const taskManagerProvider =
         std::make_shared<impl::TaskManagerProvider>(*ledgers, extractor, loader);
 
     ret = std::make_shared<ETLService>(
@@ -242,7 +243,7 @@ ETLService::getInfo() const
     result["etl_sources"] = balancer_->toJson();
     result["is_writer"] = static_cast<int>(state_->isWriting);
     result["read_only"] = static_cast<int>(state_->isStrictReadonly);
-    auto last = publisher_->getLastPublish();
+    auto const last = publisher_->getLastPublish();
     if (last.time_since_epoch().count() != 0)
         result["last_publish_age_seconds"] = std::to_string(publisher_->lastPublishAgeSeconds());
     return result;

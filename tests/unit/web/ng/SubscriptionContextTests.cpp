@@ -170,6 +170,8 @@ struct NgSubscriptionContextAssertTests : common::util::WithMockAssertNoThrow,
 TEST_F(NgSubscriptionContextAssertTests, AssertFailsWhenNotDisconnected)
 {
     runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_CLIO_ASSERT_FAIL({ auto subscriptionContext = makeSubscriptionContext(yield); });
+        EXPECT_CLIO_ASSERT_FAIL({
+            auto const subscriptionContext = makeSubscriptionContext(yield);
+        });
     });
 }

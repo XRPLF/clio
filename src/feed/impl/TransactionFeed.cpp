@@ -43,7 +43,7 @@ TransactionFeed::TransactionSlot::operator()(
     std::shared_ptr<AllVersionsMsgsType> const& allVersionMsgs
 ) const
 {
-    if (auto connection = subscriptionContextWeakPtr.lock(); connection) {
+    if (auto const connection = subscriptionContextWeakPtr.lock(); connection) {
         // Check if this connection already sent
         if (feed.get().notified_.contains(connection.get()))
             return;
@@ -191,7 +191,7 @@ TransactionFeed::pub(
         auto const account = tx->getAccountID(xrpl::sfAccount);
         auto const amount = tx->getFieldAmount(xrpl::sfTakerGets);
         if (account != amount.get<xrpl::Issue>().account) {
-            auto fetchFundsSynchronous = [&] {
+            auto const fetchFundsSynchronous = [&] {
                 data::synchronous([&](boost::asio::yield_context yield) {
                     ownerFunds = rpc::accountFunds(
                         *backend, *amendmentCenter, lgrInfo.seq, amount, account, yield
@@ -309,30 +309,31 @@ TransactionFeed::pub(
         }
     }
 
-    [[maybe_unused]] auto task = strand_.execute([this,
-                                                  allVersionsMsgs = std::move(allVersionsMsgs),
-                                                  affectedAccounts = std::move(affectedAccounts),
-                                                  affectedBooks = std::move(affectedBooks)] {
-        notified_.clear();
-        signal_.emit(allVersionsMsgs);
-        // clear the notified set. If the same connection subscribes both transactions +
-        // proposed_transactions, rippled SENDS the same message twice
-        notified_.clear();
-        txProposedSignal_.emit(allVersionsMsgs);
-        notified_.clear();
-        // check duplicate for account and proposed_account, this prevents sending the same message
-        // multiple times if it affects multiple accounts watched by the same connection
-        for (auto const& account : affectedAccounts) {
-            accountSignal_.emit(account, allVersionsMsgs);
-            accountProposedSignal_.emit(account, allVersionsMsgs);
-        }
-        notified_.clear();
-        // check duplicate for books, this prevents sending the same message multiple times if it
-        // affects multiple books watched by the same connection
-        for (auto const& book : affectedBooks) {
-            bookSignal_.emit(book, allVersionsMsgs);
-        }
-    });
+    [[maybe_unused]] auto const task =
+        strand_.execute([this,
+                         allVersionsMsgs = std::move(allVersionsMsgs),
+                         affectedAccounts = std::move(affectedAccounts),
+                         affectedBooks = std::move(affectedBooks)] {
+            notified_.clear();
+            signal_.emit(allVersionsMsgs);
+            // clear the notified set. If the same connection subscribes both transactions +
+            // proposed_transactions, rippled SENDS the same message twice
+            notified_.clear();
+            txProposedSignal_.emit(allVersionsMsgs);
+            notified_.clear();
+            // check duplicate for account and proposed_account, this prevents sending the same
+            // message multiple times if it affects multiple accounts watched by the same connection
+            for (auto const& account : affectedAccounts) {
+                accountSignal_.emit(account, allVersionsMsgs);
+                accountProposedSignal_.emit(account, allVersionsMsgs);
+            }
+            notified_.clear();
+            // check duplicate for books, this prevents sending the same message multiple times if
+            // it affects multiple books watched by the same connection
+            for (auto const& book : affectedBooks) {
+                bookSignal_.emit(book, allVersionsMsgs);
+            }
+        });
 }
 
 void

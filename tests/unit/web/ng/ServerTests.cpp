@@ -526,7 +526,7 @@ TEST_P(ServerHttpTest, RequestResponse)
         );
         [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             expectedSuccess = client.send(request, yield, std::chrono::milliseconds{100});
             EXPECT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
 
@@ -607,7 +607,7 @@ TEST_F(ServerTest, WsRequestResponse)
         );
         [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             expectedSuccess = client.send(yield, requestMessage_, std::chrono::milliseconds{100});
             EXPECT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
 

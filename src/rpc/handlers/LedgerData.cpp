@@ -81,7 +81,7 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
 
     if (diffMarker != nullptr) {
         // keep the same logic as previous implementation
-        auto diff = sharedPtrBackend_->fetchLedgerDiff(*diffMarker, ctx.yield);
+        auto const diff = sharedPtrBackend_->fetchLedgerDiff(*diffMarker, ctx.yield);
         std::vector<xrpl::uint256> keys;
 
         for (auto& [key, object] : diff) {

@@ -148,7 +148,7 @@ TEST_P(ChannelSpawnTest, MultipleSendersOneReceiver)
         );
 
         {
-            auto localSender = std::move(sender);
+            auto const localSender = std::move(sender);
             for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
                 util::spawn(
                     executor,
@@ -194,7 +194,7 @@ TEST_P(ChannelSpawnTest, MultipleSendersMultipleReceivers)
         }
 
         {
-            auto localSender = std::move(sender);
+            auto const localSender = std::move(sender);
             for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
                 util::spawn(
                     executor,
@@ -237,12 +237,12 @@ TEST_P(ChannelSpawnTest, ChannelClosureScenarios)
                 EXPECT_EQ(*value, 42);
 
                 {
-                    [[maybe_unused]] auto tempSender = std::move(sender);
+                    [[maybe_unused]] auto const tempSender = std::move(sender);
                 }
 
                 EXPECT_TRUE(receiver.isClosed());
 
-                auto closedValue = receiver.asyncReceive(yield);
+                auto const closedValue = receiver.asyncReceive(yield);
                 EXPECT_FALSE(closedValue.has_value());
 
                 testCompleted = true;
@@ -309,7 +309,7 @@ TEST_P(ChannelSpawnTest, TryMethodsWithClosedChannel)
             EXPECT_TRUE(sender.trySend(43));
 
             {
-                [[maybe_unused]] auto tempSender = std::move(sender);
+                [[maybe_unused]] auto const tempSender = std::move(sender);
             }
 
             EXPECT_TRUE(receiver.isClosed());
@@ -361,7 +361,7 @@ TEST_P(ChannelCallbackTest, MultipleSendersOneReceiver)
         boost::asio::post(executor, receiveNext);
 
         {
-            auto localSender = std::move(sender);
+            auto const localSender = std::move(sender);
             for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
                 auto senderCopy = localSender;
                 boost::asio::post(
@@ -423,7 +423,7 @@ TEST_P(ChannelCallbackTest, MultipleSendersMultipleReceivers)
         }
 
         {
-            auto localSender = std::move(sender);
+            auto const localSender = std::move(sender);
             for (auto senderId = 0uz; senderId < kNumSenders; ++senderId) {
                 auto senderCopy = localSender;
                 boost::asio::post(
@@ -468,8 +468,8 @@ TEST_P(ChannelCallbackTest, ChannelClosureScenarios)
     context_.withExecutor([this](auto& executor) {
         std::atomic_bool testCompleted{false};
         auto [sender, receiver] = util::Channel<int>::create(executor, 5);
-        auto receiverPtr = std::make_shared<decltype(receiver)>(std::move(receiver));
-        auto senderPtr = std::make_shared<std::optional<decltype(sender)>>(std::move(sender));
+        auto const receiverPtr = std::make_shared<decltype(receiver)>(std::move(receiver));
+        auto const senderPtr = std::make_shared<std::optional<decltype(sender)>>(std::move(sender));
 
         EXPECT_FALSE(receiverPtr->isClosed());
 
@@ -510,8 +510,8 @@ TEST_P(ChannelCallbackTest, TrySendTryReceiveMethods)
     context_.withExecutor([this](auto& executor) {
         std::atomic_bool testCompleted{false};
         auto [sender, receiver] = util::Channel<int>::create(executor, 2);
-        auto receiverPtr = std::make_shared<decltype(receiver)>(std::move(receiver));
-        auto senderPtr = std::make_shared<decltype(sender)>(std::move(sender));
+        auto const receiverPtr = std::make_shared<decltype(receiver)>(std::move(receiver));
+        auto const senderPtr = std::make_shared<decltype(sender)>(std::move(sender));
 
         boost::asio::post(executor, [receiverPtr, senderPtr, &testCompleted] {
             EXPECT_FALSE(receiverPtr->tryReceive().has_value());
@@ -547,8 +547,9 @@ TEST_P(ChannelCallbackTest, TryMethodsWithClosedChannel)
     context_.withExecutor([this](auto& executor) {
         std::atomic_bool testCompleted{false};
         auto [sender, receiver] = util::Channel<int>::create(executor, 3);
-        auto receiverPtr = std::make_shared<util::Channel<int>::Receiver>(std::move(receiver));
-        auto senderPtr =
+        auto const receiverPtr =
+            std::make_shared<util::Channel<int>::Receiver>(std::move(receiver));
+        auto const senderPtr =
             std::make_shared<std::optional<util::Channel<int>::Sender>>(std::move(sender));
 
         boost::asio::post(executor, [receiverPtr, senderPtr, &testCompleted] {
@@ -601,20 +602,20 @@ TEST(ChannelTest, MultipleSenderCopiesErrorHandling)
 
         auto senderCopy = sender;
         {
-            [[maybe_unused]] auto tempSender = std::move(sender);
+            [[maybe_unused]] auto const tempSender = std::move(sender);
             // tempSender destroyed here, but senderCopy still exists
         }
 
         EXPECT_FALSE(receiver.isClosed());
 
         {
-            [[maybe_unused]] auto tempSender = std::move(senderCopy);
+            [[maybe_unused]] auto const tempSender = std::move(senderCopy);
             // now all senders are destroyed, channel should close
         }
 
         EXPECT_TRUE(receiver.isClosed());
 
-        auto closedValue = receiver.asyncReceive(yield);
+        auto const closedValue = receiver.asyncReceive(yield);
         EXPECT_FALSE(closedValue.has_value());
 
         testCompleted = true;
@@ -633,12 +634,12 @@ TEST(ChannelTest, ChannelClosesWhenAllSendersDestroyed)
 
     auto senderCopy = sender;
     {
-        [[maybe_unused]] auto temp = std::move(sender);
+        [[maybe_unused]] auto const temp = std::move(sender);
     }
     EXPECT_FALSE(receiver.isClosed());  // one sender still exists
 
     {
-        [[maybe_unused]] auto temp = std::move(senderCopy);
+        [[maybe_unused]] auto const temp = std::move(senderCopy);
     }
     EXPECT_TRUE(receiver.isClosed());  // all senders destroyed
 }
@@ -652,12 +653,12 @@ TEST(ChannelTest, ChannelClosesWhenAllReceiversDestroyed)
 
     auto receiverCopy = receiver;
     {
-        [[maybe_unused]] auto temp = std::move(receiver);
+        [[maybe_unused]] auto const temp = std::move(receiver);
     }
     EXPECT_TRUE(sender.trySend(43));  // one receiver still exists, can send
 
     {
-        [[maybe_unused]] auto temp = std::move(receiverCopy);
+        [[maybe_unused]] auto const temp = std::move(receiverCopy);
     }
     EXPECT_FALSE(sender.trySend(44));  // all receivers destroyed, channel closed
 }
@@ -692,7 +693,7 @@ TEST(ChannelTest, ChannelPreservesOrderFIFO)
 
             // Close sender to signal end of data
             {
-                [[maybe_unused]] auto temp = std::move(sender);
+                [[maybe_unused]] auto const temp = std::move(sender);
             }
 
             // Give receiver time to process all values
@@ -773,7 +774,7 @@ TEST(ChannelTest, PendingAsyncSendsAreCancelledOnClose)
     // Close the channel by destroying the only receiver we have.
     // Our workaround calls cancel() after close() to unblock pending operations
     {
-        [[maybe_unused]] auto r = std::move(receiver);
+        [[maybe_unused]] auto const r = std::move(receiver);
     }
 
     // All senders should complete (unblocked by our cancel() workaround)

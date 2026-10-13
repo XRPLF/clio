@@ -265,7 +265,7 @@ private:
             auto [result, timeDiff] =
                 util::timed([&] { return rpcEngine_->buildResponse(*context); });
 
-            auto us = std::chrono::duration<int, std::milli>(timeDiff);
+            auto const us = std::chrono::duration<int, std::milli>(timeDiff);
             rpc::logDuration(request, context->tag(), us);
 
             boost::json::object response;

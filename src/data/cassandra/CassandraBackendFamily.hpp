@@ -358,7 +358,7 @@ public:
         boost::asio::yield_context yield
     ) const override
     {
-        auto hashes = fetchAllTransactionHashesInLedger(ledgerSequence, yield);
+        auto const hashes = fetchAllTransactionHashesInLedger(ledgerSequence, yield);
         return fetchTransactions(hashes, yield);
     }
 
@@ -368,7 +368,7 @@ public:
         boost::asio::yield_context yield
     ) const override
     {
-        auto start = std::chrono::system_clock::now();
+        auto const start = std::chrono::system_clock::now();
         auto const res =
             executor_.read(yield, schema_->selectAllTransactionHashesInLedger, ledgerSequence);
 
@@ -388,7 +388,7 @@ public:
         for (auto [hash] : extract<xrpl::uint256>(result))
             hashes.push_back(std::move(hash));
 
-        auto end = std::chrono::system_clock::now();
+        auto const end = std::chrono::system_clock::now();
         LOG(
             log_.debug()
         ) << "Fetched "
@@ -596,7 +596,7 @@ public:
 
         auto mptObjects = doFetchLedgerObjects(mptKeys, ledgerSequence, yield);
 
-        auto it = std::remove_if(mptObjects.begin(), mptObjects.end(), [](Blob const& mpt) {
+        auto const it = std::remove_if(mptObjects.begin(), mptObjects.end(), [](Blob const& mpt) {
             return mpt.empty();
         });
 

@@ -14,7 +14,7 @@ hexStringToBinaryString(std::string const& hex)
     auto const blob = xrpl::strUnHex(hex);
     std::string strBlob;
 
-    for (auto c : *blob)  // NOLINT(bugprone-unchecked-optional-access)
+    for (auto const c : *blob)  // NOLINT(bugprone-unchecked-optional-access)
         strBlob += c;
 
     return strBlob;
@@ -31,7 +31,7 @@ ledgerHeaderToBinaryString(xrpl::LedgerHeader const& info)
 {
     auto const blob = rpc::ledgerHeaderToBlob(info, true);
     std::string strBlob;
-    for (auto c : blob)
+    for (auto const c : blob)
         strBlob += c;
 
     return strBlob;

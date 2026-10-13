@@ -67,7 +67,7 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
     PrometheusService::init(config::getClioConfig());
 
     auto const logDir = uniqueLogDir();
-    for (auto _ : state) {
+    for (auto const _ : state) {
         state.PauseTiming();
 
         std::filesystem::create_directories(logDir);
@@ -75,7 +75,7 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         static constexpr size_t kThreadCount = 1;
         spdlog::init_thread_pool(kQueueSize, kThreadCount);
 
-        auto fileSink = BenchmarkLoggingInitializer::createFileSink(logDir, 5, 25);
+        auto const fileSink = BenchmarkLoggingInitializer::createFileSink(logDir, 5, 25);
 
         std::vector<std::thread> threads;
         threads.reserve(numThreads);

@@ -113,20 +113,22 @@ struct ObjectViewAssertTest : common::util::WithMockAssert, ObjectViewTest {};
 
 TEST_F(ObjectViewAssertTest, KeyDoesNotExist)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = configData.getObject("head"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const _ = configData.getObject("head"); });
 }
 
 TEST_F(ObjectViewAssertTest, KeyIsValueView)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = configData.getObject("header.text1"); });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = configData.getArray("header"); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const _ = configData.getObject("header.text1");
+    });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const _ = configData.getArray("header"); });
 }
 
 TEST_F(ObjectViewAssertTest, KeyisArrayView)
 {
     // dies because only 1 object in higher.[].low
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto _ = configData.getObject("higher.[].low", 1);
+        [[maybe_unused]] auto const _ = configData.getObject("higher.[].low", 1);
     });
 }
 
@@ -134,6 +136,7 @@ TEST_F(ObjectViewAssertTest, KeyisNotOptional)
 {
     // dies because not an optional
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto _ = configData.getObject("header").maybeValue<std::string>("text1");
+        [[maybe_unused]] auto const _ =
+            configData.getObject("header").maybeValue<std::string>("text1");
     });
 }

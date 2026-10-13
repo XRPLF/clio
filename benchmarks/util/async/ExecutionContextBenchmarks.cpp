@@ -93,7 +93,7 @@ public:
             operations.push_back(ctx.execute(
                 [this](auto stopRequested) {
                     bool hasMore = true;
-                    auto doOne = [this] {
+                    auto const doOne = [this] {
                         auto v = q_.pop();
                         if (not v.has_value())
                             return false;
@@ -143,7 +143,7 @@ public:
             operations.push_back(anyCtx.execute(
                 [this](auto stopRequested) {
                     bool hasMore = true;
-                    auto doOne = [this] {
+                    auto const doOne = [this] {
                         auto v = q_.pop();
                         if (not v.has_value())
                             return false;
@@ -182,8 +182,8 @@ generateData()
 static void
 benchmarkThreads(benchmark::State& state)
 {
-    auto data = generateData();
-    for (auto _ : state) {
+    auto const data = generateData();
+    for (auto const _ : state) {
         TestThread t{data};
         t.run(state.range(0));
     }
@@ -193,8 +193,8 @@ template <typename CtxType>
 static void
 benchmarkExecutionContextBatched(benchmark::State& state)
 {
-    auto data = generateData();
-    for (auto _ : state) {
+    auto const data = generateData();
+    for (auto const _ : state) {
         TestExecutionContextBatched<CtxType> t{data, state.range(1)};
         t.run(state.range(0));
     }
@@ -204,8 +204,8 @@ template <typename CtxType>
 static void
 benchmarkAnyExecutionContextBatched(benchmark::State& state)
 {
-    auto data = generateData();
-    for (auto _ : state) {
+    auto const data = generateData();
+    for (auto const _ : state) {
         TestAnyExecutionContextBatched<CtxType> t{data, state.range(1)};
         t.run(state.range(0));
     }

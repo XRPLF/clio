@@ -47,7 +47,7 @@ mockLedgerObject(
     std::uint32_t time = 4321u
 )
 {
-    auto oracleObject = createOracleObject(
+    auto const oracleObject = createOracleObject(
         account,
         "70726F7669646572",
         64u,

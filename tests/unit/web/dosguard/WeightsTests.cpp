@@ -44,7 +44,7 @@ protected:
 TEST_P(WeightsTest, RequestWeight)
 {
     auto const& params = GetParam();
-    auto request = boost::json::parse(params.requestJson).as_object();
+    auto const request = boost::json::parse(params.requestJson).as_object();
     EXPECT_EQ(weights_.requestWeight(request), params.expectedWeight);
 }
 

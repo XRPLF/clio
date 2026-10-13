@@ -83,7 +83,7 @@ TEST_P(WsConnectionTests, SendAndReceive)
         auto serverConnection = unwrap(server.acceptConnection(yield));
 
         for (size_t i = 0; i < clientMessages.size(); ++i) {
-            auto message = serverConnection.receive(yield);
+            auto const message = serverConnection.receive(yield);
             EXPECT_EQ(clientMessages.at(i), message);
 
             auto error = serverConnection.send(serverMessages.at(i), yield);
@@ -198,7 +198,7 @@ TEST_F(WsConnectionTests, WriteWithTimeoutWorksFine)
 {
     util::spawn(ctx_, [&](asio::yield_context yield) {
         auto serverConnection = unwrap(server.acceptConnection(yield));
-        auto message = serverConnection.receive(yield);
+        auto const message = serverConnection.receive(yield);
         ASSERT_TRUE(message.has_value());
         EXPECT_EQ(message, "hello");
     });
@@ -214,11 +214,11 @@ TEST_F(WsConnectionTests, TrySslUsePlain)
 {
     util::spawn(ctx_, [&](asio::yield_context yield) {
         // Client attempts to establish SSL connection first which will fail
-        auto failedConnection = server.acceptConnection(yield);
+        auto const failedConnection = server.acceptConnection(yield);
         EXPECT_FALSE(failedConnection.has_value());
 
         auto serverConnection = unwrap(server.acceptConnection(yield));
-        auto message = serverConnection.receive(yield);
+        auto const message = serverConnection.receive(yield);
         EXPECT_EQ(message, "hello");
 
         auto error = serverConnection.send("goodbye", yield);
@@ -277,7 +277,7 @@ TEST_F(WsConnectionTests, WsHandshakeTimeout)
 {
     builder.setWsHandshakeTimeout(std::chrono::milliseconds{1});
     util::spawn(ctx_, [&](asio::yield_context yield) {
-        auto socket = server.acceptConnectionWithoutHandshake(yield);
+        auto const socket = server.acceptConnectionWithoutHandshake(yield);
         std::this_thread::sleep_for(std::chrono::milliseconds{10});
     });
     runSpawn([&](asio::yield_context yield) {
@@ -293,7 +293,7 @@ TEST_F(WsConnectionTests, CloseConnection)
     util::spawn(ctx_, [&](asio::yield_context yield) {
         auto serverConnection = unwrap(server.acceptConnection(yield));
 
-        auto message = serverConnection.receive(yield);
+        auto const message = serverConnection.receive(yield);
         EXPECT_EQ(std::nullopt, message);
     });
 
@@ -309,14 +309,14 @@ TEST_F(WsConnectionTests, CloseConnectionTimeout)
 {
     TestWsConnectionPtr const serverConnection;
     util::spawn(ctx_, [&](asio::yield_context yield) {
-        auto serverConnection =
+        auto const serverConnection =
             std::make_unique<TestWsConnection>(unwrap(server.acceptConnection(yield)));
     });
 
     runSpawn([&](asio::yield_context yield) {
         auto connection = unwrap(builder.plainConnect(yield));
 
-        auto error = connection->close(yield, std::chrono::milliseconds{1});
+        auto const error = connection->close(yield, std::chrono::milliseconds{1});
         EXPECT_TRUE(error.has_value());
     });
 }

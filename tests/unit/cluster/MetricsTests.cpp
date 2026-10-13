@@ -77,7 +77,7 @@ TEST_F(MetricsTest, OnNewStateWithValidClusterData)
     std::vector<ClioNode> const nodes = {node1, node2, node3};
     Backend::ClusterData const clusterData =
         std::expected<std::vector<ClioNode>, std::string>(nodes);
-    auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
+    auto const sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
     EXPECT_CALL(isHealthyMock, set(1));
     EXPECT_CALL(nodesInClusterMock, set(3));
@@ -98,7 +98,7 @@ TEST_F(MetricsTest, OnNewStateWithEmptyClusterData)
     std::vector<ClioNode> const nodes = {};
     Backend::ClusterData const clusterData =
         std::expected<std::vector<ClioNode>, std::string>(nodes);
-    auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
+    auto const sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
     EXPECT_CALL(isHealthyMock, set(1));
     EXPECT_CALL(nodesInClusterMock, set(0));
@@ -118,7 +118,7 @@ TEST_F(MetricsTest, OnNewStateWithFailedClusterData)
 
     Backend::ClusterData const clusterData =
         std::expected<std::vector<ClioNode>, std::string>(std::unexpected("Connection failed"));
-    auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
+    auto const sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
     EXPECT_CALL(isHealthyMock, set(0));
     EXPECT_CALL(nodesInClusterMock, set(1));
@@ -148,7 +148,7 @@ TEST_F(MetricsTest, OnNewStateWithSingleNode)
     std::vector<ClioNode> const nodes = {node1};
     Backend::ClusterData const clusterData =
         std::expected<std::vector<ClioNode>, std::string>(nodes);
-    auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
+    auto const sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
     EXPECT_CALL(isHealthyMock, set(1));
     EXPECT_CALL(nodesInClusterMock, set(1));
@@ -168,7 +168,7 @@ TEST_F(MetricsTest, OnNewStateRecoveryFromFailure)
 
     Backend::ClusterData const clusterData1 =
         std::expected<std::vector<ClioNode>, std::string>(std::unexpected("Connection timeout"));
-    auto sharedClusterData1 = std::make_shared<Backend::ClusterData>(clusterData1);
+    auto const sharedClusterData1 = std::make_shared<Backend::ClusterData>(clusterData1);
 
     EXPECT_CALL(isHealthyMock, set(0));
     EXPECT_CALL(nodesInClusterMock, set(1));
@@ -195,7 +195,7 @@ TEST_F(MetricsTest, OnNewStateRecoveryFromFailure)
     std::vector<ClioNode> const nodes = {node1, node2};
     Backend::ClusterData const clusterData2 =
         std::expected<std::vector<ClioNode>, std::string>(nodes);
-    auto sharedClusterData2 = std::make_shared<Backend::ClusterData>(clusterData2);
+    auto const sharedClusterData2 = std::make_shared<Backend::ClusterData>(clusterData2);
 
     EXPECT_CALL(isHealthyMock, set(1));
     EXPECT_CALL(nodesInClusterMock, set(2));

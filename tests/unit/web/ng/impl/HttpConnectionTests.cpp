@@ -124,7 +124,7 @@ TEST_F(HttpConnectionTests, ReceiveTimeout)
     runSpawn([this](boost::asio::yield_context yield) {
         auto connection = acceptConnection(yield);
         connection->setTimeout(std::chrono::milliseconds{1});
-        auto expectedRequest = connection->receive(yield);
+        auto const expectedRequest = connection->receive(yield);
         EXPECT_FALSE(expectedRequest.has_value());
     });
 }
@@ -142,7 +142,7 @@ TEST_F(HttpConnectionTests, ReceiveClientDisconnected)
     runSpawn([this](boost::asio::yield_context yield) {
         auto connection = acceptConnection(yield);
         connection->setTimeout(std::chrono::milliseconds{1});
-        auto expectedRequest = connection->receive(yield);
+        auto const expectedRequest = connection->receive(yield);
         EXPECT_FALSE(expectedRequest.has_value());
     });
 }
@@ -187,7 +187,7 @@ TEST_F(HttpConnectionTests, SendMultipleTimes)
         );
         [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             auto const expectedResponse =
                 httpClient_.receive(yield, std::chrono::milliseconds{100});
             [&] {
@@ -206,7 +206,7 @@ TEST_F(HttpConnectionTests, SendMultipleTimes)
     runSpawn([this, &response](boost::asio::yield_context yield) {
         auto connection = acceptConnection(yield);
 
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             auto expectedSuccess = connection->send(response, yield);
             [&] {
                 ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
@@ -226,7 +226,7 @@ TEST_F(HttpConnectionTests, SendMultipleTimesFromMultipleCoroutines)
         );
         [&] { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             auto const expectedResponse =
                 httpClient_.receive(yield, std::chrono::milliseconds{100});
             [&] {
@@ -246,7 +246,7 @@ TEST_F(HttpConnectionTests, SendMultipleTimesFromMultipleCoroutines)
         auto connection = acceptConnection(yield);
 
         util::CoroutineGroup group{yield};
-        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view{0, 3}) {
             group.spawn(yield, [&response, &connection](boost::asio::yield_context innerYield) {
                 auto const expectedSuccess = connection->send(response, innerYield);
                 [&] {
@@ -367,7 +367,7 @@ TEST_F(HttpConnectionTests, IsUpgradeRequested_FailedToFetch)
     runSpawn([this](boost::asio::yield_context yield) {
         auto connection = acceptConnection(yield);
         connection->setTimeout(std::chrono::milliseconds{1});
-        auto result = connection->isUpgradeRequested(yield);
+        auto const result = connection->isUpgradeRequested(yield);
         EXPECT_FALSE(result.has_value());
     });
 }

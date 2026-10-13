@@ -21,10 +21,10 @@ forEachBatch(std::ranges::forward_range auto&& container, std::size_t batchSize,
     ASSERT(batchSize > 0, "Batch size must be greater than 0");
 
     auto to = std::begin(container);
-    auto end = std::end(container);
+    auto const end = std::end(container);
 
     while (to != end) {
-        auto from = to;
+        auto const from = to;
 
         auto cnt = batchSize;
         while (to != end and cnt > 0) {

@@ -165,7 +165,7 @@ RequestBuilder::doRequestImpl(
     http::verb const method
 )
 {
-    auto executor = asio::get_associated_executor(yield);
+    auto const executor = asio::get_associated_executor(yield);
 
     beast::error_code errorCode;
     tcp::resolver resolver(executor);

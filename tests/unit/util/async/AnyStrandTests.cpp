@@ -64,11 +64,11 @@ TEST_F(AnyStrandTests, ExecuteWithoutTokenAndVoid)
 
 TEST_F(AnyStrandTests, ExecuteWithoutTokenAndVoidThrowsException)
 {
-    auto mockOp = OperationType<impl::Any>{};
+    auto const mockOp = OperationType<impl::Any>{};
     EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any()>>()))
         .WillOnce([](auto&&) -> OperationType<impl::Any> const& { throw 0; });
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([] {}));
+    EXPECT_ANY_THROW([[maybe_unused]] auto const unused = strand.execute([] {}));
 }
 
 TEST_F(AnyStrandTests, ExecuteWithStopTokenAndVoid)
@@ -88,7 +88,7 @@ TEST_F(AnyStrandTests, ExecuteWithStopTokenAndVoidThrowsException)
     EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
         .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([](auto) {}));
+    EXPECT_ANY_THROW([[maybe_unused]] auto const unused = strand.execute([](auto) {}));
 }
 
 TEST_F(AnyStrandTests, ExecuteWithStopTokenAndReturnValue)
@@ -109,7 +109,7 @@ TEST_F(AnyStrandTests, ExecuteWithStopTokenAndReturnValueThrowsException)
     EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
         .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([](auto) { return 42; }));
+    EXPECT_ANY_THROW([[maybe_unused]] auto const unused = strand.execute([](auto) { return 42; }));
 }
 
 TEST_F(AnyStrandTests, ExecuteWithTimeoutAndStopTokenAndReturnValue)
@@ -131,7 +131,7 @@ TEST_F(AnyStrandTests, ExecuteWithTimeoutAndStopTokenAndReturnValueThrowsExcepti
         .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
 
     EXPECT_ANY_THROW(
-        [[maybe_unused]] auto unused =
+        [[maybe_unused]] auto const unused =
             strand.execute([](auto) { return 42; }, std::chrono::milliseconds{1})
     );
 }

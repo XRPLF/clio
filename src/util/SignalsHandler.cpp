@@ -95,7 +95,7 @@ void
 SignalsHandler::runStateMachine()
 {
     while (state_ != State::NormalExit) {
-        auto currentState = state_.load();
+        auto const currentState = state_.load();
 
         switch (currentState) {
             case State::WaitingForSignal: {

@@ -245,8 +245,8 @@ TEST_F(ETLServiceTests, GetInfoWithoutLastPublish)
         .WillOnce(testing::Return(std::chrono::system_clock::time_point{}));
     EXPECT_CALL(*publisher_, lastPublishAgeSeconds()).WillRepeatedly(testing::Return(0));
 
-    auto result = service_.getInfo();
-    auto expectedResult = boost::json::parse(R"JSON({
+    auto const result = service_.getInfo();
+    auto const expectedResult = boost::json::parse(R"JSON({
         "etl_sources": [{"test": "value"}],
         "is_writer": 0,
         "read_only": 0
@@ -264,8 +264,8 @@ TEST_F(ETLServiceTests, GetInfoWithLastPublish)
         .WillOnce(testing::Return(std::chrono::system_clock::now()));
     EXPECT_CALL(*publisher_, lastPublishAgeSeconds()).WillOnce(testing::Return(42));
 
-    auto result = service_.getInfo();
-    auto expectedResult = boost::json::parse(R"JSON({
+    auto const result = service_.getInfo();
+    auto const expectedResult = boost::json::parse(R"JSON({
         "etl_sources": [{"test": "value"}],
         "is_writer": 0,
         "read_only": 0,
@@ -289,7 +289,7 @@ TEST_F(ETLServiceTests, GetETLState)
 {
     EXPECT_CALL(*balancer_, getETLState()).WillOnce(testing::Return(etl::ETLState{}));
 
-    auto result = service_.getETLState();
+    auto const result = service_.getETLState();
     EXPECT_TRUE(result.has_value());
 }
 
@@ -304,8 +304,8 @@ TEST_F(ETLServiceTests, LastCloseAgeSeconds)
 TEST_F(ETLServiceTests, RunWithEmptyDatabase)
 {
     auto mockTaskManager = std::make_unique<testing::NiceMock<MockTaskManager>>();
-    auto& mockTaskManagerRef = *mockTaskManager;
-    auto ledgerData = createTestData(kSeq);
+    auto const& mockTaskManagerRef = *mockTaskManager;
+    auto const ledgerData = createTestData(kSeq);
     EXPECT_FALSE(systemState_->etlStarted);
 
     testing::Sequence const s;
@@ -388,7 +388,7 @@ TEST_F(ETLServiceTests, WaitForValidatedLedgerIsAborted)
 TEST_F(ETLServiceTests, HandlesWriteConflictInMonitorSubscription)
 {
     auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
+    auto const& mockMonitorRef = *mockMonitor;
     std::function<void(uint32_t)> capturedCallback;
 
     EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
@@ -424,7 +424,7 @@ TEST_F(ETLServiceTests, HandlesWriteConflictInMonitorSubscription)
 TEST_F(ETLServiceTests, NormalFlowInMonitorSubscription)
 {
     auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
+    auto const& mockMonitorRef = *mockMonitor;
     std::function<void(uint32_t)> capturedCallback;
 
     EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
@@ -464,7 +464,7 @@ TEST_F(ETLServiceTests, NormalFlowInMonitorSubscription)
 TEST_F(ETLServiceTests, AttemptTakeoverWriter)
 {
     auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
+    auto const& mockMonitorRef = *mockMonitor;
     std::function<void()> capturedDbStalledCallback;
 
     EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
@@ -495,7 +495,7 @@ TEST_F(ETLServiceTests, AttemptTakeoverWriter)
     systemState_->isWriting = false;         // but starts in readonly as usual
 
     auto mockTaskManager = std::make_unique<testing::NiceMock<MockTaskManager>>();
-    auto& mockTaskManagerRef = *mockTaskManager;
+    auto const& mockTaskManagerRef = *mockTaskManager;
     EXPECT_CALL(mockTaskManagerRef, run);
 
     EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSeq + 1, testing::_))
@@ -518,7 +518,7 @@ TEST_F(ETLServiceTests, AttemptTakeoverWriter)
 TEST_F(ETLServiceTests, GiveUpWriterAfterWriteConflict)
 {
     auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
+    auto const& mockMonitorRef = *mockMonitor;
 
     std::function<void(uint32_t)> capturedCallback;
 
@@ -613,7 +613,7 @@ TEST_F(ETLServiceTests, RunStopsIfInitialLoadIsCancelledByBalancer)
 TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenStrictReadonly)
 {
     auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
+    auto const& mockMonitorRef = *mockMonitor;
     std::function<void()> capturedDbStalledCallback;
 
     EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
@@ -652,7 +652,7 @@ TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenStrictReadonly)
 TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenAlreadyWriting)
 {
     auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
+    auto const& mockMonitorRef = *mockMonitor;
     std::function<void()> capturedDbStalledCallback;
 
     EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
@@ -689,7 +689,7 @@ TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenAlreadyWriting)
 TEST_F(ETLServiceTests, CacheUpdatesDependOnActualCacheState_WriterMode)
 {
     auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
+    auto const& mockMonitorRef = *mockMonitor;
     std::function<void(uint32_t)> capturedCallback;
 
     EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
@@ -736,7 +736,7 @@ TEST_F(ETLServiceTests, CacheUpdatesDependOnActualCacheState_WriterMode)
 TEST_F(ETLServiceTests, OnlyCacheUpdatesWhenBackendIsCurrent)
 {
     auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
+    auto const& mockMonitorRef = *mockMonitor;
     std::function<void(uint32_t)> capturedCallback;
     // Set cache to be in sync with DB initially to avoid syncCacheWithDb loop
     backend_->cache().update({}, kSeq, false);
@@ -780,7 +780,7 @@ TEST_F(ETLServiceTests, OnlyCacheUpdatesWhenBackendIsCurrent)
 TEST_F(ETLServiceTests, NoUpdatesWhenBothCacheAndBackendAreCurrent)
 {
     auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
+    auto const& mockMonitorRef = *mockMonitor;
     std::function<void(uint32_t)> capturedCallback;
     // Set cache to be in sync with DB initially to avoid syncCacheWithDb loop
     backend_->cache().update({}, kSeq, false);
@@ -863,7 +863,7 @@ TEST_F(ETLServiceTests, WriteConflictIsHandledImmediately_NotDelayed)
     // not delayed until the next sequence notification (the old behavior)
 
     auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
+    auto const& mockMonitorRef = *mockMonitor;
     std::function<void(uint32_t)> capturedNewSeqCallback;
 
     EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
