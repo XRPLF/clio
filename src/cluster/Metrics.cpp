@@ -10,7 +10,8 @@ namespace cluster {
 Metrics::Metrics()
 {
     nodesInClusterMetric_.set(1);  // The node always sees itself
-    isHealthy_ = true;
+    // Sets the metric value; the member itself is initialized in the class definition
+    isHealthy_ = true;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
 }
 
 void

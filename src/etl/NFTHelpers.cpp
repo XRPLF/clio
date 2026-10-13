@@ -90,7 +90,7 @@ getNFTokenMintData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
             // However, there will always be NFTs listed in the final fields,
             // as rippled outputs all fields in final fields even if they were
             // not changed.
-            xrpl::STObject const& previousFields =
+            auto const& previousFields =
                 node.peekAtField(xrpl::sfPreviousFields).downcast<xrpl::STObject>();
             if (!previousFields.isFieldPresent(xrpl::sfNFTokens))
                 continue;
@@ -163,7 +163,7 @@ getNFTokenBurnData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
         std::optional<xrpl::STArray> prevNFTs;
 
         if (node.isFieldPresent(xrpl::sfPreviousFields)) {
-            xrpl::STObject const& previousFields =
+            auto const& previousFields =
                 node.peekAtField(xrpl::sfPreviousFields).downcast<xrpl::STObject>();
             if (previousFields.isFieldPresent(xrpl::sfNFTokens))
                 prevNFTs = previousFields.getFieldArray(xrpl::sfNFTokens);

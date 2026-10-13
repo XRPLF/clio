@@ -68,7 +68,7 @@ struct BasicScheduledOperation : util::MoveTracker {
         }
 
         [[nodiscard]] OpType&
-        get()
+        waitForOperation()
         {
             std::unique_lock lock{m_};
             ready_.wait(lock, [this] { return op_.has_value(); });
@@ -106,13 +106,13 @@ struct BasicScheduledOperation : util::MoveTracker {
     [[nodiscard]] auto
     get()
     {
-        return state->get().get();
+        return state->waitForOperation().get();
     }
 
     void
     wait() noexcept
     {
-        state->get().wait();
+        state->waitForOperation().wait();
     }
 
     void
@@ -125,7 +125,7 @@ struct BasicScheduledOperation : util::MoveTracker {
     requestStop() noexcept
         requires(SomeStoppableOperation<OpType>)
     {
-        state->get().requestStop();
+        state->waitForOperation().requestStop();
     }
 
     void

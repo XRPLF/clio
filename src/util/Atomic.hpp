@@ -44,20 +44,7 @@ public:
     void
     add(ValueType const value)
     {
-        if constexpr (std::is_integral_v<ValueType>) {
-            value_.fetch_add(value);
-        } else {
-#if __cpp_lib_atomic_float >= 201711L
-            value_.fetch_add(value);
-#else
-            // Workaround for atomic float not being supported by the standard library
-            // compare_exchange_weak returns false if the value is not exchanged and updates the
-            // current value
-            auto current = value_.load();
-            while (!value_.compare_exchange_weak(current, current + value)) {
-            }
-#endif
-        }
+        value_.fetch_add(value);
     }
 
     /**

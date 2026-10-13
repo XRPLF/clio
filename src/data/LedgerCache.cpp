@@ -36,7 +36,6 @@ LedgerCache::waitUntilCacheContainsSeq(uint32_t seq)
 
     std::unique_lock lock(mtx_);
     cv_.wait(lock, [this, seq] { return latestSeq_ >= seq; });
-    return;
 }
 
 void

@@ -623,7 +623,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
     auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount),
                                      getAccountIdWithString(kAccount2),
-                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::makeSlice(kCredentialType)
     )
                                      .key;
 
@@ -681,7 +681,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
     auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount),
                                      getAccountIdWithString(kAccount2),
-                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::makeSlice(kCredentialType)
     )
                                      .key;
 
@@ -749,7 +749,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
     auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount),
                                      getAccountIdWithString(kAccount2),
-                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::makeSlice(kCredentialType)
     )
                                      .key;
 
@@ -810,7 +810,7 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
     auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount),
                                      getAccountIdWithString(kAccount2),
-                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::makeSlice(kCredentialType)
     )
                                      .key;
 
@@ -923,7 +923,7 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
     auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount),
                                      getAccountIdWithString(kAccount2),
-                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::makeSlice(kCredentialType)
     )
                                      .key;
 
@@ -993,7 +993,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentSubjectAccountForCredentialReturnsFals
     auto const credentialIndex = xrpl::keylet::credential(
                                      getAccountIdWithString(kAccount2),
                                      getAccountIdWithString(kAccount),
-                                     xrpl::Slice(kCredentialType.data(), kCredentialType.size())
+                                     xrpl::makeSlice(kCredentialType)
     )
                                      .key;
 

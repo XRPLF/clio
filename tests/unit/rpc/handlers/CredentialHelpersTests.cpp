@@ -58,12 +58,10 @@ TEST(CreateAuthCredentialsTest, UniqueCredentials)
     auto const cred1Type = cred1.getFieldVL(xrpl::sfCredentialType);
     auto const cred2Type = cred2.getFieldVL(xrpl::sfCredentialType);
 
-    auto const expectedCred1 = std::make_pair(
-        cred1.getAccountID(xrpl::sfIssuer), xrpl::Slice{cred1Type.data(), cred1Type.size()}
-    );
-    auto const expectedCred2 = std::make_pair(
-        cred2.getAccountID(xrpl::sfIssuer), xrpl::Slice{cred2Type.data(), cred2Type.size()}
-    );
+    auto const expectedCred1 =
+        std::make_pair(cred1.getAccountID(xrpl::sfIssuer), xrpl::makeSlice(cred1Type));
+    auto const expectedCred2 =
+        std::make_pair(cred2.getAccountID(xrpl::sfIssuer), xrpl::makeSlice(cred2Type));
 
     EXPECT_TRUE(result.count(expectedCred1));
     EXPECT_TRUE(result.count(expectedCred2));

@@ -166,7 +166,7 @@ accountFromStringStrict(std::string const& account)
 
     std::optional<xrpl::PublicKey> publicKey = {};
     if (blob && xrpl::publicKeyType(xrpl::makeSlice(*blob))) {
-        publicKey = xrpl::PublicKey(xrpl::Slice{blob->data(), blob->size()});
+        publicKey = xrpl::PublicKey(xrpl::makeSlice(*blob));
     } else {
         publicKey =
             util::parseBase58Wrapper<xrpl::PublicKey>(xrpl::TokenType::AccountPublic, account);

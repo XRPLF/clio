@@ -6,7 +6,9 @@
 #include "migration/impl/MigrationManagerBase.hpp"
 #include "migration/impl/MigratorsRegister.hpp"
 
-namespace {
+namespace migration::cassandra {
+
+namespace impl {
 
 // Register migrators here
 // MigratorsRegister<BackendType, ExampleMigrator>
@@ -14,19 +16,16 @@ template <typename BackendType>
 using CassandraSupportedMigrators = migration::impl::MigratorsRegister<BackendType>;
 
 //  Instantiates with the backend which supports actual migration running
-using MigrationProcessor =
-    CassandraSupportedMigrators<migration::cassandra::CassandraMigrationBackend>;
+using MigrationProcessor = CassandraSupportedMigrators<CassandraMigrationBackend>;
 
 // Instantiates with backend interface, it doesn't support actual migration. But it can be used to
 // inspect the migrators status
 using MigrationQuerier = CassandraSupportedMigrators<data::BackendInterface>;
 
-}  // namespace
+}  // namespace impl
 
-namespace migration::cassandra {
+using CassandraMigrationInspector = migration::impl::MigrationInspectorBase<impl::MigrationQuerier>;
 
-using CassandraMigrationInspector = migration::impl::MigrationInspectorBase<MigrationQuerier>;
-
-using CassandraMigrationManager = migration::impl::MigrationManagerBase<MigrationProcessor>;
+using CassandraMigrationManager = migration::impl::MigrationManagerBase<impl::MigrationProcessor>;
 
 }  // namespace migration::cassandra

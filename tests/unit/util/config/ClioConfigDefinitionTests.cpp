@@ -104,9 +104,8 @@ TEST_F(ConfigTest, CheckAllKeys)
         "requireValue",
     };
 
-    for (auto i = configData.begin(); i != configData.end(); ++i) {
-        expected.emplace(i->first);
-    }
+    for (auto const& [key, _] : configData)
+        expected.emplace(key);
     EXPECT_EQ(expected, actual);
 }
 
@@ -248,9 +247,8 @@ TEST_F(OverrideConfigVals, ValidateIntegerValuesInArrays)
 
     std::vector<double> expectedArrSubVal{111.11, 4321.55, 5555.44};
     std::vector<double> actualArrSubVal{};
-    for (auto it = arrSub.begin<ValueView>(); it != arrSub.end<ValueView>(); ++it) {
-        actualArrSubVal.emplace_back((*it).asDouble());
-    }
+    for (auto const& value : arrSub.values())
+        actualArrSubVal.emplace_back(value.asDouble());
     EXPECT_TRUE(std::ranges::equal(expectedArrSubVal, actualArrSubVal));
 }
 
@@ -262,9 +260,8 @@ TEST_F(OverrideConfigVals, ValidateStringValuesInArrays)
 
     std::vector<std::string> expectedArrSub2Val{"subCategory", "temporary", "london"};
     std::vector<std::string> actualArrSub2Val{};
-    for (auto it = arrSub2.begin<ValueView>(); it != arrSub2.end<ValueView>(); ++it) {
-        actualArrSub2Val.emplace_back((*it).asString());
-    }
+    for (auto const& value : arrSub2.values())
+        actualArrSub2Val.emplace_back(value.asString());
     EXPECT_TRUE(std::ranges::equal(expectedArrSub2Val, actualArrSub2Val));
 
     // Check dosguard values

@@ -48,6 +48,13 @@ protected:
     boost::signals2::signal<void(T const&)> onUpdate_;
 
 public:
+    ObservableValueBase() = default;
+    ObservableValueBase(ObservableValueBase const&) = delete;
+    ObservableValueBase(ObservableValueBase&&) = default;
+    ObservableValueBase&
+    operator=(ObservableValueBase const&) = delete;
+    ObservableValueBase&
+    operator=(ObservableValueBase&&) = default;
     virtual ~ObservableValueBase() = default;
 
     /**
@@ -175,8 +182,9 @@ public:
      * @brief Constructs ObservableValue with initial value.
      * @param value Initial value (must be convertible to T)
      */
-    ObservableValue(std::convertible_to<T> auto&& value)
-        : value_{std::forward<decltype(value)>(value)}
+    template <std::convertible_to<T> U>
+        requires(not std::same_as<std::remove_cvref_t<U>, ObservableValue>)
+    ObservableValue(U&& value) : value_{std::forward<U>(value)}
     {
     }
 
@@ -207,10 +215,12 @@ public:
      *
      * @throws Any exception thrown by observer callbacks will propagate
      */
+    template <std::convertible_to<T> U>
+        requires(not std::same_as<std::remove_cvref_t<U>, ObservableValue>)
     ObservableValue&
-    operator=(std::convertible_to<T> auto&& val)
+    operator=(U&& val)
     {
-        set(val);
+        set(std::forward<U>(val));
         return *this;
     }
 
@@ -313,8 +323,9 @@ public:
      * @brief Constructs ObservableValue with initial atomic value.
      * @param value Initial value (will be stored in the atomic)
      */
-    ObservableValue(std::convertible_to<T> auto&& value)
-        : value_{std::forward<decltype(value)>(value)}
+    template <std::convertible_to<T> U>
+        requires(not std::same_as<std::remove_cvref_t<U>, ObservableValue>)
+    ObservableValue(U&& value) : value_{std::forward<U>(value)}
     {
     }
 
@@ -343,10 +354,12 @@ public:
      * @param val New value
      * @return Reference to this object for chaining
      */
+    template <std::convertible_to<T> U>
+        requires(not std::same_as<std::remove_cvref_t<U>, ObservableValue>)
     ObservableValue&
-    operator=(std::convertible_to<T> auto&& val)
+    operator=(U&& val)
     {
-        set(std::forward<decltype(val)>(val));
+        set(std::forward<U>(val));
         return *this;
     }
 

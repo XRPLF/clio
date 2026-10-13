@@ -304,6 +304,7 @@ private:
         CtxType ctx;
 
         template <typename Type>
+            requires std::is_same_v<Type, CtxType>
         Model(Type&& ctx) : ctx(std::forward<Type>(ctx))
         {
         }

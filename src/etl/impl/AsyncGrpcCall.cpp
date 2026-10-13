@@ -141,8 +141,8 @@ AsyncGrpcCall::call(
 std::string
 AsyncGrpcCall::getMarkerPrefix()
 {
-    return next_->marker().empty() ? std::string{}
-                                   : xrpl::strHex(std::string{next_->marker().data()[0]});
+    // Hex of the first byte of the marker, or an empty string if there is no marker
+    return xrpl::strHex(next_->marker().substr(0, 1));
 }
 
 // this is used to generate edgeKeys - keys that were the last one in the onInitialObjects list

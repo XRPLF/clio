@@ -220,10 +220,7 @@ getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSever
 
     auto const overrides = config.getArray("log.channels");
 
-    for (auto it = overrides.begin<util::config::ObjectView>();
-         it != overrides.end<util::config::ObjectView>();
-         ++it) {
-        auto const& channelConfig = *it;
+    for (auto const& channelConfig : overrides.objects()) {
         auto const name = channelConfig.get<std::string>("channel");
         if (not std::ranges::contains(Logger::kChannels, name)) {
             return std::unexpected{
@@ -328,7 +325,7 @@ LogServiceState::registerLogger(std::string_view channel, std::optional<Severity
 std::expected<std::vector<spdlog::sink_ptr>, std::string>
 LogService::getSinks(config::ClioConfigDefinition const& config)
 {
-    std::string const format = config.get<std::string>("log.format");
+    auto const format = config.get<std::string>("log.format");
 
     std::vector<spdlog::sink_ptr> allSinks =
         createConsoleSinks(config.get<bool>("log.enable_console"), format);

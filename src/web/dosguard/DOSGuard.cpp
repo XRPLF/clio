@@ -133,9 +133,8 @@ DOSGuard::getWhitelist(ClioConfigDefinition const& config)
     std::unordered_set<std::string> ips;
     auto const whitelist = config.getArray("dos_guard.whitelist");
 
-    for (auto it = whitelist.begin<ValueView>(); it != whitelist.end<ValueView>(); ++it) {
-        ips.insert((*it).asString());
-    }
+    for (auto const& ip : whitelist.values())
+        ips.insert(ip.asString());
 
     return ips;
 }

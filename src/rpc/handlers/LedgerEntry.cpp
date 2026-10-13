@@ -162,7 +162,7 @@ depositPreauthLocator(le::DepositPreauthEntry const& entry)
         ASSERT(decoded.has_value(), "credential_type is hex-validated by the spec");
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         buffers.push_back(*decoded);
-        authCreds.emplace(cred.issuer, xrpl::Slice(buffers.back().data(), buffers.back().size()));
+        authCreds.emplace(cred.issuer, xrpl::makeSlice(buffers.back()));
     }
 
     if (authCreds.size() != entry.authorizedCredentials->size()) {
@@ -180,7 +180,7 @@ credentialLocator(le::CredentialEntry const& entry)
     auto const credType = xrpl::strUnHex(entry.credentialType);
     ASSERT(credType.has_value(), "credential_type is hex-validated by the spec");
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    auto const credSlice = xrpl::Slice(credType->data(), credType->size());
+    auto const credSlice = xrpl::makeSlice(*credType);
 
     return Locator{.key = xrpl::keylet::credential(entry.subject, entry.issuer, credSlice).key};
 }
