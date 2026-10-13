@@ -28,10 +28,13 @@ public:
      */
     template <typename T>
     struct ArrayIterator {
+        // Required by the std iterator contract.
+        // NOLINTBEGIN(readability-identifier-naming)
         using iterator_category = std::forward_iterator_tag;
         using pointer = T const*;
         using reference = T const&;
         using value_type = T;
+        // NOLINTEND(readability-identifier-naming)
 
         /**
          * @brief Constructs an ArrayIterator with underlying ArrayView and index value
