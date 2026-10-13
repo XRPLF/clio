@@ -219,7 +219,7 @@ jobs:
             Fixes #${{ steps.create_issue.outputs.issue_number }}.
 
             Please review and commit clang-tidy fixes.
-          reviewers: "godexsoft,kuznetsss,mathbunnyru"
+          reviewers: "godexsoft,mathbunnyru"
 
       - name: Fail the job
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}

@@ -110,4 +110,4 @@ jobs:
 
             PR: ${{ github.event.client_payload.pr_url }}
           labels: "compatibility,bug"
-          assignees: "godexsoft,kuznetsss,mathbunnyru"
+          assignees: "godexsoft,mathbunnyru"
