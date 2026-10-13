@@ -2102,7 +2102,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderFromSpecifierUnspecifiedResolvesToMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const res = getLedgerHeaderFromLedgerSpecifier(
-            *backend_, yield, rpc::spec::LedgerSpecifier{}, kSpecifierRangeMax
+            *backend_, yield, rpc::spec::LedgerSpecifier(), kSpecifierRangeMax
         );
         ASSERT_TRUE(res.has_value());
         EXPECT_EQ(res->seq, kSpecifierRangeMax);

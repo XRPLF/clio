@@ -334,7 +334,7 @@ TEST_P(ShouldForwardParameterTest, Test)
             params.as_object(),
             nullptr,
             tagFactory_,
-            data::LedgerRange{},
+            data::LedgerRange(),
             kClientIp,
             testBundle.isAdmin,
         };
@@ -371,7 +371,7 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
             params.as_object(),
             nullptr,
             tagFactory_,
-            data::LedgerRange{},
+            data::LedgerRange(),
             kClientIp,
             true,
         };
@@ -409,7 +409,7 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
             params.as_object(),
             nullptr,
             tagFactory_,
-            data::LedgerRange{},
+            data::LedgerRange(),
             kClientIp,
             true,
         };
