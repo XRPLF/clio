@@ -20,7 +20,7 @@ class ClioConan(ConanFile):
         "fmt/12.1.0",
         "libbacktrace/cci.20210118",
         "spdlog/1.17.0",
-        "xrpl-rpc-spec/0.1.24",
+        "xrpl-rpc-spec/0.1.25",
         "xrpl/3.4.0",
     ]
 
