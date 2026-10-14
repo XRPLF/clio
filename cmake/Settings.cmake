@@ -32,13 +32,13 @@ set(COMPILER_FLAGS
 # TODO: re-enable when we change CI #884 if (is_gcc AND NOT lint) list(APPEND COMPILER_FLAGS -Wduplicated-branches
 # -Wduplicated-cond -Wlogical-op -Wuseless-cast ) endif ()
 
-if(is_clang AND NOT is_appleclang)
+if(is_llvm_clang)
     # gcc is too aggressive with shadowing
     # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78147
     list(APPEND COMPILER_FLAGS -Wshadow)
 endif()
 
-if(is_appleclang)
+if(is_apple_clang)
     list(APPEND COMPILER_FLAGS -Wreorder-init-list)
 endif()
 
@@ -73,7 +73,7 @@ endif()
 # the flags description
 
 if(time_trace)
-    if(is_clang)
+    if(is_any_clang)
         list(APPEND COMPILER_FLAGS -ftime-trace)
     else()
         message(
@@ -98,7 +98,7 @@ target_compile_options(clio_options INTERFACE -g)
 if(
     is_nix_compiler
     AND is_linux
-    AND is_clang
+    AND is_any_clang
     AND CMAKE_CXX_FLAGS MATCHES "stdlib=libstdc"
 )
     string(REPLACE "-stdlib=libstdc++" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
