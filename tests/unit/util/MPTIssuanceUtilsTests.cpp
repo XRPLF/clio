@@ -20,6 +20,7 @@
 #include <xrpl/protocol/TxMeta.h>
 
 #include <cstdint>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -87,7 +88,27 @@ createMptIssuanceSetTx()
     return xrpl::STTx{xrpl::SerialIter{serialized.slice()}};
 }
 
+xrpl::STObject
+createMPTokenIssuanceNodeWithout(xrpl::SField const& missingField)
+{
+    auto node = util::createMPTokenIssuanceNode(xrpl::sfModifiedNode, kIssuanceSeq, kIssuer);
+    node.peekFieldObject(xrpl::sfFinalFields).makeFieldAbsent(missingField);
+    return node;
+}
+
 }  // namespace
+
+TEST(MPTIssuanceUtilsTest, GetMPTokenIssuanceIDFromNode_IssuanceNodeMissingSequenceOrIssuer)
+{
+    EXPECT_EQ(
+        util::getMPTokenIssuanceIDFromNode(createMPTokenIssuanceNodeWithout(xrpl::sfSequence)),
+        std::nullopt
+    );
+    EXPECT_EQ(
+        util::getMPTokenIssuanceIDFromNode(createMPTokenIssuanceNodeWithout(xrpl::sfIssuer)),
+        std::nullopt
+    );
+}
 
 TEST(MPTIssuanceUtilsTest, ReferencesMptIssuance_MatchesFromAffectedNode)
 {
@@ -176,6 +197,22 @@ TEST(MPTIssuanceUtilsTest, GetAffectedMPTs_DeduplicatesIssuances)
 TEST(MPTIssuanceUtilsTest, GetAffectedMPTs_NoMPTNodes)
 {
     auto const txMeta = createTxMeta({});
+
+    EXPECT_TRUE(util::getAffectedMPTs(txMeta).empty());
+}
+
+TEST(MPTIssuanceUtilsTest, GetAffectedMPTs_SkipsIncompleteNodes)
+{
+    // A modified node without FinalFields
+    xrpl::STObject nodeWithoutFields(xrpl::sfModifiedNode);
+    nodeWithoutFields.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
+    nodeWithoutFields.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});
+
+    std::vector<xrpl::STObject> nodes;
+    nodes.push_back(std::move(nodeWithoutFields));
+    nodes.push_back(createMPTokenIssuanceNodeWithout(xrpl::sfSequence));
+    nodes.push_back(createMPTokenIssuanceNodeWithout(xrpl::sfIssuer));
+    auto const txMeta = createTxMeta(std::move(nodes));
 
     EXPECT_TRUE(util::getAffectedMPTs(txMeta).empty());
 }

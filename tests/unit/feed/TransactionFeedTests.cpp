@@ -877,6 +877,26 @@ TEST_F(FeedTransactionTest, SubRepeat)
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
+
+    auto const mptIssuanceID = xrpl::makeMptID(1, account);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+
+    EXPECT_CALL(*session2, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, session2);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 2);
+
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+    testFeedPtr->sub(mptIssuanceID, session2);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 2);
+
+    testFeedPtr->unsub(mptIssuanceID, sessionPtr);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 1);
+    testFeedPtr->unsub(mptIssuanceID, session2);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 0);
+    testFeedPtr->unsub(mptIssuanceID, sessionPtr);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 0);
 }
 
 TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
