@@ -29,6 +29,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 # Include required modules
+include(CompilationEnv)
 include(Ccache)
 include(CheckCXXCompilerFlag)
 include(ClangTidy)
@@ -61,8 +62,7 @@ if(
     )
 endif()
 
-# Apply sanitizer instrumentation if requested and define SANITIZERS_ENABLED.
-# Must come before the modules and subdirectories below that key off it.
+# Apply sanitizer instrumentation if requested.
 include(Sanitizers)
 
 if(verbose)
