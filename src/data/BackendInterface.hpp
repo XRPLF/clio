@@ -78,7 +78,7 @@ static constexpr std::chrono::milliseconds kMaxWaitBetweenRetry{5'000};
  */
 static constexpr util::Retry::Delays kDefaultRetryDelays{
     .initial = kDefaultWaitBetweenRetry,
-    .max = kDefaultWaitBetweenRetry
+    .max = kDefaultWaitBetweenRetry,
 };
 
 /**
@@ -202,7 +202,7 @@ template <typename FnType>
 auto
 synchronousAndRetryOnTimeout(FnType&& func, util::Retry::Delays delays = kDefaultRetryDelays)
 {
-    return retryOnTimeout([&]() { return synchronous(func); }, delays);
+    return retryOnTimeout([&] { return synchronous(func); }, delays);
 }
 
 /**

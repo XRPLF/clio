@@ -241,11 +241,11 @@ public:
     std::uint32_t
     lastCloseAgeSeconds() const override
     {
-        auto closeTime = lastCloseTime_.lock()->time_since_epoch().count();
-        auto now = std::chrono::duration_cast<std::chrono::seconds>(
-                       std::chrono::system_clock::now().time_since_epoch()
+        auto const closeTime = lastCloseTime_.lock()->time_since_epoch().count();
+        auto const now = std::chrono::duration_cast<std::chrono::seconds>(
+                             std::chrono::system_clock::now().time_since_epoch()
         )
-                       .count();
+                             .count();
         if (now < (kRippleEpochStart + closeTime))
             return 0;
         return now - (kRippleEpochStart + closeTime);

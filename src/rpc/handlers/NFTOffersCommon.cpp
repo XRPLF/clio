@@ -101,7 +101,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 
         // We have a start point. Use limit - 1 from the result and use the very last one for the
         // resume.
-        auto const sle = [this, &cursor, &lgrInfo, yield]() -> std::shared_ptr<SLE const> {
+        auto const sle = [this, &cursor, &lgrInfo, yield] -> std::shared_ptr<SLE const> {
             auto const key = keylet::nftokenOffer(cursor).key;
 
             if (auto const blob = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield);
@@ -172,10 +172,10 @@ tag_invoke(
     };
 
     if (output.marker)
-        object[JS(marker)] = *(output.marker);
+        object[JS(marker)] = *output.marker;
 
     if (output.limit)
-        object[JS(limit)] = *(output.limit);
+        object[JS(limit)] = *output.limit;
 
     jv = std::move(object);
 }

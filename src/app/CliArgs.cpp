@@ -38,7 +38,7 @@ CliArgs::parse(int argc, char const* argv[])
     po::positional_options_description positional;
     positional.add("conf", 1);
 
-    auto const printHelp = [&description]() {
+    auto const printHelp = [&description] {
         std::cout << "Clio server " << util::build::getClioFullVersionString() << "\n\n"
                   << description;
     };
@@ -87,11 +87,13 @@ CliArgs::parse(int argc, char const* argv[])
         auto const opt = parsed["migrate"].as<std::string>();
         if (opt == "status") {
             return Action{Action::Migrate{
-                .configPath = std::move(configPath), .subCmd = MigrateSubCmd::status()
+                .configPath = std::move(configPath),
+                .subCmd = MigrateSubCmd::status(),
             }};
         }
         return Action{Action::Migrate{
-            .configPath = std::move(configPath), .subCmd = MigrateSubCmd::migration(opt)
+            .configPath = std::move(configPath),
+            .subCmd = MigrateSubCmd::migration(opt),
         }};
     }
 
@@ -99,7 +101,8 @@ CliArgs::parse(int argc, char const* argv[])
         return Action{Action::VerifyConfig{.configPath = std::move(configPath)}};
 
     return Action{Action::Run{
-        .configPath = std::move(configPath), .useNgWebServer = parsed.contains("ng-web-server")
+        .configPath = std::move(configPath),
+        .useNgWebServer = parsed.contains("ng-web-server"),
     }};
 }
 

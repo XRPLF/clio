@@ -76,22 +76,26 @@ private:
     mutable std::shared_mutex mtx_;
     std::condition_variable_any cv_;
     uint32_t latestSeq_ = 0;
-    util::prometheus::Bool full_{PrometheusService::boolMetric(
-        "ledger_cache_full",
-        util::prometheus::Labels{},
-        "Whether ledger cache full or not"
-    )};
-    util::prometheus::Bool disabled_{PrometheusService::boolMetric(
-        "ledger_cache_disabled",
-        util::prometheus::Labels{},
-        "Whether ledger cache is disabled or not"
-    )};
+    util::prometheus::Bool full_{
+        PrometheusService::boolMetric(
+            "ledger_cache_full",
+            util::prometheus::Labels{},
+            "Whether ledger cache full or not"
+        ),
+    };
+    util::prometheus::Bool disabled_{
+        PrometheusService::boolMetric(
+            "ledger_cache_disabled",
+            util::prometheus::Labels{},
+            "Whether ledger cache is disabled or not"
+        ),
+    };
     util::prometheus::Bool isCurrentlyLoading_{
         PrometheusService::boolMetric(
             "ledger_cache_is_currently_loading",
             util::prometheus::Labels{},
             "Whether ledger cache is currently loading or not"
-        )
+        ),
 
     };
 

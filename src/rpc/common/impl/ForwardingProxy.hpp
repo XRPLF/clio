@@ -56,12 +56,12 @@ public:
         if (isForcedForward(ctx))
             return true;
 
-        auto const checkAccountInfoForward = [&]() {
+        auto const checkAccountInfoForward = [&] {
             return ctx.method == "account_info" and request.contains("queue") and
                 request.at("queue").is_bool() and request.at("queue").as_bool();
         };
 
-        auto const checkLedgerForward = [&]() {
+        auto const checkLedgerForward = [&] {
             return ctx.method == "ledger" and request.contains("queue") and
                 request.at("queue").is_bool() and request.at("queue").as_bool();
         };

@@ -10,6 +10,7 @@
 #include <iterator>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace util::config {
 
@@ -27,10 +28,13 @@ public:
      */
     template <typename T>
     struct ArrayIterator {
+        // Required by the std iterator contract.
+        // NOLINTBEGIN(readability-identifier-naming)
         using iterator_category = std::forward_iterator_tag;
         using pointer = T const*;
         using reference = T const&;
         using value_type = T;
+        // NOLINTEND(readability-identifier-naming)
 
         /**
          * @brief Constructs an ArrayIterator with underlying ArrayView and index value
@@ -99,7 +103,7 @@ public:
         bool
         operator==(ArrayIterator const& other) const
         {
-            return &arr_ == &(other.arr_) && index_ == other.index_;
+            return &arr_ == &other.arr_ && index_ == other.index_;
         }
 
         /**
@@ -111,7 +115,7 @@ public:
         bool
         operator!=(ArrayIterator const& other) const
         {
-            return &arr_ != &(other.arr_) || index_ != other.index_;
+            return &arr_ != &other.arr_ || index_ != other.index_;
         }
 
     private:
@@ -142,6 +146,28 @@ public:
     {
         return ArrayIterator<T>(*this, this->size());
     }
+
+    /**
+     * @brief A range over the elements of an array, viewed as T (ValueView or ObjectView)
+     */
+    template <typename T>
+    class Elements;
+
+    /**
+     * @brief Returns a range over the elements of an array of values
+     *
+     * @return Range of ValueView, usable in a range-based for loop
+     */
+    [[nodiscard]] Elements<ValueView>
+    values() const;
+
+    /**
+     * @brief Returns a range over the elements of an array of objects
+     *
+     * @return Range of ObjectView, usable in a range-based for loop
+     */
+    [[nodiscard]] Elements<ObjectView>
+    objects() const;
 
     /**
      * @brief Constructs an ArrayView with the given prefix and config definition.
@@ -181,5 +207,55 @@ private:
     std::string prefix_;
     std::reference_wrapper<ClioConfigDefinition const> clioConfig_;
 };
+
+template <typename T>
+class ArrayView::Elements {
+public:
+    /**
+     * @brief Constructs the range over the given array
+     *
+     * @param array The array to iterate over; stored by value so the range never dangles
+     */
+    explicit Elements(ArrayView array) : array_{std::move(array)}
+    {
+    }
+
+    /**
+     * @brief Returns an iterator to the first element
+     *
+     * @return Iterator to the first element
+     */
+    [[nodiscard]] ArrayIterator<T>
+    begin() const
+    {
+        return array_.begin<T>();
+    }
+
+    /**
+     * @brief Returns an iterator past the last element
+     *
+     * @return Iterator past the last element
+     */
+    [[nodiscard]] ArrayIterator<T>
+    end() const
+    {
+        return array_.end<T>();
+    }
+
+private:
+    ArrayView array_;
+};
+
+[[nodiscard]] inline ArrayView::Elements<ValueView>
+ArrayView::values() const
+{
+    return Elements<ValueView>{*this};
+}
+
+[[nodiscard]] inline ArrayView::Elements<ObjectView>
+ArrayView::objects() const
+{
+    return Elements<ObjectView>{*this};
+}
 
 }  // namespace util::config

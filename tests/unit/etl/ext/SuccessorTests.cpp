@@ -50,7 +50,7 @@ createTestData(std::vector<etl::model::Object> objects)
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 }
 
@@ -441,7 +441,7 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsButNotBookDirAndNoSuccessor
             if (successorChain.empty())
                 return std::nullopt;
 
-            auto v = successorChain.front();
+            auto const v = successorChain.front();
             successorChain.pop();
             return data::LedgerObject{.key = v, .blob = {'0'}};
         });
@@ -488,7 +488,7 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsButNotBookDirAndSuccessorsF
             if (successorChain.empty())
                 return std::nullopt;
 
-            auto v = successorChain.front();
+            auto const v = successorChain.front();
             successorChain.pop();
             return data::LedgerObject{.key = v, .blob = {'0'}};
         });
@@ -539,7 +539,7 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsAndBookDirAndSuccessorsForE
             if (successorChain.empty())
                 return std::nullopt;
 
-            auto v = successorChain.front();
+            auto const v = successorChain.front();
             successorChain.pop();
             return data::LedgerObject{.key = v, .blob = bookBaseObj.data};
         });
@@ -720,7 +720,7 @@ TEST_F(SuccessorExtAssertTests, OnInitialDataIsFullButNoEdgeKeys)
 {
     using namespace etl::model;
 
-    auto data = createTestData({});
+    auto const data = createTestData({});
 
     EXPECT_CALL(cache_, isFull()).WillOnce(testing::Return(true));
     EXPECT_CLIO_ASSERT_FAIL({ ext_.onInitialData(data); });

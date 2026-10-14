@@ -43,7 +43,7 @@ public:
     bindAt(std::size_t const idx, Type&& value) const
     {
         using std::to_string;
-        auto throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
+        auto const throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
             if (rc != CASS_OK) {
                 auto const tag = '[' + std::string{label} + ']';
                 throw std::logic_error(
@@ -102,7 +102,7 @@ private:
         if (not cass_iterator_next(*this))
             throw std::logic_error("Could not extract next value from tuple iterator");
 
-        auto throwErrorIfNeeded = [](CassError rc, std::string_view label) {
+        auto const throwErrorIfNeeded = [](CassError rc, std::string_view label) {
             if (rc != CASS_OK) {
                 auto const tag = '[' + std::string{label} + ']';
                 throw std::logic_error(tag + ": " + cass_error_desc(rc));

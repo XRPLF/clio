@@ -204,15 +204,15 @@ tag_invoke(
         return balancesObj;
     };
 
-    if (auto balances = toJson(output.hotBalances); !balances.empty())
+    if (auto const balances = toJson(output.hotBalances); !balances.empty())
         obj[JS(balances)] = balances;
 
     // we don't have frozen_balances field in the
     // document:https://xrpl.org/gateway_balances.html#gateway_balances
-    if (auto balances = toJson(output.frozenBalances); !balances.empty())
+    if (auto const balances = toJson(output.frozenBalances); !balances.empty())
         obj[JS(frozen_balances)] = balances;
 
-    if (auto balances = toJson(output.assets); !balances.empty())
+    if (auto const balances = toJson(output.assets); !balances.empty())
         obj[JS(assets)] = balances;
 
     if (!output.locked.empty()) {

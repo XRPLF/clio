@@ -36,7 +36,7 @@ public:
     {
         namespace rg = std::ranges;
 
-        auto accountRoots = [this, seq]() {
+        auto accountRoots = [this, seq] {
             return data::synchronousAndRetryOnTimeout([this, seq](auto yield) {
                 return backend_->fetchAccountRoots(numCursors_, pageSize_, seq, yield);
             });

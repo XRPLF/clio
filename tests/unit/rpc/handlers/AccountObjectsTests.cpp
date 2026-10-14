@@ -25,6 +25,7 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -73,92 +74,92 @@ generateTestValuesForParametersTest()
             .testName = "MissingAccount",
             .testJson = R"JSON({})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'account' missing"
+            .expectedErrorMessage = "Required field 'account' missing",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "AccountNotString",
             .testJson = R"JSON({"account": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "accountNotString"
+            .expectedErrorMessage = "accountNotString",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "AccountInvalid",
             .testJson = R"JSON({"account": "xxx"})JSON",
             .expectedError = "actMalformed",
-            .expectedErrorMessage = "accountMalformed"
+            .expectedErrorMessage = "accountMalformed",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "TypeNotString",
             .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'type', not string."
+            .expectedErrorMessage = "Invalid field 'type', not string.",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "TypeInvalid",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type": "wrong"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'type'."
+            .expectedErrorMessage = "Invalid field 'type'.",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "TypeNotAccountOwned",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type": "amendments"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid field 'type'."
+            .expectedErrorMessage = "Invalid field 'type'.",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LedgerHashInvalid",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": "1"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LedgerHashNotString",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index": "a"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LimitNotInt",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit": "1"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LimitNegative",
             .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":-1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LimitZero",
             .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit": 0})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "MarkerNotString",
             .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker": 9})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "markerNotString"
+            .expectedErrorMessage = "markerNotString",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "MarkerInvalid",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker": "xxxx"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Malformed cursor."
+            .expectedErrorMessage = "Malformed cursor.",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "NFTMarkerInvalid",
@@ -167,21 +168,21 @@ generateTestValuesForParametersTest()
                 std::numeric_limits<uint32_t>::max()
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Malformed cursor."
+            .expectedErrorMessage = "Malformed cursor.",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "DeletionBlockersOnlyInvalidString",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "deletion_blockers_only": "wrong"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "DeletionBlockersOnlyInvalidNull",
             .testJson =
                 R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "deletion_blockers_only": null})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
     };
 }
@@ -572,9 +573,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
         std::ranges::next_permutation(first);
         auto const previous =
             xrpl::keylet::nftokenPage(
-                xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
-            )
-                .key;
+                xrpl::keylet::nftokenPageMin(account), xrpl::uint256{std::string_view{first}}
+            ).key;
         auto const nftPage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
@@ -1017,7 +1017,7 @@ makeSponsoredMixObjects()
         lineHigh.getSerializer().peekData(),
         lineLow.getSerializer().peekData(),
         channel.getSerializer().peekData(),
-        offer.getSerializer().peekData()
+        offer.getSerializer().peekData(),
     };
 }
 
@@ -1033,10 +1033,12 @@ TEST_F(RPCAccountObjectsHandlerTest, SponsoredFilterTrueReturnsOnlySponsored)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = createOwnerDirLedgerObject(
-        {xrpl::uint256{kIndex1},
-         xrpl::uint256{kIndex1},
-         xrpl::uint256{kIndex1},
-         xrpl::uint256{kIndex1}},
+        {
+            xrpl::uint256{kIndex1},
+            xrpl::uint256{kIndex1},
+            xrpl::uint256{kIndex1},
+            xrpl::uint256{kIndex1},
+        },
         kIndex1
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::ownerDir(account).key, kMaxSeq, _))
@@ -1070,10 +1072,12 @@ TEST_F(RPCAccountObjectsHandlerTest, SponsoredFilterFalseReturnsOnlyUnsponsored)
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = createOwnerDirLedgerObject(
-        {xrpl::uint256{kIndex1},
-         xrpl::uint256{kIndex1},
-         xrpl::uint256{kIndex1},
-         xrpl::uint256{kIndex1}},
+        {
+            xrpl::uint256{kIndex1},
+            xrpl::uint256{kIndex1},
+            xrpl::uint256{kIndex1},
+            xrpl::uint256{kIndex1},
+        },
         kIndex1
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::ownerDir(account).key, kMaxSeq, _))
@@ -1299,10 +1303,10 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = xrpl::keylet::nftokenPage(
-                            xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
-        )
-                            .key;
+        auto previous =
+            xrpl::keylet::nftokenPage(
+                xrpl::keylet::nftokenPageMin(account), xrpl::uint256{std::string_view{first}}
+            ).key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
@@ -1349,10 +1353,10 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = xrpl::keylet::nftokenPage(
-                            xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
-        )
-                            .key;
+        auto previous =
+            xrpl::keylet::nftokenPage(
+                xrpl::keylet::nftokenPageMin(account), xrpl::uint256{std::string_view{first}}
+            ).key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
@@ -1406,17 +1410,16 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 
     std::string first{kIndex1};
     auto current = xrpl::keylet::nftokenPage(
-                       xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
-    )
-                       .key;
+                       xrpl::keylet::nftokenPageMin(account), xrpl::uint256{std::string_view{first}}
+    ).key;
     auto const marker = current;
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = xrpl::keylet::nftokenPage(
-                            xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
-        )
-                            .key;
+        auto previous =
+            xrpl::keylet::nftokenPage(
+                xrpl::keylet::nftokenPageMin(account), xrpl::uint256{std::string_view{first}}
+            ).key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );
@@ -1626,17 +1629,16 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 
     std::string first{kIndex1};
     auto current = xrpl::keylet::nftokenPage(
-                       xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
-    )
-                       .key;
+                       xrpl::keylet::nftokenPageMin(account), xrpl::uint256{std::string_view{first}}
+    ).key;
     auto const marker = current;
     std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
         std::ranges::next_permutation(first);
-        auto previous = xrpl::keylet::nftokenPage(
-                            xrpl::keylet::nftokenPageMin(account), xrpl::uint256{first.c_str()}
-        )
-                            .key;
+        auto previous =
+            xrpl::keylet::nftokenPage(
+                xrpl::keylet::nftokenPageMin(account), xrpl::uint256{std::string_view{first}}
+            ).key;
         auto const nftpage = createNftTokenPage(
             std::vector{std::make_pair<std::string, std::string>(kTokenId, "www.ok.com")}, previous
         );

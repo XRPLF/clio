@@ -20,3 +20,16 @@ endfunction()
 
 function(patch_nix_binary target)
 endfunction()
+
+function(rpcspec_generate_instantiations)
+    set(options)
+    set(oneValueArgs OUT_VAR VALUE_TYPE VIEW_HEADER INCLUDE_DIR)
+    set(multiValueArgs HANDLERS)
+    cmake_parse_arguments(
+        THIS_FUNCTION_PREFIX
+        "${options}"
+        "${oneValueArgs}"
+        "${multiValueArgs}"
+        ${ARGN}
+    )
+endfunction()

@@ -49,12 +49,12 @@ struct SignalsHandlerAssertTest : common::util::WithMockAssert {};
 
 TEST_F(SignalsHandlerAssertTest, CantCreateTwoSignalsHandlers)
 {
-    auto makeHandler = []() {
+    auto const makeHandler = [] {
         return SignalsHandler{
             ClioConfigDefinition{
-                {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(1.f)}
+                {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(1.f)},
             },
-            []() {}
+            [] {}
         };
     };
     auto const handler = makeHandler();
@@ -65,7 +65,7 @@ struct SignalsHandlerTests : SignalsHandlerTestsBase {
 protected:
     SignalsHandler handler_{
         ClioConfigDefinition{
-            {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(3.0)}
+            {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(3.0)},
         },
         forceExitHandler_.AsStdFunction()
     };
@@ -96,7 +96,7 @@ struct SignalsHandlerTimeoutTests : SignalsHandlerTestsBase {
 protected:
     SignalsHandler handler_{
         ClioConfigDefinition{
-            {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(0.001)}
+            {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(0.001)},
         },
         forceExitHandler_.AsStdFunction()
     };
@@ -109,7 +109,7 @@ TEST_F(SignalsHandlerTimeoutTests, OneSignalTimeout)
         // Don't notify completion, let it timeout
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     });
-    EXPECT_CALL(forceExitHandler_, Call()).WillOnce([this]() { allowTestToFinish(); });
+    EXPECT_CALL(forceExitHandler_, Call()).WillOnce([this] { allowTestToFinish(); });
     std::raise(SIGINT);
 
     wait();
@@ -123,7 +123,7 @@ TEST_F(SignalsHandlerTests, TwoSignals)
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         std::raise(SIGINT);
     });
-    EXPECT_CALL(forceExitHandler_, Call()).WillOnce([this]() { allowTestToFinish(); });
+    EXPECT_CALL(forceExitHandler_, Call()).WillOnce([this] { allowTestToFinish(); });
     std::raise(SIGINT);
 
     wait();

@@ -159,7 +159,8 @@ TEST_F(SourceImplTest, toJson)
     EXPECT_EQ(boost::json::value_to<std::string>(json.at("ip")), "some_ip");
     EXPECT_EQ(boost::json::value_to<std::string>(json.at("ws_port")), "some_ws_port");
     EXPECT_EQ(boost::json::value_to<std::string>(json.at("grpc_port")), "some_grpc_port");
-    auto lastMessageAgeStr = boost::json::value_to<std::string>(json.at("last_msg_age_seconds"));
+    auto const lastMessageAgeStr =
+        boost::json::value_to<std::string>(json.at("last_msg_age_seconds"));
     EXPECT_GE(std::stoi(lastMessageAgeStr), 0);
 }
 
@@ -211,7 +212,7 @@ TEST_F(SourceImplTest, loadInitialLedgerSuccessPath)
 {
     uint32_t const ledgerSeq = 123;
     uint32_t const numMarkers = 3;
-    auto response = etl::InitialLedgerLoadResult{{"1", "2", "3"}};
+    auto const response = etl::InitialLedgerLoadResult{{"1", "2", "3"}};
 
     auto observerMock = testing::StrictMock<InitialLoadObserverMock>();
 

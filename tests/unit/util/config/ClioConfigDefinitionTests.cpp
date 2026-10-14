@@ -101,12 +101,11 @@ TEST_F(ConfigTest, CheckAllKeys)
         "dosguard.port",
         "optional.withDefault",
         "optional.withNoDefault",
-        "requireValue"
+        "requireValue",
     };
 
-    for (auto i = configData.begin(); i != configData.end(); ++i) {
-        expected.emplace((i->first));
-    }
+    for (auto const& [key, _] : configData)
+        expected.emplace(key);
     EXPECT_EQ(expected, actual);
 }
 
@@ -114,45 +113,53 @@ struct ConfigAssertTest : common::util::WithMockAssert, ConfigTest {};
 
 TEST_F(ConfigAssertTest, GetNonExistentKeys)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("head."); });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("asdf"); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const unused = configData.getValueView("head.");
+    });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const unused = configData.getValueView("asdf");
+    });
 }
 
 TEST_F(ConfigAssertTest, GetValueButIsArray)
 {
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist");
+        [[maybe_unused]] auto const unused = configData.getValueView("dosguard.whitelist");
     });
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist.[]");
+        [[maybe_unused]] auto const unused = configData.getValueView("dosguard.whitelist.[]");
     });
 }
 
 TEST_F(ConfigAssertTest, GetNonExistentObjectKey)
 {
     ASSERT_FALSE(configData.contains("head"));
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("head"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const unused = configData.getObject("head"); });
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto unused = configData.getObject("doesNotExist");
+        [[maybe_unused]] auto const unused = configData.getObject("doesNotExist");
     });
 }
 
 TEST_F(ConfigAssertTest, GetObjectButIsArray)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("array"); });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("array", 2); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const unused = configData.getObject("array");
+    });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const unused = configData.getObject("array", 2);
+    });
 }
 
 TEST_F(ConfigAssertTest, GetArrayButIsValue)
 {
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto unused = configData.getArray("header.text1");
+        [[maybe_unused]] auto const unused = configData.getArray("header.text1");
     });
 }
 
 TEST_F(ConfigAssertTest, GetNonExistentArrayKey)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getArray("asdf"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const unused = configData.getArray("asdf"); });
 }
 
 TEST(ConfigDescription, GetValues)
@@ -176,8 +183,8 @@ TEST_F(ConfigDescriptionAssertTest, NonExistingKeyTest)
 {
     ClioConfigDescription const definition{};
 
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = definition.get("data"); });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = definition.get("etl_sources.[]"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const a = definition.get("data"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const a = definition.get("etl_sources.[]"); });
 }
 
 /**
@@ -240,9 +247,8 @@ TEST_F(OverrideConfigVals, ValidateIntegerValuesInArrays)
 
     std::vector<double> expectedArrSubVal{111.11, 4321.55, 5555.44};
     std::vector<double> actualArrSubVal{};
-    for (auto it = arrSub.begin<ValueView>(); it != arrSub.end<ValueView>(); ++it) {
-        actualArrSubVal.emplace_back((*it).asDouble());
-    }
+    for (auto const& value : arrSub.values())
+        actualArrSubVal.emplace_back(value.asDouble());
     EXPECT_TRUE(std::ranges::equal(expectedArrSubVal, actualArrSubVal));
 }
 
@@ -254,9 +260,8 @@ TEST_F(OverrideConfigVals, ValidateStringValuesInArrays)
 
     std::vector<std::string> expectedArrSub2Val{"subCategory", "temporary", "london"};
     std::vector<std::string> actualArrSub2Val{};
-    for (auto it = arrSub2.begin<ValueView>(); it != arrSub2.end<ValueView>(); ++it) {
-        actualArrSub2Val.emplace_back((*it).asString());
-    }
+    for (auto const& value : arrSub2.values())
+        actualArrSub2Val.emplace_back(value.asString());
     EXPECT_TRUE(std::ranges::equal(expectedArrSub2Val, actualArrSub2Val));
 
     // Check dosguard values
@@ -309,7 +314,7 @@ TEST_F(IncorrectOverrideValues, InvalidJsonErrors)
         "dosguard.whitelist.[] value does not match type string",
         "header.port value does not match type integer",
         "header.admin value does not match type boolean",
-        "optional.withDefault value does not match type double"
+        "optional.withDefault value does not match type double",
     };
 
     std::set<std::string_view> actualErrors;
@@ -322,7 +327,7 @@ TEST_F(IncorrectOverrideValues, InvalidJsonErrors)
 struct ClioConfigDefinitionParseArrayTest : public virtual ::testing::Test {
     ClioConfigDefinition config{
         {"array.[].int", Array{ConfigValue{ConfigType::Integer}}},
-        {"array.[].string", Array{ConfigValue{ConfigType::String}.optional()}}
+        {"array.[].string", Array{ConfigValue{ConfigType::String}.optional()}},
     };
 };
 

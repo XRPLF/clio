@@ -34,7 +34,7 @@ TEST_F(InputFileTest, ConstructorWithInvalidFile)
 TEST_F(InputFileTest, ReadRawFromFile)
 {
     std::string const content = "Test content for reading";
-    auto tmpFile = TmpFile{content};
+    auto const tmpFile = TmpFile{content};
     InputFile inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());
@@ -47,7 +47,7 @@ TEST_F(InputFileTest, ReadRawFromFile)
 TEST_F(InputFileTest, ReadRawFromFilePartial)
 {
     std::string const content = "Hello, World!";
-    auto tmpFile = TmpFile{content};
+    auto const tmpFile = TmpFile{content};
     InputFile inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());
@@ -68,7 +68,7 @@ TEST_F(InputFileTest, ReadRawFromFilePartial)
 TEST_F(InputFileTest, ReadRawAfterEnd)
 {
     std::string const content = "Test";
-    auto tmpFile = TmpFile{content};
+    auto const tmpFile = TmpFile{content};
     InputFile inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());
@@ -82,7 +82,7 @@ TEST_F(InputFileTest, ReadRawAfterEnd)
 
 TEST_F(InputFileTest, ReadRawFromFileExceedsSize)
 {
-    auto tmpFile = TmpFile{"Test"};
+    auto const tmpFile = TmpFile{"Test"};
     InputFile inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());
@@ -93,7 +93,7 @@ TEST_F(InputFileTest, ReadRawFromFileExceedsSize)
 
 TEST_F(InputFileTest, ReadTemplateMethod)
 {
-    auto tmpFile = TmpFile{"\x01\x02\x03\x04"};
+    auto const tmpFile = TmpFile{"\x01\x02\x03\x04"};
     InputFile inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());
@@ -108,7 +108,7 @@ TEST_F(InputFileTest, ReadTemplateMethod)
 
 TEST_F(InputFileTest, ReadTemplateMethodFailure)
 {
-    auto tmpFile = TmpFile{"Hi"};  // Only 2 bytes
+    auto const tmpFile = TmpFile{"Hi"};  // Only 2 bytes
     InputFile inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());
@@ -119,7 +119,7 @@ TEST_F(InputFileTest, ReadTemplateMethodFailure)
 
 TEST_F(InputFileTest, ReadFromEmptyFile)
 {
-    auto tmpFile = TmpFile::empty();
+    auto const tmpFile = TmpFile::empty();
     InputFile inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());
@@ -130,7 +130,7 @@ TEST_F(InputFileTest, ReadFromEmptyFile)
 
 TEST_F(InputFileTest, HashOfEmptyFile)
 {
-    auto tmpFile = TmpFile::empty();
+    auto const tmpFile = TmpFile::empty();
     InputFile const inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());
@@ -140,7 +140,7 @@ TEST_F(InputFileTest, HashOfEmptyFile)
 TEST_F(InputFileTest, HashAfterReading)
 {
     std::string const content = "Hello, World!";
-    auto tmpFile = TmpFile{content};
+    auto const tmpFile = TmpFile{content};
     InputFile inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());
@@ -157,7 +157,7 @@ TEST_F(InputFileTest, HashAfterReading)
 TEST_F(InputFileTest, HashProgressesWithReading)
 {
     std::string const content = "Hello, World!";
-    auto tmpFile = TmpFile{content};
+    auto const tmpFile = TmpFile{content};
     InputFile inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());

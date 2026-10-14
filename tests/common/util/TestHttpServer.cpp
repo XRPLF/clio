@@ -125,7 +125,7 @@ TestHttpServer::handleRequest(TestHttpServer::RequestHandler handler, bool const
             if (allowToFail and errorCode)
                 return;
 
-            [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
+            [&] { ASSERT_FALSE(errorCode) << errorCode.message(); }();
 
             doSession(beast::tcp_stream{std::move(socket)}, std::move(handler), yield, allowToFail);
         },

@@ -230,8 +230,8 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
         "fifth",
     };
 
-    auto handle = createHandle(TestGlobals::instance().backendHost, "test");
-    auto q1 = fmt::format(
+    auto const handle = createHandle(TestGlobals::instance().backendHost, "test");
+    auto const q1 = fmt::format(
         R"(
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
             WITH default_time_to_live = {}
@@ -246,7 +246,7 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
     }
 
     std::string const q2 = "INSERT INTO strings (hash, sequence) VALUES (?, ?)";
-    auto insert = handle.prepare(q2);
+    auto const insert = handle.prepare(q2);
 
     // write data
     {
@@ -295,7 +295,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
         "fifth",
     };
 
-    auto handle = createHandle(TestGlobals::instance().backendHost, "test");
+    auto const handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto const q1 = fmt::format(
         R"(
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
@@ -354,7 +354,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
         "fifth",
     };
 
-    auto handle = createHandle(TestGlobals::instance().backendHost, "test");
+    auto const handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto const q1 = fmt::format(
         R"(
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
@@ -400,7 +400,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
 
 TEST_F(BackendCassandraBaseTest, AlterTableAddColumn)
 {
-    auto handle = createHandle(TestGlobals::instance().backendHost, "test");
+    auto const handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto const q1 = fmt::format(
         R"(
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
@@ -418,7 +418,7 @@ TEST_F(BackendCassandraBaseTest, AlterTableAddColumn)
 
 TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
 {
-    auto handle = createHandle(TestGlobals::instance().backendHost, "test");
+    auto const handle = createHandle(TestGlobals::instance().backendHost, "test");
     prepStringsTable(handle);
 
     auto const newTable = fmt::format(

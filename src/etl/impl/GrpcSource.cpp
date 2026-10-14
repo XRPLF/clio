@@ -147,7 +147,7 @@ GrpcSource::loadInitialLedger(
 
         LOG(log_.trace()) << "Marker prefix = " << ptr->getMarkerPrefix();
 
-        auto result = ptr->process(stub_, queue, observer, abort);
+        auto const result = ptr->process(stub_, queue, observer, abort);
         if (result != AsyncGrpcCall::CallStatus::More) {
             ++numFinished;
             LOG(log_.debug()) << "Finished a marker. Current number of finished = " << numFinished;

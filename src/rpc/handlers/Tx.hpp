@@ -214,7 +214,7 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output)
     {
-        auto const getJsonV1 = [&]() {
+        auto const getJsonV1 = [&] {
             auto obj = boost::json::object{};
 
             if (output.tx) {
@@ -233,7 +233,7 @@ private:
             return obj;
         };
 
-        auto const getJsonV2 = [&]() {
+        auto const getJsonV2 = [&] {
             auto obj = boost::json::object{};
 
             if (output.tx) {

@@ -32,20 +32,15 @@ ProxyIpResolver::ProxyIpResolver(
 ProxyIpResolver
 ProxyIpResolver::fromConfig(util::config::ClioConfigDefinition const& config)
 {
-    using util::config::ValueView;
-
     std::unordered_set<std::string> ips;
     auto const ipsFromConfig = config.getArray("server.proxy.ips");
-    for (auto it = ipsFromConfig.begin<ValueView>(); it != ipsFromConfig.end<ValueView>(); ++it) {
-        ips.insert((*it).asString());
-    }
+    for (auto const& ip : ipsFromConfig.values())
+        ips.insert(ip.asString());
 
     std::unordered_set<std::string> tokens;
     auto const tokensFromConfig = config.getArray("server.proxy.tokens");
-    for (auto it = tokensFromConfig.begin<ValueView>(); it != tokensFromConfig.end<ValueView>();
-         ++it) {
-        tokens.insert((*it).asString());
-    }
+    for (auto const& token : tokensFromConfig.values())
+        tokens.insert(token.asString());
 
     return ProxyIpResolver{std::move(ips), std::move(tokens)};
 }
@@ -57,7 +52,7 @@ ProxyIpResolver::resolveClientIp(std::string const& connectionIp, HttpHeaders co
         return extractClientIp(headers);
     }
 
-    if (auto it = headers.find(kProxyTokenHeader); it != headers.end()) {
+    if (auto const it = headers.find(kProxyTokenHeader); it != headers.end()) {
         auto const tokenHash = util::sha256sum(it->value());
         if (proxyTokens_.contains(tokenHash)) {
             return extractClientIp(headers);
@@ -83,7 +78,7 @@ ProxyIpResolver::extractClientIp(HttpHeaders const& headers)
     if (startPos == std::string::npos) {
         return std::nullopt;
     }
-    auto value = it->value().substr(startPos + kForPrefix.size());
+    auto const value = it->value().substr(startPos + kForPrefix.size());
 
     static constexpr char kSectionDelimiter = ';';
     static constexpr char kChainDelimiter = ',';

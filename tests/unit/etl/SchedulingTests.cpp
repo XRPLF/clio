@@ -105,7 +105,7 @@ TEST(BackfillSchedulerTests, ExhaustsSchedulerUntilDefaultMinValueReached)
 
 TEST(SchedulerChainTests, ExhaustsOneGenerator)
 {
-    auto generate = [stop = 10u, seq = 0u]() mutable {
+    auto generate = [stop = 10u, seq = 0u] mutable {
         std::optional<Task> task = std::nullopt;
         if (seq < stop)
             task = Task{.priority = model::Task::Priority::Lower, .seq = seq++};
@@ -130,7 +130,7 @@ TEST(SchedulerChainTests, ExhaustsOneGenerator)
 
 TEST(SchedulerChainTests, ExhaustsFirstSchedulerBeforeUsingSecond)
 {
-    auto generateFirst = [stop = 10u, seq = 0u]() mutable {
+    auto generateFirst = [stop = 10u, seq = 0u] mutable {
         std::optional<Task> task = std::nullopt;
         if (seq < stop)
             task = Task{.priority = model::Task::Priority::Lower, .seq = seq++};
@@ -140,7 +140,7 @@ TEST(SchedulerChainTests, ExhaustsFirstSchedulerBeforeUsingSecond)
     testing::MockFunction<std::optional<Task>()> upToTenGen;
     EXPECT_CALL(upToTenGen, Call()).Times(21).WillRepeatedly(testing::ByRef(generateFirst));
 
-    auto generateSecond = [seq = 10u]() mutable {
+    auto generateSecond = [seq = 10u] mutable {
         std::optional<Task> task = std::nullopt;
         if (seq > 0u)
             task = Task{.priority = model::Task::Priority::Lower, .seq = seq--};

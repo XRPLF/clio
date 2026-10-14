@@ -86,7 +86,9 @@ TEST_F(AmendmentCenterTest, IsMultipleEnabled)
 
     runSpawn([this](auto yield) {
         std::vector<data::AmendmentKey> const keys{
-            "fixUniversalNumber", "unknown", "ImmediateOfferKilled"
+            "fixUniversalNumber",
+            "unknown",
+            "ImmediateOfferKilled",
         };
         auto const result = amendmentCenter.isEnabled(yield, keys, kSeq);
 
@@ -188,9 +190,11 @@ struct AmendmentCenterAssertTest : common::util::WithMockAssert, AmendmentCenter
 TEST_F(AmendmentCenterAssertTest, GetInvalidAmendmentAsserts)
 {
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto _ = amendmentCenter.getAmendment("invalidAmendmentKey");
+        [[maybe_unused]] auto const _ = amendmentCenter.getAmendment("invalidAmendmentKey");
     });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = amendmentCenter["invalidAmendmentKey"]; });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const _ = amendmentCenter["invalidAmendmentKey"];
+    });
 }
 
 struct AmendmentKeyTest : testing::Test {};

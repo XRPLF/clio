@@ -162,7 +162,7 @@ depositPreauthLocator(le::DepositPreauthEntry const& entry)
         ASSERT(decoded.has_value(), "credential_type is hex-validated by the spec");
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         buffers.push_back(*decoded);
-        authCreds.emplace(cred.issuer, xrpl::Slice(buffers.back().data(), buffers.back().size()));
+        authCreds.emplace(cred.issuer, xrpl::makeSlice(buffers.back()));
     }
 
     if (authCreds.size() != entry.authorizedCredentials->size()) {
@@ -180,7 +180,7 @@ credentialLocator(le::CredentialEntry const& entry)
     auto const credType = xrpl::strUnHex(entry.credentialType);
     ASSERT(credType.has_value(), "credential_type is hex-validated by the spec");
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    auto const credSlice = xrpl::Slice(credType->data(), credType->size());
+    auto const credSlice = xrpl::makeSlice(*credType);
 
     return Locator{.key = xrpl::keylet::credential(entry.subject, entry.issuer, credSlice).key};
 }
@@ -250,7 +250,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
         return locatorFrom(*input.offer, xrpl::ltOFFER, [](le::OfferEntry const& entry) {
             return LocatorOrStatus{Locator{
                 .key =
-                    xrpl::keylet::offer(entry.account, xrpl::SeqProxy::rawSequence(entry.seq)).key
+                    xrpl::keylet::offer(entry.account, xrpl::SeqProxy::rawSequence(entry.seq)).key,
             }};
         });
     }
@@ -262,7 +262,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
                     .key = xrpl::keylet::trustLine(
                                entry.accounts[0], entry.accounts[1], entry.currency
                     )
-                               .key
+                               .key,
                 }};
             }
         );
@@ -271,7 +271,8 @@ resolveLocator(Input const& input, uint32_t apiVersion)
     if (input.escrow.has_value()) {
         return locatorFrom(*input.escrow, xrpl::ltESCROW, [](le::EscrowEntry const& entry) {
             return LocatorOrStatus{Locator{
-                .key = xrpl::keylet::escrow(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key
+                .key =
+                    xrpl::keylet::escrow(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key,
             }};
         });
     }
@@ -284,7 +285,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
             return LocatorOrStatus{Locator{
                 .key =
                     xrpl::keylet::ticket(entry.account, xrpl::SeqProxy::rawTicket(entry.ticketSeq))
-                        .key
+                        .key,
             }};
         });
     }
@@ -306,7 +307,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
             xrpl::ltXCHAIN_OWNED_CLAIM_ID,
             [](le::XChainClaimIdEntry const& entry) {
                 return LocatorOrStatus{Locator{
-                    .key = xrpl::keylet::xChainClaimID(makeBridge(entry.bridge), entry.claimId).key
+                    .key = xrpl::keylet::xChainClaimID(makeBridge(entry.bridge), entry.claimId).key,
                 }};
             }
         );
@@ -321,7 +322,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
                     .key = xrpl::keylet::xChainCreateAccountClaimID(
                                makeBridge(entry.bridge), entry.claimId
                     )
-                               .key
+                               .key,
                 }};
             }
         );
@@ -355,7 +356,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
                     .key = xrpl::keylet::permissionedDomain(
                                entry.account, xrpl::SeqProxy::rawSequence(entry.seq)
                     )
-                               .key
+                               .key,
                 }};
             }
         );
@@ -364,7 +365,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
     if (input.vault.has_value()) {
         return locatorFrom(*input.vault, xrpl::ltVAULT, [](le::VaultEntry const& entry) {
             return LocatorOrStatus{Locator{
-                .key = xrpl::keylet::vault(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key
+                .key = xrpl::keylet::vault(entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)).key,
             }};
         });
     }
@@ -376,7 +377,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
                     .key = xrpl::keylet::loanBroker(
                                entry.owner, xrpl::SeqProxy::rawSequence(entry.seq)
                     )
-                               .key
+                               .key,
                 }};
             }
         );
@@ -388,7 +389,7 @@ resolveLocator(Input const& input, uint32_t apiVersion)
                 .key = xrpl::keylet::loan(
                            entry.loanBrokerId, xrpl::SeqProxy::rawSequence(entry.loanSeq)
                 )
-                           .key
+                           .key,
             }};
         });
     }
@@ -495,12 +496,12 @@ tag_invoke(
     };
 
     if (output.deletedLedgerIndex.has_value())
-        object["deleted_ledger_index"] = *(output.deletedLedgerIndex);
+        object["deleted_ledger_index"] = *output.deletedLedgerIndex;
 
     if (output.nodeBinary.has_value()) {
-        object[JS(node_binary)] = *(output.nodeBinary);
+        object[JS(node_binary)] = *output.nodeBinary;
     } else {
-        object[JS(node)] = *(output.node);  // NOLINT(bugprone-unchecked-optional-access)
+        object[JS(node)] = *output.node;  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     jv = std::move(object);

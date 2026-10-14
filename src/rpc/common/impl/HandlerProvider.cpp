@@ -33,7 +33,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
         .balancer = balancer,
         .etl = etl,
         .amendmentCenter = amendmentCenter,
-        .counters = counters
+        .counters = counters,
     };
 
     auto const registry = handlerRegistry();

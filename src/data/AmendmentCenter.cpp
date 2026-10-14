@@ -99,7 +99,7 @@ AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& 
                 .feature = Amendment::getAmendmentId(name),
                 .isSupportedByXRPL = support != xrpl::AmendmentSupport::Unsupported,
                 .isSupportedByClio = rg::contains(supportedAmendments(), name),
-                .isRetired = support == xrpl::AmendmentSupport::Retired
+                .isRetired = support == xrpl::AmendmentSupport::Retired,
             };
         }),
         std::back_inserter(all_)
@@ -210,7 +210,7 @@ AmendmentCenter::operator[](AmendmentKey const& key) const
 xrpl::uint256
 Amendment::getAmendmentId(std::string_view name)
 {
-    return xrpl::sha512Half(xrpl::Slice(name.data(), name.size()));
+    return xrpl::sha512Half(xrpl::makeSlice(name));
 }
 
 std::optional<std::vector<xrpl::uint256>>

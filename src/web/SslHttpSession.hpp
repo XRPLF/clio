@@ -108,8 +108,8 @@ public:
     void
     run()
     {
-        auto self = this->shared_from_this();
-        boost::asio::dispatch(stream_.get_executor(), [self]() {
+        auto const self = this->shared_from_this();
+        boost::asio::dispatch(stream_.get_executor(), [self] {
             // Set the timeout.
             boost::beast::get_lowest_layer(self->stream()).expires_after(std::chrono::seconds(30));
 

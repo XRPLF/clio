@@ -37,7 +37,8 @@ protected:
 TEST_F(DelegateTransactionFilterTest, ReturnsFalseIfNoDelegateField)
 {
     DelegateFilter const filterParams{
-        .delegateType = DelegateFilter::Role::Authorizer, .counterParty = std::nullopt
+        .delegateType = DelegateFilter::Role::Authorizer,
+        .counterParty = std::nullopt,
     };
     DelegateTransactionFilter const filter(filterParams, kAccountOwner);
 
@@ -60,11 +61,12 @@ TEST_F(DelegateTransactionFilterTest, ReturnsFalseIfNoDelegateField)
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_MatchesWhenUserIsSigner)
 {
     DelegateFilter const filterParams{
-        .delegateType = DelegateFilter::Role::Authorizer, .counterParty = std::nullopt
+        .delegateType = DelegateFilter::Role::Authorizer,
+        .counterParty = std::nullopt,
     };
     DelegateTransactionFilter const filter(filterParams, kAccountDelegator);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
@@ -75,11 +77,12 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_MatchesWhenUserIsSigner)
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_FailsWhenUserIsNotSigner)
 {
     DelegateFilter const filterParams{
-        .delegateType = DelegateFilter::Role::Authorizer, .counterParty = std::nullopt
+        .delegateType = DelegateFilter::Role::Authorizer,
+        .counterParty = std::nullopt,
     };
     DelegateTransactionFilter const filter(filterParams, kAccountDestination);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     EXPECT_FALSE(result.has_value());
@@ -88,11 +91,12 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_FailsWhenUserIsNotSigner)
 TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Match)
 {
     DelegateFilter const filterParams{
-        .delegateType = DelegateFilter::Role::Authorizer, .counterParty = to_string(kAccountOwner)
+        .delegateType = DelegateFilter::Role::Authorizer,
+        .counterParty = to_string(kAccountOwner),
     };
     DelegateTransactionFilter const filter(filterParams, kAccountDelegator);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
@@ -104,11 +108,11 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Mismatch)
 {
     DelegateFilter const filterParams{
         .delegateType = DelegateFilter::Role::Authorizer,
-        .counterParty = to_string(kAccountDestination)
+        .counterParty = to_string(kAccountDestination),
     };
     DelegateTransactionFilter const filter(filterParams, kAccountDelegator);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     EXPECT_FALSE(result.has_value());
@@ -117,11 +121,12 @@ TEST_F(DelegateTransactionFilterTest, RoleAuthorizer_WithCounterparty_Mismatch)
 TEST_F(DelegateTransactionFilterTest, RoleActor_MatchesWhenUserIsOwner)
 {
     DelegateFilter const filterParams{
-        .delegateType = DelegateFilter::Role::Actor, .counterParty = std::nullopt
+        .delegateType = DelegateFilter::Role::Actor,
+        .counterParty = std::nullopt,
     };
     DelegateTransactionFilter const filter(filterParams, kAccountOwner);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
@@ -132,11 +137,12 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_MatchesWhenUserIsOwner)
 TEST_F(DelegateTransactionFilterTest, RoleActor_FailsWhenUserIsNotOwner)
 {
     DelegateFilter const filterParams{
-        .delegateType = DelegateFilter::Role::Actor, .counterParty = std::nullopt
+        .delegateType = DelegateFilter::Role::Actor,
+        .counterParty = std::nullopt,
     };
     DelegateTransactionFilter const filter(filterParams, kAccountDestination);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     EXPECT_FALSE(result.has_value());
@@ -145,11 +151,12 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_FailsWhenUserIsNotOwner)
 TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Match)
 {
     DelegateFilter const filterParams{
-        .delegateType = DelegateFilter::Role::Actor, .counterParty = to_string(kAccountDelegator)
+        .delegateType = DelegateFilter::Role::Actor,
+        .counterParty = to_string(kAccountDelegator),
     };
     DelegateTransactionFilter const filter(filterParams, kAccountOwner);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     ASSERT_TRUE(result.has_value());
@@ -160,11 +167,12 @@ TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Match)
 TEST_F(DelegateTransactionFilterTest, RoleActor_WithCounterparty_Mismatch)
 {
     DelegateFilter const filterParams{
-        .delegateType = DelegateFilter::Role::Actor, .counterParty = to_string(kAccountDestination)
+        .delegateType = DelegateFilter::Role::Actor,
+        .counterParty = to_string(kAccountDestination),
     };
     DelegateTransactionFilter const filter(filterParams, kAccountOwner);
 
-    auto blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
+    auto const blob = createBlob(to_string(kAccountOwner), to_string(kAccountDelegator));
 
     auto const result = filter.check(blob);
     EXPECT_FALSE(result.has_value());

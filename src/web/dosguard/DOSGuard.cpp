@@ -57,7 +57,7 @@ DOSGuard::isOk(std::string const& ip) const noexcept
                 return false;
             }
         }
-        auto it = lock->ipConnCount.find(ip);
+        auto const it = lock->ipConnCount.find(ip);
         if (it != lock->ipConnCount.end()) {
             if (it->second > maxConnCount_) {
                 LOG(log_.warn()) << "Dosguard: Client surpassed the rate limit. ip = " << ip
@@ -133,9 +133,8 @@ DOSGuard::getWhitelist(ClioConfigDefinition const& config)
     std::unordered_set<std::string> ips;
     auto const whitelist = config.getArray("dos_guard.whitelist");
 
-    for (auto it = whitelist.begin<ValueView>(); it != whitelist.end<ValueView>(); ++it) {
-        ips.insert((*it).asString());
-    }
+    for (auto const& ip : whitelist.values())
+        ips.insert(ip.asString());
 
     return ips;
 }

@@ -83,56 +83,94 @@ class MigrationCassandraSimpleTest : public WithPrometheus {
 protected:
     static constexpr auto kCassandra = "cassandra";
 
-    ClioConfigDefinition cfg_{
-        {{"database.type", ConfigValue{ConfigType::String}.defaultValue(kCassandra)},
-         {"database.cassandra.contact_points",
-          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
-         {"database.cassandra.keyspace",
-          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
-         {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kCassandra)},
-         {"database.cassandra.replication_factor",
-          ConfigValue{ConfigType::Integer}.defaultValue(1)},
-         {"database.cassandra.replication_factor",
-          ConfigValue{ConfigType::Integer}.defaultValue(1)},
-         {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-         {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.port",
-          ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional()},
-         {"database.cassandra.replication_factor",
-          ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(gValidateUint16)},
-         {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.max_write_requests_outstanding",
-          ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(gValidateUint32)},
-         {"database.cassandra.max_read_requests_outstanding",
-          ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(gValidateUint32)},
-         {"database.cassandra.threads",
-          ConfigValue{ConfigType::Integer}
-              .defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))
-              .withConstraint(gValidateUint32)},
-         {"database.cassandra.core_connections_per_host",
-          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint16)},
-         {"database.cassandra.queue_size_io",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
-         {"database.cassandra.write_batch_size",
-          ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(gValidateUint16)},
-         {"database.cassandra.connect_timeout",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
-         {"database.cassandra.initial_request_retry_delay",
-          ConfigValue{ConfigType::Double}.defaultValue(0.5)},
-         {"database.cassandra.max_request_retry_delay",
-          ConfigValue{ConfigType::Double}.defaultValue(5.0)},
-         {"database.cassandra.request_timeout",
-          ConfigValue{ConfigType::Double}.optional().withConstraint(gValidatePositiveDouble)},
-         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
-         {"migration.full_scan_threads",
-          ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint32)},
-         {"migration.full_scan_jobs",
-          ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32)},
-         {"migration.cursors_per_job",
-          ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}}
-    };
+    ClioConfigDefinition cfg_{{
+        {"database.type", ConfigValue{ConfigType::String}.defaultValue(kCassandra)},
+        {
+            "database.cassandra.contact_points",
+            ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost),
+        },
+        {
+            "database.cassandra.keyspace",
+            ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace),
+        },
+        {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kCassandra)},
+        {
+            "database.cassandra.replication_factor",
+            ConfigValue{ConfigType::Integer}.defaultValue(1),
+        },
+        {
+            "database.cassandra.replication_factor",
+            ConfigValue{ConfigType::Integer}.defaultValue(1),
+        },
+        {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
+        {
+            "database.cassandra.port",
+            ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional(),
+        },
+        {
+            "database.cassandra.replication_factor",
+            ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(gValidateUint16),
+        },
+        {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
+        {
+            "database.cassandra.max_write_requests_outstanding",
+            ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(gValidateUint32),
+        },
+        {
+            "database.cassandra.max_read_requests_outstanding",
+            ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(gValidateUint32),
+        },
+        {
+            "database.cassandra.threads",
+            ConfigValue{ConfigType::Integer}
+                .defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))
+                .withConstraint(gValidateUint32),
+        },
+        {
+            "database.cassandra.core_connections_per_host",
+            ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint16),
+        },
+        {
+            "database.cassandra.queue_size_io",
+            ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16),
+        },
+        {
+            "database.cassandra.write_batch_size",
+            ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(gValidateUint16),
+        },
+        {
+            "database.cassandra.connect_timeout",
+            ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32),
+        },
+        {
+            "database.cassandra.initial_request_retry_delay",
+            ConfigValue{ConfigType::Double}.defaultValue(0.5),
+        },
+        {
+            "database.cassandra.max_request_retry_delay",
+            ConfigValue{ConfigType::Double}.defaultValue(5.0),
+        },
+        {
+            "database.cassandra.request_timeout",
+            ConfigValue{ConfigType::Double}.optional().withConstraint(gValidatePositiveDouble),
+        },
+        {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
+        {
+            "migration.full_scan_threads",
+            ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint32),
+        },
+        {
+            "migration.full_scan_jobs",
+            ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32),
+        },
+        {
+            "migration.cursors_per_job",
+            ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32),
+        },
+    }};
 
     std::shared_ptr<migration::MigrationManagerInterface> testMigrationManager_;
     std::shared_ptr<CassandraMigrationTestBackend> testMigrationBackend_;

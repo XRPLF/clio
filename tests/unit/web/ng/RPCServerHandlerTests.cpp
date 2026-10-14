@@ -46,12 +46,14 @@ namespace http = boost::beast::http;
 struct NgRpcServerHandlerTest : util::prometheus::WithPrometheus,
                                 MockBackendTestStrict,
                                 SyncAsioContextTest {
-    ClioConfigDefinition config{ClioConfigDefinition{
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
-        {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(1)},
-        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(1)}
-    }};
+    ClioConfigDefinition config{
+        ClioConfigDefinition{
+            {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+            {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(1)},
+            {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+            {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(1)},
+        },
+    };
 
 protected:
     std::shared_ptr<testing::StrictMock<MockRPCEngine>> rpcEngine_ =
@@ -103,7 +105,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedWsRequest)
         auto const request = makeWsRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(false));
-        auto response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
+        auto const response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
 
         auto const responseWs = boost::beast::buffers_to_string(response.asWsResponse());
 
@@ -120,7 +122,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedWsJsonRequest)
         auto const request = makeWsRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(false));
-        auto response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
+        auto const response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
 
         auto const responseWs = boost::beast::buffers_to_string(response.asWsResponse());
 
@@ -532,7 +534,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_Forwarded)
                 .WillOnce(Return(
                     rpc::Result{rpc::ReturnType{boost::json::object{
                         {"result", boost::json::object{{"some key", "some value"}}},
-                        {"forwarded", true}
+                        {"forwarded", true},
                     }}}
                 ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);

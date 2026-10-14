@@ -21,7 +21,7 @@ jobs:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@b3e255d74d785d053e4903da8ac90983cd7d9e82
+        uses: XRPLF/actions/prepare-runner@8e98d61f011fd2a67f3fde5f0f075662c099a527
         with:
           enable_ccache: false
 
@@ -66,7 +66,7 @@ jobs:
         run: strip build/clio_tests
 
       - name: Upload clio_tests
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: clio_tests_check_libxrpl
           path: build/clio_tests
@@ -76,10 +76,10 @@ jobs:
     needs: build
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-060957e
+      image: ghcr.io/xrplf/xrpld/nix-ubuntu:sha-ede8af8
 
     steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: clio_tests_check_libxrpl
 
@@ -102,7 +102,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Create an issue
-        uses: XRPLF/actions/create-issue@2b8bc36af85b88bca0dd7bfac2e2dc05f94ad712
+        uses: XRPLF/actions/create-issue@b489c21d53928f7dab4874912fec40e4f6c9e85e
         with:
           title: "Proposed libXRPL check failed"
           body: >
@@ -110,4 +110,4 @@ jobs:
 
             PR: ${{ github.event.client_payload.pr_url }}
           labels: "compatibility,bug"
-          assignees: "godexsoft,kuznetsss,mathbunnyru"
+          assignees: "godexsoft,mathbunnyru"

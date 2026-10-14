@@ -56,7 +56,7 @@ SignalsHandler::SignalsHandler(
     , forceExitHandler_(std::move(forceExitHandler))
 {
     impl::SignalsHandlerStatic::registerHandler(*this);
-    workerThread_ = std::thread([this]() { runStateMachine(); });
+    workerThread_ = std::thread([this] { runStateMachine(); });
     setHandler(impl::SignalsHandlerStatic::handleSignal);
 }
 
@@ -95,13 +95,13 @@ void
 SignalsHandler::runStateMachine()
 {
     while (state_ != State::NormalExit) {
-        auto currentState = state_.load();
+        auto const currentState = state_.load();
 
         switch (currentState) {
             case State::WaitingForSignal: {
                 {
                     std::unique_lock<std::mutex> lock(mutex_);
-                    cv_.wait(lock, [this]() {
+                    cv_.wait(lock, [this] {
                         return signalReceived_ or state_ == State::NormalExit;
                     });
                 }
@@ -131,7 +131,7 @@ SignalsHandler::runStateMachine()
                     // 1. Graceful period to elapse (timeout)
                     // 2. Another signal (signalReceived_)
                     // 3. Graceful shutdown completion (state changes to NormalExit)
-                    waitResult = cv_.wait_for(lock, gracefulPeriod_, [this]() {
+                    waitResult = cv_.wait_for(lock, gracefulPeriod_, [this] {
                         return signalReceived_ or state_ == State::NormalExit;
                     });
                 }

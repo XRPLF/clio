@@ -27,16 +27,26 @@ class WeightsTest : public ::testing::TestWithParam<TestParams> {
 protected:
     size_t const defaultWeight_{10};
     std::unordered_map<std::string, Weights::Entry> weightsMap_{
-        {"only_weight",
-         {.weight = 20,
-          .weightLedgerCurrent = std::nullopt,
-          .weightLedgerValidated = std::nullopt}},
-        {"with_current_weight",
-         {.weight = 30, .weightLedgerCurrent = 35, .weightLedgerValidated = std::nullopt}},
-        {"with_validated_weight",
-         {.weight = 40, .weightLedgerCurrent = std::nullopt, .weightLedgerValidated = 45}},
-        {"with_both_weights",
-         {.weight = 50, .weightLedgerCurrent = 55, .weightLedgerValidated = 60}},
+        {
+            "only_weight",
+            {
+                .weight = 20,
+                .weightLedgerCurrent = std::nullopt,
+                .weightLedgerValidated = std::nullopt,
+            },
+        },
+        {
+            "with_current_weight",
+            {.weight = 30, .weightLedgerCurrent = 35, .weightLedgerValidated = std::nullopt},
+        },
+        {
+            "with_validated_weight",
+            {.weight = 40, .weightLedgerCurrent = std::nullopt, .weightLedgerValidated = 45},
+        },
+        {
+            "with_both_weights",
+            {.weight = 50, .weightLedgerCurrent = 55, .weightLedgerValidated = 60},
+        },
     };
     Weights weights_{defaultWeight_, weightsMap_};
 };
@@ -44,7 +54,7 @@ protected:
 TEST_P(WeightsTest, RequestWeight)
 {
     auto const& params = GetParam();
-    auto request = boost::json::parse(params.requestJson).as_object();
+    auto const request = boost::json::parse(params.requestJson).as_object();
     EXPECT_EQ(weights_.requestWeight(request), params.expectedWeight);
 }
 
@@ -206,20 +216,30 @@ INSTANTIATE_TEST_SUITE_P(
 TEST(WeightsMakeTest, CreateFromConfig)
 {
     util::config::ClioConfigDefinition mockConfig{
-        {"dos_guard.__ng_default_weight",
-         util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(10)},
-        {"dos_guard.__ng_weights.[].method",
-         util::config::Array{util::config::ConfigValue{util::config::ConfigType::String}}},
-        {"dos_guard.__ng_weights.[].weight",
-         util::config::Array{util::config::ConfigValue{util::config::ConfigType::Integer}}},
-        {"dos_guard.__ng_weights.[].weight_ledger_current",
-         util::config::Array{
-             util::config::ConfigValue{util::config::ConfigType::Integer}.optional()
-         }},
-        {"dos_guard.__ng_weights.[].weight_ledger_validated",
-         util::config::Array{
-             util::config::ConfigValue{util::config::ConfigType::Integer}.optional()
-         }}
+        {
+            "dos_guard.__ng_default_weight",
+            util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(10),
+        },
+        {
+            "dos_guard.__ng_weights.[].method",
+            util::config::Array{util::config::ConfigValue{util::config::ConfigType::String}},
+        },
+        {
+            "dos_guard.__ng_weights.[].weight",
+            util::config::Array{util::config::ConfigValue{util::config::ConfigType::Integer}},
+        },
+        {
+            "dos_guard.__ng_weights.[].weight_ledger_current",
+            util::config::Array{
+                util::config::ConfigValue{util::config::ConfigType::Integer}.optional()
+            },
+        },
+        {
+            "dos_guard.__ng_weights.[].weight_ledger_validated",
+            util::config::Array{
+                util::config::ConfigValue{util::config::ConfigType::Integer}.optional()
+            },
+        },
     };
     std::string const configStr = R"JSON(
         {

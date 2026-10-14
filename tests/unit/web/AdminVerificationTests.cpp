@@ -78,7 +78,7 @@ class MakeAdminVerificationStrategyTest
 
 TEST_P(MakeAdminVerificationStrategyTest, ChoosesStrategyCorrectly)
 {
-    auto strat = web::makeAdminVerificationStrategy(GetParam().passwordOpt);
+    auto const strat = web::makeAdminVerificationStrategy(GetParam().passwordOpt);
     auto ipStrat = dynamic_cast<web::IPAdminVerificationStrategy*>(strat.get());
     EXPECT_EQ(ipStrat != nullptr, GetParam().expectIpStrategy);
     auto passwordStrat = dynamic_cast<web::PasswordAdminVerificationStrategy*>(strat.get());
@@ -122,10 +122,10 @@ struct MakeAdminVerificationStrategyFromConfigTest
 inline static ClioConfigDefinition
 generateDefaultAdminConfig()
 {
-    return ClioConfigDefinition{
-        {{"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
-         {"server.admin_password", ConfigValue{ConfigType::String}.optional()}}
-    };
+    return ClioConfigDefinition{{
+        {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+        {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
+    }};
 }
 
 TEST_P(MakeAdminVerificationStrategyFromConfigTest, ChecksConfig)

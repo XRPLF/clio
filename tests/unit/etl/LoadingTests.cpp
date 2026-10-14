@@ -75,7 +75,7 @@ createTestData()
         .edgeKeys = {},
         .header = header,
         .rawHeader = {},
-        .seq = kSeq
+        .seq = kSeq,
     };
 }
 
@@ -182,7 +182,9 @@ TEST_F(LoadingAssertTest, LoadInitialLedgerHasDataInDB)
     testing::Mock::AllowLeak(&*backend_);
     ON_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillByDefault(testing::Return(range));
 
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = loader_.loadInitialLedger(data); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const unused = loader_.loadInitialLedger(data);
+    });
 }
 
 TEST_F(LoadingTests, LoadWriteConflictEmitsStopWritingSignal)
@@ -192,7 +194,7 @@ TEST_F(LoadingTests, LoadWriteConflictEmitsStopWritingSignal)
     testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>>
         mockSignalCallback;
 
-    auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
+    auto const connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
 
     EXPECT_CALL(*mockRegistryPtr_, dispatch(data));
     EXPECT_CALL(*backend_, doFinishWrites())
@@ -214,7 +216,7 @@ TEST_F(LoadingTests, LoadSuccessDoesNotEmitSignal)
     testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>>
         mockSignalCallback;
 
-    auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
+    auto const connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
 
     EXPECT_CALL(*mockRegistryPtr_, dispatch(data));
     EXPECT_CALL(*backend_, doFinishWrites()).WillOnce(testing::Return(true));  // success
@@ -222,7 +224,7 @@ TEST_F(LoadingTests, LoadSuccessDoesNotEmitSignal)
 
     EXPECT_FALSE(state_->isWriterDecidingFallback);
 
-    auto result = loader_.load(data);
+    auto const result = loader_.load(data);
     EXPECT_TRUE(result.has_value());
     EXPECT_FALSE(state_->isWriterDecidingFallback);
 }
@@ -234,13 +236,13 @@ TEST_F(LoadingTests, LoadWhenNotWritingDoesNotCheckConflict)
     testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>>
         mockSignalCallback;
 
-    auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
+    auto const connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
 
     EXPECT_CALL(*mockRegistryPtr_, dispatch(data));
     // doFinishWrites should not be called when not writing
     EXPECT_CALL(*backend_, doFinishWrites()).Times(0);
     // No signal should be emitted
 
-    auto result = loader_.load(data);
+    auto const result = loader_.load(data);
     EXPECT_TRUE(result.has_value());
 }

@@ -170,7 +170,7 @@ ConfigFileJson::flattenJson(boost::json::object const& jsonRootObject)
                     Task{
                         .object = value.as_object(),
                         .prefix = std::move(fullKey),
-                        .arrayIndex = task.arrayIndex
+                        .arrayIndex = task.arrayIndex,
                     }
                 );
             } else if (value.is_array()) {
@@ -187,7 +187,7 @@ ConfigFileJson::flattenJson(boost::json::object const& jsonRootObject)
                             Task{
                                 .object = array.at(i).as_object(),
                                 .prefix = fullKey,
-                                .arrayIndex = i
+                                .arrayIndex = i,
                             }
                         );
                     }

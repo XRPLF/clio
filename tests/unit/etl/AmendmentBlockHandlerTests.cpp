@@ -30,7 +30,7 @@ TEST_F(AmendmentBlockHandlerTests, CallToNotifyAmendmentBlockedSetsStateAndRepea
     std::binary_semaphore stop{0};
 
     EXPECT_FALSE(state_.isAmendmentBlocked);
-    EXPECT_CALL(actionMock_, Call()).Times(testing::AtLeast(10)).WillRepeatedly([&]() {
+    EXPECT_CALL(actionMock_, Call()).Times(testing::AtLeast(10)).WillRepeatedly([&] {
         if (++counter; counter > kMaxIterations)
             stop.release();
     });

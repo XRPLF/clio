@@ -106,7 +106,7 @@ AsyncGrpcCall::process(
     data.reserve(numObjects);
 
     for (int i = 0; i < numObjects; ++i) {
-        auto obj = std::move(*(cur_->mutable_ledger_objects()->mutable_objects(i)));
+        auto obj = std::move(*cur_->mutable_ledger_objects()->mutable_objects(i));
         if (!more && nextPrefix_ != 0x00) {
             if (static_cast<unsigned char>(obj.key()[0]) >= nextPrefix_)
                 continue;
@@ -141,8 +141,8 @@ AsyncGrpcCall::call(
 std::string
 AsyncGrpcCall::getMarkerPrefix()
 {
-    return next_->marker().empty() ? std::string{}
-                                   : xrpl::strHex(std::string{next_->marker().data()[0]});
+    // Hex of the first byte of the marker, or an empty string if there is no marker
+    return xrpl::strHex(next_->marker().substr(0, 1));
 }
 
 // this is used to generate edgeKeys - keys that were the last one in the onInitialObjects list

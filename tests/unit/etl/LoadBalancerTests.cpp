@@ -86,27 +86,37 @@ constinit auto const kThreeSourcesLedgerResponse = R"JSON({
 inline ClioConfigDefinition
 getParseLoadBalancerConfig(boost::json::value val)
 {
-    ClioConfigDefinition config{
-        {{"forwarding.cache_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(
-              gValidatePositiveDouble
-          )},
-         {"forwarding.request_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
-              gValidatePositiveDouble
-          )},
-         {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-         {"etl_sources.[].ip",
-          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
-         {"etl_sources.[].ws_port",
-          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
-         {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional()}},
-         {"num_markers",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers)}}
-    };
+    ClioConfigDefinition config{{
+        {
+            "forwarding.cache_timeout",
+            ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(
+                gValidatePositiveDouble
+            ),
+        },
+        {
+            "forwarding.request_timeout",
+            ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
+                gValidatePositiveDouble
+            ),
+        },
+        {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+        {
+            "etl_sources.[].ip",
+            Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)},
+        },
+        {
+            "etl_sources.[].ws_port",
+            Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)},
+        },
+        {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional()}},
+        {
+            "num_markers",
+            ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers),
+        },
+    }};
 
     auto const errors = config.parse(ConfigFileJson{val.as_object()});
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
+    [&] { ASSERT_FALSE(errors.has_value()); }();
 
     return config;
 }
@@ -1000,7 +1010,7 @@ TEST_F(LoadBalancerForwardToRippledTests, adminResponseNotCachedForSubsequentUse
 TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheDisabledOnLedgerClosedHookCalled)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-    auto loadBalancer = makeLoadBalancer();
+    auto const loadBalancer = makeLoadBalancer();
     EXPECT_NO_THROW(sourceFactory_.callbacksAt(0).onLedgerClosed());
 }
 

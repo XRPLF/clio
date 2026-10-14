@@ -32,7 +32,7 @@ extractColumn(CassRow const* row, std::size_t idx)
     using std::to_string;
     Type output{};
 
-    auto throwErrorIfNeeded = [](CassError rc, std::string_view label) {
+    auto const throwErrorIfNeeded = [](CassError rc, std::string_view label) {
         if (rc != CASS_OK) {
             auto const tag = '[' + std::string{label} + ']';
             throw std::logic_error(tag + ": " + cass_error_desc(rc));
@@ -118,7 +118,7 @@ struct Result : public ManagedObject<CassResult const> {
             return std::nullopt;
 
         std::size_t idx = 0;
-        auto advanceId = [&idx]() { return idx++; };
+        auto const advanceId = [&idx] { return idx++; };
 
         return std::make_optional<std::tuple<RowTypes...>>(
             {extractColumn<RowTypes>(row, advanceId())...}
@@ -161,7 +161,7 @@ public:
         auto const* row = cass_iterator_get_row(*this);
 
         std::size_t idx = 0;
-        auto advanceId = [&idx]() { return idx++; };
+        auto const advanceId = [&idx] { return idx++; };
 
         return {extractColumn<RowTypes>(row, advanceId())...};
     }
@@ -175,9 +175,14 @@ public:
     struct Sentinel {};
 
     struct Iterator {
+        using ValueType = std::tuple<Types...>;
+
+        // Required by the std iterator contract.
+        // NOLINTBEGIN(readability-identifier-naming)
         using iterator_category = std::input_iterator_tag;
         using difference_type = std::size_t;  // rows count
-        using value_type = std::tuple<Types...>;
+        using value_type = ValueType;
+        // NOLINTEND(readability-identifier-naming)
 
         /* implicit */ Iterator(ResultIterator iterator) : iterator_{std::move(iterator)}
         {
@@ -187,13 +192,13 @@ public:
         Iterator&
         operator=(Iterator const&) = delete;
 
-        value_type
+        ValueType
         operator*() const
         {
             return iterator_.extractCurrentRow<Types...>();
         }
 
-        value_type
+        ValueType
         operator->()
         {
             return iterator_.extractCurrentRow<Types...>();

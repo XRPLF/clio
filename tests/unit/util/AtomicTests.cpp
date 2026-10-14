@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <thread>
+#include <vector>
 
 using namespace util;
 

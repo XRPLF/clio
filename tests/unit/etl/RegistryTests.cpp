@@ -260,7 +260,7 @@ protected:
 
 TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForInitialTransaction)
 {
-    auto transactions = std::vector{
+    auto const transactions = std::vector{
         util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
         util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
         util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
@@ -313,7 +313,7 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForTransaction)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -364,7 +364,7 @@ TEST_F(RegistryTest, ObjectsDispatched)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -391,7 +391,7 @@ TEST_F(RegistryTest, OnLedgerDataForBatch)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -438,7 +438,7 @@ TEST_F(RegistryTest, InitialDataCorrectOrderOfHookCalls)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -478,7 +478,7 @@ TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -505,7 +505,7 @@ TEST_F(RegistryTest, ReadonlyModeLedgerDataAllowed)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -532,7 +532,7 @@ TEST_F(RegistryTest, ReadonlyModeTransactionAllowed)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -560,7 +560,7 @@ TEST_F(RegistryTest, ReadonlyModeObjectAllowed)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -587,7 +587,7 @@ TEST_F(RegistryTest, ReadonlyModeInitialDataAllowed)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -614,7 +614,7 @@ TEST_F(RegistryTest, ReadonlyModeInitialTransactionAllowed)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -669,7 +669,7 @@ TEST_F(RegistryTest, ReadonlyModeRegularExtensionsNotCalled)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -701,7 +701,7 @@ TEST_F(RegistryTest, MixedReadonlyAndRegularExtensions)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -760,7 +760,7 @@ TEST_F(RegistryTest, ReadonlyModeWithAllowInReadonlyTest)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 }
@@ -790,7 +790,7 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
     auto transactions = std::vector{
         util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
-    auto objects = std::vector{
+    auto const objects = std::vector{
         util::createObject(),
     };
 
@@ -809,7 +809,7 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 
@@ -821,7 +821,7 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 
@@ -856,7 +856,7 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
     auto transactions = std::vector{
         util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
     };
-    auto objects = std::vector{
+    auto const objects = std::vector{
         util::createObject(),
     };
 
@@ -876,7 +876,7 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 
@@ -888,7 +888,7 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
             .edgeKeys = {},
             .header = header,
             .rawHeader = {},
-            .seq = kSeq
+            .seq = kSeq,
         }
     );
 

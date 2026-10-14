@@ -83,7 +83,7 @@ TEST_F(CoroutineTest, CancelAllCancelsChildren)
 {
     runCoroutine([&](Coroutine& coroutine) {
         coroutine.spawnChild([](Coroutine& childCoroutine) {
-            auto const duration = util::timed([&childCoroutine]() {
+            auto const duration = util::timed([&childCoroutine] {
                 asyncOperation(childCoroutine.yieldContext(), std::chrono::seconds{5});
             });
             EXPECT_TRUE(childCoroutine.isCancelled());
@@ -103,7 +103,7 @@ TEST_F(CoroutineTest, CancelAllCancelsParent)
             EXPECT_TRUE(childCoroutine.isCancelled());
         });
 
-        auto const duration = util::timed([&coroutine]() {
+        auto const duration = util::timed([&coroutine] {
             asyncOperation(coroutine.yieldContext(), std::chrono::seconds{5});
         });
         EXPECT_TRUE(coroutine.isCancelled());
@@ -122,7 +122,7 @@ TEST_F(CoroutineTest, CancelAllCalledMultipleTimes)
             EXPECT_TRUE(childCoroutine.isCancelled());
         });
 
-        auto const duration = util::timed([&coroutine]() {
+        auto const duration = util::timed([&coroutine] {
             asyncOperation(coroutine.yieldContext(), std::chrono::seconds{5});
         });
         EXPECT_TRUE(coroutine.isCancelled());
@@ -135,7 +135,7 @@ TEST_F(CoroutineTest, CancelAllCancelsSiblingsAndParent)
     EXPECT_CALL(fnMock_, Call).Times(2);
     runCoroutine([&](Coroutine& parentCoroutine) {
         parentCoroutine.spawnChild([&](Coroutine& child1Coroutine) {
-            auto duration = util::timed([&child1Coroutine]() {
+            auto const duration = util::timed([&child1Coroutine] {
                 asyncOperation(child1Coroutine.yieldContext(), std::chrono::seconds(5));
             });
             EXPECT_TRUE(child1Coroutine.isCancelled());
@@ -149,7 +149,7 @@ TEST_F(CoroutineTest, CancelAllCancelsSiblingsAndParent)
             fnMock_.Call(child2Coroutine);
         });
 
-        auto parentDuration = util::timed([&parentCoroutine]() {
+        auto const parentDuration = util::timed([&parentCoroutine] {
             asyncOperation(parentCoroutine.yieldContext(), std::chrono::seconds(5));
         });
         EXPECT_TRUE(parentCoroutine.isCancelled());

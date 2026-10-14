@@ -85,7 +85,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
     auto const& lgrInfo = *expectedLgrInfo;
 
     if (input.accountID) {
-        auto keylet = keylet::account(*input.accountID);
+        auto const keylet = keylet::account(*input.accountID);
         if (not sharedPtrBackend_->fetchLedgerObject(keylet.key, lgrInfo.seq, ctx.yield))
             return Error{Status{XrpldError::RpcActNotFound}};
     }
@@ -108,7 +108,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
 
     auto issue1 = input.issue1;
     auto issue2 = input.issue2;
-    auto ammKeylet = ammID != 0 ? keylet::amm(ammID) : keylet::amm(issue1, issue2);
+    auto const ammKeylet = ammID != 0 ? keylet::amm(ammID) : keylet::amm(issue1, issue2);
     auto const ammBlob =
         sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 

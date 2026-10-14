@@ -104,7 +104,7 @@ LoadBalancer::LoadBalancer(
               "forwarding_cache_miss_counter",
               Labels(),
               "The number of requests that were not served from the cache"
-          )
+          ),
       }
 {
     auto const forwardingCacheTimeout = config.get<float>("forwarding.cache_timeout");
@@ -139,14 +139,14 @@ LoadBalancer::LoadBalancer(
     auto const forwardingTimeout =
         ClioConfigDefinition::toMilliseconds(config.get<float>("forwarding.request_timeout"));
     auto const etlArray = config.getArray("etl_sources");
-    for (auto it = etlArray.begin<ObjectView>(); it != etlArray.end<ObjectView>(); ++it) {
+    for (auto const& sourceConfig : etlArray.objects()) {
         auto source = sourceFactory(
-            *it,
+            sourceConfig,
             ioc,
             subscriptions,
             validatedLedgers,
             forwardingTimeout,
-            [this]() {
+            [this] {
                 if (not hasForwardingSource_.lock().get())
                     chooseForwardingSource();
             },
@@ -154,7 +154,7 @@ LoadBalancer::LoadBalancer(
                 if (wasForwarding)
                     chooseForwardingSource();
             },
-            [this]() {
+            [this] {
                 if (forwardingCache_.has_value())
                     forwardingCache_->invalidate();
             }
@@ -294,7 +294,7 @@ LoadBalancer::forwardToRippled(
     std::optional<boost::json::object> response;
     rpc::ClioError error = rpc::ClioError::RpcForwardingConnectionError;
     while (numAttempts < sources_.size()) {
-        auto [res, duration] = util::timed([&]() {
+        auto [res, duration] = util::timed([&] {
             return sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield);
         });
         if (res) {

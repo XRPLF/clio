@@ -76,7 +76,7 @@ public:
     bindAt(std::size_t const idx, Type&& value) const
     {
         using std::to_string;
-        auto throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
+        auto const throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
             if (rc != CASS_OK) {
                 throw std::logic_error(
                     fmt::format("[{}] at idx {}: {}", label, idx, cass_error_desc(rc))
@@ -84,7 +84,7 @@ public:
             }
         };
 
-        auto bindBytes = [this, idx](auto const* data, size_t size) {
+        auto const bindBytes = [this, idx](auto const* data, size_t size) {
             return cass_statement_bind_bytes(
                 *this, idx, static_cast<cass_byte_t const*>(data), size
             );

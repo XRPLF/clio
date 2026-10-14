@@ -49,21 +49,31 @@ protected:
 
         {"log.level", ConfigValue{ConfigType::String}.defaultValue("info")},
 
-        {"log.format",
-         ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
+        {
+            "log.format",
+            ConfigValue{ConfigType::String}.defaultValue(
+                R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)"
+            ),
+        },
         {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
         {"log.enable_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
         {"log.directory", ConfigValue{ConfigType::String}.optional()},
 
-        {"log.rotation_size",
-         ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(
-             config::gValidateUint32
-         )},
+        {
+            "log.rotation_size",
+            ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(
+                config::gValidateUint32
+            ),
+        },
 
-        {"log.directory_max_files",
-         ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(config::gValidateUint32)},
+        {
+            "log.directory_max_files",
+            ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(
+                config::gValidateUint32
+            ),
+        },
 
         {"log.rotate", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
@@ -84,7 +94,7 @@ TEST_F(LogServiceInitTests, DefaultLogLevel)
     for (std::string_view const channel : Logger::kChannels) {
         Logger const log{channel};
         log.trace() << logString;
-        auto loggerStr = getLoggerString();
+        auto const loggerStr = getLoggerString();
         ASSERT_TRUE(loggerStr.empty()) << " channel: " << channel << " logger_str: " << loggerStr;
 
         log.debug() << logString;

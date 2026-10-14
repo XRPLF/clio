@@ -16,6 +16,8 @@ namespace util {
  */
 struct StringHash {
     using HashType = std::hash<std::string_view>;
+
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using is_transparent = void;  ///< Enables heterogeneous lookup
 
     /**

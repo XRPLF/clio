@@ -63,38 +63,38 @@ generateTestValuesForParametersTest()
             .testName = "InvalidTypeFeatureBool",
             .testJson = R"JSON({"feature": true})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         RPCFeatureHandlerParamTestCaseBundle{
             .testName = "InvalidTypeFeatureInt",
             .testJson = R"JSON({"feature": 42})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         RPCFeatureHandlerParamTestCaseBundle{
             .testName = "InvalidTypeFeatureDouble",
             .testJson = R"JSON({"feature": 4.2})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         RPCFeatureHandlerParamTestCaseBundle{
             .testName = "InvalidTypeFeatureNull",
             .testJson = R"JSON({"feature": null})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         // Note: this and below internal errors on rippled
         RPCFeatureHandlerParamTestCaseBundle{
             .testName = "InvalidTypeFeatureObj",
             .testJson = R"JSON({"feature": {}})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         RPCFeatureHandlerParamTestCaseBundle{
             .testName = "InvalidTypeFeatureArray",
             .testJson = R"JSON({"feature": []})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         // "vetoed" should always be blocked
         RPCFeatureHandlerParamTestCaseBundle{
@@ -102,42 +102,42 @@ generateTestValuesForParametersTest()
             .testJson = R"JSON({"feature": "foo", "vetoed": true})JSON",
             .expectedError = "noPermission",
             .expectedErrorMessage =
-                "The admin portion of feature API is not available through Clio."
+                "The admin portion of feature API is not available through Clio.",
         },
         RPCFeatureHandlerParamTestCaseBundle{
             .testName = "InvalidTypeVetoedString",
             .testJson = R"JSON({"feature": "foo", "vetoed": "test"})JSON",
             .expectedError = "noPermission",
             .expectedErrorMessage =
-                "The admin portion of feature API is not available through Clio."
+                "The admin portion of feature API is not available through Clio.",
         },
         RPCFeatureHandlerParamTestCaseBundle{
             .testName = "InvalidTypeVetoedInt",
             .testJson = R"JSON({"feature": "foo", "vetoed": 42})JSON",
             .expectedError = "noPermission",
             .expectedErrorMessage =
-                "The admin portion of feature API is not available through Clio."
+                "The admin portion of feature API is not available through Clio.",
         },
         RPCFeatureHandlerParamTestCaseBundle{
             .testName = "InvalidTypeVetoedDouble",
             .testJson = R"JSON({"feature": "foo", "vetoed": 4.2})JSON",
             .expectedError = "noPermission",
             .expectedErrorMessage =
-                "The admin portion of feature API is not available through Clio."
+                "The admin portion of feature API is not available through Clio.",
         },
         RPCFeatureHandlerParamTestCaseBundle{
             .testName = "InvalidTypeVetoedObject",
             .testJson = R"JSON({"feature": "foo", "vetoed": {}})JSON",
             .expectedError = "noPermission",
             .expectedErrorMessage =
-                "The admin portion of feature API is not available through Clio."
+                "The admin portion of feature API is not available through Clio.",
         },
         RPCFeatureHandlerParamTestCaseBundle{
             .testName = "InvalidTypeVetoedArray",
             .testJson = R"JSON({"feature": "foo", "vetoed": []})JSON",
             .expectedError = "noPermission",
             .expectedErrorMessage =
-                "The admin portion of feature API is not available through Clio."
+                "The admin portion of feature API is not available through Clio.",
         },
     };
 }
@@ -267,7 +267,7 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaNameWithSingleSupportedAndEnabledRes
             .feature = data::Amendment::getAmendmentId(Amendments::fixRemoveNFTokenAutoTrustLine),
             .isSupportedByXRPL = true,
             .isSupportedByClio = true,
-        }
+        },
     };
     auto const keys = std::vector<data::AmendmentKey>{Amendments::fixUniversalNumber};
     auto const enabled = std::vector<bool>{true};
@@ -319,7 +319,7 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaHashWithSingleResult)
             .feature = data::Amendment::getAmendmentId(Amendments::fixRemoveNFTokenAutoTrustLine),
             .isSupportedByXRPL = true,
             .isSupportedByClio = true,
-        }
+        },
     };
     auto const keys = std::vector<data::AmendmentKey>{Amendments::fixUniversalNumber};
     auto const enabled = std::vector<bool>{true};
@@ -362,12 +362,14 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaHashWithSingleResult)
 
 TEST_F(RPCFeatureHandlerTest, BadFeaturePath)
 {
-    auto const all = std::vector<data::Amendment>{{
-        .name = Amendments::fixUniversalNumber,
-        .feature = data::Amendment::getAmendmentId(Amendments::fixUniversalNumber),
-        .isSupportedByXRPL = true,
-        .isSupportedByClio = true,
-    }};
+    auto const all = std::vector<data::Amendment>{
+        {
+            .name = Amendments::fixUniversalNumber,
+            .feature = data::Amendment::getAmendmentId(Amendments::fixUniversalNumber),
+            .isSupportedByXRPL = true,
+            .isSupportedByClio = true,
+        },
+    };
     auto const keys = std::vector<data::AmendmentKey>{"nonexistent"};
     EXPECT_CALL(*mockAmendmentCenterPtr_, getAll).WillOnce(testing::ReturnRef(all));
 
@@ -392,13 +394,15 @@ TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByNameReturnsSupported
 {
     auto const ownerPaysFeeKey =
         xrpl::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
-    auto const all = std::vector<data::Amendment>{{
-        .name = Amendments::OwnerPaysFee,
-        .feature = data::Amendment::getAmendmentId(Amendments::OwnerPaysFee),
-        .isSupportedByXRPL = false,
-        .isSupportedByClio = true,
-        .isRetired = true,
-    }};
+    auto const all = std::vector<data::Amendment>{
+        {
+            .name = Amendments::OwnerPaysFee,
+            .feature = data::Amendment::getAmendmentId(Amendments::OwnerPaysFee),
+            .isSupportedByXRPL = false,
+            .isSupportedByClio = true,
+            .isRetired = true,
+        },
+    };
     auto const keys = std::vector<data::AmendmentKey>{Amendments::OwnerPaysFee};
     auto const enabled = std::vector<bool>{false};
 
@@ -440,13 +444,15 @@ TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByHashReturnsSupported
 {
     auto const ownerPaysFeeKey =
         xrpl::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
-    auto const all = std::vector<data::Amendment>{{
-        .name = Amendments::OwnerPaysFee,
-        .feature = data::Amendment::getAmendmentId(Amendments::OwnerPaysFee),
-        .isSupportedByXRPL = false,
-        .isSupportedByClio = true,
-        .isRetired = true,
-    }};
+    auto const all = std::vector<data::Amendment>{
+        {
+            .name = Amendments::OwnerPaysFee,
+            .feature = data::Amendment::getAmendmentId(Amendments::OwnerPaysFee),
+            .isSupportedByXRPL = false,
+            .isSupportedByClio = true,
+            .isRetired = true,
+        },
+    };
     auto const keys = std::vector<data::AmendmentKey>{Amendments::OwnerPaysFee};
     auto const enabled = std::vector<bool>{true};
 
@@ -498,10 +504,11 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathWithMultipleResults)
             .feature = data::Amendment::getAmendmentId(Amendments::fixRemoveNFTokenAutoTrustLine),
             .isSupportedByXRPL = true,
             .isSupportedByClio = false,
-        }
+        },
     };
     auto const keys = std::vector<data::AmendmentKey>{
-        Amendments::fixUniversalNumber, Amendments::fixRemoveNFTokenAutoTrustLine
+        Amendments::fixUniversalNumber,
+        Amendments::fixRemoveNFTokenAutoTrustLine,
     };
     auto const enabled = std::vector<bool>{true, false};
 

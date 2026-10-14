@@ -192,7 +192,7 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
                             }
                         }
                     }
-                }
+                },
             },
             value
         );
@@ -243,232 +243,383 @@ ClioConfigDefinition&
 getClioConfig()
 {
     static ClioConfigDefinition kClioConfig{
-        {{"database.type",
-          ConfigValue{ConfigType::String}
-              .defaultValue("cassandra")
-              .withConstraint(gValidateCassandraName)},
-         {"database.cassandra.contact_points",
-          ConfigValue{ConfigType::String}.defaultValue("localhost")},
-         {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.port",
-          ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional()},
-         {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
-         {"database.cassandra.replication_factor",
-          ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(
-              gValidateReplicationFactor
-          )},
-         {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.max_write_requests_outstanding",
-          ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(gValidateUint32)},
-         {"database.cassandra.max_read_requests_outstanding",
-          ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(gValidateUint32)},
-         {"database.cassandra.threads",
-          ConfigValue{ConfigType::Integer}
-              .defaultValue(
-                  static_cast<uint32_t>(std::thread::hardware_concurrency()),
-                  "The number of available CPU cores."
-              )
-              .withConstraint(gValidateUint32)},
-         {"database.cassandra.core_connections_per_host",
-          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint16)},
-         {"database.cassandra.queue_size_io",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
-         {"database.cassandra.write_batch_size",
-          ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(gValidateUint16)},
-         {"database.cassandra.connect_timeout",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
-         {"database.cassandra.request_timeout",
-          ConfigValue{ConfigType::Double}.optional().withConstraint(gValidatePositiveDouble)},
-         {"database.cassandra.initial_request_retry_delay",
-          ConfigValue{ConfigType::Double}.defaultValue(0.5).withConstraint(
-              gValidatePositiveDouble
-          )},
-         {"database.cassandra.max_request_retry_delay",
-          ConfigValue{ConfigType::Double}.defaultValue(5.0).withConstraint(
-              gValidatePositiveDouble
-          )},
-         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.provider",
-          ConfigValue{ConfigType::String}
-              .defaultValue("cassandra")
-              .withConstraint(gValidateProvider)},
+        {
+            {
+                "database.type",
+                ConfigValue{ConfigType::String}
+                    .defaultValue("cassandra")
+                    .withConstraint(gValidateCassandraName),
+            },
+            {
+                "database.cassandra.contact_points",
+                ConfigValue{ConfigType::String}.defaultValue("localhost"),
+            },
+            {
+                "database.cassandra.secure_connect_bundle",
+                ConfigValue{ConfigType::String}.optional(),
+            },
+            {
+                "database.cassandra.port",
+                ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional(),
+            },
+            {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
+            {
+                "database.cassandra.replication_factor",
+                ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(
+                    gValidateReplicationFactor
+                ),
+            },
+            {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
+            {
+                "database.cassandra.max_write_requests_outstanding",
+                ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(
+                    gValidateUint32
+                ),
+            },
+            {
+                "database.cassandra.max_read_requests_outstanding",
+                ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(
+                    gValidateUint32
+                ),
+            },
+            {
+                "database.cassandra.threads",
+                ConfigValue{ConfigType::Integer}
+                    .defaultValue(
+                        static_cast<uint32_t>(std::thread::hardware_concurrency()),
+                        "The number of available CPU cores."
+                    )
+                    .withConstraint(gValidateUint32),
+            },
+            {
+                "database.cassandra.core_connections_per_host",
+                ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint16),
+            },
+            {
+                "database.cassandra.queue_size_io",
+                ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16),
+            },
+            {
+                "database.cassandra.write_batch_size",
+                ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(gValidateUint16),
+            },
+            {
+                "database.cassandra.connect_timeout",
+                ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32),
+            },
+            {
+                "database.cassandra.request_timeout",
+                ConfigValue{ConfigType::Double}.optional().withConstraint(gValidatePositiveDouble),
+            },
+            {
+                "database.cassandra.initial_request_retry_delay",
+                ConfigValue{ConfigType::Double}.defaultValue(0.5).withConstraint(
+                    gValidatePositiveDouble
+                ),
+            },
+            {
+                "database.cassandra.max_request_retry_delay",
+                ConfigValue{ConfigType::Double}.defaultValue(5.0).withConstraint(
+                    gValidatePositiveDouble
+                ),
+            },
+            {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
+            {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
+            {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
+            {
+                "database.cassandra.provider",
+                ConfigValue{ConfigType::String}
+                    .defaultValue("cassandra")
+                    .withConstraint(gValidateProvider),
+            },
 
-         {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-         {"etl_sources.[].ip",
-          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
-         {"etl_sources.[].ws_port",
-          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
-         {"etl_sources.[].grpc_port",
-          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
+            {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+            {
+                "etl_sources.[].ip",
+                Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)},
+            },
+            {
+                "etl_sources.[].ws_port",
+                Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)},
+            },
+            {
+                "etl_sources.[].grpc_port",
+                Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)},
+            },
 
-         {"forwarding.cache_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(
-              gValidatePositiveDouble
-          )},
-         {"forwarding.request_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
-              gValidatePositiveDouble
-          )},
+            {
+                "forwarding.cache_timeout",
+                ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(
+                    gValidatePositiveDouble
+                ),
+            },
+            {
+                "forwarding.request_timeout",
+                ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
+                    gValidatePositiveDouble
+                ),
+            },
 
-         {"rpc.cache_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(
-              gValidatePositiveDouble
-          )},
+            {
+                "rpc.cache_timeout",
+                ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(
+                    gValidatePositiveDouble
+                ),
+            },
 
-         {"num_markers",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers)},
+            {
+                "num_markers",
+                ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers),
+            },
 
-         {"dos_guard.whitelist.[]",
-          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
-         {"dos_guard.max_fetches",
-          ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(gValidateUint32)},
-         {"dos_guard.max_connections",
-          ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
-         {"dos_guard.max_requests",
-          ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
-         {"dos_guard.sweep_interval",
-          ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(
-              gValidatePositiveDouble
-          )},
-         {"dos_guard.__ng_default_weight",
-          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(
-              gValidateNonNegativeUint32
-          )},
-         {"dos_guard.__ng_weights.[].method",
-          Array{ConfigValue{ConfigType::String}.withConstraint(gRpcNameConstraint)}},
-         {"dos_guard.__ng_weights.[].weight",
-          Array{ConfigValue{ConfigType::Integer}.withConstraint(gValidateNonNegativeUint32)}},
-         {"dos_guard.__ng_weights.[].weight_ledger_current",
-          Array{
-              ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNonNegativeUint32)
-          }},
-         {"dos_guard.__ng_weights.[].weight_ledger_validated",
-          Array{
-              ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNonNegativeUint32)
-          }},
+            {
+                "dos_guard.whitelist.[]",
+                Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)},
+            },
+            {
+                "dos_guard.max_fetches",
+                ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(
+                    gValidateUint32
+                ),
+            },
+            {
+                "dos_guard.max_connections",
+                ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32),
+            },
+            {
+                "dos_guard.max_requests",
+                ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32),
+            },
+            {
+                "dos_guard.sweep_interval",
+                ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(
+                    gValidatePositiveDouble
+                ),
+            },
+            {
+                "dos_guard.__ng_default_weight",
+                ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(
+                    gValidateNonNegativeUint32
+                ),
+            },
+            {
+                "dos_guard.__ng_weights.[].method",
+                Array{ConfigValue{ConfigType::String}.withConstraint(gRpcNameConstraint)},
+            },
+            {
+                "dos_guard.__ng_weights.[].weight",
+                Array{ConfigValue{ConfigType::Integer}.withConstraint(gValidateNonNegativeUint32)},
+            },
+            {
+                "dos_guard.__ng_weights.[].weight_ledger_current",
+                Array{ConfigValue{ConfigType::Integer}.optional().withConstraint(
+                    gValidateNonNegativeUint32
+                )},
+            },
+            {
+                "dos_guard.__ng_weights.[].weight_ledger_validated",
+                Array{ConfigValue{ConfigType::Integer}.optional().withConstraint(
+                    gValidateNonNegativeUint32
+                )},
+            },
 
-         {"workers",
-          ConfigValue{ConfigType::Integer}
-              .defaultValue(
-                  std::thread::hardware_concurrency(), "The number of available CPU cores."
-              )
-              .withConstraint(gValidateUint32)},
-         {"server.ip", ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
-         {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort)},
-         {"server.max_queue_size",
-          ConfigValue{ConfigType::Integer}.defaultValue(1000).withConstraint(gValidateUint32)},
-         {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
-         {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
-         {"server.processing_policy",
-          ConfigValue{ConfigType::String}
-              .defaultValue("parallel")
-              .withConstraint(gValidateProcessingPolicy)},
-         {"server.parallel_requests_limit",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
-         {"server.ws_max_sending_queue_size",
-          ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32)},
-         {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-         {"server.proxy.ips.[]",
-          Array{ConfigValue{ConfigType::String}.withConstraint(gValidateIp)}},
-         {"server.proxy.tokens.[]", Array{ConfigValue{ConfigType::String}}},
+            {
+                "workers",
+                ConfigValue{ConfigType::Integer}
+                    .defaultValue(
+                        std::thread::hardware_concurrency(), "The number of available CPU cores."
+                    )
+                    .withConstraint(gValidateUint32),
+            },
+            {"server.ip", ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
+            {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort)},
+            {
+                "server.max_queue_size",
+                ConfigValue{ConfigType::Integer}.defaultValue(1000).withConstraint(gValidateUint32),
+            },
+            {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+            {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
+            {
+                "server.processing_policy",
+                ConfigValue{ConfigType::String}
+                    .defaultValue("parallel")
+                    .withConstraint(gValidateProcessingPolicy),
+            },
+            {
+                "server.parallel_requests_limit",
+                ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16),
+            },
+            {
+                "server.ws_max_sending_queue_size",
+                ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32),
+            },
+            {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+            {
+                "server.proxy.ips.[]",
+                Array{ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
+            },
+            {"server.proxy.tokens.[]", Array{ConfigValue{ConfigType::String}}},
 
-         {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-         {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+            {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+            {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
-         {"io_threads",
-          ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint16)},
+            {
+                "io_threads",
+                ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint16),
+            },
 
-         {"subscription_workers",
-          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
+            {
+                "subscription_workers",
+                ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32),
+            },
 
-         {"graceful_period",
-          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
-              gValidatePositiveDouble
-          )},
+            {
+                "graceful_period",
+                ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
+                    gValidatePositiveDouble
+                ),
+            },
 
-         {"cache.num_diffs",
-          ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(gValidateUint16)},
-         {"cache.num_markers",
-          ConfigValue{ConfigType::Integer}.defaultValue(48).withConstraint(gValidateUint16)},
-         {"cache.num_cursors_from_diff",
-          ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
-         {"cache.num_cursors_from_account",
-          ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
-         {"cache.page_fetch_size",
-          ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
-         {"cache.limit_load_in_cluster", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-         {"cache.load",
-          ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
-         {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
-         {"cache.file.max_sequence_age", ConfigValue{ConfigType::Integer}.defaultValue(5000)},
-         {"cache.file.async_save", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+            {
+                "cache.num_diffs",
+                ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(gValidateUint16),
+            },
+            {
+                "cache.num_markers",
+                ConfigValue{ConfigType::Integer}.defaultValue(48).withConstraint(gValidateUint16),
+            },
+            {
+                "cache.num_cursors_from_diff",
+                ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(
+                    gValidateNumCursors
+                ),
+            },
+            {
+                "cache.num_cursors_from_account",
+                ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(
+                    gValidateNumCursors
+                ),
+            },
+            {
+                "cache.page_fetch_size",
+                ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16),
+            },
+            {"cache.limit_load_in_cluster", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+            {
+                "cache.load",
+                ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(
+                    gValidateLoadMode
+                ),
+            },
+            {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
+            {"cache.file.max_sequence_age", ConfigValue{ConfigType::Integer}.defaultValue(5000)},
+            {"cache.file.async_save", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
-         {"log.channels.[].channel",
-          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)}},
-         {"log.channels.[].level",
-          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateLogLevelName)}},
+            {
+                "log.channels.[].channel",
+                Array{
+                    ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)
+                },
+            },
+            {
+                "log.channels.[].level",
+                Array{
+                    ConfigValue{ConfigType::String}.optional().withConstraint(gValidateLogLevelName)
+                },
+            },
 
-         {"log.level",
-          ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(
-              gValidateLogLevelName
-          )},
+            {
+                "log.level",
+                ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(
+                    gValidateLogLevelName
+                ),
+            },
 
-         {"log.format",
-          ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
+            {
+                "log.format",
+                ConfigValue{ConfigType::String}.defaultValue(
+                    R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)"
+                ),
+            },
 
-         {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+            {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
-         {"log.enable_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+            {"log.enable_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
-         {"log.directory", ConfigValue{ConfigType::String}.optional()},
+            {"log.directory", ConfigValue{ConfigType::String}.optional()},
 
-         {"log.rotation_size",
-          ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
+            {
+                "log.rotation_size",
+                ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32),
+            },
 
-         {"log.directory_max_files",
-          ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
+            {
+                "log.directory_max_files",
+                ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32),
+            },
 
-         {"log.rotate", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+            {"log.rotate", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
-         {"log.tag_style",
-          ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
+            {
+                "log.tag_style",
+                ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(
+                    gValidateLogTag
+                ),
+            },
 
-         {"extractor_threads",
-          ConfigValue{ConfigType::Integer}.defaultValue(1u).withConstraint(gValidateUint32)},
+            {
+                "extractor_threads",
+                ConfigValue{ConfigType::Integer}.defaultValue(1u).withConstraint(gValidateUint32),
+            },
 
-         {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+            {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
-         {"start_sequence",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
+            {
+                "start_sequence",
+                ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32),
+            },
 
-         {"finish_sequence",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
+            {
+                "finish_sequence",
+                ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32),
+            },
 
-         {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
+            {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
 
-         {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
+            {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
 
-         {"api_version.default",
-          ConfigValue{ConfigType::Integer}
-              .defaultValue(rpc::kApiVersionDefault)
-              .withConstraint(gValidateApiVersion)},
-         {"api_version.min",
-          ConfigValue{ConfigType::Integer}
-              .defaultValue(rpc::kApiVersionMin)
-              .withConstraint(gValidateApiVersion)},
-         {"api_version.max",
-          ConfigValue{ConfigType::Integer}
-              .defaultValue(rpc::kApiVersionMax)
-              .withConstraint(gValidateApiVersion)},
+            {
+                "api_version.default",
+                ConfigValue{ConfigType::Integer}
+                    .defaultValue(rpc::kApiVersionDefault)
+                    .withConstraint(gValidateApiVersion),
+            },
+            {
+                "api_version.min",
+                ConfigValue{ConfigType::Integer}
+                    .defaultValue(rpc::kApiVersionMin)
+                    .withConstraint(gValidateApiVersion),
+            },
+            {
+                "api_version.max",
+                ConfigValue{ConfigType::Integer}
+                    .defaultValue(rpc::kApiVersionMax)
+                    .withConstraint(gValidateApiVersion),
+            },
 
-         {"migration.full_scan_threads",
-          ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint32)},
-         {"migration.full_scan_jobs",
-          ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32)},
-         {"migration.cursors_per_job",
-          ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}},
+            {
+                "migration.full_scan_threads",
+                ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint32),
+            },
+            {
+                "migration.full_scan_jobs",
+                ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32),
+            },
+            {
+                "migration.cursors_per_job",
+                ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32),
+            },
+        },
     };
 
     return kClioConfig;

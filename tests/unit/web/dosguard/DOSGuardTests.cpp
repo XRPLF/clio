@@ -41,12 +41,12 @@ struct DOSGuardTest : public virtual ::testing::Test {
         MOCK_METHOD(size_t, requestWeight, (boost::json::object const& cmd), (const, override));
     };
 
-    ClioConfigDefinition cfg{
-        {{"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(100)},
-         {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-         {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(3)},
-         {"dos_guard.whitelist", Array{ConfigValue{ConfigType::String}}}}
-    };
+    ClioConfigDefinition cfg{{
+        {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(100)},
+        {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(3)},
+        {"dos_guard.whitelist", Array{ConfigValue{ConfigType::String}}},
+    }};
     NiceMock<MockWhitelistHandler> whitelistHandler;
     StrictMock<MockWeights> weightsMock;
     DOSGuard guard{cfg, whitelistHandler, weightsMock};

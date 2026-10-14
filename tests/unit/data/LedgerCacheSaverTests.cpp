@@ -96,7 +96,7 @@ TEST_F(LedgerCacheSaverTest, DestructorWaitsForCompletion)
     std::binary_semaphore semaphore{1};
     std::atomic_bool saveCompleted{false};
 
-    EXPECT_CALL(cache, saveToFile(kFilePath)).WillOnce([&]() {
+    EXPECT_CALL(cache, saveToFile(kFilePath)).WillOnce([&] {
         semaphore.release();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         saveCompleted = true;
@@ -157,7 +157,7 @@ TEST_F(LedgerCacheSaverTest, SyncSaveWaitsForCompletion)
 
     std::atomic_bool saveCompleted{false};
 
-    EXPECT_CALL(cache, saveToFile(kFilePath)).WillOnce([&]() {
+    EXPECT_CALL(cache, saveToFile(kFilePath)).WillOnce([&] {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         saveCompleted = true;
         return std::expected<void, std::string>{};
@@ -176,7 +176,7 @@ TEST_F(LedgerCacheSaverTest, AsyncSaveDoesNotWaitForCompletion)
     std::binary_semaphore continueExecution{0};
     std::atomic_bool saveCompleted{false};
 
-    EXPECT_CALL(cache, saveToFile(kFilePath)).WillOnce([&]() {
+    EXPECT_CALL(cache, saveToFile(kFilePath)).WillOnce([&] {
         saveStarted.release();
         continueExecution.acquire();
         saveCompleted = true;

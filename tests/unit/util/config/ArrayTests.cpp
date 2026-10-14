@@ -75,8 +75,8 @@ TEST(ArrayTest, iterateValueArray)
         ASSERT_FALSE(arr.addValue(num));
 
     std::vector<int64_t> actual;
-    for (auto it = arr.begin(); it != arr.end(); ++it)
-        actual.emplace_back(std::get<int64_t>(it->getValue()));
+    for (auto const& value : arr)
+        actual.emplace_back(std::get<int64_t>(value.getValue()));
 
     EXPECT_TRUE(std::ranges::equal(expected, actual));
 }

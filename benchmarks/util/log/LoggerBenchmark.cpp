@@ -67,7 +67,7 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
     PrometheusService::init(config::getClioConfig());
 
     auto const logDir = uniqueLogDir();
-    for (auto _ : state) {
+    for (auto const _ : state) {
         state.PauseTiming();
 
         std::filesystem::create_directories(logDir);
@@ -75,19 +75,19 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         static constexpr size_t kThreadCount = 1;
         spdlog::init_thread_pool(kQueueSize, kThreadCount);
 
-        auto fileSink = BenchmarkLoggingInitializer::createFileSink(logDir, 5, 25);
+        auto const fileSink = BenchmarkLoggingInitializer::createFileSink(logDir, 5, 25);
 
         std::vector<std::thread> threads;
         threads.reserve(numThreads);
 
         std::chrono::high_resolution_clock::time_point start;
-        std::barrier barrier(numThreads, [&state, &start]() {
+        std::barrier barrier(numThreads, [&state, &start] {
             state.ResumeTiming();
             start = std::chrono::high_resolution_clock::now();
         });
 
         for (size_t threadNum = 0; threadNum < numThreads; ++threadNum) {
-            threads.emplace_back([threadNum, messagesPerThread, fileSink, &barrier]() {
+            threads.emplace_back([threadNum, messagesPerThread, fileSink, &barrier] {
                 std::string const channel = fmt::format("Thread_{}", threadNum);
                 auto logger = std::make_shared<spdlog::async_logger>(
                     channel, fileSink, spdlog::thread_pool(), spdlog::async_overflow_policy::block

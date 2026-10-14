@@ -22,18 +22,24 @@ using namespace rpc;
 
 struct ProductionHandlerProviderTest : util::prometheus::WithPrometheus, MockBackendTestStrict {
     util::config::ClioConfigDefinition config{
-        {"api_version.default",
-         util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(
-             rpc::kApiVersionDefault
-         )},
-        {"api_version.min",
-         util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(
-             rpc::kApiVersionMin
-         )},
-        {"api_version.max",
-         util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(
-             rpc::kApiVersionMax
-         )},
+        {
+            "api_version.default",
+            util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(
+                rpc::kApiVersionDefault
+            ),
+        },
+        {
+            "api_version.min",
+            util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(
+                rpc::kApiVersionMin
+            ),
+        },
+        {
+            "api_version.max",
+            util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(
+                rpc::kApiVersionMax
+            ),
+        },
     };
     StrictMockSubscriptionManagerSharedPtr subscriptionManagerMock;
     std::shared_ptr<testing::StrictMock<MockLoadBalancer>> loadBalancerMock;

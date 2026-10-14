@@ -29,6 +29,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 # Include required modules
+include(CompilationEnv)
 include(Ccache)
 include(CheckCXXCompilerFlag)
 include(ClangTidy)
@@ -38,10 +39,7 @@ add_library(clio_options INTERFACE)
 target_compile_features(clio_options INTERFACE cxx_std_23)
 target_include_directories(clio_options INTERFACE ${CMAKE_SOURCE_DIR}/src)
 
-if(
-    CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
-    OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
-)
+if(is_llvm_clang OR is_gcc)
     # Note: -static-libstdc++ can statically link both libstdc++ and libc++
     target_link_libraries(
         clio_options
@@ -51,18 +49,14 @@ endif()
 
 # On aarch64, libatomic is required for atomic operations. It is not needed on x86_64.
 # Linking it statically on Linux
-if(
-    CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64"
-    AND CMAKE_SYSTEM_NAME STREQUAL "Linux"
-)
+if(is_arm64 AND is_linux)
     target_link_options(
         clio_options
         INTERFACE -Wl,--push-state -Wl,-Bstatic -latomic -Wl,--pop-state
     )
 endif()
 
-# Apply sanitizer instrumentation if requested and define SANITIZERS_ENABLED.
-# Must come before the modules and subdirectories below that key off it.
+# Apply sanitizer instrumentation if requested.
 include(Sanitizers)
 
 if(verbose)

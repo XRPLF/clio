@@ -55,7 +55,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderSkipDueToAge)
 {
     // Use kAge (800) which is > MAX_LEDGER_AGE_SECONDS (600) to test skipping
     auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, kAge);
-    auto dummyState = etl::SystemState{};
+    auto const dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
     backend_->setRange(kSeq - 1, kSeq);
@@ -81,7 +81,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderWithinAgeLimit)
 {
     // Use age 0 which is < MAX_LEDGER_AGE_SECONDS to ensure publishing happens
     auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, 0);
-    auto dummyState = etl::SystemState{};
+    auto const dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::feeSettings().key, kSeq, _))
@@ -218,7 +218,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderCloseTimeGreaterThanNow)
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
 {
-    auto dummyState = etl::SystemState{};
+    auto const dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
     publisher.stop();
     EXPECT_FALSE(publisher.publish(kSeq, {}));
@@ -226,7 +226,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttempt)
 {
-    auto dummyState = etl::SystemState{};
+    auto const dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
     static constexpr auto kMaxAttempt = 2;
@@ -239,7 +239,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttempt)
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
 {
-    auto dummyState = etl::SystemState{};
+    auto const dummyState = etl::SystemState{};
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
     LedgerRange const range{.minSequence = kSeq, .maxSequence = kSeq};

@@ -63,7 +63,7 @@ static_assert(not SomeStopSourceProvider<Outcome<int>>);
 static_assert(SomeStoppableOutcome<StoppableOutcome<int, impl::BasicStopSource>>);
 static_assert(not SomeStoppableOutcome<Outcome<int>>);
 
-static_assert(SomeHandlerWithoutStopToken<decltype([]() {})>);
+static_assert(SomeHandlerWithoutStopToken<decltype([] {})>);
 static_assert(not SomeHandlerWithoutStopToken<decltype([](int) {})>);
 
 static_assert(SomeHandlerWith<decltype([](int) {}), int>);
@@ -141,11 +141,11 @@ TEST_F(AnyExecutionContextTests, ExecuteWithoutTokenAndVoid)
 
 TEST_F(AnyExecutionContextTests, ExecuteWithoutTokenAndVoidThrowsException)
 {
-    auto mockOp = OperationType<impl::Any>{};
+    auto const mockOp = OperationType<impl::Any>{};
     EXPECT_CALL(mockExecutionContext, execute(A<std::function<impl::Any()>>()))
         .WillOnce([](auto&&) -> OperationType<impl::Any> const& { throw 0; });
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto unused = ctx.execute([] { throw 0; }));
+    EXPECT_ANY_THROW([[maybe_unused]] auto const unused = ctx.execute([] { throw 0; }));
 }
 
 TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndVoid)
@@ -166,7 +166,7 @@ TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndVoidThrowsException)
     EXPECT_CALL(mockExecutionContext, execute(A<std::function<impl::Any(AnyStopToken)>>(), _))
         .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto unused = ctx.execute([](auto) { throw 0; }));
+    EXPECT_ANY_THROW([[maybe_unused]] auto const unused = ctx.execute([](auto) { throw 0; }));
 }
 
 TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndReturnValue)
@@ -187,7 +187,9 @@ TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndReturnValueThrowsExcepti
     EXPECT_CALL(mockExecutionContext, execute(A<std::function<impl::Any(AnyStopToken)>>(), _))
         .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto unused = ctx.execute([](auto) -> int { throw 0; }));
+    EXPECT_ANY_THROW([[maybe_unused]] auto const unused = ctx.execute([](auto) -> int {
+        throw 0;
+    }));
 }
 
 TEST_F(AnyExecutionContextTests, TimerCancellation)
@@ -307,7 +309,7 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithVoidThrowsException)
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([] {}));
+    EXPECT_ANY_THROW([[maybe_unused]] auto const unused = strand.execute([] {}));
 }
 
 TEST_F(AnyExecutionContextTests, StrandExecuteWithReturnValue)
@@ -321,7 +323,7 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithReturnValue)
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
 
-    auto op = strand.execute([]() -> int { throw 0; });
+    auto op = strand.execute([] -> int { throw 0; });
     static_assert(std::is_same_v<decltype(op), AnyOperation<int>>);
 
     EXPECT_EQ(op.get().value(), 42);
@@ -337,7 +339,7 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithReturnValueThrowsException)
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([]() -> int { throw 0; }));
+    EXPECT_ANY_THROW([[maybe_unused]] auto const unused = strand.execute([]() -> int { throw 0; }));
 }
 
 TEST_F(AnyExecutionContextTests, StrandExecuteWithStopTokenAndVoid)
@@ -368,7 +370,7 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithStopTokenAndVoidThrowsExceptio
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([](auto) { throw 0; }));
+    EXPECT_ANY_THROW([[maybe_unused]] auto const unused = strand.execute([](auto) { throw 0; }));
 }
 
 TEST_F(AnyExecutionContextTests, StrandExecuteWithStopTokenAndReturnValue)
@@ -399,5 +401,7 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithStopTokenAndReturnValueThrowsE
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([](auto) -> int { throw 0; }));
+    EXPECT_ANY_THROW([[maybe_unused]] auto const unused = strand.execute([](auto) -> int {
+        throw 0;
+    }));
 }

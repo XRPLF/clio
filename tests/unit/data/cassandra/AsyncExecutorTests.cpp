@@ -26,19 +26,19 @@ protected:
         MOCK_METHOD(void, onRetry, ());
     };
     CallbackMock callbackMock_;
-    std::function<void()> onRetry_ = [this]() { callbackMock_.onRetry(); };
+    std::function<void()> onRetry_ = [this] { callbackMock_.onRetry(); };
 };
 
 TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
 {
-    auto handle = MockHandle{};
+    auto const handle = MockHandle{};
 
     ON_CALL(
         handle,
         asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>())
     )
         .WillByDefault([this](auto const&, auto&& cb) {
-            boost::asio::post(ctx_, [cb = std::forward<decltype(cb)>(cb)]() { cb({}); });
+            boost::asio::post(ctx_, [cb = std::forward<decltype(cb)>(cb)] { cb({}); });
             return FakeFutureWithCallback{};
         });
     EXPECT_CALL(
@@ -67,7 +67,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
 TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMainThread)
 {
     auto callCount = std::atomic_int{0};
-    auto handle = MockHandle{};
+    auto const handle = MockHandle{};
 
     // emulate successful execution after some attempts
     ON_CALL(
@@ -112,7 +112,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
 TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOtherThread)
 {
     auto callCount = std::atomic_int{0};
-    auto handle = MockHandle{};
+    auto const handle = MockHandle{};
 
     auto threadedCtx = boost::asio::io_context{};
     auto work = std::make_optional(boost::asio::make_work_guard(threadedCtx));
@@ -163,7 +163,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
 
 TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnFailureAfterRetryCountExceeded)
 {
-    auto handle = MockHandle{};
+    auto const handle = MockHandle{};
 
     // FakeRetryPolicy returns false for shouldRetry in which case we should
     // still call onComplete giving it whatever error we have raised internally.

@@ -29,7 +29,7 @@ getParseWhitelistHandlerConfig(boost::json::value val)
     auto config =
         ClioConfigDefinition{{"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}}};
     auto const errors = config.parse(jsonVal);
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
+    [&] { ASSERT_FALSE(errors.has_value()); }();
     return config;
 }
 
@@ -61,7 +61,7 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
         });
 
     ClioConfigDefinition const cfg{
-        getParseWhitelistHandlerConfig(boost::json::parse(kJsonDataIpV4))
+        getParseWhitelistHandlerConfig(boost::json::parse(kJsonDataIpV4)),
     };
     auto const result = WhitelistHandler::create(cfg, mockResolver);
     ASSERT_TRUE(result.has_value());
@@ -87,7 +87,7 @@ TEST_F(WhitelistHandlerTest, TestWhiteListResolvesHostname)
     )JSON";
 
     ClioConfigDefinition const cfg{
-        getParseWhitelistHandlerConfig(boost::json::parse(kJsonDataIpV4))
+        getParseWhitelistHandlerConfig(boost::json::parse(kJsonDataIpV4)),
     };
     auto const result = WhitelistHandler::create(cfg);
     ASSERT_TRUE(result.has_value());
@@ -113,7 +113,7 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV6)
     )JSON";
 
     ClioConfigDefinition const cfg{
-        getParseWhitelistHandlerConfig(boost::json::parse(kJsonDataIpV6))
+        getParseWhitelistHandlerConfig(boost::json::parse(kJsonDataIpV6)),
     };
     auto const result = WhitelistHandler::create(cfg);
     ASSERT_TRUE(result.has_value());

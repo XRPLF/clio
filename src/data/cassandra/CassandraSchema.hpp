@@ -34,7 +34,7 @@ public:
         //
         // Update (and "delete") queries
         //
-        PreparedStatement updateLedgerRange = [this]() {
+        PreparedStatement updateLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -52,7 +52,7 @@ public:
         // Select queries
         //
 
-        PreparedStatement selectNFTIDsByIssuer = [this]() {
+        PreparedStatement selectNFTIDsByIssuer = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -68,7 +68,7 @@ public:
             );
         }();
 
-        PreparedStatement selectAccountFromBeginning = [this]() {
+        PreparedStatement selectAccountFromBeginning = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -83,7 +83,7 @@ public:
             );
         }();
 
-        PreparedStatement selectAccountFromToken = [this]() {
+        PreparedStatement selectAccountFromToken = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -98,7 +98,7 @@ public:
             );
         }();
 
-        PreparedStatement selectLedgerPageKeys = [this]() {
+        PreparedStatement selectLedgerPageKeys = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(
@@ -115,7 +115,7 @@ public:
             );
         }();
 
-        PreparedStatement selectLedgerPage = [this]() {
+        PreparedStatement selectLedgerPage = [this] {
             return handle_.get().prepare(
                 fmt::format(
                     R"(

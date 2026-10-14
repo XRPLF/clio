@@ -144,7 +144,7 @@ private:
             auto const g = to_string(deltaGets.get<xrpl::Issue>());
             auto const p = to_string(deltaPays.get<xrpl::Issue>());
 
-            auto const noswap = [&]() {
+            auto const noswap = [&] {
                 if (isXRP(deltaGets))
                     return true;
                 return isXRP(deltaPays) ? false : (g < p);
@@ -232,11 +232,11 @@ private:
 inline void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const& change)
 {
-    auto amountStr = [](xrpl::STAmount const& amount) -> std::string {
+    auto const amountStr = [](xrpl::STAmount const& amount) -> std::string {
         return isXRP(amount) ? to_string(amount.xrp()) : to_string(amount.iou());
     };
 
-    auto currencyStr = [](xrpl::STAmount const& amount) -> std::string {
+    auto const currencyStr = [](xrpl::STAmount const& amount) -> std::string {
         return isXRP(amount) ? "XRP_drops" : to_string(amount.get<xrpl::Issue>());
     };
 

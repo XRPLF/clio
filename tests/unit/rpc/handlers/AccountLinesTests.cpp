@@ -400,7 +400,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIntIndex)
 TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 31);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 31);
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
@@ -452,7 +452,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
 // error case account not exist
 TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLedgerHash}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
@@ -482,14 +482,14 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
 // normal case when only provide account
 TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kAccount);
-    auto accountKk = xrpl::keylet::account(account).key;
-    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
-    auto fake = Blob{'f', 'a', 'k', 'e'};
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
@@ -553,7 +553,7 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
                 ]
             })JSON";
 
-        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(correctOutput), *output.result);
@@ -563,14 +563,14 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
 // normal case : limit is used
 TEST_F(RPCAccountLinesHandlerTest, UseLimit)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(3);
     // fetch account object return something
-    auto account = getAccountIdWithString(kAccount);
-    auto accountKk = xrpl::keylet::account(account).key;
-    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
-    auto fake = Blob{'f', 'a', 'k', 'e'};
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
@@ -598,7 +598,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(3);
 
     runSpawn([this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const input = boost::json::parse(
             fmt::format(
                 R"JSON({{
@@ -652,14 +652,14 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
 // normal case : destination is used
 TEST_F(RPCAccountLinesHandlerTest, UseDestination)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kAccount);
-    auto accountKk = xrpl::keylet::account(account).key;
-    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
-    auto fake = Blob{'f', 'a', 'k', 'e'};
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
@@ -708,7 +708,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("lines").as_array().size(), 20);
@@ -718,14 +718,14 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
 // normal case : but the lines is empty
 TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kAccount);
-    auto accountKk = xrpl::keylet::account(account).key;
-    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
-    auto fake = Blob{'f', 'a', 'k', 'e'};
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
@@ -745,7 +745,7 @@ TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("lines").as_array().size(), 0);
@@ -790,14 +790,14 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseFieldWithDeepFreeze)
         ]
     })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kAccount);
-    auto accountKk = xrpl::keylet::account(account).key;
-    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
-    auto fake = Blob{'f', 'a', 'k', 'e'};
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const fake = Blob{'f', 'a', 'k', 'e'};
 
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
@@ -842,7 +842,7 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseFieldWithDeepFreeze)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(kCorrectOutput), *output.result);
@@ -883,14 +883,14 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
         ]
     })JSON";
 
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // fetch account object return something
-    auto account = getAccountIdWithString(kAccount);
-    auto accountKk = xrpl::keylet::account(account).key;
-    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
-    auto fake = Blob{'f', 'a', 'k', 'e'};
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const fake = Blob{'f', 'a', 'k', 'e'};
 
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
@@ -929,7 +929,7 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(kCorrectOutput), *output.result);
@@ -939,23 +939,23 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
 // normal case : test marker output correct
 TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
 {
-    auto account = getAccountIdWithString(kAccount);
-    auto accountKk = xrpl::keylet::account(account).key;
-    auto ownerDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
     static constexpr auto kNextPage = 99;
     static constexpr auto kLimit = 15;
-    auto ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNextPage).key;
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNextPage).key;
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto fake = Blob{'f', 'a', 'k', 'e'};
+    auto const fake = Blob{'f', 'a', 'k', 'e'};
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    auto line = createRippleStateLedgerObject(
+    auto const line = createRippleStateLedgerObject(
         "USD", kAccount2, 10, kAccount, 100, kAccount2, 200, kTxnId, 0
     );
 
@@ -999,7 +999,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
@@ -1013,16 +1013,16 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
 // normal case : handler marker correctly
 TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
 {
-    auto account = getAccountIdWithString(kAccount);
-    auto accountKk = xrpl::keylet::account(account).key;
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
     static constexpr auto kNextPage = 99;
     static constexpr auto kLimit = 15;
-    auto ownerDirKk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNextPage).key;
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ownerDirKk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNextPage).key;
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto fake = Blob{'f', 'a', 'k', 'e'};
+    auto const fake = Blob{'f', 'a', 'k', 'e'};
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
@@ -1062,7 +1062,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().if_contains("marker") == nullptr);
@@ -1074,14 +1074,14 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
 
 TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kAccount);
-    auto accountKk = xrpl::keylet::account(account).key;
-    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
-    auto fake = Blob{'f', 'a', 'k', 'e'};
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
@@ -1149,7 +1149,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
             AccountLinesHandler::kLimitMin
         );
 
-        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(correctOutput), *output.result);
@@ -1158,14 +1158,14 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
 
 TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
 {
-    auto ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
-    auto account = getAccountIdWithString(kAccount);
-    auto accountKk = xrpl::keylet::account(account).key;
-    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
-    auto fake = Blob{'f', 'a', 'k', 'e'};
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
         .WillByDefault(Return(fake));
@@ -1233,7 +1233,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
             AccountLinesHandler::kLimitMax
         );
 
-        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(boost::json::parse(correctOutput), *output.result);
@@ -1252,7 +1252,7 @@ TEST(RPCAccountLinesHandlerSpecTest, DeprecatedFields)
         {"marker", "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun,0"},
         {"ledger", 123},
         {"strict", true},
-        {"peer_index", 456}
+        {"peer_index", 456},
     };
     auto const spec = AccountLinesHandler::spec(2);
     auto const warnings = rpc::spec::toJsonArray(spec.check(json));

@@ -13,7 +13,7 @@ void
 callWithTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function)
 {
     std::promise<void> promise;
-    auto future = promise.get_future();
+    auto const future = promise.get_future();
     std::thread t([&promise, &function] {
         function();
         promise.set_value();

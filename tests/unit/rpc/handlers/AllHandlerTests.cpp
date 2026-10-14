@@ -138,7 +138,9 @@ private:
             return HandlerType{this->backend_, this->mockAmendmentCenterPtr_};
         } else if constexpr (std::is_same_v<HandlerType, SubscribeHandler>) {
             return HandlerType{
-                this->backend_, this->mockAmendmentCenterPtr_, this->mockSubscriptionManagerPtr_
+                this->backend_,
+                this->mockAmendmentCenterPtr_,
+                this->mockSubscriptionManagerPtr_,
             };
         } else if constexpr (std::is_same_v<HandlerType, AccountTxHandler>) {
             return HandlerType{this->backend_, mockETLServicePtr_};
@@ -148,7 +150,7 @@ private:
                 this->mockSubscriptionManagerPtr_,
                 mockLoadBalancerPtr_,
                 mockETLServicePtr_,
-                *mockCountersPtr_
+                *mockCountersPtr_,
             };
         } else {
             return HandlerType{this->backend_};
@@ -244,9 +246,14 @@ createInput<SubscribeHandler>()
 {
     SubscribeHandler::Input input{};
 
-    input.books = std::vector<SubscribeHandler::OrderBook>{SubscribeHandler::OrderBook{
-        .book = xrpl::Book{}, .taker = kAccount, .snapshot = true, .both = true
-    }};
+    input.books = std::vector<SubscribeHandler::OrderBook>{
+        SubscribeHandler::OrderBook{
+            .book = xrpl::Book{},
+            .taker = kAccount,
+            .snapshot = true,
+            .both = true,
+        },
+    };
     return input;
 }
 
@@ -273,7 +280,7 @@ TYPED_TEST(AllHandlersAssertTest, NoRangeAvailable)
             auto const context = Context{yield, this->session_};
 
             EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-                { [[maybe_unused]] auto unused = handler.process(input, context); },
+                { [[maybe_unused]] auto const unused = handler.process(input, context); },
                 "Assertion .* failed at .*"
             );
         },

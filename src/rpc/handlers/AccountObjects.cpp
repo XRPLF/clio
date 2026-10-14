@@ -62,7 +62,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
         auto const& deletionBlockers = util::LedgerTypes::getDeletionBlockerLedgerTypes();
         typeFilter->reserve(deletionBlockers.size());
 
-        for (auto type : deletionBlockers) {
+        for (auto const type : deletionBlockers) {
             if (input.type && input.type != type)
                 continue;
 
@@ -170,7 +170,7 @@ tag_invoke(
     };
 
     if (output.marker)
-        jv.as_object()[JS(marker)] = *(output.marker);
+        jv.as_object()[JS(marker)] = *output.marker;
 }
 
 }  // namespace rpc

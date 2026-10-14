@@ -84,10 +84,12 @@ struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus,
                                  SyncAsioContextTest {
     util::config::ClioConfigDefinition cfg{
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
-        {"api_version.default",
-         ConfigValue{ConfigType::Integer}.defaultValue(rpc::kApiVersionDefault)},
+        {
+            "api_version.default",
+            ConfigValue{ConfigType::Integer}.defaultValue(rpc::kApiVersionDefault),
+        },
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kApiVersionMin)},
-        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kApiVersionMax)}
+        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kApiVersionMax)},
     };
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine = std::make_shared<MockAsyncRPCEngine>();
     std::shared_ptr<MockETLService> etl = std::make_shared<MockETLService>();
@@ -926,8 +928,8 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
 {
     session->upgraded = true;
 
-    auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(
+    auto const localRpcEngine = std::make_shared<MockRPCEngine>();
+    auto const localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(
         cfg, backend_, localRpcEngine, etl, dosguard
     );
     static constexpr auto kRequest = R"JSON({
@@ -959,8 +961,8 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
 
 TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
 {
-    auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(
+    auto const localRpcEngine = std::make_shared<MockRPCEngine>();
+    auto const localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(
         cfg, backend_, localRpcEngine, etl, dosguard
     );
     static constexpr auto kRequest = R"JSON({
@@ -1040,16 +1042,20 @@ auto
 generateInvalidVersions()
 {
     return std::vector<InvalidAPIVersionTestBundle>{
-        {.testName = "v0",
-         .version = "0",
-         .wsMessage = fmt::format(
-             "Requested API version is lower than minimum supported ({})", rpc::kApiVersionMin
-         )},
-        {.testName = "v4",
-         .version = "4",
-         .wsMessage = fmt::format(
-             "Requested API version is higher than maximum supported ({})", rpc::kApiVersionMax
-         )},
+        {
+            .testName = "v0",
+            .version = "0",
+            .wsMessage = fmt::format(
+                "Requested API version is lower than minimum supported ({})", rpc::kApiVersionMin
+            ),
+        },
+        {
+            .testName = "v4",
+            .version = "4",
+            .wsMessage = fmt::format(
+                "Requested API version is higher than maximum supported ({})", rpc::kApiVersionMax
+            ),
+        },
         {.testName = "null", .version = "null", .wsMessage = "API version must be an integer"},
         {.testName = "str", .version = "\"bogus\"", .wsMessage = "API version must be an integer"},
         {.testName = "bool", .version = "false", .wsMessage = "API version must be an integer"},
@@ -1066,7 +1072,7 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, HTTPInvalidAPIVersion)
 {
-    auto request = fmt::format(
+    auto const request = fmt::format(
         R"JSON({{
             "method": "server_info",
             "params": [{{
@@ -1092,7 +1098,7 @@ TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, HTTPInvalidAPIVersion)
 TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, WSInvalidAPIVersion)
 {
     session->upgraded = true;
-    auto request = fmt::format(
+    auto const request = fmt::format(
         R"JSON({{
             "method": "server_info",
             "api_version": {}

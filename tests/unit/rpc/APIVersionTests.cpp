@@ -31,29 +31,31 @@ TEST_F(RPCAPIVersionTest, ReturnsDefaultVersionIfNotSpecified)
 
 TEST_F(RPCAPIVersionTest, ReturnsErrorIfVersionHigherThanMaxSupported)
 {
-    auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": 11})JSON").as_object());
+    auto const ver =
+        parser_.parse(boost::json::parse(R"JSON({"api_version": 11})JSON").as_object());
     EXPECT_FALSE(ver);
 }
 
 TEST_F(RPCAPIVersionTest, ReturnsErrorIfVersionLowerThanMinSupported)
 {
-    auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": 1})JSON").as_object());
+    auto const ver = parser_.parse(boost::json::parse(R"JSON({"api_version": 1})JSON").as_object());
     EXPECT_FALSE(ver);
 }
 
 TEST_F(RPCAPIVersionTest, ReturnsErrorOnWrongType)
 {
     {
-        auto ver =
+        auto const ver =
             parser_.parse(boost::json::parse(R"JSON({"api_version": null})JSON").as_object());
         EXPECT_FALSE(ver);
     }
     {
-        auto ver = parser_.parse(boost::json::parse(R"JSON({"api_version": "5"})JSON").as_object());
+        auto const ver =
+            parser_.parse(boost::json::parse(R"JSON({"api_version": "5"})JSON").as_object());
         EXPECT_FALSE(ver);
     }
     {
-        auto ver =
+        auto const ver =
             parser_.parse(boost::json::parse(R"JSON({"api_version": "wrong"})JSON").as_object());
         EXPECT_FALSE(ver);
     }
@@ -83,7 +85,7 @@ TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
     ClioConfigDefinition const cfg{
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(kMinApiVersion)},
         {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(kMaxApiVersion)},
-        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(kDefaultApiVersion)}
+        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(kDefaultApiVersion)},
     };
 
     ProductionAPIVersionParser const configuredParser{cfg.getObject("api_version")};
@@ -113,13 +115,13 @@ TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
         EXPECT_EQ(ver.value(), kDefaultApiVersion);
     }
     {
-        auto ver = configuredParser.parse(
+        auto const ver = configuredParser.parse(
             boost::json::parse(R"JSON({"api_version": 11})JSON").as_object()
         );
         EXPECT_FALSE(ver);
     }
     {
-        auto ver =
+        auto const ver =
             configuredParser.parse(boost::json::parse(R"JSON({"api_version": 1})JSON").as_object());
         EXPECT_FALSE(ver);
     }

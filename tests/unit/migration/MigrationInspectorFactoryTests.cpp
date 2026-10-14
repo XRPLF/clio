@@ -20,8 +20,10 @@ struct MigrationInspectorFactoryTests : util::prometheus::WithPrometheus,
                                         MockBackendTest {
 protected:
     util::config::ClioConfigDefinition const readerConfig_ = util::config::ClioConfigDefinition{
-        {"read_only",
-         util::config::ConfigValue{util::config::ConfigType::Boolean}.defaultValue(true)}
+        {
+            "read_only",
+            util::config::ConfigValue{util::config::ConfigType::Boolean}.defaultValue(true),
+        },
     };
 };
 
@@ -42,8 +44,10 @@ TEST_F(MigrationInspectorFactoryTests, BackendIsWriterAndDBEmpty)
     EXPECT_CALL(*backend_, hardFetchLedgerRange).WillOnce(Return(std::nullopt));
 
     util::config::ClioConfigDefinition const writerConfig = util::config::ClioConfigDefinition{
-        {"read_only",
-         util::config::ConfigValue{util::config::ConfigType::Boolean}.defaultValue(false)}
+        {
+            "read_only",
+            util::config::ConfigValue{util::config::ConfigType::Boolean}.defaultValue(false),
+        },
     };
     EXPECT_NE(migration::makeMigrationInspector(writerConfig, backend_), nullptr);
 }
@@ -54,8 +58,10 @@ TEST_F(MigrationInspectorFactoryTests, BackendIsWriterAndDBNotEmpty)
     EXPECT_CALL(*backend_, hardFetchLedgerRange).WillOnce(Return(range));
 
     util::config::ClioConfigDefinition const writerConfig = util::config::ClioConfigDefinition{
-        {"read_only",
-         util::config::ConfigValue{util::config::ConfigType::Boolean}.defaultValue(false)}
+        {
+            "read_only",
+            util::config::ConfigValue{util::config::ConfigType::Boolean}.defaultValue(false),
+        },
     };
     EXPECT_NE(migration::makeMigrationInspector(writerConfig, backend_), nullptr);
 }

@@ -453,7 +453,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    auto obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
+    auto const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
 
@@ -642,7 +642,7 @@ TEST_F(FeedTransactionTest, SubBookV2)
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto trans1 = TransactionAndMetadata();
-    auto obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
+    auto const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
 

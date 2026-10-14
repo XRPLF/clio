@@ -68,7 +68,7 @@ extractTx(PBTxType tx, uint32_t seq)
         .meta = std::move(meta),
         .id = sttx.getTransactionID(),
         .key = uint256ToString(sttx.getTransactionID()),
-        .type = sttx.getTxnType()
+        .type = sttx.getTxnType(),
     };
 }
 
@@ -164,7 +164,7 @@ auto
 Extractor::unpack()
 {
     return [](auto&& data) {
-        auto header = ::util::deserializeHeader(xrpl::makeSlice(data.ledger_header()));
+        auto const header = ::util::deserializeHeader(xrpl::makeSlice(data.ledger_header()));
 
         return std::make_optional<model::LedgerData>({
             .transactions = extractTxs(

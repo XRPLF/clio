@@ -45,10 +45,10 @@ struct ForwardingSourceOperationsTests : ForwardingSourceTests {
     {
         // First connection attempt is SSL handshake so it will fail
         auto failedConnection = server_.acceptConnection(yield);
-        [&]() { ASSERT_FALSE(failedConnection); }();
+        [&] { ASSERT_FALSE(failedConnection); }();
 
         auto connection = server_.acceptConnection(yield);
-        [&]() { ASSERT_TRUE(connection) << connection.error().message(); }();
+        [&] { ASSERT_TRUE(connection) << connection.error().message(); }();
         return std::move(connection).value();
     }
 
@@ -64,7 +64,7 @@ TEST_F(ForwardingSourceOperationsTests, XUserHeader)
         auto connection = serverConnection(yield);
         auto headers = connection.headers();
         ASSERT_FALSE(headers.empty());
-        auto it = std::ranges::find_if(headers, [](auto const& header) {
+        auto const it = std::ranges::find_if(headers, [](auto const& header) {
             return std::holds_alternative<std::string>(header.name) &&
                 std::get<std::string>(header.name) == "X-User";
         });
@@ -121,12 +121,12 @@ TEST_F(ForwardingSourceOperationsTests, ParseFailed)
         auto connection = serverConnection(yield);
 
         auto receivedMessage = connection.receive(yield);
-        [&]() { ASSERT_TRUE(receivedMessage); }();
+        [&] { ASSERT_TRUE(receivedMessage); }();
         EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_))
             << *receivedMessage;
 
         auto sendError = connection.send("invalid_json", yield);
-        [&]() { ASSERT_FALSE(sendError) << *sendError; }();
+        [&] { ASSERT_FALSE(sendError) << *sendError; }();
 
         connection.close(yield);
     });
@@ -146,13 +146,13 @@ TEST_F(ForwardingSourceOperationsTests, GotNotAnObject)
         auto connection = serverConnection(yield);
 
         auto receivedMessage = connection.receive(yield);
-        [&]() { ASSERT_TRUE(receivedMessage); }();
+        [&] { ASSERT_TRUE(receivedMessage); }();
         EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_))
             << *receivedMessage;
 
         auto sendError = connection.send(R"(["some_value"])", yield);
 
-        [&]() { ASSERT_FALSE(sendError) << *sendError; }();
+        [&] { ASSERT_FALSE(sendError) << *sendError; }();
 
         connection.close(yield);
     });
@@ -172,19 +172,19 @@ TEST_F(ForwardingSourceOperationsTests, Success)
         auto connection = serverConnection(yield);
 
         auto receivedMessage = connection.receive(yield);
-        [&]() { ASSERT_TRUE(receivedMessage); }();
+        [&] { ASSERT_TRUE(receivedMessage); }();
         EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_))
             << *receivedMessage;
 
         auto sendError = connection.send(boost::json::serialize(reply_), yield);
-        [&]() { ASSERT_FALSE(sendError) << *sendError; }();
+        [&] { ASSERT_FALSE(sendError) << *sendError; }();
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
         auto result = forwardingSource_.forwardToRippled(
             boost::json::parse(message_).as_object(), "some_ip", {}, yield
         );
-        [&]() { ASSERT_TRUE(result); }();
+        [&] { ASSERT_TRUE(result); }();
         auto expectedReply = reply_;
         expectedReply["forwarded"] = true;
         EXPECT_EQ(*result, expectedReply) << *result;

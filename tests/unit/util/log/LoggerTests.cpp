@@ -69,7 +69,7 @@ TEST_F(LoggerTest, LOGMacro)
     Logger const log{"General"};
 
     auto computeCalled = false;
-    auto compute = [&computeCalled]() {
+    auto const compute = [&computeCalled] {
         computeCalled = true;
         return "computed";
     };
@@ -86,7 +86,7 @@ TEST_F(LoggerTest, ManyDynamicLoggers)
 {
     static constexpr size_t kNumLoggers = 10'000;
 
-    auto initialLoggers = loggersNum();
+    auto const initialLoggers = loggersNum();
 
     for (size_t i = 0; i < kNumLoggers; ++i) {
         std::string const loggerName = "DynamicLogger" + std::to_string(i);
@@ -126,23 +126,31 @@ struct LogFileRotationTests : ::testing::Test {
 
         {"log.level", ConfigValue{ConfigType::String}.defaultValue("info")},
 
-        {"log.format",
-         ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
+        {
+            "log.format",
+            ConfigValue{ConfigType::String}.defaultValue(
+                R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)"
+            ),
+        },
         {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
         {"log.enable_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
         {"log.directory", ConfigValue{ConfigType::String}.optional()},
 
-        {"log.rotation_size",
-         ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(
-             util::config::gValidateUint32
-         )},
+        {
+            "log.rotation_size",
+            ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(
+                util::config::gValidateUint32
+            ),
+        },
 
-        {"log.directory_max_files",
-         ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(
-             util::config::gValidateUint32
-         )},
+        {
+            "log.directory_max_files",
+            ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(
+                util::config::gValidateUint32
+            ),
+        },
 
         {"log.rotate", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
@@ -199,11 +207,13 @@ TEST_F(LogFileRotationTests, RotationDisabledProducesSingleLogFile)
 {
     auto const parsingErrors = config.parse(
         ConfigFileJson{boost::json::object{
-            {"log",
-             boost::json::object{
-                 {"directory", tmpDir.string()},
-                 {"rotate", false},
-             }}
+            {
+                "log",
+                boost::json::object{
+                    {"directory", tmpDir.string()},
+                    {"rotate", false},
+                },
+            },
         }}
     );
     ASSERT_FALSE(parsingErrors.has_value());
@@ -224,13 +234,15 @@ TEST_F(LogFileRotationTests, RotationEnabledProducesMultipleLogFiles)
 {
     auto const parsingErrors = config.parse(
         ConfigFileJson{boost::json::object{
-            {"log",
-             boost::json::object{
-                 {"directory", tmpDir.string()},
-                 {"rotate", true},
-                 {"rotation_size", 1},
-                 {"directory_max_files", 2},
-             }}
+            {
+                "log",
+                boost::json::object{
+                    {"directory", tmpDir.string()},
+                    {"rotate", true},
+                    {"rotation_size", 1},
+                    {"directory_max_files", 2},
+                },
+            },
         }}
     );
     ASSERT_FALSE(parsingErrors.has_value());

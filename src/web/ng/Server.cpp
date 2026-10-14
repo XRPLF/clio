@@ -103,7 +103,9 @@ detectSsl(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
         return std::unexpected{fmt::format("Detector failed (detect): {}", errorCode.message())};
 
     return SslDetectionResult{
-        .socket = tcpStream.release_socket(), .isSsl = isSsl, .buffer = std::move(buffer)
+        .socket = tcpStream.release_socket(),
+        .isSsl = isSsl,
+        .buffer = std::move(buffer),
     };
 }
 
@@ -112,7 +114,7 @@ makeConnection(
     SslDetectionResult sslDetectionResult,
     std::optional<boost::asio::ssl::context>& sslContext,
     std::string ip,
-    util::TagDecoratorFactory& tagDecoratorFactory,
+    util::TagDecoratorFactory const& tagDecoratorFactory,
     Server::OnConnectCheck onConnectCheck,
     size_t maxSendingQueueSize,
     boost::asio::yield_context yield
@@ -165,7 +167,7 @@ makeConnection(
 std::expected<ConnectionPtr, std::string>
 tryUpgradeConnection(
     impl::UpgradableConnectionPtr connection,
-    util::TagDecoratorFactory& tagDecoratorFactory,
+    util::TagDecoratorFactory const& tagDecoratorFactory,
     size_t maxSendingQueueSize,
     boost::asio::yield_context yield
 )
@@ -395,7 +397,7 @@ makeServer(
         Server::Hooks{
             .onConnectCheck = std::move(onConnectCheck),
             .onIpChangeHook = std::move(onIpChangeHook),
-            .onDisconnectHook = std::move(onDisconnectHook)
+            .onDisconnectHook = std::move(onDisconnectHook),
         }
     };
 }

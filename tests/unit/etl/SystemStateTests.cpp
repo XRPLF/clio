@@ -17,7 +17,7 @@ struct SystemStateTest : util::prometheus::WithPrometheus {};
 
 TEST_F(SystemStateTest, InitialValuesAreCorrect)
 {
-    auto state = SystemState{};
+    auto const state = SystemState{};
 
     EXPECT_FALSE(state.isStrictReadonly);
     EXPECT_FALSE(state.isWriting);
@@ -41,7 +41,7 @@ TEST_P(SystemStateReadOnlyTest, MakeSystemStateWithReadOnly)
     auto const errors = config.parse(configFile);
     ASSERT_FALSE(errors.has_value());
 
-    auto state = SystemState::makeSystemState(config);
+    auto const state = SystemState::makeSystemState(config);
 
     EXPECT_EQ(state->isStrictReadonly, readOnlyValue);
     EXPECT_FALSE(state->isWriting);

@@ -45,7 +45,7 @@ TransactionFeed::TransactionSlot::operator()(
     std::shared_ptr<AllVersionsMsgsType> const& allVersionMsgs
 ) const
 {
-    if (auto connection = subscriptionContextWeakPtr.lock(); connection) {
+    if (auto const connection = subscriptionContextWeakPtr.lock(); connection) {
         // Check if this connection already sent
         if (feed.get().notified_.contains(connection.get()))
             return;
@@ -220,7 +220,7 @@ TransactionFeed::pub(
         auto const account = tx->getAccountID(xrpl::sfAccount);
         auto const amount = tx->getFieldAmount(xrpl::sfTakerGets);
         if (account != amount.get<xrpl::Issue>().account) {
-            auto fetchFundsSynchronous = [&]() {
+            auto const fetchFundsSynchronous = [&] {
                 data::synchronous([&](boost::asio::yield_context yield) {
                     ownerFunds = rpc::accountFunds(
                         *backend, *amendmentCenter, lgrInfo.seq, amount, account, yield
@@ -340,12 +340,12 @@ TransactionFeed::pub(
         }
     }
 
-    [[maybe_unused]] auto task =
+    [[maybe_unused]] auto const task =
         strand_.execute([this,
                          allVersionsMsgs = std::move(allVersionsMsgs),
                          affectedAccounts = std::move(affectedAccounts),
                          affectedBooks = std::move(affectedBooks),
-                         affectedMPTIssuances = std::move(affectedMPTIssuances)]() {
+                         affectedMPTIssuances = std::move(affectedMPTIssuances)] {
             notified_.clear();
             signal_.emit(allVersionsMsgs);
             // clear the notified set. If the same connection subscribes both transactions +

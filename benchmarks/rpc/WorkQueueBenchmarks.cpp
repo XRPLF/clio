@@ -32,15 +32,21 @@ auto const kConfig = ClioConfigDefinition{
     {"log.channels.[].channel", Array{ConfigValue{ConfigType::String}}},
     {"log.channels.[].level", Array{ConfigValue{ConfigType::String}}},
     {"log.level", ConfigValue{ConfigType::String}.defaultValue("info")},
-    {"log.format",
-     ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
+    {
+        "log.format",
+        ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)"),
+    },
     {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
     {"log.enable_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
     {"log.directory", ConfigValue{ConfigType::String}.optional()},
-    {"log.rotation_size",
-     ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
-    {"log.directory_max_files",
-     ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
+    {
+        "log.rotation_size",
+        ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32),
+    },
+    {
+        "log.directory_max_files",
+        ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32),
+    },
     {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
 };
 
@@ -68,7 +74,7 @@ benchmarkWorkQueue(benchmark::State& state)
     auto const itemsPerClient = static_cast<uint32_t>(state.range(3));
     auto const clientProcessingMs = static_cast<uint32_t>(state.range(4));
 
-    for (auto _ : state) {
+    for (auto const _ : state) {
         std::atomic_size_t totalExecuted = 0uz;
         std::atomic_size_t totalQueued = 0uz;
 

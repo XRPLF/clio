@@ -131,7 +131,7 @@ TEST_F(ResponseTest, asConstBufferJson)
 TEST_F(ResponseTest, createFromStringAndConnection)
 {
     util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
     StrictMockConnection const connection{
         "some ip", boost::beast::flat_buffer{}, tagDecoratorFactory
@@ -152,7 +152,7 @@ TEST_F(ResponseTest, createFromStringAndConnection)
 TEST_F(ResponseTest, createFromJsonAndConnection)
 {
     util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
-        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
     StrictMockConnection const connection{
         "some ip", boost::beast::flat_buffer{}, tagDecoratorFactory
@@ -182,7 +182,7 @@ TEST_F(ResponseTest, setMessageString_HttpResponse)
 
     EXPECT_EQ(response.message(), newMessage);
     auto const httpResponse = std::move(response).intoHttpResponse();
-    auto it = httpResponse.find(http::field::content_type);
+    auto const it = httpResponse.find(http::field::content_type);
     ASSERT_NE(it, httpResponse.end());
     EXPECT_EQ(it->value(), "text/html");
 }
@@ -209,7 +209,7 @@ TEST_F(ResponseTest, setMessageJson_HttpResponse)
     response.setMessage(newMessage);
 
     auto const httpResponse = std::move(response).intoHttpResponse();
-    auto it = httpResponse.find(http::field::content_type);
+    auto const it = httpResponse.find(http::field::content_type);
     ASSERT_NE(it, httpResponse.end());
     EXPECT_EQ(it->value(), "application/json");
 }

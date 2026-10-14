@@ -31,7 +31,7 @@ struct ChannelInstantiated;
 enum class ProducerType {
     Single,  ///< Only one Sender can exist (non-copyable).
              ///< Uses direct Guard ownership for zero overhead.
-    Multi    ///< Multiple Senders can exist (copyable).
+    Multi,   ///< Multiple Senders can exist (copyable).
              ///< Uses shared_ptr<Guard> for shared ownership.
 };
 
@@ -41,7 +41,7 @@ enum class ProducerType {
 enum class ConsumerType {
     Single,  ///< Only one Receiver can exist (non-copyable).
              ///< Uses direct Guard ownership for zero overhead.
-    Multi    ///< Multiple Receivers can exist (copyable).
+    Multi,   ///< Multiple Receivers can exist (copyable).
              ///< Uses shared_ptr<Guard> for shared ownership.
 };
 
@@ -143,7 +143,7 @@ public:
          * @param shared The shared control block managing the channel state
          */
         Sender(std::shared_ptr<ControlBlock> shared)
-            : shared_(shared), guard_([shared = std::move(shared)]() {
+            : shared_(shared), guard_([shared = std::move(shared)] {
                 if constexpr (kIsMultiProducer) {
                     return std::make_shared<Guard>(std::move(shared));
                 } else {
@@ -268,7 +268,7 @@ public:
          * @param shared The shared control block managing the channel state
          */
         Receiver(std::shared_ptr<ControlBlock> shared)
-            : shared_(shared), guard_([shared = std::move(shared)]() {
+            : shared_(shared), guard_([shared = std::move(shared)] {
                 if constexpr (kIsMultiConsumer) {
                     return std::make_shared<Guard>(std::move(shared));
                 } else {

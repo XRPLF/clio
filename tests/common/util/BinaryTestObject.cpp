@@ -66,7 +66,7 @@ createTransaction(xrpl::TxType type, std::string hashStr, std::string metaStr, s
         .meta = meta,
         .id = xrpl::uint256{"0000000000000000000000000000000000000000000000000000000000000001"},
         .key = "0000000000000000000000000000000000000000000000000000000000000001",
-        .type = type
+        .type = type,
     };
 }
 

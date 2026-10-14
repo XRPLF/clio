@@ -94,7 +94,7 @@ struct LedgerCacheSaveLoadTest : LedgerCacheTest {
             .dataRaw = {},
             .successor = {},
             .predecessor = {},
-            .type = {}
+            .type = {},
         },
         etl::model::Object{
             .key = key2,
@@ -103,8 +103,8 @@ struct LedgerCacheSaveLoadTest : LedgerCacheTest {
             .dataRaw = {},
             .successor = {},
             .predecessor = {},
-            .type = {}
-        }
+            .type = {},
+        },
     };
     uint32_t const kLedgerSeq = 100;
 };

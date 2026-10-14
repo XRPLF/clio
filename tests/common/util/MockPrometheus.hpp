@@ -164,7 +164,7 @@ struct MockPrometheusImpl : PrometheusInterface {
     {
         auto labelsString = labels.serialize();
         auto const key = name + labelsString;
-        auto it = metrics.find(key);
+        auto const it = metrics.find(key);
         if (it == metrics.end()) {
             return makeMetric<MetricType>(std::move(name), std::move(labelsString));
         }
@@ -180,6 +180,8 @@ struct MockPrometheusImpl : PrometheusInterface {
     {
         std::unique_ptr<MetricBase> metric;
         auto const key = name + labelsString;
+        // Metric constructors require a non-const mock reference
+        // NOLINTBEGIN(misc-const-correctness)
         if constexpr (std::is_same_v<MetricType, GaugeInt> or std::is_same_v<MetricType, Bool>) {
             auto& impl = counterIntImpls[key];
             metric = std::make_unique<GaugeInt>(name, labelsString, impl);
@@ -203,6 +205,7 @@ struct MockPrometheusImpl : PrometheusInterface {
         } else {
             throw std::runtime_error("Wrong metric type");
         }
+        // NOLINTEND(misc-const-correctness)
         auto* ptr = metrics.emplace(key, std::move(metric)).first->second.get();
         auto metricPtr = dynamic_cast<MetricType*>(ptr);
         ASSERT(metricPtr != nullptr, "Wrong metric type");
@@ -239,10 +242,14 @@ struct WithMockPrometheus : virtual ::testing::Test {
             std::cerr << "\n";
         }
         config::ClioConfigDefinition const config{
-            {"prometheus.compress_reply",
-             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)},
-            {"prometheus.enabled",
-             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)}
+            {
+                "prometheus.compress_reply",
+                config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true),
+            },
+            {
+                "prometheus.enabled",
+                config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true),
+            },
         };
         PrometheusService::replaceInstance(nullptr);
     }
@@ -295,10 +302,14 @@ struct WithPrometheusImpl : virtual ::testing::Test {
     WithPrometheusImpl()
     {
         config::ClioConfigDefinition const config{
-            {"prometheus.compress_reply",
-             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(false)},
-            {"prometheus.enabled",
-             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(IsEnabled)}
+            {
+                "prometheus.compress_reply",
+                config::ConfigValue{config::ConfigType::Boolean}.defaultValue(false),
+            },
+            {
+                "prometheus.enabled",
+                config::ConfigValue{config::ConfigType::Boolean}.defaultValue(IsEnabled),
+            },
         };
         PrometheusService::init(config);
     }

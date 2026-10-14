@@ -83,14 +83,14 @@ TEST(JsonUtils, tryIntegralValueAs)
     auto const expectedResultInt64 = static_cast<int64_t>(std::numeric_limits<int32_t>::max()) + 1u;
     auto const int64Json = boost::json::value(expectedResultInt64);
 
-    auto checkHasValue = [&](boost::json::value const& jv, auto const& expectedValue) {
+    auto const checkHasValue = [&](boost::json::value const& jv, auto const& expectedValue) {
         using T = std::remove_cvref_t<decltype(expectedValue)>;
         auto const res = util::tryIntegralValueAs<T>(jv);
         ASSERT_TRUE(res.has_value());
         EXPECT_EQ(res.value(), expectedValue);
     };
 
-    auto checkError = [&](boost::json::value const& jv) {
+    auto const checkError = [&](boost::json::value const& jv) {
         auto res = util::tryIntegralValueAs<int>(jv);
         EXPECT_FALSE(res.has_value());
         EXPECT_EQ(res.error(), "Value neither uint64 nor int64");

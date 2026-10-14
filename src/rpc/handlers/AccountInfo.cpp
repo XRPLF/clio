@@ -54,7 +54,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = *expectedLgrInfo;
-    auto const accountID = input.account ? *input.account : *input.ident;
+    // Clio's spec rejects a malformed account, so the deferred account always holds one
+    auto const accountID = *(input.account ? *input.account : *input.ident);
     auto const accountKeylet = xrpl::keylet::account(accountID);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
@@ -70,7 +71,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     if (!accountKeylet.check(sle))
         return Error{Status{XrpldError::RpcDbDeserialization}};
 
-    auto isEnabled = [this, &ctx, seq = lgrInfo.seq](auto key) {
+    auto const isEnabled = [this, &ctx, seq = lgrInfo.seq](auto key) {
         return amendmentCenter_->isEnabled(ctx.yield, key, seq);
     };
 
@@ -86,7 +87,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         .isClawbackEnabled = isClawbackEnabled,
         .isTokenEscrowEnabled = isTokenEscrowEnabled,
         .apiVersion = ctx.apiVersion,
-        .signerLists = std::nullopt
+        .signerLists = std::nullopt,
     };
 
     // Return SignerList(s) if that is requested.

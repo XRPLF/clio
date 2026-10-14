@@ -120,7 +120,7 @@ TEST_F(RetryWaitTests, WaitDoesNotBlockItsThread)
     bool ranBeforeWaitReturned = false;
 
     runSpawn([this, &ran, &ranBeforeWaitReturned](auto yield) {
-        boost::asio::post(ctx_, [&ran]() { ran = true; });
+        boost::asio::post(ctx_, [&ran] { ran = true; });
 
         auto retry = makeRetryExponentialBackoff(
             {.initial = std::chrono::milliseconds{20}, .max = std::chrono::milliseconds{20}},

@@ -335,7 +335,7 @@ struct ConfigFileJsonAssertTest : common::util::WithMockAssert, ConfigFileJsonTe
 TEST_F(ConfigFileJsonAssertTest, getValueInvalidKey)
 {
     auto const jsonFileObj = ConfigFileJson{boost::json::parse("{}").as_object()};
-    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getValue("some_key"));
+    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto const a = jsonFileObj.getValue("some_key"));
 }
 
 TEST_F(ConfigFileJsonAssertTest, getValueOfArray)
@@ -344,7 +344,7 @@ TEST_F(ConfigFileJsonAssertTest, getValueOfArray)
         "array": [1, 2, 3]
     })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
-    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getValue("array"));
+    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto const a = jsonFileObj.getValue("array"));
 }
 
 TEST_F(ConfigFileJsonAssertTest, nullIsNotSupported)
@@ -353,7 +353,7 @@ TEST_F(ConfigFileJsonAssertTest, nullIsNotSupported)
         "null": null
     })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
-    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getValue("null"));
+    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto const a = jsonFileObj.getValue("null"));
 }
 
 TEST_F(ConfigFileJsonTest, getArray)
@@ -447,7 +447,7 @@ TEST_F(ConfigFileJsonTest, getArrayOptionalInArray)
 TEST_F(ConfigFileJsonAssertTest, getArrayInvalidKey)
 {
     auto const jsonFileObj = ConfigFileJson{boost::json::parse("{}").as_object()};
-    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getArray("some_key"));
+    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto const a = jsonFileObj.getArray("some_key"));
 }
 
 TEST_F(ConfigFileJsonAssertTest, getArrayNotArray)
@@ -456,7 +456,7 @@ TEST_F(ConfigFileJsonAssertTest, getArrayNotArray)
         "int": 42
     })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
-    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getArray("int"));
+    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto const a = jsonFileObj.getArray("int"));
 }
 
 TEST_F(ConfigFileJsonTest, containsKey)
@@ -501,14 +501,14 @@ TEST_F(ConfigFileJsonTest, getAllKeys)
     std::ranges::sort(allKeys);
     EXPECT_EQ(allKeys.size(), 6);
 
-    std::vector<std::string> const expectedKeys{
-        {"array2.[]",
-         "array_of_objects.[].int",
-         "array_of_objects.[].string",
-         "int",
-         "object.array.[]",
-         "object.string"}
-    };
+    std::vector<std::string> const expectedKeys{{
+        "array2.[]",
+        "array_of_objects.[].int",
+        "array_of_objects.[].string",
+        "int",
+        "object.array.[]",
+        "object.string",
+    }};
     EXPECT_EQ(allKeys, expectedKeys);
 }
 

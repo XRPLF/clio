@@ -35,9 +35,11 @@ getNftokenModifyData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
     auto const tokenID = sttx.getFieldH256(xrpl::sfNFTokenID);
     // note: sfURI is optional, if it is absent, we will update the uri as empty string
     return {
-        {NFTTransactionsData(
-            sttx.getFieldH256(xrpl::sfNFTokenID), txMeta, sttx.getTransactionID()
-        )},
+        {
+            NFTTransactionsData(
+                sttx.getFieldH256(xrpl::sfNFTokenID), txMeta, sttx.getTransactionID()
+            ),
+        },
         NFTsData(tokenID, txMeta, sttx.getFieldVL(xrpl::sfURI))
     };
 }
@@ -88,7 +90,7 @@ getNFTokenMintData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
             // However, there will always be NFTs listed in the final fields,
             // as rippled outputs all fields in final fields even if they were
             // not changed.
-            xrpl::STObject const& previousFields =
+            auto const& previousFields =
                 node.peekAtField(xrpl::sfPreviousFields).downcast<xrpl::STObject>();
             if (!previousFields.isFieldPresent(xrpl::sfNFTokens))
                 continue;
@@ -139,7 +141,7 @@ getNFTokenBurnData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
 {
     xrpl::uint256 const tokenID = sttx.getFieldH256(xrpl::sfNFTokenID);
     std::vector<NFTTransactionsData> const txs = {
-        NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())
+        NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID()),
     };
 
     // Determine who owned the token when it was burned by finding an
@@ -161,7 +163,7 @@ getNFTokenBurnData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
         std::optional<xrpl::STArray> prevNFTs;
 
         if (node.isFieldPresent(xrpl::sfPreviousFields)) {
-            xrpl::STObject const& previousFields =
+            auto const& previousFields =
                 node.peekAtField(xrpl::sfPreviousFields).downcast<xrpl::STObject>();
             if (previousFields.isFieldPresent(xrpl::sfNFTokens))
                 prevNFTs = previousFields.getFieldArray(xrpl::sfNFTokens);
@@ -325,9 +327,11 @@ std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenCreateOfferData(xrpl::TxMeta const& txMeta, xrpl::STTx const& sttx)
 {
     return {
-        {NFTTransactionsData(
-            sttx.getFieldH256(xrpl::sfNFTokenID), txMeta, sttx.getTransactionID()
-        )},
+        {
+            NFTTransactionsData(
+                sttx.getFieldH256(xrpl::sfNFTokenID), txMeta, sttx.getTransactionID()
+            ),
+        },
         {}
     };
 }

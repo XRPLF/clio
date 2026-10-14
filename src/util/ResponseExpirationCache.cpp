@@ -64,12 +64,9 @@ ResponseExpirationCache::isBareRequest(boost::json::object const& request)
     static constexpr auto kIgnoredKeys =
         std::to_array<std::string_view>({"command", "method", "id"});
 
-    for (auto const& kv : request) {
-        std::string_view const key{kv.key()};
-        if (not std::ranges::contains(kIgnoredKeys, key))
-            return false;
-    }
-    return true;
+    return std::ranges::all_of(request, [](auto const& kv) {
+        return std::ranges::contains(kIgnoredKeys, std::string_view{kv.key()});
+    });
 }
 
 std::optional<boost::json::object>
@@ -78,7 +75,7 @@ ResponseExpirationCache::get(std::string const& cmd, boost::json::object const& 
     if (not isBareRequest(request))
         return std::nullopt;
 
-    auto it = cache_.find(cmd);
+    auto const it = cache_.find(cmd);
     if (it == cache_.end())
         return std::nullopt;
 

@@ -23,7 +23,7 @@ TEST(SpawnTest, SpawnOnStrand)
 {
     EXPECT_ANY_THROW([] {
         boost::asio::io_context io;
-        auto str = boost::asio::make_strand(io);
+        auto const str = boost::asio::make_strand(io);
         util::spawn(str, [](boost::asio::yield_context) {
             throw std::runtime_error("Test exception in coroutine");
         });

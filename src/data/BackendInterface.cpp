@@ -35,7 +35,7 @@ bool
 BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 {
     LOG(log_.debug()) << "Want finish writes for " << ledgerSequence;
-    auto commitRes = doFinishWrites();
+    auto const commitRes = doFinishWrites();
     if (commitRes) {
         LOG(log_.debug()) << "Successfully committed. Updating range now to " << ledgerSequence;
         updateRange(ledgerSequence);
@@ -52,7 +52,7 @@ BackendInterface::writeLedgerObject(std::string&& key, std::uint32_t const seq, 
 std::optional<LedgerRange>
 BackendInterface::hardFetchLedgerRangeNoThrow() const
 {
-    return retryOnTimeout([&]() { return hardFetchLedgerRange(); });
+    return retryOnTimeout([&] { return hardFetchLedgerRange(); });
 }
 
 // *** state data methods
@@ -174,18 +174,18 @@ BackendInterface::fetchBookOffers(
     xrpl::uint256 const bookEnd = xrpl::getQualityNext(book);
     xrpl::uint256 uTipIndex = book;
     std::vector<xrpl::uint256> keys;
-    auto getMillis = [](auto diff) {
+    auto const getMillis = [](auto diff) {
         return std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
     };
-    auto begin = std::chrono::system_clock::now();
+    auto const begin = std::chrono::system_clock::now();
     std::uint32_t numSucc = 0;
     std::uint32_t numPages = 0;
     long succMillis = 0;
     long pageMillis = 0;
     while (keys.size() < limit) {
-        auto mid1 = std::chrono::system_clock::now();
+        auto const mid1 = std::chrono::system_clock::now();
         auto offerDir = fetchSuccessorObject(uTipIndex, ledgerSequence, yield);
-        auto mid2 = std::chrono::system_clock::now();
+        auto const mid2 = std::chrono::system_clock::now();
         numSucc++;
         succMillis += getMillis(mid2 - mid1);
         if (not offerDir.has_value() || offerDir->key >= bookEnd) {
@@ -205,7 +205,7 @@ BackendInterface::fetchBookOffers(
                 LOG(log_.trace()) << "Next is empty. breaking";
                 break;
             }
-            auto nextKey = xrpl::keylet::page(uTipIndex, next);
+            auto const nextKey = xrpl::keylet::page(uTipIndex, next);
             auto nextDir = fetchLedgerObject(nextKey.key, ledgerSequence, yield);
             ASSERT(nextDir.has_value(), "Next dir must exist");
             // NOLINTBEGIN(bugprone-unchecked-optional-access)
@@ -213,10 +213,10 @@ BackendInterface::fetchBookOffers(
             offerDir->key = nextKey.key;
             // NOLINTEND(bugprone-unchecked-optional-access)
         }
-        auto mid3 = std::chrono::system_clock::now();
+        auto const mid3 = std::chrono::system_clock::now();
         pageMillis += getMillis(mid3 - mid2);
     }
-    auto mid = std::chrono::system_clock::now();
+    auto const mid = std::chrono::system_clock::now();
     auto objs = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < keys.size() && i < limit; ++i) {
         LOG(log_.trace()) << "Key = " << xrpl::strHex(keys[i])
@@ -225,7 +225,7 @@ BackendInterface::fetchBookOffers(
         ASSERT(!objs[i].empty(), "Ledger object can't be empty");
         page.offers.push_back({.key = keys[i], .blob = objs[i]});
     }
-    auto end = std::chrono::system_clock::now();
+    auto const end = std::chrono::system_clock::now();
     LOG(log_.debug()) << "Fetching " << std::to_string(keys.size()) << " offers took "
                       << std::to_string(getMillis(mid - begin))
                       << " milliseconds. Fetching next dir took " << std::to_string(succMillis)
@@ -308,7 +308,7 @@ BackendInterface::fetchLedgerPage(
     bool reachedEnd = false;
 
     while (keys.size() < limit && !reachedEnd) {
-        xrpl::uint256 const& curCursor = [&]() {
+        xrpl::uint256 const& curCursor = [&] {
             if (!keys.empty())
                 return keys.back();
             return (cursor ? *cursor : kFirstKey);
@@ -353,7 +353,7 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context 
 {
     xrpl::Fees fees;
 
-    auto key = xrpl::keylet::feeSettings().key;
+    auto const key = xrpl::keylet::feeSettings().key;
     auto bytes = fetchLedgerObject(key, seq, yield);
 
     if (!bytes) {

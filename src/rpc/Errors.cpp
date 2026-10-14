@@ -71,7 +71,7 @@ operator<<(std::ostream& stream, Status const& status)
                 } else {
                     stream << ", Message: " << getErrorInfo(err).message;
                 }
-            }
+            },
         },
         status.code
     );
@@ -231,7 +231,9 @@ makeError(Status const& status)
             [&status, &wrapOptional](XrpldError err) {
                 if (err == xrpl::RpcUnknown) {
                     return boost::json::object{
-                        {"error", status.message}, {"type", "response"}, {"status", "error"}
+                        {"error", status.message},
+                        {"type", "response"},
+                        {"status", "error"},
                     };
                 }
 

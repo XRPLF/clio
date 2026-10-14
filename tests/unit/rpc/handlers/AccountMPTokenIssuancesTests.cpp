@@ -134,58 +134,83 @@ static auto
 generateTestValuesForInvalidParamsTest()
 {
     return std::vector<AccountMPTokenIssuancesParamTestCaseBundle>{
-        {.testName = "NonHexLedgerHash",
-         .testJson =
-             fmt::format(R"JSON({{ "account": "{}", "ledger_hash": "xxx" }})JSON", kAccount),
-         .expectedError = "invalidParams",
-         .expectedErrorMessage = "ledger_hashMalformed"},
-        {.testName = "NonStringLedgerHash",
-         .testJson = fmt::format(R"JSON({{ "account": "{}", "ledger_hash": 123 }})JSON", kAccount),
-         .expectedError = "invalidParams",
-         .expectedErrorMessage = "ledger_hashNotString"},
-        {.testName = "InvalidLedgerIndexString",
-         .testJson = fmt::format(
-             R"JSON({{ "account": "{}", "ledger_index": "notvalidated" }})JSON", kAccount
-         ),
-         .expectedError = "invalidParams",
-         .expectedErrorMessage = "ledgerIndexMalformed"},
-        {.testName = "MarkerNotString",
-         .testJson = fmt::format(R"JSON({{ "account": "{}", "marker": 9 }})JSON", kAccount),
-         .expectedError = "invalidParams",
-         .expectedErrorMessage = "markerNotString"},
-        {.testName = "InvalidMarkerContent",
-         .testJson =
-             fmt::format(R"JSON({{ "account": "{}", "marker": "123invalid" }})JSON", kAccount),
-         .expectedError = "invalidParams",
-         .expectedErrorMessage = "Malformed cursor."},
-        {.testName = "AccountMissing",
-         .testJson = R"JSON({ "limit": 10 })JSON",
-         .expectedError = "invalidParams",
-         .expectedErrorMessage = "Required field 'account' missing"},
-        {.testName = "AccountNotString",
-         .testJson = R"JSON({ "account": 123 })JSON",
-         .expectedError = "actMalformed",
-         .expectedErrorMessage = "Account malformed."},
-        {.testName = "AccountMalformed",
-         .testJson = R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON",
-         .expectedError = "actMalformed",
-         .expectedErrorMessage = "Account malformed."},
-        {.testName = "LimitNotInteger",
-         .testJson = fmt::format(R"JSON({{ "account": "{}", "limit": "t" }})JSON", kAccount),
-         .expectedError = "invalidParams",
-         .expectedErrorMessage = "Invalid parameters."},
-        {.testName = "LimitNegative",
-         .testJson = fmt::format(R"JSON({{ "account": "{}", "limit": -1 }})JSON", kAccount),
-         .expectedError = "invalidParams",
-         .expectedErrorMessage = "Invalid parameters."},
-        {.testName = "LimitZero",
-         .testJson = fmt::format(R"JSON({{ "account": "{}", "limit": 0 }})JSON", kAccount),
-         .expectedError = "invalidParams",
-         .expectedErrorMessage = "Invalid parameters."},
-        {.testName = "LimitTypeInvalid",
-         .testJson = fmt::format(R"JSON({{ "account": "{}", "limit": true }})JSON", kAccount),
-         .expectedError = "invalidParams",
-         .expectedErrorMessage = "Invalid parameters."}
+        {
+            .testName = "NonHexLedgerHash",
+            .testJson =
+                fmt::format(R"JSON({{ "account": "{}", "ledger_hash": "xxx" }})JSON", kAccount),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashMalformed",
+        },
+        {
+            .testName = "NonStringLedgerHash",
+            .testJson =
+                fmt::format(R"JSON({{ "account": "{}", "ledger_hash": 123 }})JSON", kAccount),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashNotString",
+        },
+        {
+            .testName = "InvalidLedgerIndexString",
+            .testJson = fmt::format(
+                R"JSON({{ "account": "{}", "ledger_index": "notvalidated" }})JSON", kAccount
+            ),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledgerIndexMalformed",
+        },
+        {
+            .testName = "MarkerNotString",
+            .testJson = fmt::format(R"JSON({{ "account": "{}", "marker": 9 }})JSON", kAccount),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "markerNotString",
+        },
+        {
+            .testName = "InvalidMarkerContent",
+            .testJson =
+                fmt::format(R"JSON({{ "account": "{}", "marker": "123invalid" }})JSON", kAccount),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Malformed cursor.",
+        },
+        {
+            .testName = "AccountMissing",
+            .testJson = R"JSON({ "limit": 10 })JSON",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'account' missing",
+        },
+        {
+            .testName = "AccountNotString",
+            .testJson = R"JSON({ "account": 123 })JSON",
+            .expectedError = "actMalformed",
+            .expectedErrorMessage = "Account malformed.",
+        },
+        {
+            .testName = "AccountMalformed",
+            .testJson = R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON",
+            .expectedError = "actMalformed",
+            .expectedErrorMessage = "Account malformed.",
+        },
+        {
+            .testName = "LimitNotInteger",
+            .testJson = fmt::format(R"JSON({{ "account": "{}", "limit": "t" }})JSON", kAccount),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
+        },
+        {
+            .testName = "LimitNegative",
+            .testJson = fmt::format(R"JSON({{ "account": "{}", "limit": -1 }})JSON", kAccount),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
+        },
+        {
+            .testName = "LimitZero",
+            .testJson = fmt::format(R"JSON({{ "account": "{}", "limit": 0 }})JSON", kAccount),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
+        },
+        {
+            .testName = "LimitTypeInvalid",
+            .testJson = fmt::format(R"JSON({{ "account": "{}", "limit": true }})JSON", kAccount),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
+        },
     };
 }
 
@@ -419,7 +444,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
             kIssuancE2DomainIdHex
         )
             .getSerializer()
-            .peekData()
+            .peekData(),
     };
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
@@ -466,7 +491,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const indexes = std::vector<xrpl::uint256>(50, xrpl::uint256{kIssuanceIndex1});
-    auto const bbs = [&]() {
+    auto const bbs = [&] {
         std::vector<Blob> v;
         v.reserve(50);
         for (int i = 0; i < 50; ++i) {
@@ -563,7 +588,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const indexes = std::vector<xrpl::uint256>(10, xrpl::uint256{kIssuanceIndex1});
-    auto const bbs = [&]() {
+    auto const bbs = [&] {
         std::vector<Blob> v;
         v.reserve(kLimit);
         for (int i = 0; i < kLimit; ++i) {
@@ -624,7 +649,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const indexes = std::vector<xrpl::uint256>(kLimit, xrpl::uint256{kIssuanceIndex1});
-    auto const bbs = [&]() {
+    auto const bbs = [&] {
         std::vector<Blob> v;
         v.reserve(kLimit);
         for (int i = 0; i < kLimit; ++i) {
@@ -709,7 +734,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
             kIssuancE2DomainIdHex
         )
             .getSerializer()
-            .peekData()
+            .peekData(),
     };
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
@@ -797,7 +822,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
             kIssuancE2DomainIdHex
         )
             .getSerializer()
-            .peekData()
+            .peekData(),
     };
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
@@ -1016,7 +1041,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, ImmutableFlags)
             immutableFlags2
         )
             .getSerializer()
-            .peekData()
+            .peekData(),
     };
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
@@ -1232,19 +1257,27 @@ generateSingleFlagTests()
     return std::vector<SingleFlagTest>{
         {.testName = "Locked", .flag = xrpl::lsfMPTLocked, .expectedJsonKey = "mpt_locked"},
         {.testName = "CanLock", .flag = xrpl::lsfMPTCanLock, .expectedJsonKey = "mpt_can_lock"},
-        {.testName = "RequireAuth",
-         .flag = xrpl::lsfMPTRequireAuth,
-         .expectedJsonKey = "mpt_require_auth"},
-        {.testName = "CanEscrow",
-         .flag = xrpl::lsfMPTCanEscrow,
-         .expectedJsonKey = "mpt_can_escrow"},
+        {
+            .testName = "RequireAuth",
+            .flag = xrpl::lsfMPTRequireAuth,
+            .expectedJsonKey = "mpt_require_auth",
+        },
+        {
+            .testName = "CanEscrow",
+            .flag = xrpl::lsfMPTCanEscrow,
+            .expectedJsonKey = "mpt_can_escrow",
+        },
         {.testName = "CanTrade", .flag = xrpl::lsfMPTCanTrade, .expectedJsonKey = "mpt_can_trade"},
-        {.testName = "CanTransfer",
-         .flag = xrpl::lsfMPTCanTransfer,
-         .expectedJsonKey = "mpt_can_transfer"},
-        {.testName = "CanClawback",
-         .flag = xrpl::lsfMPTCanClawback,
-         .expectedJsonKey = "mpt_can_clawback"},
+        {
+            .testName = "CanTransfer",
+            .flag = xrpl::lsfMPTCanTransfer,
+            .expectedJsonKey = "mpt_can_transfer",
+        },
+        {
+            .testName = "CanClawback",
+            .flag = xrpl::lsfMPTCanClawback,
+            .expectedJsonKey = "mpt_can_clawback",
+        },
     };
 }
 
@@ -1273,10 +1306,11 @@ TEST_P(AccountMPTokenIssuancesLedgerFlagsTest, SingleFlag)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    auto const bbs =
-        std::vector<Blob>{createMptIssuanceObject(kAccount, 1, std::nullopt, testParams.flag, 0)
-                              .getSerializer()
-                              .peekData()};
+    auto const bbs = std::vector<Blob>{
+        createMptIssuanceObject(kAccount, 1, std::nullopt, testParams.flag, 0)
+            .getSerializer()
+            .peekData(),
+    };
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
@@ -1316,33 +1350,51 @@ static auto
 generateSingleImmutableFlagTests()
 {
     return std::vector<SingleImmutableFlagTest>{
-        {.testName = "ImmutableCanLock",
-         .immutableFlag = xrpl::lsifMPTCanLock,
-         .expectedJsonKey = "mpt_immutable_can_lock"},
-        {.testName = "ImmutableRequireAuth",
-         .immutableFlag = xrpl::lsifMPTRequireAuth,
-         .expectedJsonKey = "mpt_immutable_require_auth"},
-        {.testName = "ImmutableCanEscrow",
-         .immutableFlag = xrpl::lsifMPTCanEscrow,
-         .expectedJsonKey = "mpt_immutable_can_escrow"},
-        {.testName = "ImmutableCanTrade",
-         .immutableFlag = xrpl::lsifMPTCanTrade,
-         .expectedJsonKey = "mpt_immutable_can_trade"},
-        {.testName = "ImmutableCanTransfer",
-         .immutableFlag = xrpl::lsifMPTCanTransfer,
-         .expectedJsonKey = "mpt_immutable_can_transfer"},
-        {.testName = "ImmutableCanClawback",
-         .immutableFlag = xrpl::lsifMPTCanClawback,
-         .expectedJsonKey = "mpt_immutable_can_clawback"},
-        {.testName = "ImmutableCanHoldConfidentialBalance",
-         .immutableFlag = xrpl::lsifMPTCanHoldConfidentialBalance,
-         .expectedJsonKey = "mpt_immutable_can_hold_confidential_balance"},
-        {.testName = "ImmutableMetadata",
-         .immutableFlag = xrpl::lsifMPTMetadata,
-         .expectedJsonKey = "mpt_immutable_metadata"},
-        {.testName = "ImmutableTransferFee",
-         .immutableFlag = xrpl::lsifMPTTransferFee,
-         .expectedJsonKey = "mpt_immutable_transfer_fee"},
+        {
+            .testName = "ImmutableCanLock",
+            .immutableFlag = xrpl::lsifMPTCanLock,
+            .expectedJsonKey = "mpt_immutable_can_lock",
+        },
+        {
+            .testName = "ImmutableRequireAuth",
+            .immutableFlag = xrpl::lsifMPTRequireAuth,
+            .expectedJsonKey = "mpt_immutable_require_auth",
+        },
+        {
+            .testName = "ImmutableCanEscrow",
+            .immutableFlag = xrpl::lsifMPTCanEscrow,
+            .expectedJsonKey = "mpt_immutable_can_escrow",
+        },
+        {
+            .testName = "ImmutableCanTrade",
+            .immutableFlag = xrpl::lsifMPTCanTrade,
+            .expectedJsonKey = "mpt_immutable_can_trade",
+        },
+        {
+            .testName = "ImmutableCanTransfer",
+            .immutableFlag = xrpl::lsifMPTCanTransfer,
+            .expectedJsonKey = "mpt_immutable_can_transfer",
+        },
+        {
+            .testName = "ImmutableCanClawback",
+            .immutableFlag = xrpl::lsifMPTCanClawback,
+            .expectedJsonKey = "mpt_immutable_can_clawback",
+        },
+        {
+            .testName = "ImmutableCanHoldConfidentialBalance",
+            .immutableFlag = xrpl::lsifMPTCanHoldConfidentialBalance,
+            .expectedJsonKey = "mpt_immutable_can_hold_confidential_balance",
+        },
+        {
+            .testName = "ImmutableMetadata",
+            .immutableFlag = xrpl::lsifMPTMetadata,
+            .expectedJsonKey = "mpt_immutable_metadata",
+        },
+        {
+            .testName = "ImmutableTransferFee",
+            .immutableFlag = xrpl::lsifMPTTransferFee,
+            .expectedJsonKey = "mpt_immutable_transfer_fee",
+        },
     };
 }
 
@@ -1371,21 +1423,23 @@ TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleImmutableFlag)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
-    auto const bbs = std::vector<Blob>{createMptIssuanceObject(
-                                           kAccount,
-                                           1,
-                                           std::nullopt,
-                                           0,
-                                           0,
-                                           std::nullopt,
-                                           std::nullopt,
-                                           std::nullopt,
-                                           std::nullopt,
-                                           std::nullopt,
-                                           testParams.immutableFlag
-    )
-                                           .getSerializer()
-                                           .peekData()};
+    auto const bbs = std::vector<Blob>{
+        createMptIssuanceObject(
+            kAccount,
+            1,
+            std::nullopt,
+            0,
+            0,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            testParams.immutableFlag
+        )
+            .getSerializer()
+            .peekData(),
+    };
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 

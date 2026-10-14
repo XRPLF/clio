@@ -131,10 +131,8 @@ private:
         // resolve hostnames to ips
         std::unordered_set<std::string> ips;
 
-        for (auto it = whitelist.begin<util::config::ValueView>();
-             it != whitelist.end<util::config::ValueView>();
-             ++it)
-            hostnames.insert((*it).asString());
+        for (auto const& hostname : whitelist.values())
+            hostnames.insert(hostname.asString());
 
         for (auto const& hostname : hostnames) {
             auto resolvedIps = resolver.resolve(hostname);

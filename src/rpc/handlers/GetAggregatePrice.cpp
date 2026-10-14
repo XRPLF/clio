@@ -58,7 +58,7 @@ GetAggregatePriceHandler::process(
 
     // sorted descending by lastUpdateTime, ascending by AssetPrice
     using TimestampPricesBiMap = boost::bimaps::bimap<
-        boost::bimaps::multiset_of<std::uint32_t, std::greater<std::uint32_t>>,
+        boost::bimaps::multiset_of<std::uint32_t, std::greater<>>,
         boost::bimaps::multiset_of<xrpl::STAmount>>;
 
     TimestampPricesBiMap timestampPricesBiMap;
@@ -116,7 +116,7 @@ GetAggregatePriceHandler::process(
         .trimStats = std::nullopt,
         .ledgerHash = xrpl::to_string(lgrInfo.hash),
         .ledgerIndex = lgrInfo.seq,
-        .median = ""
+        .median = "",
     };
 
     if (input.timeThreshold) {
@@ -168,7 +168,7 @@ GetAggregatePriceHandler::process(
         );
     }
 
-    auto const median = [&, size = out.extireStats.size]() {
+    auto const median = [&, size = out.extireStats.size] {
         auto const middle = size / 2;
         if ((size % 2) == 0) {
             static xrpl::STAmount const kTwo{xrpl::noIssue(), 2, 0};
@@ -256,20 +256,22 @@ tag_invoke(
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
         {JS(time), output.time},
-        {JS(entire_set),
-         boost::json::object{
-             {JS(mean), output.extireStats.avg.getText()},
-             {JS(standard_deviation), xrpl::to_string(output.extireStats.sd)},
-             {JS(size), output.extireStats.size}
-         }},
-        {JS(median), output.median}
+        {
+            JS(entire_set),
+            boost::json::object{
+                {JS(mean), output.extireStats.avg.getText()},
+                {JS(standard_deviation), xrpl::to_string(output.extireStats.sd)},
+                {JS(size), output.extireStats.size},
+            },
+        },
+        {JS(median), output.median},
     };
 
     if (output.trimStats) {
         jv.as_object()[JS(trimmed_set)] = boost::json::object{
             {JS(mean), output.trimStats->avg.getText()},
             {JS(standard_deviation), xrpl::to_string(output.trimStats->sd)},
-            {JS(size), output.trimStats->size}
+            {JS(size), output.trimStats->size},
         };
     }
 }

@@ -318,7 +318,7 @@ public:
             ErrorHandlerType::wrap([this, timeout, fn = std::forward<decltype(fn)>(fn)](
                                        auto& outcome, auto& stopSource, auto stopToken
                                    ) mutable {
-                [[maybe_unused]] auto timeoutHandler = impl::getTimeoutHandleIfNeeded(
+                [[maybe_unused]] auto const timeoutHandler = impl::getTimeoutHandleIfNeeded(
                     TimerContextProvider::getContext(*this), timeout, stopSource
                 );
 

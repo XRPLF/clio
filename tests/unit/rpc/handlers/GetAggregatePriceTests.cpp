@@ -47,7 +47,7 @@ mockLedgerObject(
     std::uint32_t time = 4321u
 )
 {
-    auto oracleObject = createOracleObject(
+    auto const oracleObject = createOracleObject(
         account,
         "70726F7669646572",
         64u,
@@ -95,19 +95,19 @@ generateTestValuesForParametersTest()
             .testName = "ledger_indexInvalid",
             .testJson = R"JSON({"ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledgerIndexMalformed"
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "ledger_hashInvalid",
             .testJson = R"JSON({"ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashMalformed"
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "ledger_hashNotString",
             .testJson = R"JSON({"ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "ledger_hashNotString"
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "no_oracles",
@@ -116,7 +116,7 @@ generateTestValuesForParametersTest()
                 "quote_asset": "USD"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'oracles' missing"
+            .expectedErrorMessage = "Required field 'oracles' missing",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "no_base_asset",
@@ -130,7 +130,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'base_asset' missing"
+            .expectedErrorMessage = "Required field 'base_asset' missing",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "invalid_base_asset",
@@ -145,7 +145,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "empty_base_asset",
@@ -160,7 +160,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "invalid_base_asset2",
@@ -175,7 +175,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "no_quote_asset",
@@ -189,7 +189,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Required field 'quote_asset' missing"
+            .expectedErrorMessage = "Required field 'quote_asset' missing",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "invalid_quote_asset",
@@ -204,7 +204,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "empty_quote_asset",
@@ -219,7 +219,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "invalid_quote_asset2",
@@ -234,7 +234,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oraclesIsEmpty",
@@ -244,7 +244,7 @@ generateTestValuesForParametersTest()
                 "oracles": []
             })JSON",
             .expectedError = "oracleMalformed",
-            .expectedErrorMessage = "Oracle request is malformed."
+            .expectedErrorMessage = "Oracle request is malformed.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oraclesNotArray",
@@ -254,7 +254,7 @@ generateTestValuesForParametersTest()
                 "oracles": 1
             })JSON",
             .expectedError = "oracleMalformed",
-            .expectedErrorMessage = "Oracle request is malformed."
+            .expectedErrorMessage = "Oracle request is malformed.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "thresholdNotInt",
@@ -270,7 +270,7 @@ generateTestValuesForParametersTest()
                 "time_threshold": "x"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "trimNotInt",
@@ -286,7 +286,7 @@ generateTestValuesForParametersTest()
                 "trim": "x"
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "trimTooSmall",
@@ -302,7 +302,7 @@ generateTestValuesForParametersTest()
                 "trim": 0
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "trimTooLarge",
@@ -318,7 +318,7 @@ generateTestValuesForParametersTest()
                 "trim": 26
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleAccountInvalid",
@@ -333,7 +333,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleDocumentIdNotInt",
@@ -348,7 +348,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleDocumentIdNegative",
@@ -363,7 +363,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleDocumentIdNull",
@@ -378,7 +378,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleDocumentIdFloat",
@@ -393,7 +393,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleDocumentIdBool",
@@ -408,7 +408,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleDocumentIdObject",
@@ -423,7 +423,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleDocumentIdTooLarge",
@@ -438,7 +438,7 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleMissingAccount",
@@ -448,7 +448,7 @@ generateTestValuesForParametersTest()
                 "oracles": [{"oracle_document_id": 2}]
             })JSON",
             .expectedError = "oracleMalformed",
-            .expectedErrorMessage = "Oracle request is malformed."
+            .expectedErrorMessage = "Oracle request is malformed.",
         },
         GetAggregatePriceParamTestCaseBundle{
             .testName = "oracleMissingDocumentId",
@@ -458,7 +458,7 @@ generateTestValuesForParametersTest()
                 "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD"}]
             })JSON",
             .expectedError = "oracleMalformed",
-            .expectedErrorMessage = "Oracle request is malformed."
+            .expectedErrorMessage = "Oracle request is malformed.",
         },
     };
 }
@@ -498,7 +498,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OverOraclesMax)
     for (auto i = 0; i < maxOracles + 1; ++i) {
         req.at("oracles").as_array().push_back(
             boost::json::object{
-                {"account", "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD"}, {"oracle_document_id", 2}
+                {"account", "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD"},
+                {"oracle_document_id", 2},
             }
         );
     }

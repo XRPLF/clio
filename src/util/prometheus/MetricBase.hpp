@@ -72,7 +72,7 @@ enum class MetricType {
     GaugeDouble,
     HistogramInt,
     HistogramDouble,
-    Summary
+    Summary,
 };
 
 char const*

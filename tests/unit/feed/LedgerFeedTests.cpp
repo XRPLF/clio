@@ -46,7 +46,7 @@ TEST_F(FeedLedgerTest, SubPub)
     boost::asio::io_context ioContext;
     util::spawn(ioContext, [this](boost::asio::yield_context yield) {
         EXPECT_CALL(*mockSessionPtr, onDisconnect);
-        auto res = testFeedPtr->sub(yield, backend_, sessionPtr, networkID);
+        auto const res = testFeedPtr->sub(yield, backend_, sessionPtr, networkID);
         // check the response
         EXPECT_EQ(res, boost::json::parse(kLedgerResponse));
     });
@@ -106,7 +106,7 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
 
     boost::asio::io_context ioContext;
     util::spawn(ioContext, [this](boost::asio::yield_context yield) {
-        auto res = testFeedPtr->sub(yield, backend_, sessionPtr, networkID);
+        auto const res = testFeedPtr->sub(yield, backend_, sessionPtr, networkID);
         // check the response
         EXPECT_EQ(res, boost::json::parse(kLedgerResponse));
     });

@@ -24,7 +24,7 @@ Handle::Handle(std::string_view contactPoints)
 
 Handle::~Handle()
 {
-    [[maybe_unused]] auto _ = disconnect();  // attempt to disconnect
+    [[maybe_unused]] auto const _ = disconnect();  // attempt to disconnect
 }
 
 Handle::FutureType
@@ -93,7 +93,7 @@ Handle::asyncExecuteEach(std::vector<StatementType> const& statements) const
 Handle::MaybeErrorType
 Handle::executeEach(std::vector<StatementType> const& statements) const
 {
-    for (auto futures = asyncExecuteEach(statements); auto const& future : futures) {
+    for (auto const futures = asyncExecuteEach(statements); auto const& future : futures) {
         if (auto rc = future.await(); not rc)
             return rc;
     }
