@@ -9,17 +9,15 @@
    - SANITIZERS_COMPILER_FLAGS: Space-separated compiler flags.
    - SANITIZERS_LINKER_FLAGS:   Space-separated linker flags.
 
-   It defines SANITIZERS_ENABLED for the rest of the build to key off, and
-   applies the flags to the 'clio_options' interface library.
+   The flags are applied to the 'clio_options' interface library.
 #]===================================================================]
 
 include_guard(GLOBAL)
+include(CompilationEnv)
 
-if(NOT DEFINED SANITIZERS)
-    set(SANITIZERS_ENABLED FALSE)
+if(NOT SANITIZERS_ENABLED)
     return()
 endif()
-set(SANITIZERS_ENABLED TRUE)
 
 message(STATUS "=== Configuring sanitizers ===")
 message(STATUS "  SANITIZERS: ${SANITIZERS}")

@@ -42,7 +42,12 @@ class ClioConan(ConanFile):
         "xrpl/*:tests": False,
     }
 
-    exports_sources = ("CMakeLists.txt", "cmake/*", "src/*")
+    exports_sources = (
+        "bin/nix/default-loader-path.sh",
+        "CMakeLists.txt",
+        "cmake/*",
+        "src/*",
+    )
 
     def requirements(self):
         self.requires("gtest/1.17.0")
