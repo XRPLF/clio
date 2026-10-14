@@ -32,7 +32,7 @@ set(COMPILER_FLAGS
 # TODO: re-enable when we change CI #884 if (is_gcc AND NOT lint) list(APPEND COMPILER_FLAGS -Wduplicated-branches
 # -Wduplicated-cond -Wlogical-op -Wuseless-cast ) endif ()
 
-if(is_llvm_clang)
+if(is_any_clang)
     # gcc is too aggressive with shadowing
     # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78147
     list(APPEND COMPILER_FLAGS -Wshadow)
