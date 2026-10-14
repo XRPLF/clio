@@ -52,10 +52,7 @@ endif()
 
 # On aarch64, libatomic is required for atomic operations. It is not needed on x86_64.
 # Linking it statically on Linux
-if(
-    CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64"
-    AND CMAKE_SYSTEM_NAME STREQUAL "Linux"
-)
+if(is_arm64 AND is_linux)
     target_link_options(
         clio_options
         INTERFACE -Wl,--push-state -Wl,-Bstatic -latomic -Wl,--pop-state

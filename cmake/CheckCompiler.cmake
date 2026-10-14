@@ -1,18 +1,20 @@
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16)
+include(CompilationEnv)
+
+set(is_appleclang FALSE)
+
+if(is_clang) # both Clang and AppleClang
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+        set(is_appleclang TRUE)
+        if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
+            message(FATAL_ERROR "AppleClang 15+ required for building clio")
+        endif()
+    elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16)
         message(FATAL_ERROR "Clang 16+ required for building clio")
     endif()
-    set(is_clang TRUE)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
-        message(FATAL_ERROR "AppleClang 15+ required for building clio")
-    endif()
-    set(is_appleclang TRUE)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+elseif(is_gcc)
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 12)
         message(FATAL_ERROR "GCC 12+ required for building clio")
     endif()
-    set(is_gcc TRUE)
 else()
     message(
         FATAL_ERROR

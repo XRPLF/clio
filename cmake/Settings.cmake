@@ -1,3 +1,5 @@
+include(CompilationEnv)
+
 set(COMPILER_FLAGS
     -pedantic
     -Wall
@@ -30,7 +32,7 @@ set(COMPILER_FLAGS
 # TODO: re-enable when we change CI #884 if (is_gcc AND NOT lint) list(APPEND COMPILER_FLAGS -Wduplicated-branches
 # -Wduplicated-cond -Wlogical-op -Wuseless-cast ) endif ()
 
-if(is_clang)
+if(is_clang AND NOT is_appleclang)
     # gcc is too aggressive with shadowing
     # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78147
     list(APPEND COMPILER_FLAGS -Wshadow)
@@ -71,7 +73,7 @@ endif()
 # the flags description
 
 if(time_trace)
-    if(is_clang OR is_appleclang)
+    if(is_clang)
         list(APPEND COMPILER_FLAGS -ftime-trace)
     else()
         message(
@@ -93,10 +95,9 @@ target_compile_options(clio_options INTERFACE -g)
 # paths. The Nixpkgs Clang wrapper (used by our CI image) supplies those paths itself (via -nostdinc++), so at compile
 # time the flag is unused -> Clang errors under our -Werror. At link time the flag IS consumed (it selects the C++
 # runtime), so we move it there instead of dropping it entirely.
-get_filename_component(_cxx_real "${CMAKE_CXX_COMPILER}" REALPATH)
 if(
-    _cxx_real MATCHES "^/nix/store/"
-    AND CMAKE_SYSTEM_NAME STREQUAL "Linux"
+    is_nix_compiler
+    AND is_linux
     AND is_clang
     AND CMAKE_CXX_FLAGS MATCHES "stdlib=libstdc"
 )
