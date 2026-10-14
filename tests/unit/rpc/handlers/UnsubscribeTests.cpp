@@ -17,7 +17,6 @@
 #include <rpcspec/Errors.hpp>
 #include <rpcspec/backends/BoostJson.hpp>
 #include <xrpl/protocol/Book.h>
-#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <memory>
@@ -486,25 +485,25 @@ generateTestValuesForParametersTest()
             .testJson =
                 R"JSON({"mpt_issuances": "00000001A407AF5856CCF3C42619DAA925813FC955C72983"})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "MPTIssuancesEmptyArray",
             .testJson = R"JSON({"mpt_issuances": []})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "MPTIssuancesItemNotString",
             .testJson = R"JSON({"mpt_issuances": [123]})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "MPTIssuancesItemInvalidString",
             .testJson = R"JSON({"mpt_issuances": ["123"]})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid parameters.",
         },
     };
 }

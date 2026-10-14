@@ -10,7 +10,6 @@
 #include "util/prometheus/Gauge.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
@@ -24,7 +23,6 @@
 #include <xrpl/protocol/STArray.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/TER.h>
-#include <xrpl/protocol/UintTypes.h>
 
 #include <functional>
 #include <memory>

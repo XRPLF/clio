@@ -38,7 +38,7 @@ UnsubscribeHandler::process(Input const& input, Context const& ctx) const
         unsubscribeFromBooks(*input.books, ctx.session);
 
     if (input.mptIssuances)
-        unsubscribeFromMPTIssuances(*(input.mptIssuances), ctx.session);
+        unsubscribeFromMPTIssuances(*input.mptIssuances, ctx.session);
 
     return Output{};
 }

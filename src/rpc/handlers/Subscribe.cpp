@@ -65,7 +65,7 @@ SubscribeHandler::process(Input const& input, Context const& ctx) const
         subscribeToBooks(*input.books, ctx.session, ctx.yield, output);
 
     if (input.mptIssuances)
-        subscribeToMPTIssuances(*(input.mptIssuances), ctx.session);
+        subscribeToMPTIssuances(*input.mptIssuances, ctx.session);
 
     return output;
 }
