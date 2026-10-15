@@ -298,7 +298,8 @@ TransactionFeed::pub(
         boost::json::serialize(genJsonByVersion(1u)), boost::json::serialize(genJsonByVersion(2u))
     );
 
-    auto affectedMPTIssuances = util::getAffectedMPTs(*meta);
+    auto affectedMPTIssuances =
+        mptIssuanceSubCount() > 0 ? util::getAffectedMPTs(*meta) : util::MPTokenIssuanceIDs{};
 
     auto const affectedAccountsFlat = meta->getAffectedAccounts();
     auto affectedAccounts = std::unordered_set<xrpl::AccountID>(

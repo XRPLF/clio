@@ -1446,6 +1446,28 @@ TEST_F(FeedTransactionTest, SubMPTIssuanceV1)
     testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
+TEST_F(FeedTransactionTest, PubWithoutMPTIssuanceSubscribers)
+{
+    auto const mptIssuanceID = xrpl::makeMptID(1, getAccountIdWithString(kAccount1));
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const trans = createMPTokenAuthorizeTxWithMetadata(kAccount1, mptIssuanceID, 15, 5);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+    testFeedPtr->unsub(mptIssuanceID, sessionPtr);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 0);
+
+    EXPECT_CALL(*mockSessionPtr, send).Times(0);
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+    testing::Mock::VerifyAndClearExpectations(mockSessionPtr);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptokenAuthorizeTranV1)));
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+}
+
 TEST_F(FeedTransactionTest, SubMPTIssuanceV2)
 {
     constexpr auto kMptTranV2 =
