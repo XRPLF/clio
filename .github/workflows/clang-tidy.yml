@@ -101,7 +101,7 @@ jobs:
           TARGETS: ${{ needs.determine-files.outputs.need_full_run != 'true' && needs.determine-files.outputs.cpp_changed_files || 'benchmarks src tests' }}
         run: |
           set -o pipefail
-          run-clang-tidy -j ${{ steps.nproc.outputs.nproc }} -p "${BUILD_DIR}" -quiet -fix -allow-no-checks ${TARGETS} 2>&1 | tee "${OUTPUT_FILE}"
+          run-clang-tidy -j ${{ steps.nproc.outputs.nproc }} -p "${BUILD_DIR}" -quiet -fix -format -allow-no-checks ${TARGETS} 2>&1 | tee "${OUTPUT_FILE}"
 
       - name: Print errors
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
@@ -124,13 +124,19 @@ jobs:
 
       - name: Fix style
         if: ${{ steps.files_changed.outcome != 'success' }}
+        # pre-commit installs every hook's environment, even for hooks that match
+        # no files, and node-based hooks need libatomic, which this image lacks.
+        # Exit code 1 just means hooks modified files or found issues.
+        env:
+          SKIP: prettier,markdownlint-fix
         run: |
-          pre-commit run --all-files || true
+          git add --update
+          pre-commit run || [ $? -eq 1 ]
 
       - name: Generate git diff
         if: ${{ steps.files_changed.outcome != 'success' }}
         run: |
-          git diff | tee "${DIFF_FILE}"
+          git diff HEAD | tee "${DIFF_FILE}"
 
       - name: Upload clang-tidy diff output
         if: ${{ github.event.repository.visibility == 'public' && steps.files_changed.outcome != 'success' }}
