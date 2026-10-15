@@ -77,6 +77,8 @@ Checks: "-*,
 # misc-override-with-different-visibility,             # Will be addressed in a future PR, but for now it generates too many warnings
 # ---
 
+FormatStyle: file
+
 CheckOptions:
   bugprone-unsafe-functions.ReportMoreUnsafeFunctions: true
   bugprone-unused-return-value.CheckedReturnTypes: ::std::error_code;::std::error_condition;::std::errc
