@@ -203,7 +203,6 @@ TEST(MPTIssuanceUtilsTest, GetAffectedMPTs_NoMPTNodes)
 
 TEST(MPTIssuanceUtilsTest, GetAffectedMPTs_SkipsIncompleteNodes)
 {
-    // A modified node without FinalFields
     xrpl::STObject nodeWithoutFields(xrpl::sfModifiedNode);
     nodeWithoutFields.setFieldU16(xrpl::sfLedgerEntryType, xrpl::ltMPTOKEN_ISSUANCE);
     nodeWithoutFields.setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256{});

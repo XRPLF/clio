@@ -366,8 +366,6 @@ TransactionFeed::pub(
                 bookSignal_.emit(book, allVersionsMsgs);
             }
             notified_.clear();
-            // check duplicate for MPT issuances, this prevents sending the same message multiple
-            // times if it affects multiple MPT issuances watched by the same connection
             for (auto const& mptIssuanceID : affectedMPTIssuances) {
                 mptIssuanceSignal_.emit(mptIssuanceID, allVersionsMsgs);
             }

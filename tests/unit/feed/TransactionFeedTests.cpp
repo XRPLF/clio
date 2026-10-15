@@ -1413,7 +1413,6 @@ TEST_F(FeedTransactionTest, PublishesMPTokenAuthorizeTx)
     testFeedPtr->sub(sessionPtr);
 
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
-    // The issuance ID that this transaction is authorizing
     auto const mptIssuanceID = xrpl::makeMptID(1, getAccountIdWithString(kAccount1));
     auto const trans = createMPTokenAuthorizeTxWithMetadata(kAccount1, mptIssuanceID, 15, 5);
 
@@ -1684,7 +1683,7 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndMPTIssuance)
     auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
     auto const trans = createMPTokenAuthorizeTxWithMetadata(kAccount1, mptIssuanceID, 15, 5);
 
-    // Same as rippled, the MPT issuance stream is independent of the transaction stream, so the
+    // Same as xrpld, the MPT issuance stream is independent of the transaction stream, so the
     // connection receives the message twice
     EXPECT_CALL(*mockSessionPtr, apiSubversion).Times(2).WillRepeatedly(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptokenAuthorizeTranV1))).Times(2);
