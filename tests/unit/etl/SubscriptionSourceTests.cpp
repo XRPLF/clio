@@ -1,14 +1,21 @@
+#include "etl/impl/SubscriptionMessageQueue.hpp"
 #include "etl/impl/SubscriptionSource.hpp"
+#include "feed/SubscriptionManager.hpp"
 #include "util/AsioContextTestFixture.hpp"
+#include "util/MockAmendmentCenter.hpp"
+#include "util/MockBackendTestFixture.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
+#include "util/MockWsBase.hpp"
 #include "util/Spawn.hpp"
 #include "util/TestWsServer.hpp"
+#include "util/async/context/SyncExecutionContext.hpp"
 #include "util/prometheus/Gauge.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include <fmt/format.h>
 #include <gmock/gmock.h>
@@ -16,6 +23,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <thread>
@@ -26,7 +34,21 @@ using testing::MockFunction;
 using testing::StrictMock;
 
 struct SubscriptionSourceConnectionTestsBase : SyncAsioContextTest {
-    SubscriptionSourceConnectionTestsBase()
+    explicit SubscriptionSourceConnectionTestsBase(
+        std::chrono::steady_clock::duration wsTimeout = std::chrono::milliseconds{5}
+    )
+        : subscriptionSource_{
+              ctx_,
+              "127.0.0.1",
+              wsServer_.port(),
+              networkValidatedLedgers_,
+              messageQueue_,
+              onConnectHook_.AsStdFunction(),
+              onDisconnectHook_.AsStdFunction(),
+              onLedgerClosedHook_.AsStdFunction(),
+              wsTimeout,
+              std::chrono::milliseconds{5}
+          }
     {
         subscriptionSource_.run();
     }
@@ -40,11 +62,17 @@ struct SubscriptionSourceConnectionTestsBase : SyncAsioContextTest {
     [[maybe_unused]] TestWsConnection
     serverConnection(boost::asio::yield_context yield)
     {
+        return serverConnection(wsServer_, yield);
+    }
+
+    static TestWsConnection
+    serverConnection(TestWsServer& server, boost::asio::yield_context yield)
+    {
         // The first one is an SSL attempt
-        auto failedConnection = wsServer_.acceptConnection(yield);
+        auto failedConnection = server.acceptConnection(yield);
         [&] { ASSERT_FALSE(failedConnection); }();
 
-        auto connection = wsServer_.acceptConnection(yield);
+        auto connection = server.acceptConnection(yield);
         [&] { ASSERT_TRUE(connection) << connection.error().message(); }();
 
         auto message = connection->receive(yield);
@@ -63,23 +91,14 @@ protected:
 
     StrictMockNetworkValidatedLedgersPtr networkValidatedLedgers_;
     StrictMockSubscriptionManagerSharedPtr subscriptionManager_;
+    std::shared_ptr<SubscriptionMessageQueue> messageQueue_ =
+        std::make_shared<SubscriptionMessageQueue>(ctx_, subscriptionManager_);
 
     StrictMock<MockFunction<void()>> onConnectHook_;
     StrictMock<MockFunction<void(bool)>> onDisconnectHook_;
     StrictMock<MockFunction<void()>> onLedgerClosedHook_;
 
-    SubscriptionSource subscriptionSource_{
-        ctx_,
-        "127.0.0.1",
-        wsServer_.port(),
-        networkValidatedLedgers_,
-        subscriptionManager_,
-        onConnectHook_.AsStdFunction(),
-        onDisconnectHook_.AsStdFunction(),
-        onLedgerClosedHook_.AsStdFunction(),
-        std::chrono::milliseconds(5),
-        std::chrono::milliseconds(5)
-    };
+    SubscriptionSource subscriptionSource_;
 };
 
 struct SubscriptionSourceConnectionTests : util::prometheus::WithPrometheus,
@@ -158,6 +177,7 @@ TEST_F(SubscriptionSourceConnectionTests, IsConnected)
 }
 
 struct SubscriptionSourceReadTestsBase : public SubscriptionSourceConnectionTestsBase {
+    using SubscriptionSourceConnectionTestsBase::SubscriptionSourceConnectionTestsBase;
     [[maybe_unused]] TestWsConnection
     connectAndSendMessage(std::string const message, boost::asio::yield_context yield)
     {
@@ -466,7 +486,7 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndexAndValidatedLe
     EXPECT_EQ(subscriptionSource_.validatedRange(), "1-2");
 }
 
-TEST_F(SubscriptionSourceReadTests, GotTransactionIsForwardingFalse)
+TEST_F(SubscriptionSourceReadTests, GotTransactionFromBackup)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto connection =
@@ -476,6 +496,10 @@ TEST_F(SubscriptionSourceReadTests, GotTransactionIsForwardingFalse)
 
     EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call(false)).WillOnce([this] { stopSubscriptionSource(); });
+    EXPECT_CALL(
+        *subscriptionManager_,
+        forwardProposedTransaction((boost::json::object{{"transaction", "some_transaction_data"}}))
+    );
     runContext();
 }
 
@@ -514,7 +538,7 @@ TEST_F(SubscriptionSourceReadTests, GotTransactionWithMetaIsForwardingFalse)
     runContext();
 }
 
-TEST_F(SubscriptionSourceReadTests, GotValidationReceivedIsForwardingFalse)
+TEST_F(SubscriptionSourceReadTests, GotValidationFromBackup)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto connection = connectAndSendMessage(R"JSON({"type":"validationReceived"})JSON", yield);
@@ -523,6 +547,10 @@ TEST_F(SubscriptionSourceReadTests, GotValidationReceivedIsForwardingFalse)
 
     EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call(false)).WillOnce([this] { stopSubscriptionSource(); });
+    EXPECT_CALL(
+        *subscriptionManager_,
+        forwardValidation((boost::json::object{{"type", "validationReceived"}}))
+    );
     runContext();
 }
 
@@ -542,7 +570,7 @@ TEST_F(SubscriptionSourceReadTests, GotValidationReceivedIsForwardingTrue)
     runContext();
 }
 
-TEST_F(SubscriptionSourceReadTests, GotManiefstReceivedIsForwardingFalse)
+TEST_F(SubscriptionSourceReadTests, GotManifestFromBackup)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto connection = connectAndSendMessage(R"JSON({"type":"manifestReceived"})JSON", yield);
@@ -551,6 +579,9 @@ TEST_F(SubscriptionSourceReadTests, GotManiefstReceivedIsForwardingFalse)
 
     EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call(false)).WillOnce([this] { stopSubscriptionSource(); });
+    EXPECT_CALL(
+        *subscriptionManager_, forwardManifest((boost::json::object{{"type", "manifestReceived"}}))
+    );
     runContext();
 }
 
@@ -615,3 +646,237 @@ TEST_F(SubscriptionSourcePrometheusCounterTests, LastMessageTime)
     });
     runContext();
 }
+
+// The ledger marker is an acknowledgement that the preceding stream event was read while
+// this source was still a backup. Promotion must not lose that already received event.
+struct SubscriptionSourceHandoffTests : util::prometheus::WithPrometheus,
+                                        SubscriptionSourceReadTestsBase,
+                                        testing::WithParamInterface<std::string> {
+    SubscriptionSourceHandoffTests() : SubscriptionSourceReadTestsBase(std::chrono::seconds{1})
+    {
+        // Multiple frames may be delayed by TCP acknowledgement scheduling. This test checks
+        // handoff delivery, so do not inherit the 5 ms timeout used by connection-failure tests.
+    }
+};
+
+TEST_P(SubscriptionSourceHandoffTests, BackupMessageBeforeHandoffIsNotLost)
+{
+    auto const stream = GetParam();
+    boost::json::object const before = stream == "transaction"
+        ? boost::json::object{{"transaction", {{"hash", "BEFORE"}}}}
+        : boost::json::object{{"type", stream}, {"signature", "BEFORE"}};
+    boost::json::object const after = stream == "transaction"
+        ? boost::json::object{{"transaction", {{"hash", "AFTER"}}}}
+        : boost::json::object{{"type", stream}, {"signature", "AFTER"}};
+
+    EXPECT_CALL(onConnectHook_, Call());
+    EXPECT_CALL(*networkValidatedLedgers_, push(123)).WillOnce([this](auto) {
+        EXPECT_FALSE(subscriptionSource_.isForwarding());
+        subscriptionSource_.setForwarding(true);
+    });
+    EXPECT_CALL(onDisconnectHook_, Call(true)).WillOnce([this] { stopSubscriptionSource(); });
+
+    if (stream == "transaction") {
+        EXPECT_CALL(*subscriptionManager_, forwardProposedTransaction(before));
+        EXPECT_CALL(*subscriptionManager_, forwardProposedTransaction(after));
+    } else if (stream == "validationReceived") {
+        EXPECT_CALL(*subscriptionManager_, forwardValidation(before));
+        EXPECT_CALL(*subscriptionManager_, forwardValidation(after));
+    } else {
+        EXPECT_CALL(*subscriptionManager_, forwardManifest(before));
+        EXPECT_CALL(*subscriptionManager_, forwardManifest(after));
+    }
+
+    util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
+        auto connection = serverConnection(yield);
+        EXPECT_FALSE(connection.send(boost::json::serialize(before), yield));
+        EXPECT_FALSE(connection.send(R"JSON({"result":{"ledger_index":123}})JSON", yield));
+        EXPECT_FALSE(connection.send(boost::json::serialize(after), yield));
+        connection.close(yield);
+    });
+    runContext();
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Streams,
+    SubscriptionSourceHandoffTests,
+    testing::Values("transaction", "validationReceived", "manifestReceived")
+);
+
+TEST_F(SubscriptionSourceReadTests, TwoSourcesShareDeduplicationAcrossReconnect)
+{
+    TestWsServer backupServer{ctx_, "0.0.0.0"};
+    std::unique_ptr<SubscriptionSource> backup;
+    backup = std::make_unique<SubscriptionSource>(
+        ctx_,
+        "127.0.0.1",
+        backupServer.port(),
+        networkValidatedLedgers_,
+        messageQueue_,
+        [] {},
+        [&](bool wasForwarding) {
+            EXPECT_FALSE(wasForwarding);
+            util::spawn(ctx_, [&](auto yield) { backup->stop(yield); });
+        },
+        [] {},
+        std::chrono::seconds{1},
+        std::chrono::milliseconds{5}
+    );
+    subscriptionSource_.setForwarding(true);
+    backup->run();
+
+    boost::json::object const duplicated{{"type", "validationReceived"}, {"signature", "SAME"}};
+    boost::json::object const unique{{"type", "validationReceived"}, {"signature", "BACKUP_ONLY"}};
+    EXPECT_CALL(*subscriptionManager_, forwardValidation(duplicated)).Times(1);
+    EXPECT_CALL(*subscriptionManager_, forwardValidation(unique)).Times(1);
+    EXPECT_CALL(onConnectHook_, Call()).Times(2);
+    EXPECT_CALL(onDisconnectHook_, Call(true)).Times(1);
+    EXPECT_CALL(onDisconnectHook_, Call(false)).WillOnce([this] { stopSubscriptionSource(); });
+
+    util::spawn(ctx_, [&](auto yield) {
+        // The active source reconnects and receives the same event again. The queue survives
+        // that connection lifecycle, and a backup can supply an event the active source missed.
+        for (int i = 0; i < 2; ++i) {
+            auto connection = serverConnection(yield);
+            EXPECT_FALSE(connection.send(boost::json::serialize(duplicated), yield));
+            connection.close(yield);
+        }
+    });
+    util::spawn(ctx_, [&](auto yield) {
+        auto connection = serverConnection(backupServer, yield);
+        EXPECT_FALSE(connection.send(boost::json::serialize(duplicated), yield));
+        EXPECT_FALSE(connection.send(boost::json::serialize(unique), yield));
+        connection.close(yield);
+    });
+    runContext();
+}
+
+TEST_F(SubscriptionSourceReadTests, StopDrainsAcceptedEvent)
+{
+    boost::json::object const message{{"transaction", {{"hash", "TX"}}}};
+    EXPECT_CALL(onConnectHook_, Call());
+    EXPECT_CALL(*subscriptionManager_, forwardProposedTransaction(message))
+        .WillOnce([this](auto const&) { stopSubscriptionSource(); });
+    util::spawn(ctx_, [&](auto yield) {
+        auto connection = connectAndSendMessage(boost::json::serialize(message), yield);
+        connection.receive(yield);
+    });
+    runContext();
+    EXPECT_FALSE(subscriptionSource_.isConnected());
+}
+
+// Exercise the production source, shared queue, manager and feeds together. Only the upstream
+// rippled peers, unused database services and final subscriber transport are test doubles.
+struct SubscriptionSourceDeliveryTests : util::prometheus::WithPrometheus,
+                                         SyncAsioContextTest,
+                                         MockBackendTest,
+                                         testing::WithParamInterface<std::string> {};
+
+TEST_P(SubscriptionSourceDeliveryTests, DeliversOnceThroughManagerAcrossHandoffAndReconnect)
+{
+    auto const stream = GetParam();
+    StrictMockAmendmentCenterSharedPtr amendmentCenter;
+    auto manager = std::make_shared<feed::SubscriptionManager>(
+        util::async::SyncExecutionContext{1}, backend_, amendmentCenter
+    );
+    auto queue = std::make_shared<SubscriptionMessageQueue>(ctx_, manager);
+    auto subscriber = std::make_shared<StrictMock<MockSession>>();
+    if (stream == "transaction") {
+        EXPECT_CALL(*subscriber, onDisconnect).Times(2);
+        manager->subProposedTransactions(subscriber);
+        EXPECT_CALL(*subscriber, apiSubversion()).Times(3).WillRepeatedly(testing::Return(1));
+    } else if (stream == "validationReceived") {
+        EXPECT_CALL(*subscriber, onDisconnect);
+        manager->subValidation(subscriber);
+    } else {
+        EXPECT_CALL(*subscriber, onDisconnect);
+        manager->subManifest(subscriber);
+    }
+
+    auto const event = [&stream](std::string const& identity) {
+        return stream == "transaction"
+            ? boost::json::object{{"transaction", {{"hash", identity}}}}
+            : boost::json::object{{"type", stream}, {"signature", identity}};
+    };
+    auto const duplicate = event("SAME");
+    auto const before = event("BEFORE");
+    auto const after = event("AFTER");
+    for (auto const& message : {duplicate, before, after}) {
+        EXPECT_CALL(*subscriber, send(testing::Truly([message](auto const& payload) {
+            return payload && boost::json::parse(*payload) == message;
+        }))).Times(1);
+    }
+
+    TestWsServer primaryServer{ctx_, "0.0.0.0"};
+    TestWsServer backupServer{ctx_, "0.0.0.0"};
+    StrictMockNetworkValidatedLedgersPtr validatedLedgers;
+    StrictMock<MockFunction<void()>> primaryConnected;
+    StrictMock<MockFunction<void(bool)>> primaryDisconnected;
+    StrictMock<MockFunction<void(bool)>> backupDisconnected;
+    SubscriptionSource primary{
+        ctx_,
+        "127.0.0.1",
+        primaryServer.port(),
+        validatedLedgers,
+        queue,
+        primaryConnected.AsStdFunction(),
+        primaryDisconnected.AsStdFunction(),
+        [] {},
+        std::chrono::seconds{1},
+        std::chrono::milliseconds{5}
+    };
+    SubscriptionSource backup{
+        ctx_,
+        "127.0.0.1",
+        backupServer.port(),
+        validatedLedgers,
+        queue,
+        [] {},
+        backupDisconnected.AsStdFunction(),
+        [] {},
+        std::chrono::seconds{1},
+        std::chrono::milliseconds{5}
+    };
+    primary.setForwarding(true);
+    EXPECT_CALL(primaryConnected, Call()).Times(2);
+    EXPECT_CALL(primaryDisconnected, Call(true));
+    EXPECT_CALL(primaryDisconnected, Call(false)).WillOnce([&](bool) {
+        util::spawn(ctx_, [&](auto yield) { primary.stop(yield); });
+    });
+    EXPECT_CALL(backupDisconnected, Call(true)).WillOnce([&](bool) {
+        util::spawn(ctx_, [&](auto yield) { backup.stop(yield); });
+    });
+    EXPECT_CALL(*validatedLedgers, push(123)).WillOnce([&](auto) {
+        EXPECT_FALSE(backup.isForwarding());
+        backup.setForwarding(true);
+    });
+    primary.run();
+    backup.run();
+
+    util::spawn(ctx_, [&](auto yield) {
+        for (int i = 0; i < 2; ++i) {
+            auto connection =
+                SubscriptionSourceConnectionTestsBase::serverConnection(primaryServer, yield);
+            EXPECT_FALSE(connection.send(boost::json::serialize(duplicate), yield));
+            connection.close(yield);
+        }
+    });
+    util::spawn(ctx_, [&](auto yield) {
+        auto connection =
+            SubscriptionSourceConnectionTestsBase::serverConnection(backupServer, yield);
+        EXPECT_FALSE(connection.send(boost::json::serialize(before), yield));
+        EXPECT_FALSE(connection.send(boost::json::serialize(duplicate), yield));
+        EXPECT_FALSE(connection.send(R"JSON({"result":{"ledger_index":123}})JSON", yield));
+        EXPECT_FALSE(connection.send(boost::json::serialize(after), yield));
+        connection.close(yield);
+    });
+    runContext();
+    EXPECT_FALSE(primary.isConnected());
+    EXPECT_FALSE(backup.isConnected());
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Streams,
+    SubscriptionSourceDeliveryTests,
+    testing::Values("transaction", "validationReceived", "manifestReceived")
+);

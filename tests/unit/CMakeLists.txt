@@ -55,6 +55,7 @@ target_sources(
         etl/RegistryTests.cpp
         etl/SchedulingTests.cpp
         etl/SourceImplTests.cpp
+        etl/SubscriptionMessageQueueTests.cpp
         etl/SubscriptionSourceTests.cpp
         etl/SystemStateTests.cpp
         etl/TaskManagerTests.cpp

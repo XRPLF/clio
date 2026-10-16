@@ -2,7 +2,7 @@
 
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
-#include "feed/SubscriptionManagerInterface.hpp"
+#include "etl/impl/SubscriptionMessageQueue.hpp"
 #include "util/Mutex.hpp"
 #include "util/Retry.hpp"
 #include "util/StopHelper.hpp"
@@ -52,7 +52,7 @@ private:
     util::Mutex<ValidatedLedgersData> validatedLedgersData_;
 
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers_;
-    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
+    std::shared_ptr<SubscriptionMessageQueue> messageQueue_;
 
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
 
@@ -87,7 +87,7 @@ public:
      * @param ip The ip address of the source
      * @param wsPort The port of the source
      * @param validatedLedgers The network validated ledgers object
-     * @param subscriptions The subscription manager object
+     * @param messageQueue The shared subscription event queue
      * @param onConnect The onConnect hook. Called when the connection is established
      * @param onDisconnect The onDisconnect hook. Called when the connection is lost
      * @param onLedgerClosed The onLedgerClosed hook. Called when the ledger is closed if the source
@@ -100,7 +100,7 @@ public:
         std::string const& ip,
         std::string const& wsPort,
         std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
-        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+        std::shared_ptr<SubscriptionMessageQueue> messageQueue,
         OnConnectHook onConnect,
         OnDisconnectHook onDisconnect,
         OnLedgerClosedHook onLedgerClosed,
@@ -142,7 +142,8 @@ public:
     /**
      * @brief Set source forwarding
      *
-     * @note If forwarding is true the source will forward messages to the subscription manager.
+     * @note If forwarding is true the source invokes the ledger-closed hook. Stream events from
+     * every source are processed by the shared subscription queue.
      * Forwarding is being reset on disconnect.
      * @param isForwarding The new forwarding state
      */
@@ -177,7 +178,7 @@ private:
     subscribe();
 
     std::optional<util::requests::RequestError>
-    handleMessage(std::string const& message);
+    handleMessage(std::string const& message, boost::asio::yield_context yield);
 
     void
     handleError(util::requests::RequestError const& error, boost::asio::yield_context yield);
