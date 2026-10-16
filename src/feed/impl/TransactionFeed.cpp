@@ -8,6 +8,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
+#include "util/MPTIssuanceUtils.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -27,6 +28,7 @@
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFormats.h>
+#include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
 #include <cstdint>
@@ -124,6 +126,21 @@ TransactionFeed::sub(xrpl::Book const& book, SubscriberSharedPtr const& subscrib
 }
 
 void
+TransactionFeed::sub(xrpl::MPTID const& mptIssuanceID, SubscriberSharedPtr const& subscriber)
+{
+    auto const added = mptIssuanceSignal_.connectTrackableSlot(
+        subscriber, mptIssuanceID, TransactionSlot(*this, subscriber)
+    );
+    if (added) {
+        LOG(logger_.info()) << subscriber->tag() << "Subscribed MPT issuance " << mptIssuanceID;
+        ++subMPTIssuanceCount_.get();
+        subscriber->onDisconnect([this, mptIssuanceID](SubscriberPtr connection) {
+            unsubInternal(mptIssuanceID, connection);
+        });
+    }
+}
+
+void
 TransactionFeed::unsub(SubscriberSharedPtr const& subscriber)
 {
     unsubInternal(subscriber.get());
@@ -156,6 +173,12 @@ TransactionFeed::unsub(xrpl::Book const& book, SubscriberSharedPtr const& subscr
     unsubInternal(book, subscriber.get());
 }
 
+void
+TransactionFeed::unsub(xrpl::MPTID const& mptIssuanceID, SubscriberSharedPtr const& subscriber)
+{
+    unsubInternal(mptIssuanceID, subscriber.get());
+}
+
 std::uint64_t
 TransactionFeed::transactionSubCount() const
 {
@@ -172,6 +195,12 @@ std::uint64_t
 TransactionFeed::bookSubCount() const
 {
     return subBookCount_.get().value();
+}
+
+std::uint64_t
+TransactionFeed::mptIssuanceSubCount() const
+{
+    return subMPTIssuanceCount_.get().value();
 }
 
 void
@@ -269,6 +298,9 @@ TransactionFeed::pub(
         boost::json::serialize(genJsonByVersion(1u)), boost::json::serialize(genJsonByVersion(2u))
     );
 
+    auto affectedMPTIssuances =
+        mptIssuanceSubCount() > 0 ? util::getAffectedMPTs(*meta) : util::MPTokenIssuanceIDs{};
+
     auto const affectedAccountsFlat = meta->getAffectedAccounts();
     auto affectedAccounts = std::unordered_set<xrpl::AccountID>(
         affectedAccountsFlat.cbegin(), affectedAccountsFlat.cend()
@@ -313,7 +345,8 @@ TransactionFeed::pub(
         strand_.execute([this,
                          allVersionsMsgs = std::move(allVersionsMsgs),
                          affectedAccounts = std::move(affectedAccounts),
-                         affectedBooks = std::move(affectedBooks)] {
+                         affectedBooks = std::move(affectedBooks),
+                         affectedMPTIssuances = std::move(affectedMPTIssuances)] {
             notified_.clear();
             signal_.emit(allVersionsMsgs);
             // clear the notified set. If the same connection subscribes both transactions +
@@ -332,6 +365,10 @@ TransactionFeed::pub(
             // it affects multiple books watched by the same connection
             for (auto const& book : affectedBooks) {
                 bookSignal_.emit(book, allVersionsMsgs);
+            }
+            notified_.clear();
+            for (auto const& mptIssuanceID : affectedMPTIssuances) {
+                mptIssuanceSignal_.emit(mptIssuanceID, allVersionsMsgs);
             }
         });
 }
@@ -372,6 +409,15 @@ TransactionFeed::unsubInternal(xrpl::Book const& book, SubscriberPtr subscriber)
     if (bookSignal_.disconnect(subscriber, book)) {
         LOG(logger_.info()) << subscriber->tag() << "Unsubscribed book " << book;
         --subBookCount_.get();
+    }
+}
+
+void
+TransactionFeed::unsubInternal(xrpl::MPTID const& mptIssuanceID, SubscriberPtr subscriber)
+{
+    if (mptIssuanceSignal_.disconnect(subscriber, mptIssuanceID)) {
+        LOG(logger_.info()) << subscriber->tag() << "Unsubscribed MPT issuance " << mptIssuanceID;
+        --subMPTIssuanceCount_.get();
     }
 }
 }  // namespace feed::impl

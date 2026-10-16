@@ -2,6 +2,7 @@
 #include "data/Types.hpp"
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/TransactionFeed.hpp"
+#include "util/MPTokenTestObjects.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/SyncExecutionCtxFixture.hpp"
@@ -19,12 +20,14 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STArray.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/TER.h>
 
 #include <functional>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 using namespace data;
@@ -41,6 +44,10 @@ constexpr auto kAmmAccount = "rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs";
 constexpr auto kLptokenCurrency = "037C35306B24AAB7FF90848206E003279AA47090";
 constexpr auto kNetworkId = 0u;
 constexpr auto kNftMintId = "000B013A95F14B0044F78A264E41713C64B5F89242540EE208C3098E00000D65";
+constexpr auto kLedgerSeq = 33u;
+constexpr auto kMptIssuanceSeq = 1u;
+constexpr auto kMptAuthorizeFee = 15u;
+constexpr auto kMptAuthorizeSeq = 5u;
 
 constexpr auto kTranV1 =
     R"JSON({
@@ -205,6 +212,47 @@ constexpr auto kNftMintTranV1 =
         "engine_result_message": "The transaction was applied. Only final in a validated ledger."
     })JSON";
 
+constexpr auto kMptokenAuthorizeTranV1 =
+    R"JSON({
+        "transaction": {
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Fee": "15",
+            "MPTokenIssuanceID": "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9",
+            "Sequence": 5,
+            "SigningPubKey": "74657374",
+            "TransactionType": "MPTokenAuthorize",
+            "hash": "94ACAB5D571C4A2B8D76979B76E8A82FA91915AEB3FD0A9917223308D5EAE331",
+            "date": 0
+        },
+        "meta": {
+            "AffectedNodes": [
+                {
+                    "ModifiedNode": {
+                        "FinalFields": {
+                            "LedgerEntryType": "MPToken",
+                            "MPTAmount": "0",
+                            "MPTokenIssuanceID": "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+                        },
+                        "LedgerEntryType": "MPToken",
+                        "LedgerIndex": "0000000000000000000000000000000000000000000000000000000000000000"
+                    }
+                }
+            ],
+            "TransactionIndex": 0,
+            "TransactionResult": "tesSUCCESS"
+        },
+        "ctid": "C000002100000000",
+        "type": "transaction",
+        "validated": true,
+        "status": "closed",
+        "ledger_index": 33,
+        "close_time_iso": "2000-01-01T00:00:00Z",
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "engine_result_code": 0,
+        "engine_result": "tesSUCCESS",
+        "engine_result_message": "The transaction was applied. Only final in a validated ledger."
+    })JSON";
+
 }  // namespace
 
 using namespace feed::impl;
@@ -218,7 +266,7 @@ TEST_F(FeedTransactionTest, SubTransactionV1)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -242,7 +290,7 @@ TEST_F(FeedTransactionTest, SubTransactionForProposedTx)
     testFeedPtr->subProposed(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -265,7 +313,7 @@ TEST_F(FeedTransactionTest, SubTransactionV2)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -292,7 +340,7 @@ TEST_F(FeedTransactionTest, SubAccountV1)
     testFeedPtr->sub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
 
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
@@ -320,7 +368,7 @@ TEST_F(FeedTransactionTest, SubForProposedAccount)
     testFeedPtr->subProposed(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
 
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
@@ -345,7 +393,7 @@ TEST_F(FeedTransactionTest, SubAccountV2)
     testFeedPtr->sub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
 
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
@@ -374,7 +422,7 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
 
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
@@ -405,7 +453,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
     testFeedPtr->sub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     auto const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -594,7 +642,7 @@ TEST_F(FeedTransactionTest, SubBookV2)
     testFeedPtr->sub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     auto const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -679,7 +727,7 @@ TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
 
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -718,7 +766,7 @@ TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
 
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -754,7 +802,7 @@ TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -833,6 +881,26 @@ TEST_F(FeedTransactionTest, SubRepeat)
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
+
+    auto const mptIssuanceID = xrpl::makeMptID(kMptIssuanceSeq, account);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+
+    EXPECT_CALL(*session2, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, session2);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 2);
+
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+    testFeedPtr->sub(mptIssuanceID, session2);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 2);
+
+    testFeedPtr->unsub(mptIssuanceID, sessionPtr);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 1);
+    testFeedPtr->unsub(mptIssuanceID, session2);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 0);
+    testFeedPtr->unsub(mptIssuanceID, sessionPtr);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 0);
 }
 
 TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
@@ -840,7 +908,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj =
         createCreateOfferTransactionObject(kAccount1, 1, 32, kCurrency, kIssuer, 1, 3);
@@ -926,7 +994,7 @@ TEST_F(FeedTransactionTest, PublishesNFTokenMintTx)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
 
     // Creates an NFTokenMint transaction
     auto const trans = createMintNftTxWithMetadata(kAccount1, 1, 12, 123, kNftMintId);
@@ -982,7 +1050,7 @@ TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj =
         createCreateOfferTransactionObject(kAccount1, 1, 32, kCurrency, kIssuer, 1, 3);
@@ -1023,7 +1091,7 @@ TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj =
         createCreateOfferTransactionObject(kAccount1, 1, 32, kCurrency, kIssuer, 1, 3);
@@ -1071,7 +1139,7 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidatedAccount)
     testFeedPtr->subProposed(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -1100,7 +1168,7 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidated)
     testFeedPtr->subProposed(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -1124,7 +1192,7 @@ TEST_F(FeedTransactionTest, SubProposedDisconnect)
     testFeedPtr->subProposed(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -1149,7 +1217,7 @@ TEST_F(FeedTransactionTest, SubProposedAccountDisconnect)
     testFeedPtr->subProposed(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -1173,7 +1241,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto trans1 = TransactionAndMetadata();
     xrpl::STObject const obj =
         createCreateOfferTransactionObject(kAccount1, 1, 32, kLptokenCurrency, kAmmAccount, 1, 3);
@@ -1329,7 +1397,7 @@ TEST_F(FeedTransactionTest, PublishesMPTokenIssuanceCreateTx)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
     auto const trans = createMPTIssuanceCreateTxWithMetadata(kAccount1, 12, 1);
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
@@ -1345,16 +1413,82 @@ TEST_F(FeedTransactionTest, PublishesMPTokenIssuanceCreateTx)
 
 TEST_F(FeedTransactionTest, PublishesMPTokenAuthorizeTx)
 {
-    constexpr auto kMptokenAuthorizeTranV1 =
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(sessionPtr);
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
+    auto const mptIssuanceID = xrpl::makeMptID(kMptIssuanceSeq, getAccountIdWithString(kAccount1));
+    auto const trans = createMPTokenAuthorizeTxWithMetadata(
+        kAccount1, mptIssuanceID, kMptAuthorizeFee, kMptAuthorizeSeq
+    );
+
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptokenAuthorizeTranV1)));
+
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+
+    testFeedPtr->unsub(sessionPtr);
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+}
+
+TEST_F(FeedTransactionTest, SubMPTIssuanceV1)
+{
+    auto const mptIssuanceID = xrpl::makeMptID(kMptIssuanceSeq, getAccountIdWithString(kAccount1));
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 1);
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
+    auto const trans = createMPTokenAuthorizeTxWithMetadata(
+        kAccount1, mptIssuanceID, kMptAuthorizeFee, kMptAuthorizeSeq
+    );
+
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptokenAuthorizeTranV1)));
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+
+    testFeedPtr->unsub(mptIssuanceID, sessionPtr);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 0);
+
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+}
+
+TEST_F(FeedTransactionTest, PubWithoutMPTIssuanceSubscribers)
+{
+    auto const mptIssuanceID = xrpl::makeMptID(kMptIssuanceSeq, getAccountIdWithString(kAccount1));
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
+    auto const trans = createMPTokenAuthorizeTxWithMetadata(
+        kAccount1, mptIssuanceID, kMptAuthorizeFee, kMptAuthorizeSeq
+    );
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+    testFeedPtr->unsub(mptIssuanceID, sessionPtr);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 0);
+
+    EXPECT_CALL(*mockSessionPtr, send).Times(0);
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+    testing::Mock::VerifyAndClearExpectations(mockSessionPtr);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptokenAuthorizeTranV1)));
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+}
+
+TEST_F(FeedTransactionTest, SubMPTIssuanceV2)
+{
+    constexpr auto kMptTranV2 =
         R"JSON({
-            "transaction": {
+            "tx_json": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "Fee": "15",
                 "MPTokenIssuanceID": "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9",
                 "Sequence": 5,
                 "SigningPubKey": "74657374",
                 "TransactionType": "MPTokenAuthorize",
-                "hash": "94ACAB5D571C4A2B8D76979B76E8A82FA91915AEB3FD0A9917223308D5EAE331",
                 "date": 0
             },
             "meta": {
@@ -1381,25 +1515,218 @@ TEST_F(FeedTransactionTest, PublishesMPTokenAuthorizeTx)
             "ledger_index": 33,
             "close_time_iso": "2000-01-01T00:00:00Z",
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "hash": "94ACAB5D571C4A2B8D76979B76E8A82FA91915AEB3FD0A9917223308D5EAE331",
             "engine_result_code": 0,
             "engine_result": "tesSUCCESS",
             "engine_result_message": "The transaction was applied. Only final in a validated ledger."
         })JSON";
 
-    EXPECT_CALL(*mockSessionPtr, onDisconnect);
-    testFeedPtr->sub(sessionPtr);
+    auto const mptIssuanceID = xrpl::makeMptID(kMptIssuanceSeq, getAccountIdWithString(kAccount1));
 
-    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 33);
-    // The issuance ID that this transaction is authorizing
-    auto const mptIssuanceID = xrpl::makeMptID(1, getAccountIdWithString(kAccount1));
-    auto const trans = createMPTokenAuthorizeTxWithMetadata(kAccount1, mptIssuanceID, 15, 5);
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
+    auto const trans = createMPTokenAuthorizeTxWithMetadata(
+        kAccount1, mptIssuanceID, kMptAuthorizeFee, kMptAuthorizeSeq
+    );
+
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptTranV2)));
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+}
+
+TEST_F(FeedTransactionTest, SubMPTIssuanceCreatedIssuance)
+{
+    constexpr auto kMptIssuanceCreateTranV1 =
+        R"JSON({
+            "transaction": {
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Fee": "12",
+                "Sequence": 1,
+                "SigningPubKey": "74657374",
+                "TransactionType": "MPTokenIssuanceCreate",
+                "hash": "B565E9E541E9C4615C920807AC8104D26F961424A06F3BB25A083DD47680EF45",
+                "date": 0
+            },
+            "meta": {
+                "AffectedNodes": [
+                    {
+                        "CreatedNode": {
+                            "LedgerEntryType": "MPTokenIssuance",
+                            "LedgerIndex": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "NewFields": {
+                                "Flags": 0,
+                                "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "LedgerEntryType": "MPTokenIssuance",
+                                "MPTokenMetadata": "746573742D6D657461",
+                                "MaximumAmount": "0",
+                                "OutstandingAmount": "0",
+                                "OwnerNode": "0",
+                                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                                "PreviousTxnLgrSeq": 0,
+                                "Sequence": 1
+                            }
+                        }
+                    }
+                ],
+                "TransactionIndex": 0,
+                "TransactionResult": "tesSUCCESS",
+                "mpt_issuance_id": "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+            },
+            "ctid": "C000002100000000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "engine_result_code": 0,
+            "engine_result": "tesSUCCESS",
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
+        })JSON";
+
+    // The created MPTokenIssuance node carries no MPTokenIssuanceID, so its ID must be derived
+    auto const mptIssuanceID = xrpl::makeMptID(kMptIssuanceSeq, getAccountIdWithString(kAccount1));
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
+    auto const trans = createMPTIssuanceCreateTxWithMetadata(kAccount1, 12, 1);
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
-    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptokenAuthorizeTranV1)));
-
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptIssuanceCreateTranV1)));
     testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+}
 
-    testFeedPtr->unsub(sessionPtr);
+TEST_F(FeedTransactionTest, SubMPTIssuanceNotAffected)
+{
+    auto const mptIssuanceID = xrpl::makeMptID(kMptIssuanceSeq, getAccountIdWithString(kAccount1));
+    auto const otherMptIssuanceID = xrpl::makeMptID(2, getAccountIdWithString(kAccount1));
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(otherMptIssuanceID, sessionPtr);
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
+    auto const mptTrans = createMPTokenAuthorizeTxWithMetadata(
+        kAccount1, mptIssuanceID, kMptAuthorizeFee, kMptAuthorizeSeq
+    );
+
+    auto paymentTrans = TransactionAndMetadata();
+    xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
+    paymentTrans.transaction = obj.getSerializer().peekData();
+    paymentTrans.ledgerSequence = 32;
+    paymentTrans.metadata = createPaymentTransactionMetaObject(kAccount1, kAccount2, 110, 30, 22)
+                                .getSerializer()
+                                .peekData();
+
+    EXPECT_CALL(*mockSessionPtr, send).Times(0);
+    testFeedPtr->pub(mptTrans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+    testFeedPtr->pub(paymentTrans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+}
+
+TEST_F(FeedTransactionTest, SubMultipleMPTIssuancesAffectedBySameTx)
+{
+    constexpr auto kMultipleMptTranV1 =
+        R"JSON({
+            "transaction": {
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Fee": "15",
+                "MPTokenIssuanceID": "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9",
+                "Sequence": 5,
+                "SigningPubKey": "74657374",
+                "TransactionType": "MPTokenAuthorize",
+                "hash": "94ACAB5D571C4A2B8D76979B76E8A82FA91915AEB3FD0A9917223308D5EAE331",
+                "date": 0
+            },
+            "meta": {
+                "AffectedNodes": [
+                    {
+                        "ModifiedNode": {
+                            "FinalFields": {
+                                "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                "MPTokenIssuanceID": "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+                            },
+                            "LedgerEntryType": "MPToken",
+                            "LedgerIndex": "0000000000000000000000000000000000000000000000000000000000000000"
+                        }
+                    },
+                    {
+                        "ModifiedNode": {
+                            "FinalFields": {
+                                "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                "MPTokenIssuanceID": "000000024B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+                            },
+                            "LedgerEntryType": "MPToken",
+                            "LedgerIndex": "0000000000000000000000000000000000000000000000000000000000000000"
+                        }
+                    }
+                ],
+                "TransactionIndex": 0,
+                "TransactionResult": "tesSUCCESS"
+            },
+            "ctid": "C000002100000000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "engine_result_code": 0,
+            "engine_result": "tesSUCCESS",
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
+        })JSON";
+
+    auto const mptIssuanceID1 = xrpl::makeMptID(kMptIssuanceSeq, getAccountIdWithString(kAccount1));
+    auto const mptIssuanceID2 = xrpl::makeMptID(2, getAccountIdWithString(kAccount1));
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect).Times(2);
+    testFeedPtr->sub(mptIssuanceID1, sessionPtr);
+    testFeedPtr->sub(mptIssuanceID2, sessionPtr);
+    EXPECT_EQ(testFeedPtr->mptIssuanceSubCount(), 2);
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
+    auto trans = createMPTokenAuthorizeTxWithMetadata(
+        kAccount1, mptIssuanceID1, kMptAuthorizeFee, kMptAuthorizeSeq
+    );
+
+    xrpl::STObject metaObj(xrpl::sfTransactionMetaData);
+    metaObj.setFieldU8(xrpl::sfTransactionResult, xrpl::tesSUCCESS);
+    metaObj.setFieldU32(xrpl::sfTransactionIndex, 0);
+    xrpl::STArray affectedNodes(xrpl::sfAffectedNodes);
+    affectedNodes.push_back(
+        util::createMPTokenNode(xrpl::sfModifiedNode, mptIssuanceID1, kAccount2)
+    );
+    affectedNodes.push_back(
+        util::createMPTokenNode(xrpl::sfModifiedNode, mptIssuanceID2, kAccount2)
+    );
+    metaObj.setFieldArray(xrpl::sfAffectedNodes, affectedNodes);
+    trans.metadata = metaObj.getSerializer().peekData();
+
+    // only one message although the connection watches both affected issuances
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMultipleMptTranV1)));
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
+}
+
+TEST_F(FeedTransactionTest, SubBothTransactionAndMPTIssuance)
+{
+    auto const mptIssuanceID = xrpl::makeMptID(kMptIssuanceSeq, getAccountIdWithString(kAccount1));
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect).Times(2);
+    testFeedPtr->sub(sessionPtr);
+    testFeedPtr->sub(mptIssuanceID, sessionPtr);
+
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, kLedgerSeq);
+    auto const trans = createMPTokenAuthorizeTxWithMetadata(
+        kAccount1, mptIssuanceID, kMptAuthorizeFee, kMptAuthorizeSeq
+    );
+
+    // Same as xrpld, the MPT issuance stream is independent of the transaction stream, so the
+    // connection receives the message twice
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).Times(2).WillRepeatedly(testing::Return(1));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMptokenAuthorizeTranV1))).Times(2);
     testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNetworkId);
 }
 
@@ -1416,6 +1743,8 @@ TEST_F(TransactionFeedMockPrometheusTest, subUnsub)
     auto& counterAccount =
         makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account\"}");
     auto& counterBook = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"book\"}");
+    auto& counterMPTIssuance =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"mpt_issuance\"}");
 
     EXPECT_CALL(counterTx, add(1));
     EXPECT_CALL(counterTx, add(-1));
@@ -1423,6 +1752,8 @@ TEST_F(TransactionFeedMockPrometheusTest, subUnsub)
     EXPECT_CALL(counterAccount, add(-1));
     EXPECT_CALL(counterBook, add(1));
     EXPECT_CALL(counterBook, add(-1));
+    EXPECT_CALL(counterMPTIssuance, add(1));
+    EXPECT_CALL(counterMPTIssuance, add(-1));
 
     EXPECT_CALL(*mockSessionPtr_, onDisconnect);
     testFeedPtr_->sub(sessionPtr_);
@@ -1438,6 +1769,11 @@ TEST_F(TransactionFeedMockPrometheusTest, subUnsub)
     EXPECT_CALL(*mockSessionPtr_, onDisconnect);
     testFeedPtr_->sub(book, sessionPtr_);
     testFeedPtr_->unsub(book, sessionPtr_);
+
+    auto const mptIssuanceID = xrpl::makeMptID(kMptIssuanceSeq, account);
+    EXPECT_CALL(*mockSessionPtr_, onDisconnect);
+    testFeedPtr_->sub(mptIssuanceID, sessionPtr_);
+    testFeedPtr_->unsub(mptIssuanceID, sessionPtr_);
 }
 
 TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
@@ -1446,6 +1782,8 @@ TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
     auto& counterAccount =
         makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account\"}");
     auto& counterBook = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"book\"}");
+    auto& counterMPTIssuance =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"mpt_issuance\"}");
 
     EXPECT_CALL(counterTx, add(1));
     EXPECT_CALL(counterTx, add(-1));
@@ -1453,11 +1791,13 @@ TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
     EXPECT_CALL(counterAccount, add(-1));
     EXPECT_CALL(counterBook, add(1));
     EXPECT_CALL(counterBook, add(-1));
+    EXPECT_CALL(counterMPTIssuance, add(1));
+    EXPECT_CALL(counterMPTIssuance, add(-1));
 
     std::vector<web::SubscriptionContextInterface::OnDisconnectSlot> onDisconnectSlots;
 
     EXPECT_CALL(*mockSessionPtr_, onDisconnect)
-        .Times(3)
+        .Times(4)
         .WillRepeatedly([&onDisconnectSlots](auto const& slot) {
             onDisconnectSlots.push_back(slot);
         });
@@ -1469,6 +1809,8 @@ TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
     auto const issue1 = getIssue(kCurrency, kIssuer);
     xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
     testFeedPtr_->sub(book, sessionPtr_);
+
+    testFeedPtr_->sub(xrpl::makeMptID(kMptIssuanceSeq, account), sessionPtr_);
 
     // Emulate onDisconnect signal is called
     for (auto const& slot : onDisconnectSlots)

@@ -14,6 +14,7 @@
 #include <boost/json/value.hpp>
 #include <rpcspec/handlers/subscribe/Types.hpp>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <expected>
 #include <memory>
@@ -104,6 +105,12 @@ private:
     void
     subscribeToAccountsProposed(
         std::vector<xrpl::AccountID> const& accounts,
+        feed::SubscriberSharedPtr const& session
+    ) const;
+
+    void
+    subscribeToMPTIssuances(
+        std::vector<xrpl::MPTID> const& mptIssuanceIDs,
         feed::SubscriberSharedPtr const& session
     ) const;
 

@@ -25,6 +25,19 @@ std::optional<xrpl::uint192>
 getMPTokenIssuanceIDFromNode(xrpl::STObject const& node);
 
 /**
+ * @brief Collect every MPTokenIssuanceID affected by a transaction, according to its metadata.
+ *
+ * @note Mirrors xrpld's TxMeta::getAffectedMPTs: for each affected node, scans the NewFields
+ * (created nodes) or FinalFields (modified/deleted nodes) for an MPTokenIssuance's own ID, any
+ * sfMPTokenIssuanceID field and any STAmount holding an xrpl::MPTIssue.
+ *
+ * @param txMeta Transaction metadata.
+ * @return The distinct affected issuance IDs.
+ */
+MPTokenIssuanceIDs
+getAffectedMPTs(xrpl::TxMeta const& txMeta);
+
+/**
  * @brief Collect every MPTokenIssuanceID referenced by a transaction's own fields.
  *
  * @note Checks the top-level sfMPTokenIssuanceID field, plus any STI_AMOUNT/STI_ISSUE field holding

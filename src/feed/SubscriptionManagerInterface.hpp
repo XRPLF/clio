@@ -11,6 +11,7 @@
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/Fees.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <string>
@@ -216,6 +217,23 @@ public:
      */
     virtual void
     unsubBook(xrpl::Book const& book, SubscriberSharedPtr const& subscriber) = 0;
+
+    /**
+     * @brief Subscribe to the transactions feed, only receive the feed when particular MPT issuance
+     * is affected.
+     * @param mptIssuanceID The MPT issuance to watch.
+     * @param subscriber
+     */
+    virtual void
+    subMPTIssuance(xrpl::MPTID const& mptIssuanceID, SubscriberSharedPtr const& subscriber) = 0;
+
+    /**
+     * @brief Unsubscribe to the transactions feed for particular MPT issuance.
+     * @param mptIssuanceID The MPT issuance to stop watching.
+     * @param subscriber
+     */
+    virtual void
+    unsubMPTIssuance(xrpl::MPTID const& mptIssuanceID, SubscriberSharedPtr const& subscriber) = 0;
 
     /**
      * @brief Forward the transactions feed.

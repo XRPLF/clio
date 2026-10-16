@@ -9,6 +9,7 @@
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/Fees.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <string>
@@ -187,6 +188,24 @@ SubscriptionManager::unsubBook(xrpl::Book const& book, SubscriberSharedPtr const
 }
 
 void
+SubscriptionManager::subMPTIssuance(
+    xrpl::MPTID const& mptIssuanceID,
+    SubscriberSharedPtr const& subscriber
+)
+{
+    transactionFeed_.sub(mptIssuanceID, subscriber);
+}
+
+void
+SubscriptionManager::unsubMPTIssuance(
+    xrpl::MPTID const& mptIssuanceID,
+    SubscriberSharedPtr const& subscriber
+)
+{
+    transactionFeed_.unsub(mptIssuanceID, subscriber);
+}
+
+void
 SubscriptionManager::pubTransaction(
     data::TransactionAndMetadata const& txMeta,
     xrpl::LedgerHeader const& lgrInfo
@@ -207,6 +226,7 @@ SubscriptionManager::report() const
         {"account", transactionFeed_.accountSubCount()},
         {"accounts_proposed", proposedTransactionFeed_.accountSubCount()},
         {"books", transactionFeed_.bookSubCount()},
+        {"mpt_issuances", transactionFeed_.mptIssuanceSubCount()},
         {"book_changes", bookChangesFeed_.count()},
     };
 }

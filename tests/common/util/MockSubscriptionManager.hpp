@@ -12,6 +12,7 @@
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/Fees.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <memory>
@@ -70,6 +71,20 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
     MOCK_METHOD(void, subBook, (xrpl::Book const&, feed::SubscriberSharedPtr const&), (override));
 
     MOCK_METHOD(void, unsubBook, (xrpl::Book const&, feed::SubscriberSharedPtr const&), (override));
+
+    MOCK_METHOD(
+        void,
+        subMPTIssuance,
+        (xrpl::MPTID const&, feed::SubscriberSharedPtr const&),
+        (override)
+    );
+
+    MOCK_METHOD(
+        void,
+        unsubMPTIssuance,
+        (xrpl::MPTID const&, feed::SubscriberSharedPtr const&),
+        (override)
+    );
 
     MOCK_METHOD(void, subBookChanges, (feed::SubscriberSharedPtr const&), (override));
 

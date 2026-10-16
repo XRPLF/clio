@@ -18,6 +18,8 @@
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/MPTIssue.h>  // IWYU pragma: keep (std::hash<xrpl::MPTID>)
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <functional>
@@ -53,11 +55,14 @@ class TransactionFeed {
     std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subBookCount_;
+    std::reference_wrapper<util::prometheus::GaugeInt> subMPTIssuanceCount_;
 
     TrackableSignalMap<xrpl::AccountID, Subscriber, std::shared_ptr<AllVersionsMsgsType> const&>
         accountSignal_;
     TrackableSignalMap<xrpl::Book, Subscriber, std::shared_ptr<AllVersionsMsgsType> const&>
         bookSignal_;
+    TrackableSignalMap<xrpl::MPTID, Subscriber, std::shared_ptr<AllVersionsMsgsType> const&>
+        mptIssuanceSignal_;
     TrackableSignal<Subscriber, std::shared_ptr<AllVersionsMsgsType> const&> signal_;
 
     // Signals for proposed tx subscribers
@@ -78,6 +83,7 @@ public:
         , subAllCount_(getSubscriptionsGaugeInt("tx"))
         , subAccountCount_(getSubscriptionsGaugeInt("account"))
         , subBookCount_(getSubscriptionsGaugeInt("book"))
+        , subMPTIssuanceCount_(getSubscriptionsGaugeInt("mpt_issuance"))
     {
     }
 
@@ -110,6 +116,15 @@ public:
      */
     void
     sub(xrpl::Book const& book, SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Subscribe to the transaction feed, only receive the feed when particular MPT issuance
+     * is affected.
+     * @param subscriber
+     * @param mptIssuanceID The MPT issuance to watch.
+     */
+    void
+    sub(xrpl::MPTID const& mptIssuanceID, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Subscribe to the transaction feed for proposed transaction stream.
@@ -166,6 +181,14 @@ public:
     unsub(xrpl::Book const& book, SubscriberSharedPtr const& subscriber);
 
     /**
+     * @brief Unsubscribe to the transaction feed for particular MPT issuance.
+     * @param subscriber
+     * @param mptIssuanceID The MPT issuance to unsubscribe.
+     */
+    void
+    unsub(xrpl::MPTID const& mptIssuanceID, SubscriberSharedPtr const& subscriber);
+
+    /**
      * @brief Publishes the transaction feed.
      * @param txMeta The transaction and metadata.
      * @param lgrInfo The ledger header.
@@ -197,6 +220,12 @@ public:
     std::uint64_t
     bookSubCount() const;
 
+    /**
+     * @brief Get the number of MPT issuances subscribers.
+     */
+    std::uint64_t
+    mptIssuanceSubCount() const;
+
 private:
     void
     unsubInternal(SubscriberPtr subscriber);
@@ -212,5 +241,8 @@ private:
 
     void
     unsubInternal(xrpl::Book const& book, SubscriberPtr subscriber);
+
+    void
+    unsubInternal(xrpl::MPTID const& mptIssuanceID, SubscriberPtr subscriber);
 };
 }  // namespace feed::impl

@@ -7,6 +7,7 @@
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STBase.h>
+#include <xrpl/protocol/STBitString.h>
 #include <xrpl/protocol/STIssue.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STTx.h>
@@ -46,6 +47,43 @@ getMPTokenIssuanceIDFromNode(xrpl::STObject const& node)
     return xrpl::makeMptID(
         fields.getFieldU32(xrpl::sfSequence), fields.getAccountID(xrpl::sfIssuer)
     );
+}
+
+MPTokenIssuanceIDs
+getAffectedMPTs(xrpl::TxMeta const& txMeta)
+{
+    MPTokenIssuanceIDs issuanceIDs;
+
+    for (auto const& node : txMeta.getNodes()) {
+        auto const& fieldsName =
+            node.getFName() == xrpl::sfCreatedNode ? xrpl::sfNewFields : xrpl::sfFinalFields;
+        if (not node.isFieldPresent(fieldsName))
+            continue;
+
+        auto const& fields = node.peekAtField(fieldsName).downcast<xrpl::STObject>();
+
+        // MPTokenIssuance objects carry no sfMPTokenIssuanceID, so reconstruct it
+        if (node.getFieldU16(xrpl::sfLedgerEntryType) == xrpl::ltMPTOKEN_ISSUANCE &&
+            fields.isFieldPresent(xrpl::sfSequence) && fields.isFieldPresent(xrpl::sfIssuer)) {
+            issuanceIDs.insert(
+                xrpl::makeMptID(
+                    fields.getFieldU32(xrpl::sfSequence), fields.getAccountID(xrpl::sfIssuer)
+                )
+            );
+        }
+
+        for (xrpl::STBase const& field : fields) {
+            if (field.getFName() == xrpl::sfMPTokenIssuanceID) {
+                issuanceIDs.insert(field.downcast<xrpl::STUInt192>().value());
+            } else if (field.getSType() == xrpl::STI_AMOUNT) {
+                auto const& amount = field.downcast<xrpl::STAmount>();
+                if (amount.holds<xrpl::MPTIssue>())
+                    issuanceIDs.insert(amount.get<xrpl::MPTIssue>().getMptID());
+            }
+        }
+    }
+
+    return issuanceIDs;
 }
 
 void
