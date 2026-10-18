@@ -7,7 +7,7 @@
     # so the local shell matches CI.
     # Its nixpkgs is deliberately not overridden with `follows`:
     # that would change the toolchain and lose the match with CI.
-    xrpld.url = "github:XRPLF/rippled/ede8af8191d2bc9ff5c59b6a26d7b84e79b9ea94";
+    xrpld.url = "github:XRPLF/rippled/de5053ae0d8905d8abfa6c59764774aeb2cef801";
   };
 
   outputs =
