@@ -71,6 +71,11 @@ public:
     std::expected<TestWsConnection, util::requests::RequestError>
     acceptConnection(boost::asio::yield_context yield);
 
+    // accepts a connection from a client that tries SSL first and falls back to plain. The failed
+    // SSL attempt may or may not reach the server, so at most one failed connection is skipped
+    std::expected<TestWsConnection, util::requests::RequestError>
+    acceptConnectionSkippingSslAttempt(boost::asio::yield_context yield);
+
     void
     acceptConnectionAndDropIt(boost::asio::yield_context yield);
 
