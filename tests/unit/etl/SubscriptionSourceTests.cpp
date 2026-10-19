@@ -40,14 +40,11 @@ struct SubscriptionSourceConnectionTestsBase : SyncAsioContextTest {
     [[maybe_unused]] TestWsConnection
     serverConnection(boost::asio::yield_context yield)
     {
-        // The first one is an SSL attempt
-        auto failedConnection = wsServer_.acceptConnection(yield);
-        [&] { ASSERT_FALSE(failedConnection); }();
+        auto maybeConnection = wsServer_.acceptConnectionSkippingSslAttempt(yield);
+        [&] { ASSERT_TRUE(maybeConnection) << maybeConnection.error().message(); }();
+        auto connection = std::move(maybeConnection).value();
 
-        auto connection = wsServer_.acceptConnection(yield);
-        [&] { ASSERT_TRUE(connection) << connection.error().message(); }();
-
-        auto message = connection->receive(yield);
+        auto message = connection.receive(yield);
         [&] {
             ASSERT_TRUE(message);
             EXPECT_EQ(
@@ -55,7 +52,7 @@ struct SubscriptionSourceConnectionTestsBase : SyncAsioContextTest {
                 R"JSON({"command":"subscribe","streams":["ledger","manifests","validations","transactions_proposed"]})JSON"
             );
         }();
-        return std::move(connection).value();
+        return connection;
     }
 
 protected:

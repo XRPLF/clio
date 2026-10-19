@@ -160,6 +160,15 @@ TestWsServer::acceptConnection(asio::yield_context yield)
     return TestWsConnection(std::move(ws), std::move(headers));
 }
 
+std::expected<TestWsConnection, util::requests::RequestError>
+TestWsServer::acceptConnectionSkippingSslAttempt(asio::yield_context yield)
+{
+    if (auto connection = acceptConnection(yield); connection)
+        return connection;
+
+    return acceptConnection(yield);
+}
+
 void
 TestWsServer::acceptConnectionAndDropIt(asio::yield_context yield)
 {

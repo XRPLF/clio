@@ -43,11 +43,7 @@ struct ForwardingSourceOperationsTests : ForwardingSourceTests {
     TestWsConnection
     serverConnection(boost::asio::yield_context yield)
     {
-        // First connection attempt is SSL handshake so it will fail
-        auto failedConnection = server_.acceptConnection(yield);
-        [&] { ASSERT_FALSE(failedConnection); }();
-
-        auto connection = server_.acceptConnection(yield);
+        auto connection = server_.acceptConnectionSkippingSslAttempt(yield);
         [&] { ASSERT_TRUE(connection) << connection.error().message(); }();
         return std::move(connection).value();
     }
