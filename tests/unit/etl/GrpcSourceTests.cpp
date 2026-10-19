@@ -367,15 +367,18 @@ TEST_F(GrpcSourceTests, DeadlineIsHandledCorrectly)
         .WillRepeatedly([&](grpc::ServerContext*,
                             org::xrpl::rpc::v1::GetLedgerRequest const*,
                             org::xrpl::rpc::v1::GetLedgerResponse*) {
-            // wait for main thread to discard us and fail the test if unsuccessful within expected
-            // timeframe
-            [&] { ASSERT_TRUE(sem.try_acquire_for(std::chrono::milliseconds{50})); }();
+            // block until the main thread observes the client-side deadline. The timeout is only a
+            // safety net against hanging forever; it must not be tight because the client-side
+            // deadline timer can fire late on a loaded machine (e.g. due to timer coalescing on
+            // macOS)
+            [&] { ASSERT_TRUE(sem.try_acquire_for(std::chrono::seconds{10})); }();
             return grpc::Status{};
         });
 
     auto const [status, response] =
         grpcSource->fetchLedger(sequence, getObjects, getObjectNeighbors);
     ASSERT_FALSE(status.ok());  // timed out after kDeadline
+    EXPECT_EQ(status.error_code(), grpc::StatusCode::DEADLINE_EXCEEDED);
 
     sem.release();  // we don't need to hold GetLedger thread any longer
     grpcSource.reset();
