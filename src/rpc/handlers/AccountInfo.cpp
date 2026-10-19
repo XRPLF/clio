@@ -35,7 +35,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 {
     using namespace data;
 
-    if (!input.account && !input.ident) {
+    if (not input.account.has_value()) {
         return Error{
             Status{XrpldError::RpcInvalidParams, xrpl::rpc::missingFieldMessage(JS(account))}
         };
@@ -55,7 +55,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 
     auto const& lgrInfo = *expectedLgrInfo;
     // Clio's spec rejects a malformed account, so the deferred account always holds one
-    auto const accountID = *(input.account ? *input.account : *input.ident);
+    auto const& accountID = *input.account;
     auto const accountKeylet = xrpl::keylet::account(accountID);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);

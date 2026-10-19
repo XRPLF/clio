@@ -139,7 +139,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
     if (not accountLedgerObject)
         return Error{Status{XrpldError::RpcActNotFound}};
 
-    auto const peerAccountID = input.peer.transform([](auto const& peer) { return *peer; });
+    auto const peerAccountID = input.peer.has_value() ? std::optional{*input.peer} : std::nullopt;
 
     Output response;
     response.lines.reserve(input.limit);
