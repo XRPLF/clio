@@ -5,6 +5,8 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Ripple Labs Inc. <support@ripple.com>")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+# Not a shared library, so shlibdeps can't detect it: Clio needs a CA bundle to start.
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "ca-certificates")
 
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/cmake/pkg/postinst)
 
