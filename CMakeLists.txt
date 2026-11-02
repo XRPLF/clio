@@ -39,7 +39,7 @@ add_library(clio_options INTERFACE)
 target_compile_features(clio_options INTERFACE cxx_std_23)
 target_include_directories(clio_options INTERFACE ${CMAKE_SOURCE_DIR}/src)
 
-if(is_llvm_clang OR is_gcc)
+if(is_linux)
     # Note: -static-libstdc++ can statically link both libstdc++ and libc++
     target_link_libraries(
         clio_options
