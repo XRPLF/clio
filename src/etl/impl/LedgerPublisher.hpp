@@ -264,11 +264,11 @@ public:
     /**
      * @brief Stops publishing
      *
-     * @note This is a basic implementation to satisfy tests. This will be improved in
-     * https://github.com/XRPLF/clio/issues/2833
+     * Any ongoing or future `publish(seq, ...)` call returns `false` without waiting for the
+     * ledger to appear in the database.
      */
     void
-    stop()
+    stop() override
     {
         stop_ = true;
     }

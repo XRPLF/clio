@@ -17,6 +17,8 @@
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>
+#include <future>
+#include <mutex>
 #include <optional>
 #include <vector>
 
@@ -222,6 +224,30 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
     publisher.stop();
     EXPECT_FALSE(publisher.publish(kSeq, {}));
+}
+
+TEST_F(ETLLedgerPublisherTest, StopInterruptsUnboundedPublishWaitingForLedger)
+{
+    auto const dummyState = etl::SystemState{};
+    auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
+
+    // The DB never reaches kSeq, so without stop() this publish would loop forever
+    LedgerRange const range{.minSequence = kSeq - 1, .maxSequence = kSeq - 1};
+    std::promise<void> firstAttempt;
+    std::once_flag firstAttemptFlag;
+    EXPECT_CALL(*backend_, hardFetchLedgerRange).WillRepeatedly([&](auto&&...) {
+        std::call_once(firstAttemptFlag, [&] { firstAttempt.set_value(); });
+        return std::optional{range};
+    });
+
+    auto result = std::async(std::launch::async, [&] {
+        return publisher.publish(kSeq, std::nullopt, std::chrono::milliseconds{1});
+    });
+
+    firstAttempt.get_future().wait();
+    publisher.stop();
+
+    EXPECT_FALSE(result.get());
 }
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttempt)

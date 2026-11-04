@@ -220,6 +220,12 @@ ETLService::stop()
 {
     LOG(log_.info()) << "Stop called";
 
+    // Must come first: a publish() waiting for a ledger that never reaches the DB blocks the
+    // Monitor strand while holding Monitor's lock. The loader then blocks in
+    // notifySequenceLoaded(), and every step below that waits for the loader or the monitor
+    // (write command handlers, taskMan_, monitor_) would hang.
+    publisher_->stop();
+
     systemStateWriteCommandSubscription_.disconnect();
     auto count = runningWriteCommandHandlers_.load();
     while (count != 0) {
@@ -435,9 +441,14 @@ void
 ETLService::giveUpWriter()
 {
     ASSERT(not state_->isStrictReadonly, "This should only happen on writer nodes");
-    state_->isWriting = false;
     LOG(log_.info()) << "Giving up writer seat";
+
+    // Stop and wait for the task manager before clearing isWriting. An in-flight Loader::load
+    // must observe a stable isWriting: if it flipped mid-load, the loader would skip
+    // finishWrites but still report success, and the Monitor would then wait forever for a
+    // ledger that was never committed.
     taskMan_ = nullptr;
+    state_->isWriting = false;
 }
 
 }  // namespace etl
