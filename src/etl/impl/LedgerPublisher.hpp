@@ -168,23 +168,23 @@ public:
                             DbProgress{.maxSequence = range->maxSequence, .since = now};
                     }
 
-                    auto const stalledFor = std::chrono::duration_cast<std::chrono::seconds>(
-                        now - lastDbProgress->since
-                    );
+                    auto const stalledFor = now - lastDbProgress->since;
+                    auto const stalledSeconds =
+                        std::chrono::duration_cast<std::chrono::seconds>(stalledFor).count();
                     LOG(log_.warn())
                         << "Ledger " << ledgerSequence << " is not in DB yet; DB max sequence is "
-                        << range->maxSequence << ", no progress for " << stalledFor.count() << "s";
+                        << range->maxSequence << ", no progress for " << stalledSeconds << "s";
 
                     // The caller only asks for ledgers it has seen committed, so a DB that stays
                     // behind means a bug or an external change to the DB. Unless another node
                     // writes the ledger, this would block publishing (and the Monitor) forever.
                     ASSERT(
-                        now - lastDbProgress->since < maxWaitForDbProgress_,
+                        stalledFor < maxWaitForDbProgress_,
                         "Ledger {} was expected to be in DB, but DB max sequence stayed at {} for "
                         "{}s. Restarting is the only way to recover",
                         ledgerSequence,
                         range->maxSequence,
-                        stalledFor.count()
+                        stalledSeconds
                     );
                 }
 
