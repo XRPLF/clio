@@ -15,6 +15,8 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/MPTAmount.h>
+#include <xrpl/protocol/MPTIssue.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STObject.h>
@@ -751,6 +753,21 @@ generateEscrowTestBundles()
     auto escrow3 = createEscrowLedgerObject(kAccount, kAccount2);
     escrow3.setFieldAmount(xrpl::sfAmount, xrpl::STAmount(getIssue("USD", kIssuer), 50));
 
+    // Escrow with an MPT, which is not included in gateway balances
+    auto escrowMpt = createEscrowLedgerObject(kAccount, kAccount2);
+    escrowMpt.setFieldAmount(
+        xrpl::sfAmount,
+        xrpl::STAmount(
+            xrpl::MPTAmount{100},
+            xrpl::MPTIssue{xrpl::makeMptID(1, getAccountIdWithString(kIssuer))}
+        )
+    );
+
+    // Obligation of 10 USD to kAccount2
+    auto const obligation = createRippleStateLedgerObject(
+        "USD", kIssuer, -10, kAccount, 100, kAccount2, 200, kTxnId, 123
+    );
+
     return std::vector<EscrowTestBundle>{
         EscrowTestBundle{
             .testName = "SingleEscrowXRP",
@@ -808,6 +825,40 @@ generateEscrowTestBundles()
             .expectedJson = fmt::format(
                 R"JSON({{
                     "locked": {{"XRP": "300", "USD": "50"}},
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "{}"
+                }})JSON",
+                kAccount,
+                kLedgerHash
+            ),
+        },
+        EscrowTestBundle{
+            .testName = "EscrowMPTSkipped",
+            .mockedDir = createOwnerDirLedgerObject(
+                {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
+            ),
+            .mockedObjects = std::vector{escrowMpt, obligation},
+            .expectedJson = fmt::format(
+                R"JSON({{
+                    "obligations": {{"USD": "10"}},
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "{}"
+                }})JSON",
+                kAccount,
+                kLedgerHash
+            ),
+        },
+        EscrowTestBundle{
+            .testName = "EscrowMixedCurrenciesWithMPT",
+            .mockedDir = createOwnerDirLedgerObject(
+                {xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}, xrpl::uint256{kIndex2}}, kIndex1
+            ),
+            .mockedObjects = std::vector{escrow1, escrowMpt, escrow3},
+            .expectedJson = fmt::format(
+                R"JSON({{
+                    "locked": {{"XRP": "100", "USD": "50"}},
                     "account": "{}",
                     "ledger_index": 300,
                     "ledger_hash": "{}"
