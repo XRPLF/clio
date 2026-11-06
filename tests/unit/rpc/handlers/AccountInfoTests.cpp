@@ -967,3 +967,44 @@ TEST(RPCAccountInfoHandlerSpecTest, DeprecatedFields)
             << message;
     }
 }
+
+TEST_F(RPCAccountInfoHandlerTest, UrlGravatarUsesHttps)
+{
+    // Regression for https://github.com/XRPLF/clio/issues/3291: for accounts with EmailHash set,
+    // account_data.urlgravatar must use https, to match rippled (rippled PR #6529).
+    auto const ledgerHeader = createLedgerHeader(kLedgerHash, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kAccount);
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto accountRoot = createAccountRootObject(kAccount, 0, 2, 200, 2, kIndex1, 2);
+    accountRoot.setFieldH128(xrpl::sfEmailHash, xrpl::uint128{"241A166EF1A5D4AF36DDE9D1828093FB"});
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _))
+        .WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _))
+        .WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _))
+        .WillOnce(Return(false));
+    EXPECT_CALL(*backend_, doFetchLedgerObject);
+
+    static auto const kInput = boost::json::parse(
+        fmt::format(
+            R"JSON({{
+                "account": "{}"
+            }})JSON",
+            kAccount
+        )
+    );
+    auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kInput, Context{yield});
+        ASSERT_TRUE(output);
+        auto const& accountData = output.result->as_object().at("account_data").as_object();
+        EXPECT_EQ(
+            accountData.at("urlgravatar").as_string(),
+            "https://www.gravatar.com/avatar/241a166ef1a5d4af36dde9d1828093fb"
+        );
+    });
+}
