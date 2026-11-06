@@ -157,13 +157,14 @@ public:
                     return false;
                 }
 
-                if (not range) {
+                if (not range.has_value()) {
                     // The DB is unavailable: waiting is all we can do
                     LOG(log_.warn()) << "Could not fetch ledger range to publish ledger "
                                      << ledgerSequence << ". Retrying";
                 } else {
                     auto const now = std::chrono::steady_clock::now();
-                    if (not lastDbProgress or range->maxSequence > lastDbProgress->maxSequence) {
+                    if (not lastDbProgress.has_value() or
+                        range->maxSequence > lastDbProgress->maxSequence) {
                         lastDbProgress =
                             DbProgress{.maxSequence = range->maxSequence, .since = now};
                     }
