@@ -26,4 +26,5 @@ struct MockLedgerPublisher : public etl::LedgerPublisherInterface {
     );
     MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const, override));
     MOCK_METHOD(std::optional<uint32_t>, getLastPublishedSequence, (), (const));
+    MOCK_METHOD(void, stop, (), (override));
 };

@@ -122,6 +122,13 @@ struct MockInitialLoadObserver : etl::InitialLoadObserverInterface {
 struct MockTaskManager : etl::TaskManagerInterface {
     MOCK_METHOD(void, run, (std::size_t), (override));
     MOCK_METHOD(void, stop, (), (override));
+    MOCK_METHOD(void, die, ());
+
+    // The real TaskManager stops and waits for its loader in the destructor
+    ~MockTaskManager() override
+    {
+        die();
+    }
 };
 
 struct MockTaskManagerProvider : etl::TaskManagerProviderInterface {
@@ -859,6 +866,88 @@ TEST_F(ETLServiceTests, StopWaitsForWriteCommandHandlersToComplete)
 
     // Verify stop() returned, meaning all handlers completed
     SUCCEED();
+}
+
+TEST_F(ETLServiceTests, StopStopsPublisherBeforeTaskManagerAndMonitor)
+{
+    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
+    auto& mockMonitorRef = *mockMonitor;
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSeq, false);
+
+    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
+        return std::move(mockMonitor);
+    });
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSeq}));
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSeq));
+    EXPECT_CALL(*cacheLoader_, load(kSeq));
+
+    service_.run();
+    systemState_->isStrictReadonly = false;
+
+    auto mockTaskManager = std::make_unique<testing::NiceMock<MockTaskManager>>();
+    auto& mockTaskManagerRef = *mockTaskManager;
+    EXPECT_CALL(
+        mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StartWriting)
+    );
+    EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSeq + 1, testing::_))
+        .WillOnce(testing::Return(std::move(mockTaskManager)));
+    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StartWriting);
+
+    {
+        // A publish() stuck waiting for a ledger blocks the Monitor strand and, through it, the
+        // loader. The publisher must be stopped before anything that waits on them.
+        testing::InSequence const seq;
+        EXPECT_CALL(*publisher_, stop());
+        EXPECT_CALL(mockTaskManagerRef, stop());
+        EXPECT_CALL(mockMonitorRef, stop());
+    }
+
+    service_.stop();
+
+    // service_'s destructor calls stop() again; only the first call is under test
+    testing::Mock::VerifyAndClearExpectations(publisher_.get());
+    testing::Mock::VerifyAndClearExpectations(&mockTaskManagerRef);
+    testing::Mock::VerifyAndClearExpectations(&mockMonitorRef);
+}
+
+TEST_F(ETLServiceTests, GiveUpWriterStopsTaskManagerBeforeClearingIsWriting)
+{
+    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSeq, false);
+
+    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
+        return std::move(mockMonitor);
+    });
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSeq}));
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSeq));
+    EXPECT_CALL(*cacheLoader_, load(kSeq));
+
+    service_.run();
+    systemState_->isStrictReadonly = false;
+
+    auto mockTaskManager = std::make_unique<testing::NiceMock<MockTaskManager>>();
+    auto& mockTaskManagerRef = *mockTaskManager;
+    EXPECT_CALL(
+        mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StartWriting)
+    );
+    EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSeq + 1, testing::_))
+        .WillOnce(testing::Return(std::move(mockTaskManager)));
+    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StartWriting);
+    ASSERT_TRUE(systemState_->isWriting);
+
+    // An in-flight Loader::load must keep seeing isWriting == true until the task manager (and
+    // so the loader) is fully stopped; otherwise it would skip finishWrites yet report success.
+    EXPECT_CALL(mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StopWriting));
+    EXPECT_CALL(mockTaskManagerRef, die()).WillOnce([this] {
+        EXPECT_TRUE(systemState_->isWriting);
+    });
+    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StopWriting);
+
+    EXPECT_FALSE(systemState_->isWriting);
 }
 
 TEST_F(ETLServiceTests, WriteConflictIsHandledImmediately_NotDelayed)
