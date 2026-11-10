@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Software constantly evolves. In order to focus resources, we generally only accept vulnerability reports that affect recent and current versions of the software. We always accept reports for issues present in the **develop** branch, and with proposed, [open pull requests](https://github.com/XRPLF/clio/pulls).
+Software constantly evolves. In order to focus resources, we generally only accept vulnerability reports that affect recent and current versions of the software. We always accept reports for issues present in the **develop** branch.
 
 ## Identifying and Reporting Vulnerabilities
 
@@ -20,7 +20,7 @@ Responsible investigation includes, but isn't limited to, the following:
 
 ## Bug Bounty Program
 
-[Ripple](https://ripple.com) is generously sponsoring a bug bounty program for vulnerabilities in [`Clio`](https://github.com/XRPLF/clio) (and other related projects, like [`xrpld`](https://github.com/XRPLF/rippled), [`xrpl.js`](https://github.com/XRPLF/xrpl.js), [`xrpl-py`](https://github.com/XRPLF/xrpl-py), [`xrpl4j`](https://github.com/XRPLF/xrpl4j)).
+[Ripple](https://ripple.com) is generously sponsoring a [bug bounty program](https://ripple.com/legal/bug-bounty/) for vulnerabilities in [`Clio`](https://github.com/XRPLF/clio) (and other related projects, like [`xrpld`](https://github.com/XRPLF/rippled), [`xrpl.js`](https://github.com/XRPLF/xrpl.js), [`xrpl-py`](https://github.com/XRPLF/xrpl-py), [`xrpl4j`](https://github.com/XRPLF/xrpl4j)).
 
 This program allows us to recognize and reward individuals or groups that identify and report bugs.
 
