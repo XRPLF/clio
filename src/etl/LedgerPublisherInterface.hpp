@@ -50,6 +50,15 @@ struct LedgerPublisherInterface {
      */
     [[nodiscard]] virtual std::uint32_t
     lastPublishAgeSeconds() const = 0;
+
+    /**
+     * @brief Stop publishing
+     *
+     * Makes any ongoing or future `publish(seq, ...)` call stop waiting for the ledger to appear
+     * in the database and return `false`. Stopping is permanent.
+     */
+    virtual void
+    stop() = 0;
 };
 
 }  // namespace etl

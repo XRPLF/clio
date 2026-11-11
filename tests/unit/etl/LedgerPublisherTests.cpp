@@ -2,6 +2,7 @@
 #include "data/Types.hpp"
 #include "etl/SystemState.hpp"
 #include "etl/impl/LedgerPublisher.hpp"
+#include "util/MockAssert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
@@ -17,6 +18,9 @@
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>
+#include <cstdint>
+#include <future>
+#include <mutex>
 #include <optional>
 #include <vector>
 
@@ -222,6 +226,93 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
     publisher.stop();
     EXPECT_FALSE(publisher.publish(kSeq, {}));
+}
+
+TEST_F(ETLLedgerPublisherTest, StopInterruptsUnboundedPublishWaitingForLedger)
+{
+    auto const dummyState = etl::SystemState{};
+    auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
+
+    // The DB never reaches kSeq, so without stop() this publish would loop forever
+    LedgerRange const range{.minSequence = kSeq - 1, .maxSequence = kSeq - 1};
+    std::promise<void> firstAttempt;
+    std::once_flag firstAttemptFlag;
+    EXPECT_CALL(*backend_, hardFetchLedgerRange).WillRepeatedly([&](auto&&...) {
+        std::call_once(firstAttemptFlag, [&] { firstAttempt.set_value(); });
+        return std::optional{range};
+    });
+
+    auto result = std::async(std::launch::async, [&] {
+        return publisher.publish(kSeq, std::nullopt, std::chrono::milliseconds{1});
+    });
+
+    firstAttempt.get_future().wait();
+    publisher.stop();
+
+    EXPECT_FALSE(result.get());
+}
+
+struct ETLLedgerPublisherAssertTest : common::util::WithMockAssert, ETLLedgerPublisherTest {};
+
+TEST_F(ETLLedgerPublisherAssertTest, AssertsWhenDbStaysBehindWithoutProgress)
+{
+    auto const dummyState = etl::SystemState{};
+    auto publisher = impl::LedgerPublisher(
+        ctx, backend_, mockSubscriptionManagerPtr, dummyState, std::chrono::milliseconds{5}
+    );
+
+    LedgerRange const range{.minSequence = kSeq - 1, .maxSequence = kSeq - 1};
+    EXPECT_CALL(*backend_, hardFetchLedgerRange).WillRepeatedly(Return(range));
+
+    EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
+        { [[maybe_unused]] auto const unused = publisher.publish(kSeq, {}, milliseconds{10}); },
+        "Ledger 30 was expected to be in DB"
+    );
+}
+
+TEST_F(ETLLedgerPublisherAssertTest, KeepsWaitingWhileDbProgressesTowardsLedger)
+{
+    auto const dummyState = etl::SystemState{};
+    // Each attempt is further apart than the max wait, so only progress can prevent the assert
+    auto publisher = impl::LedgerPublisher(
+        ctx, backend_, mockSubscriptionManagerPtr, dummyState, std::chrono::milliseconds{5}
+    );
+
+    {
+        InSequence const seq;
+        for (uint32_t const max : {kSeq - 3, kSeq - 2, kSeq - 1, kSeq}) {
+            EXPECT_CALL(*backend_, hardFetchLedgerRange)
+                .WillOnce(Return(LedgerRange{.minSequence = 1, .maxSequence = max}));
+        }
+    }
+
+    auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, kAge);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kSeq, _)).WillOnce(Return(dummyLedgerHeader));
+
+    EXPECT_TRUE(publisher.publish(kSeq, {}, milliseconds{10}));
+    ctx.join();
+}
+
+TEST_F(ETLLedgerPublisherAssertTest, KeepsWaitingWhileDbRangeIsUnavailable)
+{
+    auto const dummyState = etl::SystemState{};
+    // Each attempt is further apart than the max wait; it must not apply to an unavailable DB
+    auto publisher = impl::LedgerPublisher(
+        ctx, backend_, mockSubscriptionManagerPtr, dummyState, std::chrono::milliseconds{5}
+    );
+
+    {
+        InSequence const seq;
+        EXPECT_CALL(*backend_, hardFetchLedgerRange).Times(3).WillRepeatedly(Return(std::nullopt));
+        EXPECT_CALL(*backend_, hardFetchLedgerRange)
+            .WillOnce(Return(LedgerRange{.minSequence = 1, .maxSequence = kSeq}));
+    }
+
+    auto const dummyLedgerHeader = createLedgerHeader(kLedgerHash, kSeq, kAge);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kSeq, _)).WillOnce(Return(dummyLedgerHeader));
+
+    EXPECT_TRUE(publisher.publish(kSeq, {}, milliseconds{10}));
+    ctx.join();
 }
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttempt)

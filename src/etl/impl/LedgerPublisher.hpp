@@ -76,26 +76,50 @@ class LedgerPublisher : public LedgerPublisherInterface {
 
     util::Mutex<std::optional<uint32_t>, std::shared_mutex> lastPublishedSequence_;
 
+    std::chrono::steady_clock::duration maxWaitForDbProgress_;
+
 public:
     /**
+     * @brief Default for how long publish() waits while the DB is reachable but stays behind the
+     * requested ledger without making progress
+     */
+    static constexpr std::chrono::steady_clock::duration kDefaultMaxWaitForDbProgress =
+        std::chrono::minutes{5};
+
+    /**
      * @brief Create an instance of the publisher
+     *
+     * @param ctx The execution context used for the publishing strand
+     * @param backend The backend to read ledgers from
+     * @param subscriptions The subscription manager to publish ledgers to
+     * @param state The shared ETL state
+     * @param maxWaitForDbProgress How long publish() waits while the DB stays behind the requested
+     * ledger without making progress before asserting
      */
     LedgerPublisher(
         util::async::AnyExecutionContext ctx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-        SystemState const& state
+        SystemState const& state,
+        std::chrono::steady_clock::duration maxWaitForDbProgress = kDefaultMaxWaitForDbProgress
     )
         : publishStrand_{ctx.makeStrand()}
         , backend_{std::move(backend)}
         , subscriptions_{std::move(subscriptions)}
         , state_{std::cref(state)}
+        , maxWaitForDbProgress_{maxWaitForDbProgress}
     {
     }
 
     /**
      * @brief Attempt to read the specified ledger from the database, and then publish that ledger
      * to the ledgers stream.
+     *
+     * The caller must only request ledgers that it has already seen committed to the database.
+     * While the ledger range can't be fetched, this waits indefinitely (until stop() is called).
+     * If the range is fetched but stays behind the requested ledger without progressing for longer
+     * than the configured maximum wait, the invariant is considered broken and this asserts: a
+     * restart is then the only way for the node to recover.
      *
      * @param ledgerSequence the sequence of the ledger to publish
      * @param maxAttempts the number of times to attempt to read the ledger from the database
@@ -111,21 +135,60 @@ public:
     {
         LOG(log_.info()) << "Attempting to publish ledger = " << ledgerSequence;
         size_t numAttempts = 0;
+
+        // Tracks when the DB was last seen making progress while staying behind ledgerSequence
+        struct DbProgress {
+            uint32_t maxSequence;
+            std::chrono::steady_clock::time_point since;
+        };
+        std::optional<DbProgress> lastDbProgress;
+
         while (not stop_) {
             auto range = backend_->hardFetchLedgerRangeNoThrow();
 
             if (!range || range->maxSequence < ledgerSequence) {
                 ++numAttempts;
-                LOG(log_.debug()) << "Trying to publish. Could not find ledger with sequence = "
-                                  << ledgerSequence;
 
-                // We try maxAttempts times to publish the ledger, waiting one second in between
+                // We try maxAttempts times to publish the ledger, waiting attemptsDelay in between
                 // each attempt.
                 if (maxAttempts && numAttempts >= maxAttempts) {
-                    LOG(log_.debug())
+                    LOG(log_.warn())
                         << "Failed to publish ledger after " << numAttempts << " attempts.";
                     return false;
                 }
+
+                if (not range.has_value()) {
+                    // The DB is unavailable: waiting is all we can do
+                    LOG(log_.warn()) << "Could not fetch ledger range to publish ledger "
+                                     << ledgerSequence << ". Retrying";
+                } else {
+                    auto const now = std::chrono::steady_clock::now();
+                    if (not lastDbProgress.has_value() or
+                        range->maxSequence > lastDbProgress->maxSequence) {
+                        lastDbProgress =
+                            DbProgress{.maxSequence = range->maxSequence, .since = now};
+                    }
+
+                    auto const stalledFor = now - lastDbProgress->since;
+                    auto const stalledSeconds =
+                        std::chrono::duration_cast<std::chrono::seconds>(stalledFor).count();
+                    LOG(log_.warn())
+                        << "Ledger " << ledgerSequence << " is not in DB yet; DB max sequence is "
+                        << range->maxSequence << ", no progress for " << stalledSeconds << "s";
+
+                    // The caller only asks for ledgers it has seen committed, so a DB that stays
+                    // behind means a bug or an external change to the DB. Unless another node
+                    // writes the ledger, this would block publishing (and the Monitor) forever.
+                    ASSERT(
+                        stalledFor < maxWaitForDbProgress_,
+                        "Ledger {} was expected to be in DB, but DB max sequence stayed at {} for "
+                        "{}s. Restarting is the only way to recover",
+                        ledgerSequence,
+                        range->maxSequence,
+                        stalledSeconds
+                    );
+                }
+
                 std::this_thread::sleep_for(attemptsDelay);
                 continue;
             }
@@ -264,11 +327,11 @@ public:
     /**
      * @brief Stops publishing
      *
-     * @note This is a basic implementation to satisfy tests. This will be improved in
-     * https://github.com/XRPLF/clio/issues/2833
+     * Any ongoing or future `publish(seq, ...)` call returns `false` without waiting for the
+     * ledger to appear in the database.
      */
     void
-    stop()
+    stop() override
     {
         stop_ = true;
     }
