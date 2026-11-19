@@ -41,10 +41,7 @@ target_include_directories(clio_options INTERFACE ${CMAKE_SOURCE_DIR}/src)
 
 if(is_linux)
     # Note: -static-libstdc++ can statically link both libstdc++ and libc++
-    target_link_libraries(
-        clio_options
-        INTERFACE -static-libstdc++ -static-libgcc
-    )
+    target_link_libraries(clio_options INTERFACE -static-libstdc++)
 endif()
 
 # On aarch64, libatomic is required for atomic operations. It is not needed on x86_64.
