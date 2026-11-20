@@ -17,6 +17,7 @@
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/MPTIssue.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STLedgerEntry.h>
@@ -68,6 +69,11 @@ GatewayBalancesHandler::process(
     auto addEscrow = [&](xrpl::SLE const& sle) {
         if (sle.getType() == xrpl::ltESCROW) {
             auto const& escrow = sle.getFieldAmount(xrpl::sfAmount);
+
+            // Gateway balances should not include MPTs
+            if (escrow.holds<xrpl::MPTIssue>())
+                return;
+
             auto& lockedBalance = output.locked[escrow.get<xrpl::Issue>().currency];
             if (lockedBalance == beast::kZero) {
                 // This is needed to set the currency code correctly
