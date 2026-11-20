@@ -414,7 +414,7 @@ toJson(xrpl::SLE const& sle)
             std::string md5 = strHex(hash);
             boost::algorithm::to_lower(md5);
             value.as_object()["urlgravatar"] =
-                fmt::format("http://www.gravatar.com/avatar/{}", md5);
+                fmt::format("https://www.gravatar.com/avatar/{}", md5);
         }
     }
     return value.as_object();
