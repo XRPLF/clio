@@ -5,8 +5,10 @@
 #include "rpc/common/impl/HandlerProvider.hpp"
 #include "util/ScopeGuard.hpp"
 #include "util/TerminationHandler.hpp"
+#include "util/build/Build.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
+#include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
 #include <cstdlib>
@@ -35,6 +37,11 @@ runApp(int argc, char const* argv[])
 
             ClioConfigDefinition const& gClioConfig = getClioConfig();
             PrometheusService::init(gClioConfig);
+            PrometheusService::gaugeInt(
+                "clio_build_info",
+                util::prometheus::Labels({{"version", util::build::getClioVersionString()}}),
+                "Information about the running Clio version."
+            ).set(1);
             if (auto const initSuccess = util::LogService::init(gClioConfig); not initSuccess) {
                 std::cerr << initSuccess.error() << std::endl;
                 return EXIT_FAILURE;
