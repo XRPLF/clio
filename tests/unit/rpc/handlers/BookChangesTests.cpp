@@ -31,6 +31,7 @@ constexpr auto kAccount1 = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr auto kAccount2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr auto kLedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr auto kDomain = "F10D0CC9A0F9A3CBF585B80BE09A186483668FDBDD39AA7E3370F3649CE134E5";
+constexpr auto kDomain2 = "0A5E7B3C9D1F4E6A8B2C0D4F6E8A1B3C5D7F9E0A2B4C6D8E0F1A3B5C7D9E1F20";
 constexpr auto kMaxSeq = 30;
 constexpr auto kMinSeq = 10;
 
@@ -240,6 +241,84 @@ TEST_F(RPCBookChangesHandlerTest, NormalPathWithDomain)
         createMetaDataForBookChange(kCurrency, kIssuer, 22, 1, 3, 3, 1, kDomain);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
+
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kMaxSeq, _)).WillOnce(Return(transactions));
+
+    auto const handler = AnyHandler{BookChangesHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(boost::json::parse("{}"), Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, boost::json::parse(kExpectedOut));
+    });
+}
+
+// The same asset pair traded in different domains (and in the open DEX) within one ledger
+// must be reported as separate changes instead of being merged into a single one.
+TEST_F(RPCBookChangesHandlerTest, SamePairInDifferentDomains)
+{
+    static constexpr auto kExpectedOut =
+        R"JSON({
+            "type": "bookChanges",
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "ledger_time": 0,
+            "validated": true,
+            "changes": [
+                {
+                    "currency_a": "XRP_drops",
+                    "currency_b": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",
+                    "volume_a": "6",
+                    "volume_b": "2",
+                    "high": "3",
+                    "low": "3",
+                    "open": "3",
+                    "close": "3"
+                },
+                {
+                    "currency_a": "XRP_drops",
+                    "currency_b": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",
+                    "volume_a": "4",
+                    "volume_b": "4",
+                    "high": "1",
+                    "low": "1",
+                    "open": "1",
+                    "close": "1",
+                    "domain": "0A5E7B3C9D1F4E6A8B2C0D4F6E8A1B3C5D7F9E0A2B4C6D8E0F1A3B5C7D9E1F20"
+                },
+                {
+                    "currency_a": "XRP_drops",
+                    "currency_b": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",
+                    "volume_a": "3",
+                    "volume_b": "8",
+                    "high": "0.5",
+                    "low": "0.25",
+                    "open": "0.5",
+                    "close": "0.25",
+                    "domain": "F10D0CC9A0F9A3CBF585B80BE09A186483668FDBDD39AA7E3370F3649CE134E5"
+                }
+            ]
+        })JSON";
+
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMaxSeq, _))
+        .WillOnce(Return(createLedgerHeader(kLedgerHash, kMaxSeq)));
+
+    auto const makeTransaction = [](xrpl::STObject const& metaObj) {
+        auto trans = TransactionAndMetadata();
+        xrpl::STObject const obj = createPaymentTransactionObject(kAccount1, kAccount2, 1, 1, 32);
+        trans.transaction = obj.getSerializer().peekData();
+        trans.ledgerSequence = 32;
+        trans.metadata = metaObj.getSerializer().peekData();
+        return trans;
+    };
+
+    // kDomain trades both before and after the other books to make sure
+    // it is neither merged into them nor overwritten by them
+    auto const transactions = std::vector<TransactionAndMetadata>{
+        makeTransaction(createMetaDataForBookChange(kCurrency, kIssuer, 22, 1, 3, 2, 6, kDomain)),
+        makeTransaction(createMetaDataForBookChange(kCurrency, kIssuer, 23, 1, 5, 1, 5, kDomain2)),
+        makeTransaction(createMetaDataForBookChange(kCurrency, kIssuer, 24, 2, 8, 1, 3)),
+        makeTransaction(createMetaDataForBookChange(kCurrency, kIssuer, 25, 1, 2, 1, 5, kDomain)),
+    };
 
     EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kMaxSeq, _)).WillOnce(Return(transactions));
 

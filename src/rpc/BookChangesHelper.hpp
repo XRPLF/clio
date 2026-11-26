@@ -165,7 +165,10 @@ private:
             if (second < beast::kZero)
                 second = -second;
 
-            auto const key = noswap ? (g + '|' + p) : (p + '|' + g);
+            auto key = noswap ? (g + '|' + p) : (p + '|' + g);
+            if (domain.has_value())
+                key += '|' + to_string(*domain);
+
             if (tally_.contains(key)) {
                 auto& entry = tally_.at(key);
 
