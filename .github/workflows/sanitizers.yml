@@ -18,6 +18,7 @@ on:
       - CMakeLists.txt
       - conanfile.py
       - conan.lock
+      - "conan/**"
       - "cmake/**"
       # We don't run sanitizers on code change, because it takes too long
       # - "src/**"

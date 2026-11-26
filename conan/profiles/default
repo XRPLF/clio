@@ -55,8 +55,6 @@ tools.info.package_id:confs+=["user.package:cppstd_version"]
 {# that might change with a Nix toolchain update. #}
 {# --as-needed drops the ones they link but don't use, #}
 {# such as libatomic for grpc_cpp_plugin on arm64. #}
-{# libgcc is not linked statically: a shared library in the process can load libgcc_s #}
-{# dynamically, and having two copies of it in one process can cause problems. #}
 {% set static_runtime_flags = ["-static-libstdc++", "-Wl,--as-needed"] %}
 tools.build:exelinkflags+={{ static_runtime_flags }}
 tools.info.package_id:confs+=["tools.build:exelinkflags"]
