@@ -25,7 +25,7 @@ on:
 
       - conanfile.py
       - conan.lock
-      - conan/profiles/**
+      - "conan/**"
   push:
     branches: [develop]
     paths:
@@ -36,7 +36,7 @@ on:
 
       - conanfile.py
       - conan.lock
-      - conan/profiles/**
+      - "conan/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

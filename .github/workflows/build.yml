@@ -19,6 +19,7 @@ on:
       - CMakeLists.txt
       - conanfile.py
       - conan.lock
+      - "conan/**"
       - "cmake/**"
       - "src/**"
       - "tests/**"
