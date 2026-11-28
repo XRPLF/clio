@@ -70,8 +70,8 @@ namespace rpc {
  * @brief Enum for NFT json manipulation
  */
 enum class NFTokenjson {
-    ENABLE,  ///< Insert synthetic NFT fields (e.g. nftoken_id, offer_id) into the metadata
-    DISABLE  ///< Do not insert synthetic NFT fields
+    ENABLE,   ///< Insert synthetic NFT fields (e.g. nftoken_id, offer_id) into the metadata
+    DISABLE,  ///< Do not insert synthetic NFT fields
 };
 
 /**

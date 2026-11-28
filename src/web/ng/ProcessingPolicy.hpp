@@ -7,7 +7,7 @@ namespace web::ng {
  */
 enum class ProcessingPolicy {
     Sequential,  ///< Requests from a connection are processed one at a time, in order
-    Parallel     ///< Requests from a connection may be processed concurrently
+    Parallel,    ///< Requests from a connection may be processed concurrently
 };
 
 }  // namespace web::ng

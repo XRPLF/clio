@@ -53,10 +53,10 @@ public:
      * requests.
      */
     enum class Method {
-        Get,         ///< HTTP GET request
-        Post,        ///< HTTP POST request
-        Websocket,   ///< A message received over a WebSocket connection
-        Unsupported  ///< Any other HTTP method
+        Get,          ///< HTTP GET request
+        Post,         ///< HTTP POST request
+        Websocket,    ///< A message received over a WebSocket connection
+        Unsupported,  ///< Any other HTTP method
     };
 
     /**

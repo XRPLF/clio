@@ -37,7 +37,7 @@ public:
     enum class State {
         NoValue,   ///< No value is cached and no update is in progress
         Updating,  ///< An update is in progress; getters wait for it to finish
-        HasValue   ///< A value is cached and can be returned immediately
+        HasValue,  ///< A value is cached and can be returned immediately
     };
 
 private:

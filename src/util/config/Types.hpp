@@ -19,7 +19,7 @@ enum class ConfigType {
     Integer,  ///< A signed 64-bit integer value
     String,   ///< A string value
     Double,   ///< A double precision floating point value
-    Boolean   ///< A boolean value
+    Boolean,  ///< A boolean value
 };
 
 /**

@@ -19,7 +19,7 @@ struct CacheLoaderSettings {
     enum class LoadStyle {
         ASYNC,  ///< Load the cache in the background without blocking startup
         SYNC,   ///< Block startup until the cache is fully loaded
-        NONE    ///< Do not load the cache; the cache is disabled
+        NONE,   ///< Do not load the cache; the cache is disabled
     };
 
     /**

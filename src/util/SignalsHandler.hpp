@@ -53,7 +53,7 @@ public:
     enum class Priority {
         StopFirst = 0,  ///< Callbacks run before Normal and StopLast ones
         Normal = 1,     ///< Default priority
-        StopLast = 2    ///< Callbacks run after StopFirst and Normal ones
+        StopLast = 2,   ///< Callbacks run after StopFirst and Normal ones
     };
 
     /**

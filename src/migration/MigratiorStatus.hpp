@@ -19,7 +19,7 @@ public:
         Migrated,     ///< The migration has been completed
         NotMigrated,  ///< The migration has not been run yet
         NotKnown,     ///< No migrator with the given name is registered
-        NumStatuses   ///< Number of statuses; not a valid status
+        NumStatuses,  ///< Number of statuses; not a valid status
     };
 
     /**
