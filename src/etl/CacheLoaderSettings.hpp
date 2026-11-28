@@ -16,7 +16,11 @@ struct CacheLoaderSettings {
     /**
      * @brief Ways to load the cache
      */
-    enum class LoadStyle { ASYNC, SYNC, NONE };
+    enum class LoadStyle {
+        ASYNC,  ///< Load the cache in the background without blocking startup
+        SYNC,   ///< Block startup until the cache is fully loaded
+        NONE    ///< Do not load the cache; the cache is disabled
+    };
 
     /**
      * @brief Settings for cache file operations

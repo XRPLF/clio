@@ -30,23 +30,35 @@ class AccountObjectsHandler : public rpc::HandlerFor<rpc::spec::handlers::accoun
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    /**
+     * @brief Minimum accepted value for the `limit` request field
+     */
     static constexpr auto kLimitMin = rpc::spec::handlers::account_objects::kLimitMin;
+    /**
+     * @brief Maximum accepted value for the `limit` request field
+     */
     static constexpr auto kLimitMax = rpc::spec::handlers::account_objects::kLimitMax;
+    /**
+     * @brief Value of `limit` used when the request does not specify one
+     */
     static constexpr auto kLimitDefault = rpc::spec::handlers::account_objects::kLimitDefault;
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string account;
-        std::string ledgerHash;
-        uint32_t ledgerIndex{};
-        std::optional<std::string> marker;
-        uint32_t limit{};
-        std::vector<xrpl::SLE> accountObjects;
-        bool validated = true;
+        std::string account;                ///< The account whose objects are returned
+        std::string ledgerHash;             ///< Hash of the ledger used for the request
+        uint32_t ledgerIndex{};             ///< Sequence of the ledger used for the request
+        std::optional<std::string> marker;  ///< Pagination marker to resume from, if more results
+        uint32_t limit{};                   ///< Maximum number of objects requested
+        std::vector<xrpl::SLE> accountObjects;  ///< Ledger objects owned by the account
+        bool validated = true;                  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: the Output on success or an error Status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

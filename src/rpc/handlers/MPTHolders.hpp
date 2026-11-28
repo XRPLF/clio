@@ -30,23 +30,30 @@ class MPTHoldersHandler : public rpc::HandlerFor<rpc::spec::handlers::mpt_holder
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    /** @brief Minimum allowed value of the `limit` parameter */
     static constexpr auto kLimitMin = rpc::spec::handlers::mpt_holders::kLimitMin;
+    /** @brief Maximum allowed value of the `limit` parameter */
     static constexpr auto kLimitMax = rpc::spec::handlers::mpt_holders::kLimitMax;
+    /** @brief Default value of the `limit` parameter */
     static constexpr auto kLimitDefault = rpc::spec::handlers::mpt_holders::kLimitDefault;
+    /** @brief Maximum number of entries allowed in the `accounts` filter */
     static constexpr auto kMaxAccounts = rpc::spec::handlers::mpt_holders::kMaxAccounts;
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        boost::json::array mpts;
-        uint32_t ledgerIndex;
-        std::string mptID;
-        bool validated = true;
-        std::optional<uint32_t> limit;
-        std::optional<std::string> marker;
+        boost::json::array mpts;            ///< MPToken objects of the holders, as JSON
+        uint32_t ledgerIndex;               ///< Sequence of the ledger used
+        std::string mptID;                  ///< ID of the queried MPTokenIssuance
+        bool validated = true;              ///< Whether the ledger is validated
+        std::optional<uint32_t> limit;      ///< Page limit used; unset in filtered mode
+        std::optional<std::string> marker;  ///< Marker to fetch the next page, if any
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

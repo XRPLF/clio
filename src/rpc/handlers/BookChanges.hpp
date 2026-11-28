@@ -30,13 +30,17 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string ledgerHash;
-        uint32_t ledgerIndex{};
-        uint32_t ledgerTime{};
+        std::string ledgerHash;  ///< Hash of the ledger the changes were computed for
+        uint32_t ledgerIndex{};  ///< Sequence of the ledger
+        uint32_t ledgerTime{};   ///< Close time of the ledger, in seconds since the Ripple epoch
+        /** @brief Order book changes caused by the ledger's transactions */
         std::vector<BookChange> bookChanges;
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

@@ -13,6 +13,9 @@
 #include <string>
 #include <utility>
 
+/**
+ * @brief This namespace implements the migration framework for the Cassandra backend.
+ */
 namespace migration::cassandra {
 
 /**

@@ -66,6 +66,10 @@ public:
         ErrorHandler errorHandler
     );
 
+    /**
+     * @brief Destroy the Subscription Context object.
+     * @note disconnect() must be called before the object is destroyed.
+     */
     ~SubscriptionContext() override;
 
     /**

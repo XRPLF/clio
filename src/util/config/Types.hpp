@@ -15,7 +15,12 @@ namespace util::config {
 /**
  * @brief Custom clio config types
  */
-enum class ConfigType { Integer, String, Double, Boolean };
+enum class ConfigType {
+    Integer,  ///< A signed 64-bit integer value
+    String,   ///< A string value
+    Double,   ///< A double precision floating point value
+    Boolean   ///< A boolean value
+};
 
 /**
  * @brief Prints the specified config type to output stream

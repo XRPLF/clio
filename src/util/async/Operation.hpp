@@ -164,6 +164,9 @@ public:
     {
     }
 
+    /**
+     * @brief Destroy the Stoppable Operation object, requesting a stop unless it was moved from
+     */
     ~StoppableOperation() override
     {
         if (not wasMoved())
@@ -223,6 +226,7 @@ public:
      * @brief Construct a new Repeating Operation object
      * @note The first invocation of the user-provided function happens with no delay
      *
+     * @tparam FnType The type of the user-provided function; must be invocable with no arguments
      * @param executor The executor to operate on
      * @param interval Time to wait before repeating the user-provided block of code
      * @param fn The function to execute repeatedly
@@ -235,6 +239,9 @@ public:
         repeat_.start(interval, action_);
     }
 
+    /**
+     * @brief Destroy the Repeating Operation object, aborting it unless it was moved from
+     */
     ~RepeatingOperation() override
     {
         if (not wasMoved())

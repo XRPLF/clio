@@ -19,6 +19,9 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief This namespace contains the data models used by the ETL pipeline and its extensions.
+ */
 namespace etl::model {
 
 /**
@@ -27,11 +30,13 @@ namespace etl::model {
  * This specification simply defines the transaction types that are to be filtered out from the
  * incoming transactions by the Registry for its `onTransaction` and `onInitialTransaction` hooks.
  * It's a compilation error to list the same transaction type more than once.
+ *
+ * @tparam Types The transaction types the Registry should deliver to the extension
  */
 template <xrpl::TxType... Types>
     requires(util::hasNoDuplicates(Types...))  // NOLINT(readability-redundant-parentheses)
 struct Spec {
-    static constexpr bool kSpecTag = true;
+    static constexpr bool kSpecTag = true;  ///< Marker used by the Registry to detect a Spec
 
     /**
      * @brief Checks if the transaction type was requested.
@@ -50,17 +55,17 @@ struct Spec {
  * @brief Represents a single transaction on the ledger.
  */
 struct Transaction {
-    std::string raw;  // raw binary blob
-    std::string metaRaw;
+    std::string raw;      ///< Raw serialized transaction blob
+    std::string metaRaw;  ///< Raw serialized transaction metadata blob
 
     // unpacked blob and meta
-    xrpl::STTx sttx;
-    xrpl::TxMeta meta;
+    xrpl::STTx sttx;    ///< Deserialized transaction
+    xrpl::TxMeta meta;  ///< Deserialized transaction metadata
 
     // commonly used stuff
-    xrpl::uint256 id;
-    std::string key;  // key is the above id as a string of 32 characters
-    xrpl::TxType type;
+    xrpl::uint256 id;   ///< Transaction hash
+    std::string key;    ///< The above id as a string of 32 raw bytes
+    xrpl::TxType type;  ///< Transaction type
 
     /**
      * @brief Compares Transaction objects to each other without considering sttx and meta fields
@@ -88,20 +93,20 @@ struct Object {
      * @brief Modification type for the object.
      */
     enum class ModType : int {
-        Unspecified = 0,
-        Created = 1,
-        Modified = 2,
-        Deleted = 3,
+        Unspecified = 0,  ///< Modification type was not provided
+        Created = 1,      ///< Object was created in this ledger
+        Modified = 2,     ///< Object was modified in this ledger
+        Deleted = 3,      ///< Object was deleted in this ledger
     };
 
-    xrpl::uint256 key;
-    std::string keyRaw;
-    xrpl::Blob data;
-    std::string dataRaw;
-    std::string successor;
-    std::string predecessor;
+    xrpl::uint256 key;        ///< Key of the ledger object
+    std::string keyRaw;       ///< Key of the ledger object as raw bytes
+    xrpl::Blob data;          ///< Serialized object data; empty if the object was deleted
+    std::string dataRaw;      ///< Serialized object data as a string
+    std::string successor;    ///< Raw key of the next object in the ledger (first key if unset)
+    std::string predecessor;  ///< Raw key of the previous object in the ledger (last key if unset)
 
-    ModType type;
+    ModType type;  ///< How the object was modified in this ledger
 
     bool
     operator==(Object const&) const = default;
@@ -111,8 +116,8 @@ struct Object {
  * @brief Represents a book successor.
  */
 struct BookSuccessor {
-    std::string firstBook;
-    std::string bookBase;
+    std::string firstBook;  ///< Raw key of the first offer directory page of the book
+    std::string bookBase;   ///< Raw key of the book base (book directory without the quality)
 
     bool
     operator==(BookSuccessor const&) const = default;
@@ -122,14 +127,14 @@ struct BookSuccessor {
  * @brief Represents an entire ledger diff worth of transactions and objects.
  */
 struct LedgerData {
-    std::vector<Transaction> transactions;
-    std::vector<Object> objects;
-    std::optional<std::vector<BookSuccessor>> successors;
-    std::optional<std::vector<std::string>> edgeKeys;
+    std::vector<Transaction> transactions;                 ///< Transactions in the ledger
+    std::vector<Object> objects;                           ///< Objects changed by the ledger
+    std::optional<std::vector<BookSuccessor>> successors;  ///< Book successors, if provided
+    std::optional<std::vector<std::string>> edgeKeys;      ///< Last key of each initial load range
 
-    xrpl::LedgerHeader header;
-    std::string rawHeader;
-    uint32_t seq;
+    xrpl::LedgerHeader header;  ///< Deserialized ledger header
+    std::string rawHeader;      ///< Serialized ledger header
+    uint32_t seq;               ///< Sequence of the ledger
 
     /**
      * @brief Compares LedgerData objects to each other without considering the header field
@@ -163,12 +168,12 @@ struct Task {
      * @brief Represents the priority of the task
      */
     enum class Priority : uint8_t {
-        Lower = 0u,
-        Higher = 1u,
+        Lower = 0u,   ///< Low priority, used for backfilling older ledgers
+        Higher = 1u,  ///< High priority, used for extracting new ledgers going forward
     };
 
-    Priority priority;
-    uint32_t seq;
+    Priority priority;  ///< Priority of the task
+    uint32_t seq;       ///< Sequence of the ledger to extract
 };
 
 }  // namespace etl::model

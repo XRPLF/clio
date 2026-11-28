@@ -28,35 +28,47 @@ class AccountOffersHandler : public rpc::HandlerFor<rpc::spec::handlers::account
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    /**
+     * @brief Minimum accepted value for the `limit` request field
+     */
     static constexpr auto kLimitMin = rpc::spec::handlers::account_offers::kLimitMin;
+    /**
+     * @brief Maximum accepted value for the `limit` request field
+     */
     static constexpr auto kLimitMax = rpc::spec::handlers::account_offers::kLimitMax;
+    /**
+     * @brief Value of `limit` used when the request does not specify one
+     */
     static constexpr auto kLimitDefault = rpc::spec::handlers::account_offers::kLimitDefault;
 
     /**
      * @brief A struct to hold data for one offer response
      */
     struct Offer {
-        uint32_t flags{};
-        uint32_t seq{};
-        xrpl::STAmount takerGets;
-        xrpl::STAmount takerPays;
-        std::string quality;
-        std::optional<uint32_t> expiration;
+        uint32_t flags{};          ///< Flags set on the offer
+        uint32_t seq{};            ///< Sequence number of the transaction that created the offer
+        xrpl::STAmount takerGets;  ///< Amount the offer creator is selling
+        xrpl::STAmount takerPays;  ///< Amount the offer creator wants in return
+        std::string quality;       ///< Exchange rate of the offer (takerPays / takerGets)
+        std::optional<uint32_t> expiration;  ///< Time after which the offer is no longer active
     };
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string account;
-        std::string ledgerHash;
-        uint32_t ledgerIndex{};
-        std::vector<Offer> offers;
-        std::optional<std::string> marker;
+        std::string account;                ///< The account whose offers are returned
+        std::string ledgerHash;             ///< Hash of the ledger used for the request
+        uint32_t ledgerIndex{};             ///< Sequence of the ledger used for the request
+        std::vector<Offer> offers;          ///< Offers owned by the account
+        std::optional<std::string> marker;  ///< Pagination marker to resume from, if more results
         // validated should be sent via framework
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: the Output on success or an error Status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

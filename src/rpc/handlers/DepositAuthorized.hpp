@@ -41,17 +41,21 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        bool depositAuthorized = true;
-        std::string sourceAccount;
-        std::string destinationAccount;
-        std::string ledgerHash;
-        uint32_t ledgerIndex{};
+        bool depositAuthorized = true;   ///< Whether the source may pay the destination
+        std::string sourceAccount;       ///< Address of the sending account
+        std::string destinationAccount;  ///< Address of the receiving account
+        std::string ledgerHash;          ///< Hash of the ledger used
+        uint32_t ledgerIndex{};          ///< Sequence of the ledger used
+        /** @brief Credentials from the request, if any */
         std::optional<std::vector<xrpl::uint256>> credentials;
 
         // validated should be sent via framework
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

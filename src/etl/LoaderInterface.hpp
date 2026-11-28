@@ -13,8 +13,8 @@ namespace etl {
  * @brief Enumeration of possible errors that can occur during loading operations
  */
 enum class LoaderError {
-    AmendmentBlocked, /*< Error indicating that an operation is blocked by an amendment */
-    WriteConflict,    /*< Error indicating that a write operation resulted in a conflict */
+    AmendmentBlocked,  ///< Error indicating that an operation is blocked by an amendment
+    WriteConflict,     ///< Error indicating that a write operation resulted in a conflict
 };
 
 /**

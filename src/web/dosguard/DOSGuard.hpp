@@ -19,6 +19,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
+/**
+ * @brief Denial of service protection: rate limiting, IP whitelisting and request weighting.
+ */
 namespace web::dosguard {
 
 /**
@@ -84,7 +87,7 @@ public:
     /**
      * @brief Increment connection count for the given ip address.
      *
-     * @param ip
+     * @param ip The ip address of the client opening a connection
      */
     void
     increment(std::string const& ip) noexcept override;
@@ -92,7 +95,7 @@ public:
     /**
      * @brief Decrement connection count for the given ip address.
      *
-     * @param ip
+     * @param ip The ip address of the client closing a connection
      */
     void
     decrement(std::string const& ip) noexcept override;
@@ -104,8 +107,8 @@ public:
      * the operation is no longer allowed and false is returned; true is
      * returned otherwise.
      *
-     * @param ip
-     * @param numObjects
+     * @param ip The ip address of the client
+     * @param numObjects The amount of usage to add (size in bytes of the transferred data)
      * @return true
      * @return false
      */
@@ -119,7 +122,7 @@ public:
      * the operation is no longer allowed and false is returned; true is
      * returned otherwise.
      *
-     * @param ip
+     * @param ip The ip address of the client
      * @param request The request as json object
      * @return true
      * @return false

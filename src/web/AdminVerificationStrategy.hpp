@@ -19,6 +19,7 @@ namespace web {
  */
 class AdminVerificationStrategy {
 public:
+    /** @brief The header type of an HTTP request with a string body. */
     using RequestHeader = boost::beast::http::request<boost::beast::http::string_body>::header_type;
     virtual ~AdminVerificationStrategy() = default;
 

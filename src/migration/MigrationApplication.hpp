@@ -22,10 +22,10 @@ struct MigrateSubCmd {
      * @brief Run a migration
      */
     struct Migration {
-        std::string migratorName;
+        std::string migratorName;  ///< Name of the migrator to run
     };
 
-    std::variant<Status, Migration> state;
+    std::variant<Status, Migration> state;  ///< The requested subcommand
 
     /**
      * @brief Helper function to create a status command

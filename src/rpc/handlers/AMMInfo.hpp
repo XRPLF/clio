@@ -33,21 +33,24 @@ public:
      */
     struct Output {
         // todo: use better type than json types
-        boost::json::value amount1;
-        boost::json::value amount2;
-        boost::json::value lpToken;
-        boost::json::array voteSlots;
-        boost::json::value auctionSlot;
-        std::uint16_t tradingFee = 0;
-        std::string ammAccount;
-        std::optional<bool> asset1Frozen;
-        std::optional<bool> asset2Frozen;
+        boost::json::value amount1;        ///< Balance of the first asset in the AMM pool
+        boost::json::value amount2;        ///< Balance of the second asset in the AMM pool
+        boost::json::value lpToken;        ///< LP tokens of `account` if given, else total
+        boost::json::array voteSlots;      ///< Current trading fee votes (account, fee, weight)
+        boost::json::value auctionSlot;    ///< Current auction slot holder info; null if none
+        std::uint16_t tradingFee = 0;      ///< Trading fee in units of 1/100,000
+        std::string ammAccount;            ///< Address of the AMM's special account
+        std::optional<bool> asset1Frozen;  ///< Whether the first asset is frozen; unset for XRP
+        std::optional<bool> asset2Frozen;  ///< Whether the second asset is frozen; unset for XRP
 
-        std::string ledgerHash;
-        uint32_t ledgerIndex{};
-        bool validated = true;
+        std::string ledgerHash;  ///< Hash of the ledger the info was taken from
+        uint32_t ledgerIndex{};  ///< Sequence of the ledger the info was taken from
+        bool validated = true;   ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: the Output on success or an error Status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

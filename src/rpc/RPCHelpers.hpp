@@ -69,7 +69,10 @@ namespace rpc {
 /**
  * @brief Enum for NFT json manipulation
  */
-enum class NFTokenjson { ENABLE, DISABLE };
+enum class NFTokenjson {
+    ENABLE,  ///< Insert synthetic NFT fields (e.g. nftoken_id, offer_id) into the metadata
+    DISABLE  ///< Do not insert synthetic NFT fields
+};
 
 /**
  * @brief Get a xrpl::AccountID from its string representation
@@ -241,6 +244,7 @@ toJson(xrpl::LedgerHeader const& info, bool binary, std::uint32_t apiVersion);
 boost::json::object
 toJson(xrpl::TxMeta const& meta);
 
+/** @brief Alias for the JSON value type used by libxrpl (rippled). */
 using RippledJson = json::Value;
 
 /**

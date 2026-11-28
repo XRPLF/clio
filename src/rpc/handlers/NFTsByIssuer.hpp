@@ -24,23 +24,29 @@ class NFTsByIssuerHandler : public rpc::HandlerFor<rpc::spec::handlers::nfts_by_
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    /** @brief Minimum allowed value of the `limit` parameter */
     static constexpr auto kLimitMin = rpc::spec::handlers::nfts_by_issuer::kLimitMin;
+    /** @brief Maximum allowed value of the `limit` parameter */
     static constexpr auto kLimitMax = rpc::spec::handlers::nfts_by_issuer::kLimitMax;
+    /** @brief Default value of the `limit` parameter */
     static constexpr auto kLimitDefault = rpc::spec::handlers::nfts_by_issuer::kLimitDefault;
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        boost::json::array nfts;
-        uint32_t ledgerIndex;
-        std::string issuer;
-        bool validated = true;
-        std::optional<uint32_t> nftTaxon;
-        uint32_t limit;
-        std::optional<std::string> marker;
+        boost::json::array nfts;            ///< NFTs minted by the issuer, as JSON
+        uint32_t ledgerIndex;               ///< Sequence of the ledger used
+        std::string issuer;                 ///< Address of the issuer
+        bool validated = true;              ///< Whether the ledger is validated
+        std::optional<uint32_t> nftTaxon;   ///< Taxon filter from the request, if any
+        uint32_t limit;                     ///< Limit used for this page
+        std::optional<std::string> marker;  ///< Marker to fetch the next page, if any
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

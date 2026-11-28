@@ -55,6 +55,8 @@ protected:
     [[nodiscard]] virtual std::chrono::steady_clock::duration
     nextDelay() const = 0;
 };
+
+/** @brief Owning pointer to a RetryStrategy */
 using RetryStrategyPtr = std::unique_ptr<RetryStrategy>;
 
 /**
@@ -73,8 +75,8 @@ public:
      * Equal `initial` and `max` mean a flat delay with no backoff.
      */
     struct Delays {
-        std::chrono::steady_clock::duration initial;
-        std::chrono::steady_clock::duration max;
+        std::chrono::steady_clock::duration initial;  ///< The delay before the first retry attempt
+        std::chrono::steady_clock::duration max;      ///< The upper bound the delay can grow to
     };
 
     /**

@@ -36,6 +36,8 @@ template <SomeSettingsProvider SettingsProviderType>
 
 /**
  * @brief Manages the DB schema and provides access to prepared statements.
+ *
+ * @tparam SettingsProviderType The settings provider type
  */
 template <SomeSettingsProvider SettingsProviderType>
 class Schema {
@@ -56,6 +58,7 @@ public:
     {
     }
 
+    /** @brief CQL statement creating the keyspace (SimpleStrategy) if it does not exist */
     std::string createKeyspace = [this] {
         return fmt::format(
             R"(
@@ -75,6 +78,7 @@ public:
     // Schema creation queries
     // =======================
 
+    /** @brief CQL statements creating all tables used by Clio if they do not exist */
     std::vector<Statement> createSchema = [this] {
         std::vector<Statement> statements;
 
@@ -377,6 +381,7 @@ public:
         // Insert queries
         //
 
+        /** @brief Insert a ledger object version into `objects` */
         PreparedStatement insertObject = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -390,6 +395,7 @@ public:
             );
         }();
 
+        /** @brief Insert a transaction with its metadata into `transactions` */
         PreparedStatement insertTransaction = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -403,6 +409,7 @@ public:
             );
         }();
 
+        /** @brief Insert a ledger sequence to transaction hash link into `ledger_transactions` */
         PreparedStatement insertLedgerTransaction = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -416,6 +423,7 @@ public:
             );
         }();
 
+        /** @brief Insert a key to successor link at a ledger sequence into `successor` */
         PreparedStatement insertSuccessor = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -429,6 +437,7 @@ public:
             );
         }();
 
+        /** @brief Insert a key changed in a ledger into `diff` */
         PreparedStatement insertDiff = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -442,6 +451,7 @@ public:
             );
         }();
 
+        /** @brief Insert an account to transaction link into `account_tx` */
         PreparedStatement insertAccountTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -455,6 +465,7 @@ public:
             );
         }();
 
+        /** @brief Insert an NFT state (owner, burned flag) at a ledger sequence into `nf_tokens` */
         PreparedStatement insertNFT = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -468,6 +479,7 @@ public:
             );
         }();
 
+        /** @brief Insert an issuer/taxon to NFT ID link into `issuer_nf_tokens_v2` */
         PreparedStatement insertIssuerNFT = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -481,6 +493,7 @@ public:
             );
         }();
 
+        /** @brief Insert an NFT URI at a ledger sequence into `nf_token_uris` */
         PreparedStatement insertNFTURI = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -494,6 +507,7 @@ public:
             );
         }();
 
+        /** @brief Insert an NFT to transaction link into `nf_token_transactions` */
         PreparedStatement insertNFTTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -507,6 +521,7 @@ public:
             );
         }();
 
+        /** @brief Insert an MPT issuance to tx link into `mptoken_issuance_transactions` */
         PreparedStatement insertMPTokenIssuanceTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -520,6 +535,10 @@ public:
             );
         }();
 
+        /**
+         * @brief Insert an MPT issuance/account to transaction link into
+         * `account_mptoken_issuance_transactions`
+         */
         PreparedStatement insertAccountMPTokenIssuanceTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -535,6 +554,7 @@ public:
             );
         }();
 
+        /** @brief Insert an MPT ID to holder link into `mp_token_holders` */
         PreparedStatement insertMPTHolder = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -548,6 +568,7 @@ public:
             );
         }();
 
+        /** @brief Insert a serialized ledger header by sequence into `ledgers` */
         PreparedStatement insertLedgerHeader = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -561,6 +582,7 @@ public:
             );
         }();
 
+        /** @brief Insert a ledger hash to sequence mapping into `ledger_hashes` */
         PreparedStatement insertLedgerHash = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -578,6 +600,7 @@ public:
         // Update (and "delete") queries
         //
 
+        /** @brief Set the minimum (non-latest) sequence in `ledger_range` */
         PreparedStatement deleteLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -591,6 +614,7 @@ public:
             );
         }();
 
+        /** @brief Insert the status of a migrator into `migrator_status` */
         PreparedStatement insertMigratorStatus = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -604,6 +628,7 @@ public:
             );
         }();
 
+        /** @brief Update the message of a Clio node in `nodes_chat` */
         PreparedStatement updateClioNodeMessage = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -621,6 +646,7 @@ public:
         // Select queries
         //
 
+        /** @brief Select the successor of a key as of a ledger sequence from `successor` */
         PreparedStatement selectSuccessor = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -637,6 +663,7 @@ public:
             );
         }();
 
+        /** @brief Select the keys changed in a ledger from `diff` */
         PreparedStatement selectDiff = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -650,6 +677,7 @@ public:
             );
         }();
 
+        /** @brief Select the latest version of an object as of a ledger sequence from `objects` */
         PreparedStatement selectObject = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -666,6 +694,7 @@ public:
             );
         }();
 
+        /** @brief Select a transaction with its metadata, sequence and date by hash */
         PreparedStatement selectTransaction = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -679,6 +708,7 @@ public:
             );
         }();
 
+        /** @brief Select all transaction hashes in a ledger */
         PreparedStatement selectAllTransactionHashesInLedger = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -692,6 +722,7 @@ public:
             );
         }();
 
+        /** @brief Select the partition token of an object key from `objects` */
         PreparedStatement getToken = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -706,6 +737,7 @@ public:
             );
         }();
 
+        /** @brief Select a page of account transactions before a cursor (newest first) */
         PreparedStatement selectAccountTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -721,6 +753,7 @@ public:
             );
         }();
 
+        /** @brief Select a page of account transactions after a cursor (oldest first) */
         PreparedStatement selectAccountTxForward = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -737,6 +770,7 @@ public:
             );
         }();
 
+        /** @brief Select the state of an NFT as of a ledger sequence from `nf_tokens` */
         PreparedStatement selectNFT = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -753,6 +787,7 @@ public:
             );
         }();
 
+        /** @brief Select the URI of an NFT as of a ledger sequence from `nf_token_uris` */
         PreparedStatement selectNFTURI = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -769,6 +804,7 @@ public:
             );
         }();
 
+        /** @brief Select a page of NFT transactions before a cursor (newest first) */
         PreparedStatement selectNFTTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -785,6 +821,7 @@ public:
             );
         }();
 
+        /** @brief Select a page of NFT transactions from a cursor (oldest first) */
         PreparedStatement selectNFTTxForward = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -801,6 +838,7 @@ public:
             );
         }();
 
+        /** @brief Select a page of MPT issuance transactions before a cursor (newest first) */
         PreparedStatement selectMPTokenIssuanceTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -817,6 +855,7 @@ public:
             );
         }();
 
+        /** @brief Select a page of MPT issuance transactions from a cursor (oldest first) */
         PreparedStatement selectMPTokenIssuanceTxForward = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -833,6 +872,7 @@ public:
             );
         }();
 
+        /** @brief Select a page of an account's MPT issuance txs before a cursor (newest first) */
         PreparedStatement selectAccountMPTokenIssuanceTx = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -852,6 +892,7 @@ public:
             );
         }();
 
+        /** @brief Select a page of an account's MPT issuance txs from a cursor (oldest first) */
         PreparedStatement selectAccountMPTokenIssuanceTxForward = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -871,6 +912,7 @@ public:
             );
         }();
 
+        /** @brief Select a page of NFT IDs for an issuer and taxon after a token ID */
         PreparedStatement selectNFTIDsByIssuerTaxon = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -888,6 +930,7 @@ public:
             );
         }();
 
+        /** @brief Select a page of holders of an MPT after a given holder */
         PreparedStatement selectMPTHolders = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -904,6 +947,7 @@ public:
             );
         }();
 
+        /** @brief Select the ledger sequence for a ledger hash from `ledger_hashes` */
         PreparedStatement selectLedgerByHash = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -918,6 +962,7 @@ public:
             );
         }();
 
+        /** @brief Select the serialized ledger header by sequence from `ledgers` */
         PreparedStatement selectLedgerBySeq = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -931,6 +976,7 @@ public:
             );
         }();
 
+        /** @brief Select the latest ledger sequence from `ledger_range` */
         PreparedStatement selectLatestLedger = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -944,6 +990,7 @@ public:
             );
         }();
 
+        /** @brief Select both the min and max sequences from `ledger_range` */
         PreparedStatement selectLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -957,6 +1004,7 @@ public:
             );
         }();
 
+        /** @brief Select the status of a migrator by name from `migrator_status` */
         PreparedStatement selectMigratorStatus = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -970,6 +1018,7 @@ public:
             );
         }();
 
+        /** @brief Select the IDs and messages of all Clio nodes from `nodes_chat` */
         PreparedStatement selectClioNodesData = [this] {
             return handle_.get().prepare(
                 fmt::format(

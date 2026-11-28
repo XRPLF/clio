@@ -19,6 +19,8 @@ namespace rpc {
 
 /**
  * @brief A process function that expects both some Input and a Context.
+ *
+ * @tparam T The handler type whose process function is checked
  */
 template <typename T>
 concept SomeContextProcessWithInput =
@@ -28,6 +30,8 @@ concept SomeContextProcessWithInput =
 
 /**
  * @brief A process function that expects no Input but does take a Context.
+ *
+ * @tparam T The handler type whose process function is checked
  */
 template <typename T>
 concept SomeContextProcessWithoutInput = requires(T a, T::Output out, Context const& ctx) {
@@ -40,6 +44,8 @@ concept SomeContextProcessWithoutInput = requires(T a, T::Output out, Context co
  * Such a handler inherits @c rpc::HandlerFor<Input>, which binds the shared spec base to
  * Clio JSON type and supplies a static @c parseInput (validate and deserialise in one pass)
  * and a static @c spec returning a type-erased view of the spec.
+ *
+ * @tparam T The handler type to check
  */
 template <typename T>
 concept SomeHandlerWithTypedInput = requires(uint32_t version, boost::json::value jv) {
@@ -50,12 +56,16 @@ concept SomeHandlerWithTypedInput = requires(uint32_t version, boost::json::valu
 
 /**
  * @brief Specifies what a Handler without Input must provide.
+ *
+ * @tparam T The handler type to check
  */
 template <typename T>
 concept SomeHandlerWithoutInput = SomeContextProcessWithoutInput<T>;
 
 /**
  * @brief Specifies what a Handler type must provide.
+ *
+ * @tparam T The handler type to check
  */
 template <typename T>
 concept SomeHandler = (SomeHandlerWithTypedInput<T> or SomeHandlerWithoutInput<T>) and

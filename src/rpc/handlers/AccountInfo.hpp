@@ -33,18 +33,24 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        uint32_t ledgerIndex;
-        std::string ledgerHash;
-        xrpl::STLedgerEntry accountData;
-        bool isDisallowIncomingEnabled = false;
-        bool isClawbackEnabled = false;
-        bool isTokenEscrowEnabled = false;
-        uint32_t apiVersion;
+        uint32_t ledgerIndex;                    ///< Sequence of the ledger used for the request
+        std::string ledgerHash;                  ///< Hash of the ledger used for the request
+        xrpl::STLedgerEntry accountData;         ///< The AccountRoot ledger entry of the account
+        bool isDisallowIncomingEnabled = false;  ///< Whether DisallowIncoming amendment is enabled
+        bool isClawbackEnabled = false;          ///< Whether the Clawback amendment is enabled
+        bool isTokenEscrowEnabled = false;       ///< Whether the TokenEscrow amendment is enabled
+        uint32_t apiVersion;  ///< API version of the request; affects signer_lists placement
+        /**
+         * @brief SignerList ledger entries of the account; set only if requested
+         */
         std::optional<std::vector<xrpl::STLedgerEntry>> signerLists;
         // validated should be sent via framework
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: the Output on success or an error Status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

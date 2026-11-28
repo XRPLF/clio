@@ -10,6 +10,10 @@
 #include <string_view>
 #include <vector>
 
+/**
+ * @brief Clio configuration: definitions of the supported keys, their types, constraints and
+ * defaults, and views for reading the parsed values
+ */
 namespace util::config {
 
 /**

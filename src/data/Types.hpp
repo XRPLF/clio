@@ -14,14 +14,15 @@
 
 namespace data {
 
+/** @brief Raw serialized data, e.g. a ledger object, transaction or metadata */
 using Blob = std::vector<unsigned char>;
 
 /**
  * @brief Represents an object in the ledger.
  */
 struct LedgerObject {
-    xrpl::uint256 key;
-    Blob blob;
+    xrpl::uint256 key;  ///< Key (index) of the object in the ledger
+    Blob blob;          ///< Serialized object data; empty if the object was deleted
 
     bool
     operator==(LedgerObject const& other) const = default;
@@ -31,26 +32,26 @@ struct LedgerObject {
  * @brief Represents a page of LedgerObjects.
  */
 struct LedgerPage {
-    std::vector<LedgerObject> objects;
-    std::optional<xrpl::uint256> cursor;
+    std::vector<LedgerObject> objects;    ///< Ledger objects in this page
+    std::optional<xrpl::uint256> cursor;  ///< Key to continue from; nullopt if no more pages
 };
 
 /**
  * @brief Represents a page of book offer objects.
  */
 struct BookOffersPage {
-    std::vector<LedgerObject> offers;
-    std::optional<xrpl::uint256> cursor;
+    std::vector<LedgerObject> offers;     ///< Offer objects in this page
+    std::optional<xrpl::uint256> cursor;  ///< Unused; fetchBookOffers() never sets it
 };
 
 /**
  * @brief Represents a transaction and its metadata bundled together.
  */
 struct TransactionAndMetadata {
-    Blob transaction;
-    Blob metadata;
-    std::uint32_t ledgerSequence = 0;
-    std::uint32_t date = 0;
+    Blob transaction;                  ///< Serialized transaction
+    Blob metadata;                     ///< Serialized transaction metadata
+    std::uint32_t ledgerSequence = 0;  ///< Sequence of the ledger containing the transaction
+    std::uint32_t date = 0;            ///< Close time of that ledger, in seconds since XRPL epoch
 
     TransactionAndMetadata() = default;
 
@@ -106,8 +107,8 @@ struct TransactionAndMetadata {
  * @brief Represents a cursor into the transactions table.
  */
 struct TransactionsCursor {
-    std::uint32_t ledgerSequence = 0;
-    std::uint32_t transactionIndex = 0;
+    std::uint32_t ledgerSequence = 0;    ///< Ledger sequence to continue from
+    std::uint32_t transactionIndex = 0;  ///< Transaction index within that ledger to continue from
 
     TransactionsCursor() = default;
 
@@ -151,19 +152,19 @@ struct TransactionsCursor {
  * @brief Represests a bundle of transactions with metadata and a cursor to the next page.
  */
 struct TransactionsAndCursor {
-    std::vector<TransactionAndMetadata> txns;
-    std::optional<TransactionsCursor> cursor;
+    std::vector<TransactionAndMetadata> txns;  ///< Transactions in this page
+    std::optional<TransactionsCursor> cursor;  ///< Cursor to the next page, if any
 };
 
 /**
  * @brief Represents a NFToken.
  */
 struct NFT {
-    xrpl::uint256 tokenID;
-    std::uint32_t ledgerSequence{};
-    xrpl::AccountID owner;
-    Blob uri;
-    bool isBurned{};
+    xrpl::uint256 tokenID;           ///< ID of the NFToken
+    std::uint32_t ledgerSequence{};  ///< Ledger sequence at which this state of the token applies
+    xrpl::AccountID owner;           ///< Owner of the token
+    Blob uri;                        ///< URI of the token; empty if not set
+    bool isBurned{};                 ///< Whether the token has been burned
 
     NFT() = default;
 
@@ -225,24 +226,24 @@ struct NFT {
  * @brief Represents a bundle of NFTs with a cursor to the next page
  */
 struct NFTsAndCursor {
-    std::vector<NFT> nfts;
-    std::optional<xrpl::uint256> cursor;
+    std::vector<NFT> nfts;                ///< NFTs in this page
+    std::optional<xrpl::uint256> cursor;  ///< Token ID to continue from; nullopt if no more pages
 };
 
 /**
  * @brief Represents an array of MPTokens
  */
 struct MPTHoldersAndCursor {
-    std::vector<Blob> mptokens;
-    std::optional<xrpl::AccountID> cursor;
+    std::vector<Blob> mptokens;             ///< Serialized MPToken ledger objects
+    std::optional<xrpl::AccountID> cursor;  ///< Holder to continue from; nullopt if no more pages
 };
 
 /**
  * @brief Stores a range of sequences as a min and max pair.
  */
 struct LedgerRange {
-    std::uint32_t minSequence = 0;
-    std::uint32_t maxSequence = 0;
+    std::uint32_t minSequence = 0;  ///< Lowest ledger sequence in the range (inclusive)
+    std::uint32_t maxSequence = 0;  ///< Highest ledger sequence in the range (inclusive)
 
     bool
     operator==(LedgerRange const&) const = default;
@@ -252,11 +253,11 @@ struct LedgerRange {
  * @brief Represents an amendment in the XRPL
  */
 struct Amendment {
-    std::string name;
-    xrpl::uint256 feature;
-    bool isSupportedByXRPL = false;
-    bool isSupportedByClio = false;
-    bool isRetired = false;
+    std::string name;                ///< Name of the amendment
+    xrpl::uint256 feature;           ///< Amendment ID (hash of the name)
+    bool isSupportedByXRPL = false;  ///< Whether libxrpl knows and supports the amendment
+    bool isSupportedByClio = false;  ///< Whether Clio supports the amendment
+    bool isRetired = false;          ///< Whether the amendment is retired
 
     /**
      * @brief Get the amendment Id from its name
@@ -283,7 +284,7 @@ struct Amendment {
  * @brief A helper for amendment name to feature conversions
  */
 struct AmendmentKey {
-    std::string name;
+    std::string name;  ///< Name of the amendment
 
     /**
      * @brief Construct a new AmendmentKey
@@ -296,16 +297,22 @@ struct AmendmentKey {
 
     /**
      * @brief Conversion to string
+     *
+     * @return The amendment name
      */
     operator std::string const&() const;
 
     /**
      * @brief Conversion to string_view
+     *
+     * @return A view of the amendment name
      */
     operator std::string_view() const;
 
     /**
      * @brief Conversion to uint256
+     *
+     * @return The amendment ID computed from the name
      */
     operator xrpl::uint256() const;
 
@@ -318,12 +325,15 @@ struct AmendmentKey {
     operator<=>(AmendmentKey const& other) const = default;
 };
 
+/** @brief The smallest possible ledger object key; used as the start of the key space */
 constexpr xrpl::uint256 kFirstKey{
     "0000000000000000000000000000000000000000000000000000000000000000"
 };
+/** @brief The largest possible ledger object key; used as the end of the key space */
 constexpr xrpl::uint256 kLastKey{
     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 };
+/** @brief Key with the high 192 bits zero and the low 64 bits set to 0x1111111111111111 */
 constexpr xrpl::uint256 kHi192{"0000000000000000000000000000000000000000000000001111111111111111"};
 
 }  // namespace data

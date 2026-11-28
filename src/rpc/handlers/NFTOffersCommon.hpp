@@ -28,23 +28,29 @@ class NFTOffersHandlerBase : public rpc::HandlerFor<rpc::spec::handlers::nft_off
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    /** @brief Minimum allowed value of the `limit` parameter */
     static constexpr auto kLimitMin = rpc::spec::handlers::nft_offers_common::kLimitMin;
+    /** @brief Maximum allowed value of the `limit` parameter */
     static constexpr auto kLimitMax = rpc::spec::handlers::nft_offers_common::kLimitMax;
+    /** @brief Default value of the `limit` parameter */
     static constexpr auto kLimitDefault = rpc::spec::handlers::nft_offers_common::kLimitDefault;
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string nftID;
-        std::vector<xrpl::SLE> offers;
+        std::string nftID;              ///< ID of the NFT the offers are for
+        std::vector<xrpl::SLE> offers;  ///< NFT offer ledger objects
 
         // validated should be sent via framework
-        bool validated = true;
-        std::optional<uint32_t> limit;
-        std::optional<std::string> marker;
+        bool validated = true;              ///< Whether the ledger is validated
+        std::optional<uint32_t> limit;      ///< Limit used, set only if more offers remain
+        std::optional<std::string> marker;  ///< Key of the next page's first offer, if any
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

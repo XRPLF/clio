@@ -6,6 +6,10 @@
 #include <string>
 #include <variant>
 
+/**
+ * @brief This namespace contains the application-level logic: command line parsing, startup and
+ * shutdown.
+ */
 namespace app {
 
 /**
@@ -42,21 +46,22 @@ public:
          * @brief Migration action.
          */
         struct Migrate {
-            std::string configPath;
-            MigrateSubCmd subCmd;
+            std::string configPath;  ///< Configuration file path.
+            MigrateSubCmd subCmd;    ///< Migration subcommand to execute.
         };
 
         /**
          * @brief Verify Config action.
          */
         struct VerifyConfig {
-            std::string configPath;
+            std::string configPath;  ///< Path of the configuration file to verify.
         };
 
         /**
-         * @brief Construct an action from a Run.
+         * @brief Construct an action from one of the action types.
          *
-         * @param action Run action.
+         * @tparam ActionType The concrete action type; one of Run, Exit, Migrate or VerifyConfig.
+         * @param action The action to wrap.
          */
         template <typename ActionType>
             requires std::is_same_v<ActionType, Run> or std::is_same_v<ActionType, Exit> or

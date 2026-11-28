@@ -15,10 +15,10 @@ namespace rpc {
  */
 using DelegateFilter = rpc::spec::handlers::account_tx::DelegateFilter;
 
+// TODO: consider moving to rpc-spec later on
 /**
  * @brief Interface for filtering transactions.
  */
-// TODO: consider moving to rpc-spec later on
 class TransactionFilter {
 public:
     /**
@@ -36,8 +36,8 @@ public:
         {
         }
 
-        xrpl::AccountID account;
-        DelegateFilter::Role role;
+        xrpl::AccountID account;    ///< The relevant account to report for this txn
+        DelegateFilter::Role role;  ///< The role `account` played in this txn
     };
 
     virtual ~TransactionFilter() = default;

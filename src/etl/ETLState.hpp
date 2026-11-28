@@ -20,7 +20,9 @@ namespace etl {
  * as the network id
  */
 struct ETLState {
-    /*
+    /**
+     * @brief The network ID reported by the rippled server.
+     *
      * NOTE: Rippled NetworkID: Mainnet = 0; Testnet = 1; Devnet = 2
      * However, if rippled is running on neither of these (ie. standalone mode) rippled will default
      * to 0, but is not included in the stateOpt response. Must manually add it here.
@@ -29,6 +31,7 @@ struct ETLState {
 
     /**
      * @brief Fetch the ETL state from the rippled server
+     * @tparam Forward The type of the source; must provide `forwardToRippled`
      * @param source The source to fetch the state from
      * @return The ETL state, nullopt if source not available
      */

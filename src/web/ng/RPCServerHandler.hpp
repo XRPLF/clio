@@ -48,6 +48,8 @@ namespace web::ng {
  * @brief The server handler for RPC requests called by web server.
  *
  * Note: see @ref web::SomeServerHandler concept
+ *
+ * @tparam RPCEngineType The RPC engine type used to build and execute requests
  */
 template <typename RPCEngineType>
 class RPCServerHandler {

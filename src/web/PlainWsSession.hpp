@@ -27,6 +27,8 @@ namespace web {
  * @brief Represents a non-secure websocket session.
  *
  * Majority of the operations are handled by the base class.
+ *
+ * @tparam HandlerType The server handler that processes incoming websocket messages
  */
 template <SomeServerHandler HandlerType>
 class PlainWsSession : public impl::WsBase<PlainWsSession, HandlerType> {
@@ -86,6 +88,8 @@ public:
  * session.
  *
  * Pass the socket to the session class after upgrade.
+ *
+ * @tparam HandlerType The server handler passed on to the created websocket session
  */
 template <SomeServerHandler HandlerType>
 class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<HandlerType>> {

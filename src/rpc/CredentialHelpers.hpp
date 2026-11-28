@@ -20,6 +20,9 @@
 #include <utility>
 #include <vector>
 
+/**
+ * @brief Helpers for validating and parsing credentials used in RPC requests.
+ */
 namespace rpc::credentials {
 
 /**

@@ -10,6 +10,11 @@
 
 namespace util {
 
+/**
+ * @brief Specifies a (possibly cv-qualified) std::atomic type
+ *
+ * @tparam T The type to check
+ */
 template <typename T>
 concept SomeAtomic =
     std::same_as<std::remove_cvref_t<T>, std::atomic<std::remove_cvref_t<typename T::value_type>>>;
@@ -26,6 +31,8 @@ concept SomeAtomic =
  *
  * @note Copy assignment is intentionally not required since we use move semantics
  *       for value updates and only need copy construction for change detection.
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept Observable =
@@ -102,6 +109,11 @@ protected:
 }  // namespace impl
 
 // Forward declaration
+/**
+ * @brief An observable value container; see the specializations for regular and atomic types
+ *
+ * @tparam T The type of the value to observe, or std::atomic of it
+ */
 template <typename T>
 class ObservableValue;
 
@@ -180,6 +192,7 @@ class ObservableValue<T> : public impl::ObservableValueBase<T> {
 public:
     /**
      * @brief Constructs ObservableValue with initial value.
+     * @tparam U Type of the initial value, convertible to T
      * @param value Initial value (must be convertible to T)
      */
     template <std::convertible_to<T> U>
@@ -210,6 +223,7 @@ public:
      * Updates the stored value and notifies observers if the new value
      * differs from the current value (using operator!=).
      *
+     * @tparam U Type of the new value, convertible to T
      * @param val New value (must be convertible to T)
      * @return Reference to this object for chaining
      *
@@ -321,6 +335,7 @@ class ObservableValue<std::atomic<T>> : public impl::ObservableValueBase<T> {
 public:
     /**
      * @brief Constructs ObservableValue with initial atomic value.
+     * @tparam U Type of the initial value, convertible to T
      * @param value Initial value (will be stored in the atomic)
      */
     template <std::convertible_to<T> U>
@@ -351,6 +366,7 @@ public:
      * Uses atomic compare-and-swap to update the value and notifies observers
      * only if the value actually changed.
      *
+     * @tparam U Type of the new value, convertible to T
      * @param val New value
      * @return Reference to this object for chaining
      */

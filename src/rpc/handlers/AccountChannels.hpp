@@ -31,8 +31,17 @@ class AccountChannelsHandler
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
 public:
+    /**
+     * @brief Minimum accepted value for the `limit` request field
+     */
     static constexpr auto kLimitMin = rpc::spec::handlers::account_channels::kLimitMin;
+    /**
+     * @brief Maximum accepted value for the `limit` request field
+     */
     static constexpr auto kLimitMax = rpc::spec::handlers::account_channels::kLimitMax;
+    /**
+     * @brief Value of `limit` used when the request does not specify one
+     */
     static constexpr auto kLimitDefault = rpc::spec::handlers::account_channels::kLimitDefault;
 
     /**
@@ -41,34 +50,37 @@ public:
      * @note type aligned with SField.h
      */
     struct ChannelResponse {
-        std::string channelID;
-        std::string account;
-        std::string accountDestination;
-        std::string amount;
-        std::string balance;
-        std::optional<std::string> publicKey;
-        std::optional<std::string> publicKeyHex;
-        uint32_t settleDelay{};
-        std::optional<uint32_t> expiration;
-        std::optional<uint32_t> cancelAfter;
-        std::optional<uint32_t> sourceTag;
-        std::optional<uint32_t> destinationTag;
+        std::string channelID;                 ///< Unique ID of the payment channel (hex)
+        std::string account;                   ///< Source account that owns the channel
+        std::string accountDestination;        ///< Destination account of the channel
+        std::string amount;                    ///< Total XRP, in drops, allocated to the channel
+        std::string balance;                   ///< XRP, in drops, already paid out of the channel
+        std::optional<std::string> publicKey;  ///< Channel public key, base58-encoded
+        std::optional<std::string> publicKeyHex;  ///< Channel public key, hex-encoded
+        uint32_t settleDelay{};  ///< Seconds the source must wait before closing the channel
+        std::optional<uint32_t> expiration;      ///< Time after which the channel can be closed
+        std::optional<uint32_t> cancelAfter;     ///< Immutable expiration time of the channel
+        std::optional<uint32_t> sourceTag;       ///< Source tag of the channel, if any
+        std::optional<uint32_t> destinationTag;  ///< Destination tag of the channel, if any
     };
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::vector<ChannelResponse> channels;
-        std::string account;
-        std::string ledgerHash;
-        uint32_t ledgerIndex{};
+        std::vector<ChannelResponse> channels;  ///< Payment channels owned by the account
+        std::string account;                    ///< The account whose channels are returned
+        std::string ledgerHash;                 ///< Hash of the ledger used for the request
+        uint32_t ledgerIndex{};                 ///< Sequence of the ledger used for the request
         // validated should be sent via framework
-        bool validated = true;
-        uint32_t limit{};
-        std::optional<std::string> marker;
+        bool validated = true;              ///< Whether the ledger is validated
+        uint32_t limit{};                   ///< Maximum number of channels requested
+        std::optional<std::string> marker;  ///< Pagination marker to resume from, if more results
     };
 
+    /**
+     * @brief The result type of the command: the Output on success or an error Status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

@@ -16,6 +16,8 @@ namespace data {
 
 /**
  * @brief A concept for a class that can be used to count backend operations.
+ *
+ * @tparam T The counters type to check
  */
 template <typename T>
 concept SomeBackendCounters = requires(T a) {
@@ -42,6 +44,7 @@ concept SomeBackendCounters = requires(T a) {
  */
 class BackendCounters {
 public:
+    /** @brief Shared pointer type used to hold BackendCounters instances */
     using PtrType = std::shared_ptr<BackendCounters>;
 
     /**

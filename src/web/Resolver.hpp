@@ -13,6 +13,8 @@ namespace web {
 
 /**
  * @brief The requirements of a resolver
+ *
+ * @tparam T The resolver type to check
  */
 template <typename T>
 concept SomeResolver = requires(T t) {

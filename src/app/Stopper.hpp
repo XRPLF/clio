@@ -59,6 +59,9 @@ public:
     /**
      * @brief Create a callback to be called on application stop.
      *
+     * @tparam ServerType The type of the web server.
+     * @tparam LedgerCacheSaverType The type of the ledger cache saver.
+     * @tparam ClusterCommunicationServiceType The type of the cluster communication service.
      * @param server The server to stop.
      * @param balancer The load balancer to stop.
      * @param etl The ETL service to stop.

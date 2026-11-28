@@ -28,22 +28,26 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string nftID;
-        uint32_t ledgerIndex;
-        std::string owner;
-        bool isBurned;
-        uint32_t flags;
-        uint32_t transferFee;
-        std::string issuer;
-        uint32_t taxon;
+        std::string nftID;     ///< ID of the NFT
+        uint32_t ledgerIndex;  ///< Sequence of the ledger used
+        std::string owner;     ///< Address of the current owner
+        bool isBurned;         ///< Whether the NFT has been burned
+        uint32_t flags;        ///< Flags set on the NFT
+        uint32_t transferFee;  ///< Fee on secondary sales, in 1/100000 units
+        std::string issuer;    ///< Address of the issuer
+        uint32_t taxon;        ///< Taxon of the NFT
+        /** @brief Serial number of the NFT within its issuer */
         uint32_t serial;  // TODO: documented as 'nft_sequence' atm.
                           // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
-        std::string uri;
+        std::string uri;  ///< Hex-encoded URI of the NFT
 
         // validated should be sent via framework
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

@@ -14,19 +14,31 @@
 
 // We forward declare spdlog::logger and spdlog::sinks::sink
 // to avoid including the spdlog headers in this header file.
+/**
+ * @brief The spdlog logging library (forward declarations only)
+ */
 namespace spdlog {
 
+/** @brief spdlog logger that log records are written to (forward declaration) */
 class logger;  // NOLINT(readability-identifier-naming)
 
+/**
+ * @brief spdlog sinks (forward declarations only)
+ */
 namespace sinks {
+/** @brief spdlog sink that log records are output to (forward declaration) */
 class sink;  // NOLINT(readability-identifier-naming)
 }  // namespace sinks
 
 }  // namespace spdlog
 
+/** @brief Benchmark logging setup; befriended by Logger and LogService (forward declaration) */
 struct BenchmarkLoggingInitializer;
+/** @brief Test fixture for logging; befriended by LogServiceState (forward declaration) */
 class LoggerFixture;
+/** @brief LogService initialization tests; befriended by LogServiceState (forward declaration) */
 struct LogServiceInitTests;
+/** @brief Log file rotation tests; befriended by LogServiceState (forward declaration) */
 struct LogFileRotationTests;
 
 namespace util {
@@ -39,19 +51,27 @@ namespace config {
 class ClioConfigDefinition;
 }  // namespace config
 
+#ifndef COVERAGE_ENABLED
 /**
  * @brief Skips evaluation of expensive argument lists if the given logger is disabled for the
  * required severity level.
  *
  * Note: Currently this introduces potential shadowing (unlikely).
+ *
+ * @param x A log pump expression such as `log_.info()`; data is then streamed in via `<<`
  */
-#ifndef COVERAGE_ENABLED
 #define LOG(x)                                 \
     if (auto clio_pump__ = x; not clio_pump__) \
         ;                                      \
     else                                       \
         clio_pump__
 #else
+/**
+ * @brief Coverage build variant: streamed arguments are always evaluated, even when the logger
+ * is disabled for the severity (avoids an uncovered branch per LOG statement)
+ *
+ * @param x A log pump expression such as `log_.info()`; data is then streamed in via `<<`
+ */
 #define LOG(x) x
 #endif
 
@@ -59,12 +79,12 @@ class ClioConfigDefinition;
  * @brief Custom severity levels for @ref util::Logger.
  */
 enum class Severity {
-    TRC,
-    DBG,
-    NFO,
-    WRN,
-    ERR,
-    FTL,
+    TRC,  ///< Trace
+    DBG,  ///< Debug
+    NFO,  ///< Info
+    WRN,  ///< Warning
+    ERR,  ///< Error
+    FTL,  ///< Fatal
 };
 
 /**
@@ -130,6 +150,7 @@ class Logger {
     };
 
 public:
+    /** @brief The predefined log channels; loggers for other channels are created dynamically */
     static constexpr std::array<std::string_view, 8> kChannels = {
         "General",
         "WebServer",
@@ -153,6 +174,11 @@ public:
     Logger(std::string_view const channel);
 
     Logger(Logger const&) = default;
+
+    /**
+     * @brief Destroy the Logger; drops a dynamically created channel's logger from the spdlog
+     * registry once no other Logger references it
+     */
     ~Logger();
 
     Logger(Logger&&) = default;

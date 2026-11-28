@@ -13,9 +13,9 @@ namespace rpc {
  * @brief Holds info about a particular ClioError.
  */
 struct ClioErrorInfo {
-    ClioError const code;
-    std::string_view const error;
-    std::string_view const message;
+    ClioError const code;            ///< The Clio-specific error code
+    std::string_view const error;    ///< The short error token (e.g. "malformedRequest")
+    std::string_view const message;  ///< The human-readable error message
 };
 
 /**

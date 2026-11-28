@@ -43,8 +43,11 @@ class MPTokenIssuanceHistoryHandler
     std::shared_ptr<std::atomic_bool> migrated_ = std::make_shared<std::atomic_bool>(false);
 
 public:
+    /** @brief Minimum allowed value of the `limit` parameter. */
     static constexpr auto kLimitMin = rpc::spec::handlers::mptoken_issuance_history::kLimitMin;
+    /** @brief Maximum allowed value of the `limit` parameter. */
     static constexpr auto kLimitMax = rpc::spec::handlers::mptoken_issuance_history::kLimitMax;
+    /** @brief Default value of the `limit` parameter. */
     static constexpr auto kLimitDefault =
         rpc::spec::handlers::mptoken_issuance_history::kLimitDefault;
 
@@ -64,17 +67,26 @@ public:
      * @brief A struct to hold the output data of the command.
      */
     struct Output {
-        std::string mptIssuanceID;
-        uint32_t ledgerIndexMin{0};
-        uint32_t ledgerIndexMax{0};
-        std::optional<uint32_t> limit;
-        std::optional<Marker> marker;
-        /** @todo Use a domain-specific type instead of JSON. */
+        std::string mptIssuanceID;      ///< ID of the queried MPTokenIssuance.
+        uint32_t ledgerIndexMin{0};     ///< Lowest ledger sequence searched.
+        uint32_t ledgerIndexMax{0};     ///< Highest ledger sequence searched.
+        std::optional<uint32_t> limit;  ///< Limit from the request; unset if the default was used.
+        std::optional<Marker> marker;   ///< Marker to resume from, if more results remain.
+        /**
+         * @brief Transactions that affected the issuance.
+         * @todo Use a domain-specific type instead of JSON.
+         */
         boost::json::array transactions;
-        /** @todo Send validated through the RPC framework. */
+        /**
+         * @brief Whether the ledger is validated.
+         * @todo Send validated through the RPC framework.
+         */
         bool validated = true;
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status.
+     */
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -222,8 +234,18 @@ private:
 
 }  // namespace rpc
 
+/**
+ * @brief JSON conversions for the mptoken_issuance_history spec types used by
+ * MPTokenIssuanceHistoryHandler.
+ */
 namespace rpc::spec::handlers::mptoken_issuance_history {
 
+/**
+ * @brief Convert the Marker to a JSON object.
+ *
+ * @param [out] jv The JSON object to convert to.
+ * @param marker The marker to convert.
+ */
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
 

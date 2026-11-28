@@ -22,8 +22,8 @@ namespace util::prometheus {
 template <SomeNumberType NumberType>
 class AnyHistogram : public MetricBase {
 public:
-    using ValueType = NumberType;
-    using Buckets = std::vector<NumberType>;
+    using ValueType = NumberType;             ///< The type of the observed values
+    using Buckets = std::vector<NumberType>;  ///< Upper bounds of the histogram buckets
 
     /**
      * @brief Construct a new Histogram object
@@ -131,7 +131,7 @@ private:
     std::unique_ptr<Concept> pimpl_;
 };
 
-using HistogramInt = AnyHistogram<std::int64_t>;
-using HistogramDouble = AnyHistogram<double>;
+using HistogramInt = AnyHistogram<std::int64_t>;  ///< Histogram of integer values
+using HistogramDouble = AnyHistogram<double>;     ///< Histogram of floating point values
 
 }  // namespace util::prometheus

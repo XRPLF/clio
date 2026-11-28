@@ -19,6 +19,8 @@ namespace data::cassandra {
 
 /**
  * @brief The requirements of a settings provider.
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeSettingsProvider = requires(T a) {
@@ -30,6 +32,8 @@ concept SomeSettingsProvider = requires(T a) {
 
 /**
  * @brief The requirements of an execution strategy.
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeExecutionStrategy = requires(
@@ -57,6 +61,8 @@ concept SomeExecutionStrategy = requires(
 
 /**
  * @brief The requirements of a retry policy.
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeRetryPolicy =

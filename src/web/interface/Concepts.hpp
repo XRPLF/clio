@@ -13,6 +13,8 @@ struct ConnectionBase;
 
 /**
  * @brief Specifies the requirements a Webserver handler must fulfill.
+ *
+ * @tparam T The handler type to check
  */
 template <typename T>
 concept SomeServerHandler = requires(
@@ -32,6 +34,11 @@ struct ServerTag {
     virtual ~ServerTag() = default;
 };
 
+/**
+ * @brief Specifies a type that is a Server, i.e. derives from @ref web::ServerTag.
+ *
+ * @tparam T The type to check
+ */
 template <typename T>
 concept SomeServer = std::derived_from<T, ServerTag>;
 

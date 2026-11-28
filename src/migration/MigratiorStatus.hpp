@@ -15,7 +15,12 @@ public:
     /**
      * @brief The status of a migrator
      */
-    enum class Status { Migrated, NotMigrated, NotKnown, NumStatuses };
+    enum class Status {
+        Migrated,     ///< The migration has been completed
+        NotMigrated,  ///< The migration has not been run yet
+        NotKnown,     ///< No migrator with the given name is registered
+        NumStatuses   ///< Number of statuses; not a valid status
+    };
 
     /**
      * @brief Construct a new Migrator Status object with the given status

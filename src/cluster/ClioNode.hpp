@@ -38,16 +38,16 @@ struct ClioNode {
      *   fallback and performs a normal election.
      */
     enum class DbRole {
-        ReadOnly = 0,
-        NotWriter = 1,
-        Writer = 2,
-        Fallback = 3,
-        FallbackRecovery = 4,
-        Max = 4,
+        ReadOnly = 0,          ///< Node never writes to the database.
+        NotWriter = 1,         ///< Node can write but is not the designated writer.
+        Writer = 2,            ///< Node is actively writing to the database.
+        Fallback = 3,          ///< Node uses the database-based fallback writer decision.
+        FallbackRecovery = 4,  ///< Node is coordinating a return from fallback to election mode.
+        Max = 4,               ///< Highest valid role value; used for validation.
     };
 
-    using Uuid = std::shared_ptr<boost::uuids::uuid>;
-    using CUuid = std::shared_ptr<boost::uuids::uuid const>;
+    using Uuid = std::shared_ptr<boost::uuids::uuid>;         ///< Shared node UUID.
+    using CUuid = std::shared_ptr<boost::uuids::uuid const>;  ///< Shared read-only node UUID.
 
     Uuid uuid;  ///< The UUID of the node.
     std::chrono::system_clock::time_point
@@ -73,9 +73,28 @@ struct ClioNode {
     );
 };
 
+/**
+ * @brief Convert a ClioNode to a JSON object.
+ *
+ * The UUID is not serialized; it is stored separately in the database.
+ *
+ * @param jv The JSON value to populate
+ * @param node The node to convert
+ */
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ClioNode const& node);
 
+/**
+ * @brief Convert a JSON object to a ClioNode.
+ *
+ * Missing optional fields get backward compatible defaults. The UUID of the result is a fresh empty
+ * UUID that the caller is expected to fill.
+ *
+ * @param jv The JSON value to convert
+ * @return The converted ClioNode
+ * @throws std::runtime_error if the update time cannot be parsed, db_role exceeds DbRole::Max,
+ * or a field is missing or mistyped
+ */
 ClioNode
 tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv);
 

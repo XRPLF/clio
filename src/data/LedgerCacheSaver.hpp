@@ -16,6 +16,8 @@ namespace data {
  *
  * This concept defines the interface requirements for any type that manages
  * asynchronous saving of ledger cache to persistent storage.
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeLedgerCacheSaver = requires(T a) {

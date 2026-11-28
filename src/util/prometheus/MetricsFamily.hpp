@@ -73,6 +73,7 @@ public:
      *
      * @param stream The stream to serialize into
      * @param metricsFamily The metrics to serialize
+     * @return The stream, for chaining
      */
     friend OStream&
     operator<<(OStream& stream, MetricsFamily const& metricsFamily);

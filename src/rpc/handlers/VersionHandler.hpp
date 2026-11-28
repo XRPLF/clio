@@ -24,9 +24,9 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        uint32_t minVersion;
-        uint32_t maxVersion;
-        uint32_t currVersion;
+        uint32_t minVersion;   ///< Minimum supported API version
+        uint32_t maxVersion;   ///< Maximum supported API version
+        uint32_t currVersion;  ///< Default API version
     };
 
     /**
@@ -43,6 +43,9 @@ public:
     {
     }
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

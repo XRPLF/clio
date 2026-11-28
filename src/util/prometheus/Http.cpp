@@ -25,7 +25,10 @@ isPrometheusRequest(http::request<http::string_body> const& req)
 }  // namespace
 
 std::optional<http::response<http::string_body>>
-handlePrometheusRequest(http::request<http::string_body> const& req, bool const isAdmin)
+handlePrometheusRequest(
+    boost::beast::http::request<boost::beast::http::string_body> const& req,
+    bool isAdmin
+)
 {
     bool const prometheusRequest = isPrometheusRequest(req);
 

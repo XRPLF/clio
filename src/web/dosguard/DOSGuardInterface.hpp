@@ -49,7 +49,7 @@ public:
     /**
      * @brief Increment connection count for the given ip address.
      *
-     * @param ip
+     * @param ip The ip address of the client opening a connection
      */
     virtual void
     increment(std::string const& ip) noexcept = 0;
@@ -57,7 +57,7 @@ public:
     /**
      * @brief Decrement connection count for the given ip address.
      *
-     * @param ip
+     * @param ip The ip address of the client closing a connection
      */
     virtual void
     decrement(std::string const& ip) noexcept = 0;
@@ -69,8 +69,8 @@ public:
      * the operation is no longer allowed and false is returned; true is
      * returned otherwise.
      *
-     * @param ip
-     * @param numObjects
+     * @param ip The ip address of the client
+     * @param numObjects The amount of usage to add (size in bytes of the transferred data)
      * @return true
      * @return false
      */
@@ -81,7 +81,7 @@ public:
      * @brief Adds one request for the given ip address.
      *
      *
-     * @param ip
+     * @param ip The ip address of the client
      * @param request The request as json object
      * @return If the total sums up to a value equal or larger than maxRequestCount_
      * the operation is no longer allowed and false is returned; true is

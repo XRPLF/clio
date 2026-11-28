@@ -45,6 +45,11 @@ struct LoadBalancerTag {
     virtual ~LoadBalancerTag() = default;
 };
 
+/**
+ * @brief Concept for load balancer implementations.
+ *
+ * @tparam T The type to check; must derive from LoadBalancerTag
+ */
 template <typename T>
 concept SomeLoadBalancer = std::derived_from<T, LoadBalancerTag>;
 
@@ -58,8 +63,11 @@ concept SomeLoadBalancer = std::derived_from<T, LoadBalancerTag>;
  */
 class LoadBalancer : public LoadBalancerInterface, LoadBalancerTag {
 public:
+    /** @brief Raw ledger object as received over gRPC */
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
+    /** @brief gRPC response containing the data of a single ledger */
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
+    /** @brief Optional ledger response, as returned by fetchLedger() */
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
 private:

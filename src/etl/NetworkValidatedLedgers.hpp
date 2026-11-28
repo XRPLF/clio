@@ -72,6 +72,12 @@ public:
     bool
     waitUntilValidatedByNetwork(uint32_t sequence, std::optional<uint32_t> maxWaitMs = {}) final;
 
+    /**
+     * @brief Allows clients to get notified when a new validated ledger becomes known to Clio
+     *
+     * @param subscriber The slot to connect
+     * @return A connection object that automatically disconnects the subscription once destroyed
+     */
     boost::signals2::scoped_connection
     subscribe(SignalType::slot_type const& subscriber) override;
 };

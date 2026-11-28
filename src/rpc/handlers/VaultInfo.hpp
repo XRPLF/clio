@@ -31,11 +31,14 @@ public:
      * @brief A struct to hold the output data for the command
      */
     struct Output {
-        boost::json::value vault;
-        uint32_t ledgerIndex{};
-        bool validated = true;
+        boost::json::value vault;  ///< Vault object as JSON; share issuance in `shares`
+        uint32_t ledgerIndex{};    ///< Sequence of the ledger used
+        bool validated = true;     ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

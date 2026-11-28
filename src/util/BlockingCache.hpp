@@ -34,7 +34,11 @@ public:
     /**
      * @brief Possible states of the cache
      */
-    enum class State { NoValue, Updating, HasValue };
+    enum class State {
+        NoValue,   ///< No value is cached and no update is in progress
+        Updating,  ///< An update is in progress; getters wait for it to finish
+        HasValue   ///< A value is cached and can be returned immediately
+    };
 
 private:
     std::atomic<State> state_{State::NoValue};

@@ -84,6 +84,13 @@ assertImpl(
 
 }  // namespace util::impl
 
+/**
+ * @brief Assert that a condition holds; on failure, pass a message with the expression, source
+ * location and formatted description to the assertion handler (by default: log and exit).
+ *
+ * @param condition The condition to check
+ * @param ... A fmt format string followed by its arguments, describing the failure
+ */
 #define ASSERT(condition, ...)                                                                 \
     util::impl::assertImpl(                                                                    \
         std::source_location::current(), #condition, static_cast<bool>(condition), __VA_ARGS__ \

@@ -6,8 +6,16 @@
 #include <cstdint>
 #include <functional>
 
+/**
+ * @brief Prometheus metrics: counters, gauges, histograms and their registry and serialization
+ */
 namespace util::prometheus {
 
+/**
+ * @brief Specifies an integer metric implementation that can back AnyBool (e.g. GaugeInt)
+ *
+ * @tparam T The type to check; must provide set(int64_t) and value() returning int64_t
+ */
 template <typename T>
 concept SomeBoolImpl = requires(T a) {
     { a.set(0) } -> std::same_as<void>;
@@ -17,6 +25,8 @@ concept SomeBoolImpl = requires(T a) {
 /**
  * @brief A wrapped to provide bool interface for a Prometheus metric
  * @note Prometheus does not have a native bool type, so we use a counter with a value of 0 or 1
+ *
+ * @tparam ImplType The underlying integer metric type storing 0 or 1
  */
 template <SomeBoolImpl ImplType>
 class AnyBool {

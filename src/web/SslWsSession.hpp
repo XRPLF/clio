@@ -29,6 +29,8 @@ namespace web {
  * @brief Represents a secure websocket session.
  *
  * Majority of the operations are handled by the base class.
+ *
+ * @tparam HandlerType The server handler that processes incoming websocket messages
  */
 template <SomeServerHandler HandlerType>
 class SslWsSession : public impl::WsBase<SslWsSession, HandlerType> {
@@ -86,6 +88,8 @@ public:
  * @brief The HTTPS upgrader class, upgrade from an HTTPS session to a secure websocket session.
  *
  * Pass the stream to the session class after upgrade.
+ *
+ * @tparam HandlerType The server handler passed on to the created websocket session
  */
 template <SomeServerHandler HandlerType>
 class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerType>> {

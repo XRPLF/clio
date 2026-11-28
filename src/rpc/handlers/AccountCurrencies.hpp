@@ -31,14 +31,17 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string ledgerHash;
-        uint32_t ledgerIndex{};
-        std::set<std::string> receiveCurrencies;
-        std::set<std::string> sendCurrencies;
+        std::string ledgerHash;                   ///< Hash of the ledger used for the request
+        uint32_t ledgerIndex{};                   ///< Sequence of the ledger used for the request
+        std::set<std::string> receiveCurrencies;  ///< Currencies the account can receive
+        std::set<std::string> sendCurrencies;     ///< Currencies the account can send
         // validated should be sent via framework
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: the Output on success or an error Status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

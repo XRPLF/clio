@@ -37,13 +37,13 @@ namespace rpc {
  * @brief Represents an entry in the book_changes' changes array.
  */
 struct BookChange {
-    xrpl::STAmount sideAVolume;
-    xrpl::STAmount sideBVolume;
-    xrpl::STAmount highRate;
-    xrpl::STAmount lowRate;
-    xrpl::STAmount openRate;
-    xrpl::STAmount closeRate;
-    std::optional<xrpl::uint256> domain;
+    xrpl::STAmount sideAVolume;           ///< Total volume traded on side A (currency_a)
+    xrpl::STAmount sideBVolume;           ///< Total volume traded on side B (currency_b)
+    xrpl::STAmount highRate;              ///< Highest exchange rate (A/B) seen in the ledger
+    xrpl::STAmount lowRate;               ///< Lowest exchange rate (A/B) seen in the ledger
+    xrpl::STAmount openRate;              ///< Exchange rate (A/B) of the first change in the ledger
+    xrpl::STAmount closeRate;             ///< Exchange rate (A/B) of the last change in the ledger
+    std::optional<xrpl::uint256> domain;  ///< Permissioned domain of the last changed offer, if any
 };
 
 /**

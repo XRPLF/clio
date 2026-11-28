@@ -441,6 +441,12 @@ template <typename T>
 struct ChannelInstantiated : std::false_type {};
 }  // namespace util::detail
 
+/**
+ * @brief Explicitly instantiate the Boost.Asio channel cancellation handler for T to work around
+ * Clang linker errors, and mark T as instantiated for Channel<T>
+ *
+ * @param T The value type of the Channel to instantiate
+ */
 #define INSTANTIATE_CHANNEL_FOR_CLANG(T)                                                       \
     /* NOLINTNEXTLINE(cppcoreguidelines-virtual-class-destructor) */                           \
     template class boost::asio::detail::cancellation_handler<                                  \
@@ -456,6 +462,11 @@ struct ChannelInstantiated : std::false_type {};
 #else
 
 // No workaround needed for non-Clang compilers
+/**
+ * @brief No-op on non-Clang compilers; the Boost.Asio channel workaround is only needed for Clang
+ *
+ * @param T The value type of the Channel (unused)
+ */
 #define INSTANTIATE_CHANNEL_FOR_CLANG(T)
 
 #endif

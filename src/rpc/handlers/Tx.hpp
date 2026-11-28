@@ -44,26 +44,36 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        uint32_t date = 0u;
-        std::string hash = {};  // NOLINT(readability-redundant-member-init)
-        uint32_t ledgerIndex = 0u;
+        uint32_t date = 0u;  ///< Close time of the ledger containing the transaction
+        /** @brief Transaction hash, only set when binary was requested */
+        std::string hash = {};      // NOLINT(readability-redundant-member-init)
+        uint32_t ledgerIndex = 0u;  ///< Sequence of the ledger containing the transaction
+        /** @brief Metadata as JSON, unless binary was requested */
         std::optional<boost::json::object> meta =
             std::nullopt;  // NOLINT(readability-redundant-member-init)
+        /** @brief Transaction as JSON, unless binary was requested */
         std::optional<boost::json::object> tx =
             std::nullopt;  // NOLINT(readability-redundant-member-init)
+        /** @brief Hex-encoded metadata, if binary was requested */
         std::optional<std::string> metaStr =
             std::nullopt;  // NOLINT(readability-redundant-member-init)
+        /** @brief Hex-encoded transaction, if binary was requested */
         std::optional<std::string> txStr =
             std::nullopt;  // NOLINT(readability-redundant-member-init)
+        /** @brief Compact transaction ID, if the network ID is known and the CTID can be encoded */
         std::optional<std::string> ctid =
-            std::nullopt;  // NOLINT(readability-redundant-member-init) ctid when binary=true
+            std::nullopt;  // NOLINT(readability-redundant-member-init)
+        /** @brief Header of the containing ledger (API version 2+) */
         std::optional<xrpl::LedgerHeader> ledgerHeader =
             std::nullopt;  // NOLINT(readability-redundant-member-init) ledger hash when apiVersion
                            // >= 2
-        uint32_t apiVersion = 0u;
-        bool validated = true;
+        uint32_t apiVersion = 0u;  ///< API version of the request
+        bool validated = true;     ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

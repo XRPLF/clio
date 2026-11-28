@@ -30,9 +30,9 @@ public:
      * specifications.
      */
     struct Entry {
-        size_t weight;
-        std::optional<size_t> weightLedgerCurrent;
-        std::optional<size_t> weightLedgerValidated;
+        size_t weight;                                ///< Base weight of the command
+        std::optional<size_t> weightLedgerCurrent;    ///< Weight if ledger_index is "current"
+        std::optional<size_t> weightLedgerValidated;  ///< Weight if ledger_index is "validated"
     };
 
 private:

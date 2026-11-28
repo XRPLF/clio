@@ -15,6 +15,7 @@ namespace etl {
  */
 class NetworkValidatedLedgersInterface {
 public:
+    /** @brief Signal fired with the sequence of each newly validated ledger */
     using SignalType = boost::signals2::signal<void(uint32_t)>;
 
     virtual ~NetworkValidatedLedgersInterface() = default;

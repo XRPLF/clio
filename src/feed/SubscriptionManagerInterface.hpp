@@ -35,14 +35,14 @@ public:
 
     /**
      * @brief Subscribe to the book changes feed.
-     * @param subscriber
+     * @param subscriber The subscriber to add
      */
     virtual void
     subBookChanges(SubscriberSharedPtr const& subscriber) = 0;
 
     /**
      * @brief Unsubscribe to the book changes feed.
-     * @param subscriber
+     * @param subscriber The subscriber to remove
      */
     virtual void
     unsubBookChanges(SubscriberSharedPtr const& subscriber) = 0;
@@ -60,14 +60,14 @@ public:
 
     /**
      * @brief Subscribe to the proposed transactions feed.
-     * @param subscriber
+     * @param subscriber The subscriber to add
      */
     virtual void
     subProposedTransactions(SubscriberSharedPtr const& subscriber) = 0;
 
     /**
      * @brief Unsubscribe to the proposed transactions feed.
-     * @param subscriber
+     * @param subscriber The subscriber to remove
      */
     virtual void
     unsubProposedTransactions(SubscriberSharedPtr const& subscriber) = 0;
@@ -76,7 +76,7 @@ public:
      * @brief Subscribe to the proposed transactions feed, only receive the feed when particular
      * account is affected.
      * @param account The account to watch.
-     * @param subscriber
+     * @param subscriber The subscriber to add
      */
     virtual void
     subProposedAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber) = 0;
@@ -84,7 +84,7 @@ public:
     /**
      * @brief Unsubscribe to the proposed transactions feed for particular account.
      * @param account The account to stop watching.
-     * @param subscriber
+     * @param subscriber The subscriber to remove
      */
     virtual void
     unsubProposedAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber) = 0;
@@ -108,7 +108,7 @@ public:
 
     /**
      * @brief Unsubscribe to the ledger feed.
-     * @param subscriber
+     * @param subscriber The subscriber to remove
      */
     virtual void
     unsubLedger(SubscriberSharedPtr const& subscriber) = 0;
@@ -130,14 +130,14 @@ public:
 
     /**
      * @brief Subscribe to the manifest feed.
-     * @param subscriber
+     * @param subscriber The subscriber to add
      */
     virtual void
     subManifest(SubscriberSharedPtr const& subscriber) = 0;
 
     /**
      * @brief Unsubscribe to the manifest feed.
-     * @param subscriber
+     * @param subscriber The subscriber to remove
      */
     virtual void
     unsubManifest(SubscriberSharedPtr const& subscriber) = 0;
@@ -151,14 +151,14 @@ public:
 
     /**
      * @brief Subscribe to the validation feed.
-     * @param subscriber
+     * @param subscriber The subscriber to add
      */
     virtual void
     subValidation(SubscriberSharedPtr const& subscriber) = 0;
 
     /**
      * @brief Unsubscribe to the validation feed.
-     * @param subscriber
+     * @param subscriber The subscriber to remove
      */
     virtual void
     unsubValidation(SubscriberSharedPtr const& subscriber) = 0;
@@ -172,14 +172,14 @@ public:
 
     /**
      * @brief Subscribe to the transactions feed.
-     * @param subscriber
+     * @param subscriber The subscriber to add
      */
     virtual void
     subTransactions(SubscriberSharedPtr const& subscriber) = 0;
 
     /**
      * @brief Unsubscribe to the transactions feed.
-     * @param subscriber
+     * @param subscriber The subscriber to remove
      */
     virtual void
     unsubTransactions(SubscriberSharedPtr const& subscriber) = 0;
@@ -188,7 +188,7 @@ public:
      * @brief Subscribe to the transactions feed, only receive the feed when particular account is
      * affected.
      * @param account The account to watch.
-     * @param subscriber
+     * @param subscriber The subscriber to add
      */
     virtual void
     subAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber) = 0;
@@ -205,7 +205,7 @@ public:
      * @brief Subscribe to the transactions feed, only receive feed when particular order book is
      * affected.
      * @param book The book to watch.
-     * @param subscriber
+     * @param subscriber The subscriber to add
      */
     virtual void
     subBook(xrpl::Book const& book, SubscriberSharedPtr const& subscriber) = 0;
@@ -213,7 +213,7 @@ public:
     /**
      * @brief Unsubscribe to the transactions feed for particular order book.
      * @param book The book to watch.
-     * @param subscriber
+     * @param subscriber The subscriber to remove
      */
     virtual void
     unsubBook(xrpl::Book const& book, SubscriberSharedPtr const& subscriber) = 0;
@@ -222,7 +222,7 @@ public:
      * @brief Subscribe to the transactions feed, only receive the feed when particular MPT issuance
      * is affected.
      * @param mptIssuanceID The MPT issuance to watch.
-     * @param subscriber
+     * @param subscriber The subscriber to add
      */
     virtual void
     subMPTIssuance(xrpl::MPTID const& mptIssuanceID, SubscriberSharedPtr const& subscriber) = 0;
@@ -230,7 +230,7 @@ public:
     /**
      * @brief Unsubscribe to the transactions feed for particular MPT issuance.
      * @param mptIssuanceID The MPT issuance to stop watching.
-     * @param subscriber
+     * @param subscriber The subscriber to remove
      */
     virtual void
     unsubMPTIssuance(xrpl::MPTID const& mptIssuanceID, SubscriberSharedPtr const& subscriber) = 0;

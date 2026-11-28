@@ -24,8 +24,8 @@ namespace etl {
  * @brief Represents possible errors for initial ledger load
  */
 enum class InitialLedgerLoadError {
-    Cancelled, /*< Indicating the initial load got cancelled by user */
-    Errored,   /*< Indicating some error happened during initial ledger load */
+    Cancelled,  ///< Indicating the initial load got cancelled by user
+    Errored,    ///< Indicating some error happened during initial ledger load
 };
 
 /**
@@ -39,8 +39,11 @@ using InitialLedgerLoadResult = std::expected<std::vector<std::string>, InitialL
  */
 class LoadBalancerInterface {
 public:
+    /** @brief Raw ledger object as received over gRPC */
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
+    /** @brief gRPC response containing the data of a single ledger */
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
+    /** @brief Optional ledger response, as returned by fetchLedger() */
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
     virtual ~LoadBalancerInterface() = default;

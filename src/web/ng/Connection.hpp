@@ -17,6 +17,9 @@
 #include <string>
 #include <utility>
 
+/**
+ * @brief The next generation web server implementation.
+ */
 namespace web::ng {
 
 /**

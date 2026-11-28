@@ -25,6 +25,12 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief Declare a static WritingAmendmentKey member named after the amendment and register the
+ * amendment as supported by Clio.
+ *
+ * @param name The amendment name; used both as the member identifier and (stringized) as the key
+ */
 #define REGISTER(name)                                   \
     inline static impl::WritingAmendmentKey const name = \
         impl::WritingAmendmentKey(std::string(BOOST_PP_STRINGIZE(name)))

@@ -1,5 +1,8 @@
 #pragma once
 
+/**
+ * @brief This namespace contains everything to do with the ETL and ETL sources.
+ */
 namespace etl {
 
 /**

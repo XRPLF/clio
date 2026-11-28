@@ -52,7 +52,12 @@ public:
      * @note Websocket is not a real method, it is used to distinguish WebSocket requests from HTTP
      * requests.
      */
-    enum class Method { Get, Post, Websocket, Unsupported };
+    enum class Method {
+        Get,         ///< HTTP GET request
+        Post,        ///< HTTP POST request
+        Websocket,   ///< A message received over a WebSocket connection
+        Unsupported  ///< Any other HTTP method
+    };
 
     /**
      * @brief Get the method of the request.

@@ -74,6 +74,15 @@ public:
      */
     BasicKeyspaceBackend(BasicKeyspaceBackend&&) = delete;
 
+    /**
+     * @brief Wait for pending writes and commit the ledger range update for the current ledger
+     *
+     * If the ledger range table is not yet populated, both the min and max sequence are first
+     * inserted for the current ledger.
+     *
+     * @return true if ledger_range now has the current ledger as its max sequence; false
+     * otherwise (e.g. a write conflict)
+     */
     bool
     doFinishWrites() override
     {
@@ -102,6 +111,17 @@ public:
         return true;
     }
 
+    /**
+     * @brief Fetches all NFTs issued by a given address.
+     *
+     * @param issuer AccountID of the issuer to query
+     * @param taxon Optional taxon of NFTs by which to filter
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param limit Paging limit
+     * @param cursorIn Optional cursor to pick up from where the previous page left off
+     * @param yield The coroutine context
+     * @return NFTs issued by this account (or issuer/taxon combination) and an optional cursor
+     */
     [[nodiscard]] NFTsAndCursor
     fetchNFTsByIssuer(
         xrpl::AccountID const& issuer,
@@ -297,6 +317,7 @@ private:
     }
 };
 
+/** @brief The Keyspace backend with the default settings provider and execution strategy */
 using KeyspaceBackend = BasicKeyspaceBackend<SettingsProvider, impl::DefaultExecutionStrategy<>>;
 
 }  // namespace data::cassandra
