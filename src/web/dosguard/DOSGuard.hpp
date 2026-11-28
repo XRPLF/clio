@@ -19,12 +19,13 @@
 #include <unordered_map>
 #include <unordered_set>
 
+/**
+ * @brief Denial of service protection: rate limiting, IP whitelisting and request weighting.
+ */
 namespace web::dosguard {
 
 /**
  * @brief A simple denial of service guard used for rate limiting.
- *
- * @tparam WhitelistHandlerType The type of the whitelist handler
  */
 class DOSGuard : public DOSGuardInterface {
     /**
@@ -86,7 +87,7 @@ public:
     /**
      * @brief Increment connection count for the given ip address.
      *
-     * @param ip
+     * @param ip The ip address of the client opening a connection
      */
     void
     increment(std::string const& ip) noexcept override;
@@ -94,7 +95,7 @@ public:
     /**
      * @brief Decrement connection count for the given ip address.
      *
-     * @param ip
+     * @param ip The ip address of the client closing a connection
      */
     void
     decrement(std::string const& ip) noexcept override;
@@ -106,8 +107,8 @@ public:
      * the operation is no longer allowed and false is returned; true is
      * returned otherwise.
      *
-     * @param ip
-     * @param numObjects
+     * @param ip The ip address of the client
+     * @param numObjects The amount of usage to add (size in bytes of the transferred data)
      * @return true
      * @return false
      */
@@ -121,7 +122,7 @@ public:
      * the operation is no longer allowed and false is returned; true is
      * returned otherwise.
      *
-     * @param ip
+     * @param ip The ip address of the client
      * @param request The request as json object
      * @return true
      * @return false
@@ -130,7 +131,7 @@ public:
     request(std::string const& ip, boost::json::object const& request) override;
 
     /**
-     * @brief Instantly clears all fetch counters added by @see add(std::string const&, uint32_t).
+     * @brief Instantly clears all fetch counters added by @ref add(std::string const&, uint32_t).
      */
     void
     clear() noexcept override;

@@ -14,6 +14,11 @@ struct ClusterCommunicationServiceTag {
     virtual ~ClusterCommunicationServiceTag() = default;
 };
 
+/**
+ * @brief Concept for cluster communication service implementations.
+ *
+ * @tparam T The type to check; must derive from ClusterCommunicationServiceTag
+ */
 template <typename T>
 concept SomeClusterCommunicationService = std::derived_from<T, ClusterCommunicationServiceTag>;
 

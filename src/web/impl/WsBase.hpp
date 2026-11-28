@@ -197,14 +197,14 @@ public:
     }
 
     /**
-     * @copydoc ConnectionBase::send
+     * @copydoc web::ConnectionBase::send(std::string&&, http::status)
      *
      * @note The message length is added to the DOSGuard. If that puts the client over its limit
      * and the message parses as a JSON object, a "load" warning is attached to it; messages that
      * are not JSON objects are sent unchanged.
      */
     void
-    send(std::string&& msg, http::status) override
+    send(std::string&& msg, [[maybe_unused]] http::status status) override
     {
         if (!dosGuard_.get().add(clientIp_, msg.size())) {
             if (auto const warned = withLoadWarning(msg); warned.has_value()) {

@@ -9,11 +9,13 @@ namespace util {
 
 /**
  * @brief Atomic wrapper for integral and floating point types
+ *
+ * @tparam NumberType The integral or floating point type to wrap
  */
 template <SomeNumberType NumberType>
 class Atomic {
 public:
-    using ValueType = NumberType;
+    using ValueType = NumberType;  ///< The type of the stored value
 
     Atomic() = default;
 
@@ -73,6 +75,11 @@ private:
     std::atomic<ValueType> value_{0};
 };
 
+/**
+ * @brief Unique pointer to an Atomic
+ *
+ * @tparam NumberType The integral or floating point type to wrap
+ */
 template <SomeNumberType NumberType>
 using AtomicPtr = std::unique_ptr<Atomic<NumberType>>;
 

@@ -36,7 +36,14 @@ class ClusterCommunicationService : public ClusterCommunicationServiceTag {
     CacheLoaderDecider cacheLoaderDecider_;
 
 public:
+    /**
+     * @brief Default interval for reading other nodes' state from the cluster.
+     */
     static constexpr std::chrono::milliseconds kDefaultReadInterval{1000};
+
+    /**
+     * @brief Default interval for writing this node's state to the cluster.
+     */
     static constexpr std::chrono::milliseconds kDefaultWriteInterval{1000};
 
     /**
@@ -56,6 +63,9 @@ public:
         std::chrono::steady_clock::duration writeInterval = kDefaultWriteInterval
     );
 
+    /**
+     * @brief Destroy the service, stopping all cluster communication.
+     */
     ~ClusterCommunicationService() override;
 
     ClusterCommunicationService(ClusterCommunicationService&&) = delete;

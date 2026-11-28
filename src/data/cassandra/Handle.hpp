@@ -29,13 +29,13 @@ class Handle {
     impl::Session session_;
 
 public:
-    using ResultOrErrorType = ResultOrError;
-    using MaybeErrorType = MaybeError;
-    using FutureWithCallbackType = FutureWithCallback;
-    using FutureType = Future;
-    using StatementType = Statement;
-    using PreparedStatementType = PreparedStatement;
-    using ResultType = Result;
+    using ResultOrErrorType = ResultOrError;            ///< A query result or an error
+    using MaybeErrorType = MaybeError;                  ///< Success or an error
+    using FutureWithCallbackType = FutureWithCallback;  ///< Future that invokes a callback
+    using FutureType = Future;                          ///< Future of an asynchronous query
+    using StatementType = Statement;                    ///< A simple or bound statement
+    using PreparedStatementType = PreparedStatement;    ///< A prepared statement
+    using ResultType = Result;                          ///< A query result
 
     /**
      * @brief Construct a new handle from a Settings object.
@@ -140,6 +140,7 @@ public:
     /**
      * @brief Execute a simple query with optional args asynchronously.
      *
+     * @tparam Args The types of the arguments to bind
      * @param query The query to execute
      * @param args The arguments to bind for execution
      * @return A future
@@ -157,6 +158,7 @@ public:
      *
      * See asyncExecute(std::string_view, Args&&...) const for how this works.
      *
+     * @tparam Args The types of the arguments to bind
      * @param query The query to execute
      * @param args The arguments to bind for execution
      * @return The result or an error
@@ -195,6 +197,7 @@ public:
     /**
      * @brief Execute a prepared statement with optional args asynchronously.
      *
+     * @tparam Args The types of the arguments to bind
      * @param statement The prepared statement to execute
      * @param args The arguments to bind for execution
      * @return A future
@@ -212,6 +215,7 @@ public:
      *
      * See asyncExecute(std::vector<StatementType> const&, Args&&...) const for how this works.
      *
+     * @tparam Args The types of the arguments to bind
      * @param statement The prepared statement to bind and execute
      * @param args The arguments to bind for execution
      * @return The result or an error
@@ -290,7 +294,7 @@ public:
     /**
      * @brief Prepare a statement.
      *
-     * @param query
+     * @param query The CQL query to prepare
      * @return A prepared statement
      * @throws std::runtime_error with underlying error description on failure
      */

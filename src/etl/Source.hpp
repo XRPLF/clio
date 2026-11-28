@@ -32,8 +32,17 @@ namespace etl {
  */
 class SourceBase {
 public:
+    /**
+     * @brief Callback invoked when the source connects
+     */
     using OnConnectHook = std::function<void()>;
+    /**
+     * @brief Callback invoked on disconnect; receives whether the source was forwarding
+     */
     using OnDisconnectHook = std::function<void(bool)>;
+    /**
+     * @brief Callback invoked when a forwarding source sees a ledger close
+     */
     using OnLedgerClosedHook = std::function<void()>;
 
     virtual ~SourceBase() = default;
@@ -140,8 +149,14 @@ public:
     ) const = 0;
 };
 
+/**
+ * @brief Owning pointer to an ETL source
+ */
 using SourcePtr = std::unique_ptr<SourceBase>;
 
+/**
+ * @brief Factory function creating an ETL source from its configuration and hooks
+ */
 using SourceFactory = std::function<SourcePtr(
     util::config::ObjectView const& config,
     boost::asio::io_context& ioc,

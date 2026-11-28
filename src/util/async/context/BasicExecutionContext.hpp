@@ -104,6 +104,12 @@ struct AsioPoolContext {
  * Return values are handled by capturing them and returning them packaged as std::expected.
  * Exceptions may or may not be caught and handled depending on the error strategy. The default
  * behavior is to catch and package them as the error channel of std::expected.
+ *
+ * @tparam ContextType The underlying context providing the executor, timer and strand types
+ * @tparam StopSourceType The stop source type used to request stopping of stoppable operations
+ * @tparam DispatcherType The strategy used to dispatch work onto the executor (post, spawn, sync)
+ * @tparam TimerContextProvider Provides the context used for scheduled and repeating operations
+ * @tparam ErrorHandlerType The strategy for catching and packaging exceptions from user functions
  */
 template <
     typename ContextType,
@@ -125,23 +131,41 @@ public:
     static constexpr bool kIsNoexcept = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; })) and
         noexcept(ErrorHandlerType::catchAndAssert([] { throw 0; }));
 
-    using ContextHolderType = ContextType;
+    using ContextHolderType = ContextType;  ///< The underlying context type
 
-    using ExecutorType = ContextHolderType::Executor;
+    using ExecutorType = ContextHolderType::Executor;  ///< Executor of the underlying context
 
+    /**
+     * @brief The result type of operations: the value or an ExecutionError
+     *
+     * @tparam T The type of the value produced by the operation
+     */
     template <typename T>
     using ValueType = std::expected<T, ExecutionError>;
 
-    using StopSource = StopSourceType;
+    using StopSource = StopSourceType;  ///< The stop source type used by stoppable operations
 
-    using StopToken = StopSourceType::Token;
+    using StopToken = StopSourceType::Token;  ///< Stop token passed to stoppable user functions
 
+    /**
+     * @brief The operation type returned for stoppable work on this context
+     *
+     * @tparam T The type of the value produced by the operation
+     */
     template <typename T>
     using StoppableOperation = StoppableOperation<ValueType<T>, StopSourceType>;
 
+    /**
+     * @brief The operation type returned for non-stoppable work on this context
+     *
+     * @tparam T The type of the value produced by the operation
+     */
     template <typename T>
     using Operation = Operation<ValueType<T>>;
 
+    /**
+     * @brief The strand type created by this context to serialize execution
+     */
     using Strand = impl::BasicStrand<
         BasicExecutionContext,
         StopSourceType,
@@ -149,13 +173,21 @@ public:
         TimerContextProvider,
         ErrorHandlerType>;
 
-    using Timer = ContextHolderType::Timer;
+    using Timer = ContextHolderType::Timer;  ///< The timer type of the underlying context
 
-    // note: scheduled operations are always stoppable
+    /**
+     * @brief The operation type returned for work scheduled after a delay
+     * @note Scheduled operations are always stoppable
+     *
+     * @tparam T The type of the value produced by the operation
+     */
     template <typename T>
     using ScheduledOperation = ScheduledOperation<BasicExecutionContext, StoppableOperation<T>>;
 
-    // note: repeating operations are always stoppable and must return void
+    /**
+     * @brief The operation type returned for work executed repeatedly at an interval
+     * @note Repeating operations are always stoppable and must return void
+     */
     using RepeatedOperation = RepeatingOperation<BasicExecutionContext>;
 
     /**

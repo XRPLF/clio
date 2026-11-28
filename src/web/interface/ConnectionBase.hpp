@@ -29,7 +29,7 @@ protected:
     std::string clientIp_;
 
 public:
-    bool upgraded = false;
+    bool upgraded = false;  ///< Whether the connection has been upgraded to a websocket
 
     /**
      * @brief Create a new connection base.

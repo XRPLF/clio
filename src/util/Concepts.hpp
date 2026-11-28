@@ -12,12 +12,16 @@ namespace util {
 
 /**
  * @brief Specifies a number type
+ *
+ * @tparam T The type to check; must be a non-const arithmetic type other than bool
  */
 template <typename T>
 concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_const_v<T>;
 
 /**
  * @brief Specifies a clock that reports the current time as a system clock time point
+ *
+ * @tparam T The clock type to check
  */
 template <typename T>
 concept SomeSystemClock = requires {

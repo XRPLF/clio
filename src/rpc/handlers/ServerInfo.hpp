@@ -61,62 +61,77 @@ public:
      * @brief A struct to hold the admin section of the output
      */
     struct AdminSection {
-        boost::json::object counters;
-        std::optional<boost::json::object> backendCounters;
-        boost::json::object subscriptions;
-        boost::json::object etl;
+        boost::json::object counters;                        ///< Report of the RPC counters
+        std::optional<boost::json::object> backendCounters;  ///< Backend stats, if requested
+        boost::json::object subscriptions;                   ///< Report of the subscription manager
+        boost::json::object etl;                             ///< Information about the ETL service
     };
 
     /**
      * @brief A struct to hold the validated ledger section of the output
      */
     struct ValidatedLedgerSection {
-        uint32_t age = 0;
-        std::string hash;
-        xrpl::LedgerIndex seq = {};
-        std::optional<xrpl::Fees> fees = std::nullopt;
+        uint32_t age = 0;                               ///< Seconds since the ledger closed
+        std::string hash;                               ///< Hash of the ledger
+        xrpl::LedgerIndex seq = {};                     ///< Sequence of the ledger
+        std::optional<xrpl::Fees> fees = std::nullopt;  ///< Fee settings of the ledger
     };
 
     /**
      * @brief A struct to hold the cache section of the output
      */
     struct CacheSection {
-        std::size_t size = 0;
-        bool isEnabled = false;
-        bool isFull = false;
-        xrpl::LedgerIndex latestLedgerSeq = {};
-        float objectHitRate = 1.0;
-        float successorHitRate = 1.0;
+        std::size_t size = 0;                    ///< Number of objects in the cache
+        bool isEnabled = false;                  ///< Whether the cache is enabled
+        bool isFull = false;                     ///< Whether the cache is fully loaded
+        xrpl::LedgerIndex latestLedgerSeq = {};  ///< Latest ledger sequence in the cache
+        float objectHitRate = 1.0;               ///< Cache hit rate of object lookups
+        float successorHitRate = 1.0;            ///< Cache hit rate of successor lookups
     };
 
     /**
      * @brief A struct to hold the info section of the output
      */
     struct InfoSection {
-        std::optional<AdminSection> adminSection = std::nullopt;
-        std::string completeLedgers;
-        uint32_t loadFactor = 1u;
+        std::optional<AdminSection> adminSection = std::nullopt;  ///< Admin-only data
+        std::string completeLedgers;  ///< Ledgers in the database, as `min-max`
+        uint32_t loadFactor = 1u;     ///< Load factor; rippled's takes precedence
+        /**
+         * @brief Current time of the server
+         */
         std::chrono::time_point<std::chrono::system_clock> time = ClockType::now();
-        std::chrono::seconds uptime = {};
+        std::chrono::seconds uptime = {};  ///< Time since the server started
+        /**
+         * @brief Version of Clio
+         */
         std::string clioVersion = util::build::getClioVersionString();
+        /**
+         * @brief Version of libxrpl
+         */
         std::string xrplVersion = xrpl::build_info::getVersionString();
+        /**
+         * @brief `info` from rippled's server_info
+         */
         std::optional<boost::json::object> rippledInfo = std::nullopt;
-        ValidatedLedgerSection validatedLedger = {};
-        CacheSection cache = {};
-        bool isAmendmentBlocked = false;
-        bool isCorruptionDetected = false;
+        ValidatedLedgerSection validatedLedger = {};  ///< Latest validated ledger
+        CacheSection cache = {};                      ///< State of the ledger cache
+        bool isAmendmentBlocked = false;              ///< Whether ETL is amendment blocked
+        bool isCorruptionDetected = false;            ///< Whether ETL detected corruption
     };
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        InfoSection info = {};
+        InfoSection info = {};  ///< Information about the server
 
         // validated should be sent via framework
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -232,6 +247,12 @@ private:
         };
     }
 
+    /**
+     * @brief Convert the InfoSection to a JSON object
+     *
+     * @param [out] jv The JSON object to convert to
+     * @param info The info section to convert
+     */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, InfoSection const& info)
     {
@@ -277,6 +298,12 @@ private:
         }
     }
 
+    /**
+     * @brief Convert the ValidatedLedgerSection to a JSON object
+     *
+     * @param [out] jv The JSON object to convert to
+     * @param validated The validated ledger section to convert
+     */
     friend void
     tag_invoke(
         boost::json::value_from_tag,
@@ -296,6 +323,12 @@ private:
         // NOLINTEND(bugprone-unchecked-optional-access)
     }
 
+    /**
+     * @brief Convert the CacheSection to a JSON object
+     *
+     * @param [out] jv The JSON object to convert to
+     * @param cache The cache section to convert
+     */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, CacheSection const& cache)
     {

@@ -5,7 +5,7 @@
 
 namespace util {
 
-template <typename ProtectedDataType, typename MutextType>
+template <typename ProtectedDataType, typename MutexType>
 class Mutex;
 
 /**

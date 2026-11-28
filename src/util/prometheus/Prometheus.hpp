@@ -191,6 +191,14 @@ class PrometheusImpl : public PrometheusInterface {
 public:
     using PrometheusInterface::PrometheusInterface;
 
+    /**
+     * @brief Get a bool based metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     * @return The bool object
+     */
     Bool
     boolMetric(
         std::string name,
@@ -198,18 +206,59 @@ public:
         std::optional<std::string> description = std::nullopt
     ) override;
 
+    /**
+     * @brief Get an integer based counter metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     * @return A reference to the counter object
+     */
     CounterInt&
     counterInt(std::string name, Labels labels, std::optional<std::string> description) override;
 
+    /**
+     * @brief Get a double based counter metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     * @return A reference to the counter object
+     */
     CounterDouble&
     counterDouble(std::string name, Labels labels, std::optional<std::string> description) override;
 
+    /**
+     * @brief Get an integer based gauge metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     * @return A reference to the gauge object
+     */
     GaugeInt&
     gaugeInt(std::string name, Labels labels, std::optional<std::string> description) override;
 
+    /**
+     * @brief Get a double based gauge metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     * @return A reference to the gauge object
+     */
     GaugeDouble&
     gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) override;
 
+    /**
+     * @brief Get an integer based histogram metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param buckets The buckets of the metric
+     * @param description The description of the metric
+     * @return A reference to the histogram object
+     */
     HistogramInt&
     histogramInt(
         std::string name,
@@ -218,6 +267,15 @@ public:
         std::optional<std::string> description = std::nullopt
     ) override;
 
+    /**
+     * @brief Get a double based histogram metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param buckets The buckets of the metric
+     * @param description The description of the metric
+     * @return A reference to the histogram object
+     */
     HistogramDouble&
     histogramDouble(
         std::string name,
@@ -226,6 +284,12 @@ public:
         std::optional<std::string> description = std::nullopt
     ) override;
 
+    /**
+     * @brief Collect all metrics and return them as a string in Prometheus format
+     *
+     * @return The serialized metrics (compressed if enabled), or an empty string if prometheus is
+     * disabled
+     */
     std::string
     collectMetrics() override;
 

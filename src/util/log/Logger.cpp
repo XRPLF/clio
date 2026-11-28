@@ -177,8 +177,8 @@ createConsoleSinks(bool logToConsole, std::string const& format)
 /**
  * @brief Initializes file logging.
  *
- * @param config The configuration object containing log settings.
- * @param dirPath The directory path where log files will be stored.
+ * @param params The file logging settings.
+ * @param format The log message format.
  * @return File sink for logging.
  */
 spdlog::sink_ptr

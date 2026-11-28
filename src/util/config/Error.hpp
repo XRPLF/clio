@@ -34,7 +34,7 @@ struct Error {
     {
     }
 
-    std::string error;
+    std::string error;  ///< The error message to display to users
 };
 
 }  // namespace util::config

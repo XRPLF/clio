@@ -14,6 +14,9 @@
 #include <memory>
 #include <utility>
 
+/**
+ * @brief This namespace implements the database migration framework.
+ */
 namespace migration {
 
 /**

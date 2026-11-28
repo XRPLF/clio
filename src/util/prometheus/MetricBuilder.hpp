@@ -22,7 +22,7 @@ struct MetricBuilderInterface {
      * @param labelsString The labels of the metric in serialized format, e.g.
      * {name="value",name2="value2"}
      * @param type The type of the metric
-     * @param buckets The buckets of the int based histogram. It is ignored for other metric types
+     * @param buckets The buckets of the int based histogram. Must be empty for other metric types
      * @return The metric
      */
     virtual std::unique_ptr<MetricBase>
@@ -57,6 +57,16 @@ struct MetricBuilderInterface {
  */
 class MetricBuilder : public MetricBuilderInterface {
 public:
+    /**
+     * @brief Create a counter, gauge or int based histogram metric
+     *
+     * @param name The name of the metric
+     * @param labelsString The labels of the metric in serialized format, e.g.
+     * {name="value",name2="value2"}
+     * @param type The type of the metric. Must not be HistogramDouble
+     * @param buckets The buckets of the int based histogram. Must be empty for other metric types
+     * @return The metric
+     */
     std::unique_ptr<MetricBase>
     operator()(
         std::string name,
@@ -65,6 +75,16 @@ public:
         std::vector<std::int64_t> const& buckets = {}
     ) override;
 
+    /**
+     * @brief Create a double based histogram metric
+     *
+     * @param name The name of the metric
+     * @param labelsString The labels of the metric in serialized format, e.g.
+     * {name="value",name2="value2"}
+     * @param type The type of the metric. Must be HistogramDouble
+     * @param buckets The buckets of the histogram
+     * @return Double based histogram
+     */
     std::unique_ptr<MetricBase>
     operator()(
         std::string name,

@@ -35,6 +35,11 @@ public:
      */
     using OnConnectCheck = std::function<std::expected<void, Response>(Connection const&)>;
 
+    /**
+     * @brief Hook called when a connection's client ip changes (e.g. resolved from a proxy).
+     *
+     * The hook receives the old ip and the new ip.
+     */
     using OnIpChangeHook = impl::ConnectionHandler::OnIpChangeHook;
 
     /**
@@ -46,9 +51,9 @@ public:
      * @brief A struct that holds all the hooks for the server.
      */
     struct Hooks {
-        OnConnectCheck onConnectCheck;
-        OnIpChangeHook onIpChangeHook;
-        OnDisconnectHook onDisconnectHook;
+        OnConnectCheck onConnectCheck;      ///< Check performed for each new client connection
+        OnIpChangeHook onIpChangeHook;      ///< Hook called when a connection's client ip changes
+        OnDisconnectHook onDisconnectHook;  ///< Hook called when a connection disconnects
     };
 
 private:
@@ -164,6 +169,7 @@ private:
  *
  * @param config The configuration.
  * @param onConnectCheck The check to perform on each client connection.
+ * @param onIpChangeHook The hook to call when a client's IP changes.
  * @param onDisconnectHook The hook to call when client disconnects.
  * @param context The boost::asio::io_context to use.
  *

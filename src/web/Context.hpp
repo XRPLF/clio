@@ -20,14 +20,14 @@ namespace web {
  * request.
  */
 struct Context : util::Taggable {
-    boost::asio::yield_context yield;
-    std::string method;
-    std::uint32_t apiVersion;
-    boost::json::object params;
-    SubscriptionContextPtr session;
-    data::LedgerRange range;
-    std::string clientIp;
-    bool isAdmin;
+    boost::asio::yield_context yield;  ///< The coroutine context the request is handled in
+    std::string method;                ///< The method/command requested
+    std::uint32_t apiVersion;          ///< The api_version parsed from the request
+    boost::json::object params;        ///< Request's parameters/data as a JSON object
+    SubscriptionContextPtr session;    ///< The subscription context of the connection
+    data::LedgerRange range;           ///< The ledger range available at the time of the request
+    std::string clientIp;              ///< IP of the peer
+    bool isAdmin;                      ///< Whether the peer has admin privileges
 
     /**
      * @brief Create a new Context instance.

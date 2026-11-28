@@ -367,6 +367,8 @@ private:
 
 /**
  * @brief The final type of the HttpServer used by Clio.
+ *
+ * @tparam HandlerType The server handler that processes incoming requests
  */
 template <typename HandlerType>
 using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;

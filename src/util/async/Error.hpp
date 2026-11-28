@@ -41,7 +41,7 @@ struct ExecutionError {
         return message.c_str();
     }
 
-    std::string message;
+    std::string message;  ///< Error message, including the id of the thread that failed
 };
 
 }  // namespace util::async

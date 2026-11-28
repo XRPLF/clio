@@ -55,8 +55,8 @@ public:
      * @brief Represents a task scheduling priority
      */
     enum class Priority : uint8_t {
-        High,
-        Default,
+        High,     ///< Taken ahead of default-priority tasks (bounded to avoid starving them)
+        Default,  ///< Normal scheduling priority
     };
 
 private:
@@ -143,7 +143,14 @@ private:
     util::Mutex<QueueState> queueState_;
 
 public:
+    /**
+     * @brief Tag type used to construct a WorkQueue that does not start processing immediately.
+     */
     struct DontStartProcessingTag {};
+
+    /**
+     * @brief Tag value used to select the non-starting WorkQueue constructor.
+     */
     static constexpr DontStartProcessingTag kDontStartProcessingTag = {};
 
     /**
@@ -166,6 +173,9 @@ public:
      */
     WorkQueue(DontStartProcessingTag, std::uint32_t numWorkers, uint32_t maxSize = 0);
 
+    /**
+     * @brief Destroy the work queue, stopping it and waiting for all workers to finish.
+     */
     ~WorkQueue() override;
 
     /**

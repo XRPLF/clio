@@ -42,6 +42,9 @@
 #include <utility>
 #include <vector>
 
+/**
+ * @brief Test fixture granted friend access to CassandraBackendFamily internals
+ */
 class CacheBackendCassandraTest;
 
 namespace data::cassandra {
@@ -157,6 +160,16 @@ public:
         return settingsProvider_.getMaxRetryDelay();
     }
 
+    /**
+     * @brief Fetches all transactions for a specific account.
+     *
+     * @param account The account to fetch transactions for
+     * @param limit The maximum number of transactions per result page
+     * @param forward Whether to fetch the page forwards or backwards from the given cursor
+     * @param txnCursor The cursor to resume fetching from
+     * @param yield The coroutine context
+     * @return Results and a cursor to resume from
+     */
     TransactionsAndCursor
     fetchAccountTransactions(
         xrpl::AccountID const& account,
@@ -227,12 +240,22 @@ public:
         return {txns, {}};
     }
 
+    /**
+     * @brief Wait for all pending writes to finish.
+     */
     void
     waitForWritesToFinish() override
     {
         executor_.sync();
     }
 
+    /**
+     * @brief Write a ledger header and its hash-to-sequence mapping, and set the ledger that
+     * doFinishWrites() will commit.
+     *
+     * @param ledgerHeader The ledger header
+     * @param blob The serialized ledger header
+     */
     void
     writeLedger(xrpl::LedgerHeader const& ledgerHeader, std::string&& blob) override
     {
@@ -243,6 +266,12 @@ public:
         ledgerSequence_ = ledgerHeader.seq;
     }
 
+    /**
+     * @brief Fetches the latest ledger sequence.
+     *
+     * @param yield The coroutine context
+     * @return Latest sequence wrapped in an optional if found; nullopt otherwise
+     */
     std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context yield) const override
     {
@@ -263,6 +292,13 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Fetches a specific ledger by sequence number, using the ledger header cache first.
+     *
+     * @param sequence The sequence number to fetch for
+     * @param yield The coroutine context
+     * @return The xrpl::LedgerHeader if found; nullopt otherwise
+     */
     std::optional<xrpl::LedgerHeader>
     fetchLedgerBySequence(
         std::uint32_t const sequence,
@@ -294,6 +330,13 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Fetches a specific ledger by hash.
+     *
+     * @param hash The hash to fetch for
+     * @param yield The coroutine context
+     * @return The xrpl::LedgerHeader if found; nullopt otherwise
+     */
     std::optional<xrpl::LedgerHeader>
     fetchLedgerByHash(xrpl::uint256 const& hash, boost::asio::yield_context yield) const override
     {
@@ -314,6 +357,12 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Fetches the ledger range from DB.
+     *
+     * @param yield The coroutine context
+     * @return The ledger range if available; nullopt otherwise
+     */
     std::optional<LedgerRange>
     hardFetchLedgerRange(boost::asio::yield_context yield) const override
     {
@@ -352,6 +401,13 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Fetches all transactions from a specific ledger.
+     *
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return Results as a vector of TransactionAndMetadata
+     */
     std::vector<TransactionAndMetadata>
     fetchAllTransactionsInLedger(
         std::uint32_t const ledgerSequence,
@@ -362,6 +418,13 @@ public:
         return fetchTransactions(hashes, yield);
     }
 
+    /**
+     * @brief Fetches all transaction hashes from a specific ledger.
+     *
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return Hashes as xrpl::uint256 in a vector
+     */
     std::vector<xrpl::uint256>
     fetchAllTransactionHashesInLedger(
         std::uint32_t const ledgerSequence,
@@ -399,6 +462,14 @@ public:
         return hashes;
     }
 
+    /**
+     * @brief Fetches a specific NFT.
+     *
+     * @param tokenID The ID of the NFT
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return NFT object on success; nullopt otherwise
+     */
     std::optional<NFT>
     fetchNFT(
         xrpl::uint256 const& tokenID,
@@ -438,6 +509,16 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Fetches all transactions for a specific NFT.
+     *
+     * @param tokenID The ID of the NFT
+     * @param limit The maximum number of transactions per result page
+     * @param forward Whether to fetch the page forwards or backwards from the given cursor
+     * @param cursorIn The cursor to resume fetching from
+     * @param yield The coroutine context
+     * @return Results and a cursor to resume from
+     */
     TransactionsAndCursor
     fetchNFTTransactions(
         xrpl::uint256 const& tokenID,
@@ -511,6 +592,16 @@ public:
         return {txns, {}};
     }
 
+    /**
+     * @brief Fetches transactions for a particular MPTokenIssuance ID.
+     *
+     * @param mptIssuanceID The 24-byte MPTokenIssuance ID
+     * @param limit The maximum number of transactions per result page
+     * @param forward Whether to fetch the page forwards or backwards from the given cursor
+     * @param cursorIn The cursor to resume fetching from
+     * @param yield The coroutine context
+     * @return Results and a cursor to resume from
+     */
     TransactionsAndCursor
     fetchMPTokenIssuanceTransactions(
         xrpl::uint192 const& mptIssuanceID,
@@ -537,6 +628,18 @@ public:
         );
     }
 
+    /**
+     * @brief Fetches transactions for a particular MPTokenIssuance ID involving a particular
+     * account.
+     *
+     * @param mptIssuanceID The 24-byte MPTokenIssuance ID
+     * @param account The account that must be affected by the transaction
+     * @param limit The maximum number of transactions per result page
+     * @param forward Whether to fetch the page forwards or backwards from the given cursor
+     * @param cursorIn The cursor to resume fetching from
+     * @param yield The coroutine context
+     * @return Results and a cursor to resume from
+     */
     TransactionsAndCursor
     fetchAccountMPTokenIssuanceTransactions(
         xrpl::uint192 const& mptIssuanceID,
@@ -564,6 +667,17 @@ public:
         );
     }
 
+    /**
+     * @brief Fetches a page of MPToken objects held for an MPTokenIssuance ID.
+     *
+     * @param mptID The MPTokenIssuance ID to query
+     * @param limit The maximum number of holders to scan
+     * @param cursorIn Optional holder to continue after
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return Serialized MPToken objects that exist at ledgerSequence, and the last scanned holder
+     * as a cursor if limit holders were scanned
+     */
     MPTHoldersAndCursor
     fetchMPTHolders(
         xrpl::uint192 const& mptID,
@@ -609,6 +723,14 @@ public:
         return {mptObjects, {}};
     }
 
+    /**
+     * @brief The database-specific implementation for fetching a ledger object.
+     *
+     * @param key The key to fetch for
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The object as a Blob on success; nullopt otherwise
+     */
     std::optional<Blob>
     doFetchLedgerObject(
         xrpl::uint256 const& key,
@@ -632,6 +754,15 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief The database-specific implementation for fetching a ledger object sequence.
+     *
+     * @param key The key to fetch for
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The sequence of the latest version (possibly a deletion) at or before sequence;
+     * nullopt if not found
+     */
     std::optional<std::uint32_t>
     doFetchLedgerObjectSeq(
         xrpl::uint256 const& key,
@@ -654,6 +785,13 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Fetches a specific transaction.
+     *
+     * @param hash The hash of the transaction to fetch
+     * @param yield The coroutine context
+     * @return TransactionAndMetadata if transaction is found; nullopt otherwise
+     */
     std::optional<TransactionAndMetadata>
     fetchTransaction(xrpl::uint256 const& hash, boost::asio::yield_context yield) const override
     {
@@ -672,6 +810,14 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Database-specific implementation of fetching the successor key
+     *
+     * @param key The key to fetch for
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The successor key; nullopt if not found or if the successor is kLastKey
+     */
     std::optional<xrpl::uint256>
     doFetchSuccessorKey(
         xrpl::uint256 key,
@@ -695,6 +841,13 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Fetches multiple transactions.
+     *
+     * @param hashes A vector of hashes to fetch transactions for
+     * @param yield The coroutine context
+     * @return One entry per hash, in order; default-constructed if the transaction is not found
+     */
     std::vector<TransactionAndMetadata>
     fetchTransactions(
         std::vector<xrpl::uint256> const& hashes,
@@ -741,6 +894,14 @@ public:
         return results;
     }
 
+    /**
+     * @brief The database-specific implementation for fetching ledger objects.
+     *
+     * @param keys The keys to fetch for
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return One blob per key, in order; empty if the object does not exist or was deleted
+     */
     std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<xrpl::uint256> const& keys,
@@ -785,6 +946,13 @@ public:
         return results;
     }
 
+    /**
+     * @brief Fetch the objects changed in the given ledger.
+     *
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The changed objects as of ledgerSequence; deleted objects have an empty blob
+     */
     std::vector<LedgerObject>
     fetchLedgerDiff(
         std::uint32_t const ledgerSequence,
@@ -836,6 +1004,13 @@ public:
         return results;
     }
 
+    /**
+     * @brief Fetches the status of migrator by name.
+     *
+     * @param migratorName The name of the migrator
+     * @param yield The coroutine context
+     * @return The status of the migrator if found; nullopt otherwise
+     */
     std::optional<std::string>
     fetchMigratorStatus(
         std::string const& migratorName,
@@ -859,6 +1034,12 @@ public:
         return {};
     }
 
+    /**
+     * @brief Fetches the data of all nodes in the cluster.
+     *
+     * @param yield The coroutine context
+     * @return (node UUID, JSON message) pairs for all nodes, or an error message on failure
+     */
     std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>
     fetchClioNodesData(boost::asio::yield_context yield) const override
     {
@@ -875,6 +1056,14 @@ public:
         return result;
     }
 
+    /**
+     * @brief Write a ledger object version to `objects` and, once the ledger range is known,
+     * record its key in `diff`
+     *
+     * @param key The key of the object
+     * @param seq The sequence of the ledger
+     * @param blob The data
+     */
     void
     doWriteLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob) override
     {
@@ -887,6 +1076,13 @@ public:
         executor_.write(schema_->insertObject, std::move(key), seq, std::move(blob));
     }
 
+    /**
+     * @brief Write a new successor.
+     *
+     * @param key Key of the object that the passed successor will be the successor for
+     * @param seq The ledger sequence to write for
+     * @param successor The successor data to write
+     */
     void
     writeSuccessor(std::string&& key, std::uint32_t const seq, std::string&& successor) override
     {
@@ -899,6 +1095,11 @@ public:
         executor_.write(schema_->insertSuccessor, std::move(key), seq, std::move(successor));
     }
 
+    /**
+     * @brief Write a new set of account transactions.
+     *
+     * @param data A vector of AccountTransactionsData objects representing the account transactions
+     */
     void
     writeAccountTransactions(std::vector<AccountTransactionsData> data) override
     {
@@ -920,6 +1121,11 @@ public:
         executor_.write(std::move(statements));
     }
 
+    /**
+     * @brief Write a new account transaction.
+     *
+     * @param record An object representing the account transaction
+     */
     void
     writeAccountTransaction(AccountTransactionsData record) override
     {
@@ -939,6 +1145,11 @@ public:
         executor_.write(std::move(statements));
     }
 
+    /**
+     * @brief Write NFTs transactions.
+     *
+     * @param data A vector of NFTTransactionsData objects
+     */
     void
     writeNFTTransactions(std::vector<NFTTransactionsData> const& data) override
     {
@@ -956,6 +1167,12 @@ public:
         executor_.write(std::move(statements));
     }
 
+    /**
+     * @brief Write MPTokenIssuance transaction index rows to the `mptoken_issuance_transactions`
+     * table.
+     *
+     * @param data A vector of MPTokenIssuanceTransactionsData objects.
+     */
     void
     writeMPTokenIssuanceTransactions(
         std::vector<MPTokenIssuanceTransactionsData> const& data
@@ -975,6 +1192,14 @@ public:
         executor_.write(std::move(statements));
     }
 
+    /**
+     * @brief Write MPTokenIssuance transaction index rows to the
+     * `account_mptoken_issuance_transactions` table.
+     *
+     * One row is written per affected account in each record.
+     *
+     * @param data A vector of MPTokenIssuanceTransactionsData objects.
+     */
     void
     writeAccountMPTokenIssuanceTransactions(
         std::vector<MPTokenIssuanceTransactionsData> const& data
@@ -1005,6 +1230,15 @@ public:
         executor_.write(std::move(statements));
     }
 
+    /**
+     * @brief Writes a new transaction.
+     *
+     * @param hash The hash of the transaction
+     * @param seq The ledger sequence to write for
+     * @param date Close time of the ledger, in seconds since the XRPL epoch
+     * @param transaction The transaction data to write
+     * @param metadata The metadata to write
+     */
     void
     writeTransaction(
         std::string&& hash,
@@ -1027,6 +1261,11 @@ public:
         );
     }
 
+    /**
+     * @brief Writes NFTs to the database.
+     *
+     * @param data A vector of NFTsData objects representing the NFTs
+     */
     void
     writeNFTs(std::vector<NFTsData> const& data) override
     {
@@ -1066,6 +1305,11 @@ public:
         executor_.writeEach(std::move(statements));
     }
 
+    /**
+     * @brief Write accounts that started holding onto a MPT.
+     *
+     * @param data A vector of MPT ID and account pairs
+     */
     void
     writeMPTHolders(std::vector<MPTHolderData> const& data) override
     {
@@ -1077,6 +1321,9 @@ public:
         executor_.write(std::move(statements));
     }
 
+    /**
+     * @brief Starts a write transaction with the DB. No-op for Cassandra.
+     */
     void
     startWrites() const override
     {
@@ -1084,6 +1331,12 @@ public:
         // probably was used in PG to start a transaction or smth.
     }
 
+    /**
+     * @brief Write the migration status of a migrator to the database.
+     *
+     * @param migratorName The name of the migrator
+     * @param status The status to set
+     */
     void
     writeMigratorStatus(std::string const& migratorName, std::string const& status) override
     {
@@ -1094,6 +1347,12 @@ public:
         );
     }
 
+    /**
+     * @brief Write a node message. Used by ClusterCommunicationService
+     *
+     * @param uuid The UUID of the node
+     * @param message The message to write
+     */
     void
     writeNodeMessage(boost::uuids::uuid const& uuid, std::string message) override
     {
@@ -1102,12 +1361,22 @@ public:
         );
     }
 
+    /**
+     * @brief Check whether the database is overwhelmed with requests.
+     *
+     * @return true if database is overwhelmed; false otherwise
+     */
     bool
     isTooBusy() const override
     {
         return executor_.isTooBusy();
     }
 
+    /**
+     * @brief Get backend usage statistics collected by the execution strategy.
+     *
+     * @return A JSON object containing backend usage statistics
+     */
     boost::json::object
     stats() const override
     {

@@ -46,7 +46,7 @@ protected:
 /**
  * @brief Fixture with a "nice" mock backend.
  *
- * Use @see MockBackendTestNaggy during development to get unset call expectation warnings.
+ * Use @ref MockBackendTestNaggy during development to get unset call expectation warnings.
  * Once the test is ready and you are happy you can switch to this fixture to mute the warnings.
  *
  * A fixture that is based off of this MockBackendTest or MockBackendTestNaggy get a `backend`

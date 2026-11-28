@@ -63,6 +63,9 @@ namespace cluster {
  */
 class WriterDecider {
 public:
+    /**
+     * @brief Default time spent in Fallback before attempting to recover to election mode.
+     */
     static constexpr std::chrono::steady_clock::duration kRecoveryTime = std::chrono::hours{1};
 
 private:

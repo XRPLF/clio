@@ -19,7 +19,7 @@ namespace util::prometheus {
  */
 template <SomeNumberType NumberType>
 struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
-    using ValueType = NumberType;
+    using ValueType = NumberType;  ///< The type of the gauge value
 
     /**
      * @brief Construct a new AnyGauge object

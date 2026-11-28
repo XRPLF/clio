@@ -24,7 +24,7 @@ protected:
 /**
  * @brief Fixture with a "nice" ETLService mock.
  *
- * Use @see MockETLServiceTestNaggy during development to get unset call expectation warnings from
+ * Use @ref MockETLServiceTestNaggy during development to get unset call expectation warnings from
  * the embedded mock. Once the test is ready and you are happy you can switch to this fixture to
  * mute the warnings.
  */

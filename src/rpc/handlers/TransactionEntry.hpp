@@ -32,15 +32,21 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
+        /**
+         * @brief Header of the ledger containing the transaction
+         */
         std::optional<xrpl::LedgerHeader> ledgerHeader;
         // TODO: use a better type for this
-        boost::json::object metadata;
-        boost::json::object tx;
+        boost::json::object metadata;  ///< Transaction metadata as JSON
+        boost::json::object tx;        ///< Transaction as JSON
         // validated should be sent via framework
-        bool validated = true;
-        uint32_t apiVersion;
+        bool validated = true;  ///< Whether the ledger is validated
+        uint32_t apiVersion;    ///< API version of the request
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

@@ -37,6 +37,8 @@ namespace rpc {
 
 /**
  * @brief The RPC engine that ties all RPC-related functionality together.
+ *
+ * @tparam CountersType The type of the RPC counters used to record metrics
  */
 template <typename CountersType>
 class RPCEngine {
@@ -248,7 +250,7 @@ public:
      *
      * Used for errors based on user input, not actual failures of the db or clio itself.
      *
-     * @param method
+     * @param method The name of the RPC method that failed
      */
     void
     notifyFailed(std::string const& method)
@@ -263,7 +265,7 @@ public:
      *
      * Used for errors such as database timeout, internal errors, etc.
      *
-     * @param method
+     * @param method The name of the RPC method that errored
      */
     void
     notifyErrored(std::string const& method)

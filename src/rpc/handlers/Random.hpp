@@ -21,9 +21,12 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string random;
+        std::string random;  ///< Random 256-bit value as a hex string
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

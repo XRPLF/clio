@@ -38,19 +38,37 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string ledgerHash;
-        uint32_t ledgerIndex;
-        std::string accountID;
-        bool overflow = false;
+        std::string ledgerHash;  ///< Hash of the ledger used
+        uint32_t ledgerIndex;    ///< Sequence of the ledger used
+        std::string accountID;   ///< Address of the gateway (issuing) account
+        bool overflow = false;   ///< Whether a sum overflowed; currently never set (sums saturate)
+        /**
+         * @brief Total obligations to customers, per currency
+         */
         std::map<xrpl::Currency, xrpl::STAmount> sums;
+        /**
+         * @brief Balances issued to the requested hot wallets
+         */
         std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> hotBalances;
+        /**
+         * @brief Positive balances owed to the gateway, per peer
+         */
         std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> assets;
+        /**
+         * @brief Obligations frozen by the gateway, per holder
+         */
         std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> frozenBalances;
+        /**
+         * @brief Amounts locked in escrow, per currency
+         */
         std::map<xrpl::Currency, xrpl::STAmount> locked;
         // validated should be sent via framework
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

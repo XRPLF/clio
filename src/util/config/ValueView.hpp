@@ -54,6 +54,7 @@ public:
     /**
      * @brief Retrieves any type of "int" value (uint_32, int64_t etc)
      *
+     * @tparam T The integral type to convert the stored int64_t value to
      * @return The value with user requested type (if convertible)
      * @throws std::logic_error if the int < 0 and user requested unsigned int
      * @throws std::bad_variant_access if the value is not of type int

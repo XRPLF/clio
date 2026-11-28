@@ -170,6 +170,10 @@ public:
      */
     WriterState(std::shared_ptr<SystemState> state, data::LedgerCacheInterface const& cache);
 
+    /**
+     * @brief Check if the ETL process is in strict read-only mode.
+     * @return true if the process is in strict read-only mode, false otherwise
+     */
     [[nodiscard]] bool
     isReadOnly() const override;
 

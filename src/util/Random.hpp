@@ -14,7 +14,7 @@ class RandomGeneratorInterface {
 public:
     virtual ~RandomGeneratorInterface() = default;
 
-    using SeedType = std::mt19937_64::result_type;
+    using SeedType = std::mt19937_64::result_type;  ///< The type of the seed used by the generator
 
     /**
      * @brief Generate a random number between min and max
@@ -41,6 +41,9 @@ public:
  */
 class MTRandomGenerator : public RandomGeneratorInterface {
 public:
+    /**
+     * @brief Construct a new generator seeded with the current system time
+     */
     MTRandomGenerator();
 
     /**

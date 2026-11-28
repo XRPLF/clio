@@ -19,7 +19,7 @@ namespace util::prometheus {
  */
 template <SomeNumberType NumberType>
 struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
-    using ValueType = NumberType;
+    using ValueType = NumberType;  ///< The type of the counter value
 
     /**
      * @brief Construct a new AnyCounter object

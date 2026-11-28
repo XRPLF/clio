@@ -171,26 +171,65 @@ public:
         std::shared_ptr<SystemState> state
     );
 
+    /**
+     * @brief Destroy the ETLService, stopping it first.
+     */
     ~ETLService() override;
 
+    /**
+     * @brief Start the ETL main loop asynchronously.
+     *
+     * Loads the initial ledger if the database is empty (otherwise loads the cache), waits for the
+     * next validated ledger, then starts monitoring the database for new ledgers and, if this node
+     * is the writer, starts extracting and loading new ledgers.
+     */
     void
     run() override;
 
+    /**
+     * @brief Stop the ETL service.
+     * @note This method blocks until the ETL service has stopped.
+     */
     void
     stop() override;
 
+    /**
+     * @brief Get state of ETL as a JSON object
+     *
+     * @return The state of ETL as a JSON object
+     */
     [[nodiscard]] boost::json::object
     getInfo() const override;
 
+    /**
+     * @brief Check for the amendment blocked state.
+     *
+     * @return true if currently amendment blocked; false otherwise
+     */
     [[nodiscard]] bool
     isAmendmentBlocked() const override;
 
+    /**
+     * @brief Check whether Clio detected DB corruptions.
+     *
+     * @return true if corruption of DB was detected and cache was stopped.
+     */
     [[nodiscard]] bool
     isCorruptionDetected() const override;
 
+    /**
+     * @brief Get the etl nodes' state
+     *
+     * @return The etl nodes' state, nullopt if etl nodes are not connected
+     */
     [[nodiscard]] std::optional<ETLState>
     getETLState() const override;
 
+    /**
+     * @brief Get time passed since last ledger close, in seconds.
+     *
+     * @return Time passed since last ledger close
+     */
     [[nodiscard]] std::uint32_t
     lastCloseAgeSeconds() const override;
 

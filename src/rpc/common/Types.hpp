@@ -56,6 +56,8 @@ using Error = std::unexpected<Status>;
 
 /**
  * @brief Return type for each individual handler
+ *
+ * @tparam OutputType The type of the handler's output on success
  */
 template <typename OutputType>
 using HandlerReturnType = std::expected<OutputType, Status>;
@@ -77,14 +79,16 @@ struct ReturnType {
 
     /**
      * @brief operator bool to check whether the ReturnType contains a response
+     *
+     * @return true if the RPC call succeeded and a response is present, false if it holds an error
      */
     operator bool() const
     {
         return result.has_value();
     }
 
-    std::expected<boost::json::value, Status> result;
-    boost::json::array warnings;
+    std::expected<boost::json::value, Status> result;  ///< The response, or the error status
+    boost::json::array warnings;                       ///< Warnings to attach to the response
 };
 
 /**
@@ -96,11 +100,30 @@ struct VoidOutput {};
  * @brief Context of an RPC call.
  */
 struct Context {
+    /**
+     * @brief The coroutine context the RPC call is executed in
+     */
     boost::asio::yield_context yield;
+
+    /**
+     * @brief The subscription context of the connection; null if not a websocket connection
+     */
     web::SubscriptionContextPtr session = {};  // NOLINT(readability-redundant-member-init)
+
+    /**
+     * @brief Whether the client has admin privileges
+     */
     bool isAdmin = false;
+
+    /**
+     * @brief IP address of the client
+     */
     std::string clientIp = {};  // NOLINT(readability-redundant-member-init)
-    uint32_t apiVersion = 0u;   // invalid by default
+
+    /**
+     * @brief The API version requested by the client; 0 means invalid/unset
+     */
+    uint32_t apiVersion = 0u;  // invalid by default
 };
 
 /**
@@ -140,16 +163,16 @@ struct Result {
     {
     }
 
-    std::expected<boost::json::object, Status> response;
-    boost::json::array warnings;
+    std::expected<boost::json::object, Status> response;  ///< The response, or the error status
+    boost::json::array warnings;                          ///< Warnings to attach to the response
 };
 
 /**
  * @brief A cursor object used to traverse nodes owned by an account.
  */
 struct AccountCursor {
-    xrpl::uint256 index;
-    std::uint32_t hint{};
+    xrpl::uint256 index;   ///< Last traversed object key, or next NFT page key; zero to start
+    std::uint32_t hint{};  ///< Owner dir page to resume from; UINT32_MAX marks an NFT page cursor
 
     /**
      * @brief Convert the cursor to a string

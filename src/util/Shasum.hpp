@@ -48,6 +48,7 @@ public:
     /**
      * @brief Update hash with a value.
      *
+     * @tparam T Type of the value; its raw object representation (sizeof(T) bytes) is hashed.
      * @param value Value to hash.
      */
     template <typename T>

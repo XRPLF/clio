@@ -17,6 +17,8 @@ namespace data::cassandra {
 
 /**
  * @brief Manages the DB schema and provides access to prepared statements.
+ *
+ * @tparam SettingsProviderType Unused; the base Schema always uses SettingsProvider
  */
 template <SomeSettingsProvider SettingsProviderType>
 class KeyspaceSchema : public Schema<SettingsProvider> {
@@ -25,8 +27,6 @@ public:
 
     /**
      * @brief Construct a new Keyspace Schema object
-     *
-     * @param settingsProvider The settings provider
      */
     struct KeyspaceStatements : public Schema<SettingsProvider>::Statements {
         using Schema<SettingsProvider>::Statements::Statements;
@@ -34,6 +34,9 @@ public:
         //
         // Insert queries
         //
+        /**
+         * @brief Insert a `ledger_range` row (min or max sequence) if it does not exist
+         */
         PreparedStatement insertLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -48,6 +51,9 @@ public:
         //
         // Update (and "delete") queries
         //
+        /**
+         * @brief Conditionally update a `ledger_range` sequence (LWT on the previous value)
+         */
         PreparedStatement updateLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -62,6 +68,9 @@ public:
             );
         }();
 
+        /**
+         * @brief Select both the min and max sequences from `ledger_range`
+         */
         PreparedStatement selectLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -78,6 +87,9 @@ public:
         //
         // Select queries
         //
+        /**
+         * @brief Select a page of NFT IDs for an issuer with taxon above a given one
+         */
         PreparedStatement selectNFTsAfterTaxonKeyspaces = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -95,6 +107,11 @@ public:
         }();
     };
 
+    /**
+     * @brief Recreates the prepared statements, including the Keyspace-specific ones.
+     *
+     * @param handle The handle to the DB
+     */
     void
     prepareStatements(Handle const& handle) override
     {

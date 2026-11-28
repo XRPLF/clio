@@ -42,14 +42,20 @@ public:
     struct Output {
         // response of stream "ledger"
         // TODO: use better type than json, this type will be used in the stream as well
-        std::optional<boost::json::object> ledger;
+        std::optional<boost::json::object> ledger;  ///< Response of the `ledger` stream
         // books returns nothing by default, if snapshot is true and both is false, offers go to
         // offers list
         // TODO: use better type than json
-        std::optional<boost::json::array> offers;
+        std::optional<boost::json::array> offers;  ///< Book snapshot when `both` is false
         // if snapshot is true and both is true, reversed book' offers go to asks list
+        /**
+         * @brief Snapshot of the reversed book when `both` is true
+         */
         std::optional<boost::json::array> asks;
         // if snapshot is true and both is true, original book' offers go to bids list
+        /**
+         * @brief Snapshot of the original book when `both` is true
+         */
         std::optional<boost::json::array> bids;
     };
 
@@ -63,6 +69,9 @@ public:
      */
     using StreamType = rpc::spec::handlers::subscribe::StreamType;
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

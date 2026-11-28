@@ -26,9 +26,12 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        data::LedgerRange range;
+        data::LedgerRange range;  ///< Range of ledgers available in the database
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

@@ -33,6 +33,7 @@ public:
      *
      * @param stream The stream to serialize into
      * @param metricBase The metric to serialize
+     * @return The stream, for chaining
      */
     friend OStream&
     operator<<(OStream& stream, MetricBase const& metricBase);
@@ -65,16 +66,25 @@ private:
     std::string labelsString_;
 };
 
+/**
+ * @brief The kind and value type of a Prometheus metric
+ */
 enum class MetricType {
-    CounterInt,
-    CounterDouble,
-    GaugeInt,
-    GaugeDouble,
-    HistogramInt,
-    HistogramDouble,
-    Summary,
+    CounterInt,       ///< Counter with integer values
+    CounterDouble,    ///< Counter with floating point values
+    GaugeInt,         ///< Gauge with integer values
+    GaugeDouble,      ///< Gauge with floating point values
+    HistogramInt,     ///< Histogram with integer values
+    HistogramDouble,  ///< Histogram with floating point values
+    Summary,          ///< Summary (not currently supported by the metric builder)
 };
 
+/**
+ * @brief Get the Prometheus type name of a metric type, as used in the `# TYPE` line
+ *
+ * @param type The metric type
+ * @return "counter", "gauge", "histogram" or "summary"
+ */
 char const*
 toString(MetricType type);
 

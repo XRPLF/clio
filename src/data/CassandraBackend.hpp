@@ -77,6 +77,14 @@ public:
      */
     BasicCassandraBackend(BasicCassandraBackend&&) = delete;
 
+    /**
+     * @brief Wait for pending writes and commit the ledger range update for the current ledger
+     *
+     * If the ledger range is not yet known, the min sequence is first set to the current ledger.
+     *
+     * @return true if ledger_range now has the current ledger as its max sequence; false
+     * otherwise (e.g. a write conflict)
+     */
     bool
     doFinishWrites() override
     {
@@ -99,6 +107,17 @@ public:
         return true;
     }
 
+    /**
+     * @brief Fetches all NFTs issued by a given address.
+     *
+     * @param issuer AccountID of the issuer to query
+     * @param taxon Optional taxon of NFTs by which to filter
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param limit Paging limit
+     * @param cursorIn Optional cursor to pick up from where the previous page left off
+     * @param yield The coroutine context
+     * @return NFTs issued by this account (or issuer/taxon combination) and an optional cursor
+     */
     [[nodiscard]] NFTsAndCursor
     fetchNFTsByIssuer(
         xrpl::AccountID const& issuer,
@@ -189,6 +208,16 @@ public:
         return ret;
     }
 
+    /**
+     * @brief Fetch the specified number of account root object indexes by page; the accounts
+     * need to exist for seq.
+     *
+     * @param number The number of accounts to fetch
+     * @param pageSize The maximum number of accounts per page
+     * @param seq The accounts need to exist for this sequence
+     * @param yield The coroutine context
+     * @return A vector of keys of the live account roots
+     */
     [[nodiscard]] std::vector<xrpl::uint256>
     fetchAccountRoots(
         std::uint32_t number,
@@ -239,6 +268,9 @@ public:
     }
 };
 
+/**
+ * @brief The Cassandra backend with the default settings provider and execution strategy
+ */
 using CassandraBackend = BasicCassandraBackend<SettingsProvider, impl::DefaultExecutionStrategy<>>;
 
 }  // namespace data::cassandra

@@ -18,6 +18,9 @@
 #include <string_view>
 #include <vector>
 
+/**
+ * @brief Coroutine-based HTTP(S) and WebSocket clients
+ */
 namespace util::requests {
 
 /**

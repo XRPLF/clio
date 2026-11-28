@@ -12,7 +12,13 @@ namespace rpc {
  */
 class PingHandler {
 public:
+    /**
+     * @brief The command has no output data
+     */
     using Output = VoidOutput;
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

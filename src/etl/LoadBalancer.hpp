@@ -45,6 +45,11 @@ struct LoadBalancerTag {
     virtual ~LoadBalancerTag() = default;
 };
 
+/**
+ * @brief Concept for load balancer implementations.
+ *
+ * @tparam T The type to check; must derive from LoadBalancerTag
+ */
 template <typename T>
 concept SomeLoadBalancer = std::derived_from<T, LoadBalancerTag>;
 
@@ -58,8 +63,17 @@ concept SomeLoadBalancer = std::derived_from<T, LoadBalancerTag>;
  */
 class LoadBalancer : public LoadBalancerInterface, LoadBalancerTag {
 public:
+    /**
+     * @brief Raw ledger object as received over gRPC
+     */
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
+    /**
+     * @brief gRPC response containing the data of a single ledger
+     */
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
+    /**
+     * @brief Optional ledger response, as returned by fetchLedger()
+     */
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
 private:
@@ -152,7 +166,7 @@ public:
      * cancelled.
      *
      * @param sequence Sequence of ledger to download
-     * @param observer The observer to notify of progress
+     * @param loadObserver The observer to notify of progress
      * @param retryAfter Time to wait between retries (2 seconds by default)
      * @return A std::expected with ledger edge keys on success, or InitialLedgerLoadError on
      * failure
@@ -160,7 +174,7 @@ public:
     InitialLedgerLoadResult
     loadInitialLedger(
         uint32_t sequence,
-        InitialLoadObserverInterface& observer,
+        InitialLoadObserverInterface& loadObserver,
         std::chrono::steady_clock::duration retryAfter
     ) override;
 

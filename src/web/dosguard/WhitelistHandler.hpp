@@ -84,6 +84,7 @@ public:
     /**
      * @brief Creates a WhitelistHandler by loading all whitelisted IPs and masks from config.
      *
+     * @tparam HostnameResolverType The type of the resolver used to resolve hostnames to IPs
      * @param config The Clio config to use
      * @param resolver The resolver to use for hostname resolution
      * @return The WhitelistHandler on success, or an error string if any whitelist entry is invalid

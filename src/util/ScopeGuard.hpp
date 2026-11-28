@@ -6,6 +6,8 @@ namespace util {
 
 /**
  * @brief Run a function when the scope is exited
+ *
+ * @tparam Func The type of the callable to run; must be invocable with no arguments
  */
 template <typename Func>
 class ScopeGuard {
@@ -26,6 +28,9 @@ public:
     {
     }
 
+    /**
+     * @brief Destroy the ScopeGuard, running the stored function.
+     */
     ~ScopeGuard()
     {
         func_();

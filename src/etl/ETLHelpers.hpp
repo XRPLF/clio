@@ -21,6 +21,8 @@ namespace etl {
  *
  * @note (original note) We can't use a lockfree queue here, since we need the ability to wait for
  * an element to be added or removed from the queue. These waits are blocking calls.
+ *
+ * @tparam T The type of the elements stored in the queue
  */
 template <typename T>
 class ThreadSafeQueue {

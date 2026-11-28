@@ -28,13 +28,13 @@ public:
      * @param name The name of the metrics
      * @param description The description of the metrics
      * @param type The type of the metrics
-     * @param builder The metric builder to use
+     * @param metricBuilder The metric builder to use
      */
     MetricsFamily(
         std::string name,
         std::optional<std::string> description,
         MetricType type,
-        MetricBuilderInterface& builder = *defaultMetricBuilder
+        MetricBuilderInterface& metricBuilder = *defaultMetricBuilder
     );
 
     MetricsFamily(MetricsFamily const&) = delete;
@@ -73,6 +73,7 @@ public:
      *
      * @param stream The stream to serialize into
      * @param metricsFamily The metrics to serialize
+     * @return The stream, for chaining
      */
     friend OStream&
     operator<<(OStream& stream, MetricsFamily const& metricsFamily);

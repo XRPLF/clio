@@ -17,6 +17,8 @@ namespace data::cassandra {
 
 /**
  * @brief Manages the DB schema and provides access to prepared statements.
+ *
+ * @tparam SettingsProviderType Unused; the base Schema always uses SettingsProvider
  */
 template <SomeSettingsProvider SettingsProviderType>
 class CassandraSchema : public Schema<SettingsProvider> {
@@ -25,8 +27,6 @@ class CassandraSchema : public Schema<SettingsProvider> {
 public:
     /**
      * @brief Construct a new Cassandra Schema object
-     *
-     * @param settingsProvider The settings provider
      */
     struct CassandraStatements : public Schema<SettingsProvider>::Statements {
         using Schema<SettingsProvider>::Statements::Statements;
@@ -34,6 +34,9 @@ public:
         //
         // Update (and "delete") queries
         //
+        /**
+         * @brief Conditionally update a `ledger_range` sequence (LWT on previous value or null)
+         */
         PreparedStatement updateLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -52,6 +55,9 @@ public:
         // Select queries
         //
 
+        /**
+         * @brief Select a page of NFT IDs for an issuer after a (taxon, token ID) cursor
+         */
         PreparedStatement selectNFTIDsByIssuer = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -68,6 +74,9 @@ public:
             );
         }();
 
+        /**
+         * @brief Select a page of distinct accounts from the start of `account_tx`
+         */
         PreparedStatement selectAccountFromBeginning = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -83,6 +92,9 @@ public:
             );
         }();
 
+        /**
+         * @brief Select a page of distinct accounts in `account_tx` after a given account
+         */
         PreparedStatement selectAccountFromToken = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -98,6 +110,9 @@ public:
             );
         }();
 
+        /**
+         * @brief Select a page of object keys from a token as of a ledger sequence
+         */
         PreparedStatement selectLedgerPageKeys = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -115,6 +130,9 @@ public:
             );
         }();
 
+        /**
+         * @brief Select a page of objects and keys from a token as of a ledger sequence
+         */
         PreparedStatement selectLedgerPage = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -133,6 +151,11 @@ public:
         }();
     };
 
+    /**
+     * @brief Recreates the prepared statements, including the Cassandra-specific ones.
+     *
+     * @param handle The handle to the DB
+     */
     void
     prepareStatements(Handle const& handle) override
     {

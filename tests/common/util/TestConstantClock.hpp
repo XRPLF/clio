@@ -15,10 +15,14 @@
  */
 class TestConstantClock {
 public:
-    /** @brief The instant now() reports, as a Unix timestamp in seconds. */
+    /**
+     * @brief The instant now() reports, as a Unix timestamp in seconds.
+     */
     static constexpr std::uint32_t kNowUnix = 1'700'000'000u;
 
-    /** @brief The instant now() reports. */
+    /**
+     * @brief The instant now() reports.
+     */
     static constexpr std::chrono::system_clock::time_point kNow{std::chrono::seconds{kNowUnix}};
 
     /**
@@ -44,7 +48,9 @@ public:
         return callCounter;
     }
 
-    /** @brief Set the call count back to zero. */
+    /**
+     * @brief Set the call count back to zero.
+     */
     static void
     resetCounter()
     {

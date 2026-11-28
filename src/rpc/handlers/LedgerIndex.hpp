@@ -27,11 +27,14 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        uint32_t ledgerIndex{};
-        std::string ledgerHash;
-        std::string closeTimeIso;
+        uint32_t ledgerIndex{};    ///< Sequence of the matching ledger
+        std::string ledgerHash;    ///< Hash of the matching ledger
+        std::string closeTimeIso;  ///< Close time of the ledger in ISO 8601 format
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

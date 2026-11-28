@@ -26,24 +26,36 @@ class AccountNFTsHandler : public rpc::HandlerFor<rpc::spec::handlers::account_n
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    /**
+     * @brief Minimum accepted value for the `limit` request field
+     */
     static constexpr auto kLimitMin = rpc::spec::handlers::account_nfts::kLimitMin;
+    /**
+     * @brief Maximum accepted value for the `limit` request field
+     */
     static constexpr auto kLimitMax = rpc::spec::handlers::account_nfts::kLimitMax;
+    /**
+     * @brief Value of `limit` used when the request does not specify one
+     */
     static constexpr auto kLimitDefault = rpc::spec::handlers::account_nfts::kLimitDefault;
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string account;
-        std::string ledgerHash;
-        uint32_t ledgerIndex;
+        std::string account;     ///< The account whose NFTs are returned
+        std::string ledgerHash;  ///< Hash of the ledger used for the request
+        uint32_t ledgerIndex;    ///< Sequence of the ledger used for the request
         // TODO: use better type than json
-        boost::json::array nfts;
-        uint32_t limit;
-        std::optional<std::string> marker;
-        bool validated = true;
+        boost::json::array nfts;            ///< NFTokens owned by the account
+        uint32_t limit;                     ///< The limit used for the request
+        std::optional<std::string> marker;  ///< Key of the next NFT page, if more results
+        bool validated = true;              ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: the Output on success or an error Status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

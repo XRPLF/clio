@@ -50,7 +50,11 @@ public:
     /**
      * @brief Enum for stop priority.
      */
-    enum class Priority { StopFirst = 0, Normal = 1, StopLast = 2 };
+    enum class Priority {
+        StopFirst = 0,  ///< Callbacks run before Normal and StopLast ones
+        Normal = 1,     ///< Default priority
+        StopLast = 2,   ///< Callbacks run after StopFirst and Normal ones
+    };
 
     /**
      * @brief Create SignalsHandler object.
@@ -96,7 +100,7 @@ public:
     void
     notifyGracefulShutdownComplete();
 
-    static constexpr auto kHandledSignals = {SIGINT, SIGTERM};
+    static constexpr auto kHandledSignals = {SIGINT, SIGTERM};  ///< The signals that trigger a stop
 
 private:
     /**

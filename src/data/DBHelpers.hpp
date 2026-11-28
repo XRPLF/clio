@@ -24,10 +24,10 @@
  * @brief Struct used to keep track of what to write to account_transactions/account_tx tables.
  */
 struct AccountTransactionsData {
-    boost::container::flat_set<xrpl::AccountID> accounts;
-    std::uint32_t ledgerSequence{};
-    std::uint32_t transactionIndex{};
-    xrpl::uint256 txHash;
+    boost::container::flat_set<xrpl::AccountID> accounts;  ///< Accounts affected by the transaction
+    std::uint32_t ledgerSequence{};    ///< Sequence of the ledger containing the transaction
+    std::uint32_t transactionIndex{};  ///< Index of the transaction within its ledger
+    xrpl::uint256 txHash;              ///< Hash of the transaction
 
     /**
      * @brief Construct a new AccountTransactionsData object
@@ -52,10 +52,10 @@ struct AccountTransactionsData {
  * Gets written to nf_token_transactions table and the like.
  */
 struct NFTTransactionsData {
-    xrpl::uint256 tokenID;
-    std::uint32_t ledgerSequence;
-    std::uint32_t transactionIndex;
-    xrpl::uint256 txHash;
+    xrpl::uint256 tokenID;           ///< ID of the NFT affected by the transaction
+    std::uint32_t ledgerSequence;    ///< Sequence of the ledger containing the transaction
+    std::uint32_t transactionIndex;  ///< Index of the transaction within its ledger
+    xrpl::uint256 txHash;            ///< Hash of the transaction
 
     /**
      * @brief Construct a new NFTTransactionsData object
@@ -91,13 +91,13 @@ struct NFTTransactionsData {
  * objects.
  */
 struct NFTsData {
-    xrpl::uint256 tokenID;
-    std::uint32_t ledgerSequence;
-    std::optional<std::uint32_t> transactionIndex;
-    xrpl::AccountID owner;
-    std::optional<xrpl::Blob> uri;
-    bool isBurned = false;
-    bool onlyUriChanged = false;  // Whether only the URI was changed
+    xrpl::uint256 tokenID;                          ///< ID of the NFT
+    std::uint32_t ledgerSequence;                   ///< Ledger sequence of this NFT state
+    std::optional<std::uint32_t> transactionIndex;  ///< Index of the tx producing this state
+    xrpl::AccountID owner;                          ///< Owner in this record; unset if URI-only
+    std::optional<xrpl::Blob> uri;                  ///< URI of the NFT, if recorded
+    bool isBurned = false;                          ///< Whether the NFT has been burned
+    bool onlyUriChanged = false;                    ///< Whether only the URI was changed
 
     /**
      * @brief Construct a new NFTsData object
@@ -195,8 +195,8 @@ struct NFTsData {
  * @brief Represents an MPT and holder pair
  */
 struct MPTHolderData {
-    xrpl::uint192 mptID;
-    xrpl::AccountID holder;
+    xrpl::uint192 mptID;     ///< ID of the MPToken issuance
+    xrpl::AccountID holder;  ///< Account holding the MPToken
 };
 
 /**
@@ -206,11 +206,11 @@ struct MPTHolderData {
  * mptoken_issuance_transactions and account_mptoken_issuance_transactions.
  */
 struct MPTokenIssuanceTransactionsData {
-    xrpl::uint192 mptIssuanceID;
-    boost::container::flat_set<xrpl::AccountID> accounts;
-    std::uint32_t ledgerSequence{};
-    std::uint32_t transactionIndex{};
-    xrpl::uint256 txHash;
+    xrpl::uint192 mptIssuanceID;                           ///< ID of the affected MPToken issuance
+    boost::container::flat_set<xrpl::AccountID> accounts;  ///< Accounts affected by the transaction
+    std::uint32_t ledgerSequence{};    ///< Sequence of the ledger containing the transaction
+    std::uint32_t transactionIndex{};  ///< Index of the transaction within its ledger
+    xrpl::uint256 txHash;              ///< Hash of the transaction
 
     bool
     operator==(MPTokenIssuanceTransactionsData const&) const = default;
@@ -219,6 +219,7 @@ struct MPTokenIssuanceTransactionsData {
 /**
  * @brief Check whether the supplied object is a dir node.
  *
+ * @tparam T A contiguous byte container type (e.g. xrpl::Blob)
  * @param object The object to check
  * @return true if the object is a dir node; false otherwise
  */
@@ -238,6 +239,8 @@ isDirNode(T const& object)
 /**
  * @brief Check whether the supplied object is a book dir.
  *
+ * @tparam T The key type (e.g. xrpl::uint256)
+ * @tparam R A contiguous byte container type holding the serialized object (e.g. xrpl::Blob)
  * @param key The key into the object
  * @param object The object to check
  * @return true if the object is a book dir; false otherwise
@@ -256,6 +259,7 @@ isBookDir(T const& key, R const& object)
 /**
  * @brief Get the book base.
  *
+ * @tparam T A 32-byte key type (e.g. xrpl::uint256)
  * @param key The key to get the book base out of
  * @return Book base as xrpl::uint256
  */

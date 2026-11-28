@@ -34,6 +34,8 @@ concept SomeExecutionContext = std::derived_from<std::remove_cvref_t<T>, Executi
 
 /**
  * @brief Specifies the interface for an entity that can be stopped
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeStoppable = requires(T v) {
@@ -42,6 +44,8 @@ concept SomeStoppable = requires(T v) {
 
 /**
  * @brief Specifies the interface for an entity that can be cancelled
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeCancellable = requires(T v) {
@@ -50,6 +54,8 @@ concept SomeCancellable = requires(T v) {
 
 /**
  * @brief Specifies the interface for an operation that can be awaited
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeAwaitable = requires(T v) {
@@ -58,6 +64,8 @@ concept SomeAwaitable = requires(T v) {
 
 /**
  * @brief Specifies the interface for an operation that can be aborted
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeAbortable = requires(T v) {
@@ -66,12 +74,16 @@ concept SomeAbortable = requires(T v) {
 
 /**
  * @brief Specifies the interface for an operation
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeOperation = SomeAwaitable<T> or SomeAbortable<T>;
 
 /**
- * @brief Specifies the interface for an operation
+ * @brief Specifies the interface for an operation that produces data
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeOperationWithData = SomeOperation<T> and requires(T v) {
@@ -80,6 +92,8 @@ concept SomeOperationWithData = SomeOperation<T> and requires(T v) {
 
 /**
  * @brief Specifies the interface for an operation that can force-invoked
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeForceInvocableOperation = SomeOperation<T> and requires(T v) {
@@ -88,18 +102,24 @@ concept SomeForceInvocableOperation = SomeOperation<T> and requires(T v) {
 
 /**
  * @brief Specifies the interface for an operation that can be stopped
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeStoppableOperation = SomeOperation<T> and SomeStoppable<T>;
 
 /**
  * @brief Specifies the interface for an operation that can be cancelled
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeCancellableOperation = SomeOperation<T> and SomeCancellable<T>;
 
 /**
  * @brief Specifies the interface for an outcome (promise)
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeOutcome = requires(T v) {
@@ -108,6 +128,8 @@ concept SomeOutcome = requires(T v) {
 
 /**
  * @brief Specifies the interface for a stop token
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeStopToken = requires(T v) {
@@ -115,7 +137,10 @@ concept SomeStopToken = requires(T v) {
 };
 
 /**
- * @brief Specifies the interface for a stop token that internally uses a boost::asio::yield_context
+ * @brief Specifies the interface for a stop source that produces tokens from a
+ * boost::asio::yield_context
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeYieldStopSource = requires(T v, boost::asio::yield_context yield) {
@@ -123,7 +148,9 @@ concept SomeYieldStopSource = requires(T v, boost::asio::yield_context yield) {
 };
 
 /**
- * @brief Specifies the interface for a simple stop token
+ * @brief Specifies the interface for a simple stop source
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeSimpleStopSource = requires(T v) {
@@ -132,12 +159,16 @@ concept SomeSimpleStopSource = requires(T v) {
 
 /**
  * @brief Specifies the interface for a stop source
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeStopSource = (SomeSimpleStopSource<T> or SomeYieldStopSource<T>) and SomeStoppable<T>;
 
 /**
  * @brief Specifies the interface for a provider of stop sources
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeStopSourceProvider = requires(T v) {
@@ -146,12 +177,16 @@ concept SomeStopSourceProvider = requires(T v) {
 
 /**
  * @brief Specifies the interface for an outcome (promise) that can be stopped
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeStoppableOutcome = SomeOutcome<T> and SomeStopSourceProvider<T>;
 
 /**
- * @brief Specifies the interface for a handler that can be stopped
+ * @brief Specifies the interface for a handler that is invocable without a stop token
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeHandlerWithoutStopToken = requires(T fn) {
@@ -160,6 +195,9 @@ concept SomeHandlerWithoutStopToken = requires(T fn) {
 
 /**
  * @brief Specifies the interface for a handler that can be invoked with the specified args
+ *
+ * @tparam T The handler type to check
+ * @tparam Args The argument types the handler must be invocable with
  */
 template <typename T, typename... Args>
 concept SomeHandlerWith = requires(T fn) {
@@ -168,6 +206,8 @@ concept SomeHandlerWith = requires(T fn) {
 
 /**
  * @brief Specifies that the type must be some std::duration
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeStdDuration = requires {
@@ -181,6 +221,8 @@ concept SomeStdDuration = requires {
 
 /**
  * @brief Specifies that the type must be some std::optional
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeStdOptional = requires {
@@ -191,18 +233,26 @@ concept SomeStdOptional = requires {
 
 /**
  * @brief Specifies that the type must be some std::duration wrapped in an optional
+ *
+ * @tparam T The type to check
  */
 template <typename T>
 concept SomeOptStdDuration = SomeStdOptional<T> and SomeStdDuration<decltype(T{}.value())>;
 
 /**
- * @brief Checks that decayed T s not of the same type as Erased
+ * @brief Checks that decayed T is not of the same type as Erased
+ *
+ * @tparam T The type to check
+ * @tparam Erased The type T must differ from after decay
  */
 template <typename T, typename Erased>
 concept NotSameAs = not std::is_same_v<std::decay_t<T>, Erased>;
 
 /**
  * @brief Check that T is an r-value and is not the same type as Erased
+ *
+ * @tparam T The type to check
+ * @tparam Erased The type T must differ from after decay
  */
 template <typename T, typename Erased>
 concept RValueNotSameAs = requires(T&& t) {

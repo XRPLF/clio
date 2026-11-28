@@ -31,13 +31,16 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        uint32_t ledgerIndex{};
-        std::string ledgerHash;
+        uint32_t ledgerIndex{};  ///< Sequence of the requested ledger
+        std::string ledgerHash;  ///< Hash of the requested ledger
         // TODO: use better type
-        boost::json::object header;
-        bool validated = true;
+        boost::json::object header;  ///< Ledger header plus any requested transactions and diff
+        bool validated = true;       ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

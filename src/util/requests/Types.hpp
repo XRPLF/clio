@@ -65,8 +65,8 @@ struct HttpHeader {
      */
     HttpHeader(std::string name, std::string value);
 
-    std::variant<boost::beast::http::field, std::string> name;
-    std::string value;
+    std::variant<boost::beast::http::field, std::string> name;  ///< Standard or custom header name
+    std::string value;                                          ///< Header value
 };
 
 }  // namespace util::requests

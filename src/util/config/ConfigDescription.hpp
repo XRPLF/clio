@@ -29,8 +29,8 @@ public:
      * @brief Struct to represent a key-value pair
      */
     struct KV {
-        std::string_view key;
-        std::string_view value;
+        std::string_view key;    ///< The config key
+        std::string_view value;  ///< The description of the config key
     };
 
     /**

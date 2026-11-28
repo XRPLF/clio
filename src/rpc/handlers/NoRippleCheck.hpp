@@ -30,22 +30,28 @@ class NoRippleCheckHandler : public rpc::HandlerFor<rpc::spec::handlers::norippl
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static constexpr auto kLimitMin = 1;
-    static constexpr auto kLimitMax = 500;
-    static constexpr auto kLimitDefault = 300;
+    static constexpr auto kLimitMin = 1;        ///< Minimum allowed value of the `limit` parameter
+    static constexpr auto kLimitMax = 500;      ///< Maximum allowed value of the `limit` parameter
+    static constexpr auto kLimitDefault = 300;  ///< Default value of the `limit` parameter
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string ledgerHash;
-        uint32_t ledgerIndex{};
-        std::vector<std::string> problems;
+        std::string ledgerHash;             ///< Hash of the ledger used
+        uint32_t ledgerIndex{};             ///< Sequence of the ledger used
+        std::vector<std::string> problems;  ///< Human-readable descriptions of problems found
         // TODO: use better type than json
+        /**
+         * @brief Transactions fixing the problems, if requested
+         */
         std::optional<boost::json::array> transactions;
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

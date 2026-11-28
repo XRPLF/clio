@@ -25,15 +25,17 @@ class ArrayView {
 public:
     /**
      * @brief Custom iterator class which contains config object or value underneath ArrayView
+     *
+     * @tparam T The element view type: ValueView for an array of values, ObjectView for objects
      */
     template <typename T>
     struct ArrayIterator {
         // Required by the std iterator contract.
         // NOLINTBEGIN(readability-identifier-naming)
-        using iterator_category = std::forward_iterator_tag;
-        using pointer = T const*;
-        using reference = T const&;
-        using value_type = T;
+        using iterator_category = std::forward_iterator_tag;  ///< This is a forward iterator
+        using pointer = T const*;                             ///< Pointer to an element view
+        using reference = T const&;                           ///< Reference to an element view
+        using value_type = T;                                 ///< The element view type
         // NOLINTEND(readability-identifier-naming)
 
         /**
@@ -126,6 +128,7 @@ public:
     /**
      * @brief Returns an iterator to the beginning of the Array
      *
+     * @tparam T The element view type: ValueView for an array of values, ObjectView for objects
      * @return Iterator to the beginning of the Array
      */
     template <typename T>
@@ -138,6 +141,7 @@ public:
     /**
      * @brief Returns an iterator to the end of the Array
      *
+     * @tparam T The element view type: ValueView for an array of values, ObjectView for objects
      * @return Iterator to the end of the Array
      */
     template <typename T>
@@ -149,6 +153,8 @@ public:
 
     /**
      * @brief A range over the elements of an array, viewed as T (ValueView or ObjectView)
+     *
+     * @tparam T The element view type: ValueView or ObjectView
      */
     template <typename T>
     class Elements;

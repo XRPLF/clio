@@ -24,8 +24,14 @@ using MigrationQuerier = CassandraSupportedMigrators<data::BackendInterface>;
 
 }  // namespace impl
 
+/**
+ * @brief Inspector reporting the status of the registered Cassandra migrators without running them
+ */
 using CassandraMigrationInspector = migration::impl::MigrationInspectorBase<impl::MigrationQuerier>;
 
+/**
+ * @brief Manager able to run the registered Cassandra migrators
+ */
 using CassandraMigrationManager = migration::impl::MigrationManagerBase<impl::MigrationProcessor>;
 
 }  // namespace migration::cassandra

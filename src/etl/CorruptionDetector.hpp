@@ -10,8 +10,6 @@ namespace etl {
 
 /**
  * @brief A helper to notify Clio operator about a corruption in the DB
- *
- * @tparam CacheType The type of the cache to disable on corruption
  */
 class CorruptionDetector {
     std::reference_wrapper<SystemState> state_;

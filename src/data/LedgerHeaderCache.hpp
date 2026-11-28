@@ -27,8 +27,8 @@ public:
      * @brief Struct to store ledger header cache entry and the sequence it belongs to
      */
     struct CacheEntry {
-        xrpl::LedgerHeader ledger;
-        uint32_t seq{};
+        xrpl::LedgerHeader ledger;  ///< The cached ledger header
+        uint32_t seq{};             ///< Sequence of the cached ledger
 
         /**
          * @brief Comparing CacheEntry. Used in testing for EXPECT_CALL

@@ -33,27 +33,42 @@ class AccountTxHandler : public rpc::HandlerFor<rpc::spec::handlers::account_tx:
     std::shared_ptr<etl::ETLServiceInterface const> etl_;
 
 public:
+    /**
+     * @brief Minimum accepted value for the `limit` request field
+     */
     static constexpr auto kLimitMin = rpc::spec::handlers::account_tx::kLimitMin;
+    /**
+     * @brief Maximum accepted value for the `limit` request field
+     */
     static constexpr auto kLimitMax = rpc::spec::handlers::account_tx::kLimitMax;
+    /**
+     * @brief Value of `limit` used when the request does not specify one
+     */
     static constexpr auto kLimitDefault = rpc::spec::handlers::account_tx::kLimitDefault;
 
+    /**
+     * @brief Pagination marker identifying a transaction by ledger sequence and transaction index
+     */
     using Marker = rpc::spec::handlers::account_tx::Marker;
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string account;
-        uint32_t ledgerIndexMin{0};
-        uint32_t ledgerIndexMax{0};
-        std::optional<uint32_t> limit;
-        std::optional<Marker> marker;
+        std::string account;            ///< The account whose transactions are returned
+        uint32_t ledgerIndexMin{0};     ///< Lowest ledger sequence that was searched
+        uint32_t ledgerIndexMax{0};     ///< Highest ledger sequence that was searched
+        std::optional<uint32_t> limit;  ///< Maximum number of transactions requested
+        std::optional<Marker> marker;   ///< Pagination marker to resume from, if more results
         // TODO: use a better type than json
-        boost::json::array transactions;
+        boost::json::array transactions;  ///< Transactions affecting the account
         // validated should be sent via framework
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger range is validated
     };
 
+    /**
+     * @brief The result type of the command: the Output on success or an error Status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**
@@ -93,8 +108,17 @@ private:
 
 }  // namespace rpc
 
+/**
+ * @brief JSON conversions for the account_tx spec types used by AccountTxHandler.
+ */
 namespace rpc::spec::handlers::account_tx {
 
+/**
+ * @brief Convert the Marker to a JSON object
+ *
+ * @param [out] jv The JSON object to convert to
+ * @param marker The marker to convert
+ */
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
 

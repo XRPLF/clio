@@ -19,6 +19,9 @@ namespace web {
  */
 class AdminVerificationStrategy {
 public:
+    /**
+     * @brief The header type of an HTTP request with a string body.
+     */
     using RequestHeader = boost::beast::http::request<boost::beast::http::string_body>::header_type;
     virtual ~AdminVerificationStrategy() = default;
 
@@ -93,10 +96,10 @@ makeAdminVerificationStrategy(std::optional<std::string> password);
 /**
  * @brief Factory function for creating an admin verification strategy from server config.
  *
- * @param serverConfig The clio config.
+ * @param config The clio config.
  * @return Admin verification strategy according to the config or an error message.
  */
 std::expected<std::shared_ptr<AdminVerificationStrategy>, std::string>
-makeAdminVerificationStrategy(util::config::ClioConfigDefinition const& serverConfig);
+makeAdminVerificationStrategy(util::config::ClioConfigDefinition const& config);
 
 }  // namespace web

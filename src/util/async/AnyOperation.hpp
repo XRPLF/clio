@@ -21,6 +21,8 @@ namespace util::async {
 
 /**
  * @brief A type-erased operation that can be executed via AnyExecutionContext
+ *
+ * @tparam RetType The type of the value produced by the operation
  */
 template <typename RetType>
 class AnyOperation {

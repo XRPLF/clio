@@ -33,24 +33,27 @@ public:
          * @brief Represents an amendment/feature
          */
         struct Feature {
-            std::string name;
-            std::string key;
-            bool supported = false;
-            bool enabled = false;
+            std::string name;        ///< Name of the amendment
+            std::string key;         ///< Amendment ID as a hex string
+            bool supported = false;  ///< Whether both Clio and libxrpl support the amendment
+            bool enabled = false;    ///< Whether the amendment is enabled in the ledger
         };
 
-        std::map<std::string, Feature> features;
-        std::string ledgerHash;
-        uint32_t ledgerIndex{};
+        std::map<std::string, Feature> features;  ///< Matching amendments, keyed by amendment ID
+        std::string ledgerHash;                   ///< Hash of the ledger used
+        uint32_t ledgerIndex{};                   ///< Sequence of the ledger used
 
         // when set to true, output will be inlined in `result` instead of wrapping as `features`
         // inside of `result`.
-        bool inlineResult = false;
+        bool inlineResult = false;  ///< Whether to inline the features directly into `result`
 
         // validated should be sent via framework
-        bool validated = true;
+        bool validated = true;  ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

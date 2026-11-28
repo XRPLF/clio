@@ -25,6 +25,12 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief This namespace implements cluster coordination between Clio nodes.
+ *
+ * Nodes share their state through the database to elect a writer and decide which node may load
+ * the ledger cache.
+ */
 namespace cluster {
 
 /**
@@ -75,6 +81,9 @@ public:
         std::chrono::steady_clock::duration writeInterval
     );
 
+    /**
+     * @brief Destroy the Backend, stopping the read and write tasks.
+     */
     ~Backend();
 
     Backend(Backend&&) = delete;

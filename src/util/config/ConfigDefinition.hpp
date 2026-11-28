@@ -30,6 +30,9 @@ namespace util::config {
  */
 class ClioConfigDefinition {
 public:
+    /**
+     * @brief A config key paired with its definition: a single value or an array
+     */
     using KeyValuePair = std::pair<std::string_view, std::variant<ConfigValue, Array>>;
 
     /**
@@ -196,7 +199,7 @@ private:
     /**
      * @brief returns the iterator of key-value pair with key fullKey
      *
-     * @param fullKey Key to search for
+     * @param key Key to search for
      * @return iterator of map
      */
     [[nodiscard]] auto
@@ -235,6 +238,8 @@ private:
  *
  * Specifies which keys are valid in Clio Config and provides default values if user's do not
  * specify one. Those without default values must be present in the user's config file.
+ *
+ * @return Reference to the global Clio config definition
  */
 ClioConfigDefinition&
 getClioConfig();

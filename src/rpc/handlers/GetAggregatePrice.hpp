@@ -39,25 +39,36 @@ public:
      * @brief A struct to hold the statistics
      */
     struct Stats {
+        /**
+         * @brief Mean of the prices
+         */
         xrpl::STAmount avg{};  // NOLINT(readability-redundant-member-init)
-        // standard deviation
+        /**
+         * @brief Standard deviation of the prices
+         */
         xrpl::Number sd{};  // NOLINT(readability-redundant-member-init)
-        uint32_t size{0};
+        uint32_t size{0};   ///< Number of prices the statistics are computed from
     };
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        uint32_t time;
-        Stats extireStats{};
+        uint32_t time;        ///< Most recent price update time among the oracles
+        Stats extireStats{};  ///< Statistics over all collected prices
+        /**
+         * @brief Statistics after trimming outliers, if `trim` was requested
+         */
         std::optional<Stats> trimStats;
-        std::string ledgerHash;
-        uint32_t ledgerIndex;
-        std::string median;
-        bool validated = true;
+        std::string ledgerHash;  ///< Hash of the ledger used
+        uint32_t ledgerIndex;    ///< Sequence of the ledger used
+        std::string median;      ///< Median of all collected prices
+        bool validated = true;   ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**

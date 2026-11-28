@@ -29,20 +29,32 @@ class BookOffersHandler : public rpc::HandlerFor<rpc::spec::handlers::book_offer
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
 public:
+    /**
+     * @brief Minimum allowed value of the `limit` parameter
+     */
     static constexpr auto kLimitMin = rpc::spec::handlers::book_offers::kLimitMin;
+    /**
+     * @brief Maximum allowed value of the `limit` parameter
+     */
     static constexpr auto kLimitMax = rpc::spec::handlers::book_offers::kLimitMax;
+    /**
+     * @brief Default value of the `limit` parameter
+     */
     static constexpr auto kLimitDefault = rpc::spec::handlers::book_offers::kLimitDefault;
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string ledgerHash;
-        uint32_t ledgerIndex;
-        boost::json::array offers;
-        bool validated = true;
+        std::string ledgerHash;     ///< Hash of the ledger the offers were read from
+        uint32_t ledgerIndex;       ///< Sequence of the ledger the offers were read from
+        boost::json::array offers;  ///< Offers in the order book, as JSON objects
+        bool validated = true;      ///< Whether the ledger is validated
     };
 
+    /**
+     * @brief The result type of the command: either the Output or an error status
+     */
     using Result = HandlerReturnType<Output>;
 
     /**
