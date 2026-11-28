@@ -152,7 +152,7 @@ public:
      * cancelled.
      *
      * @param sequence Sequence of ledger to download
-     * @param observer The observer to notify of progress
+     * @param loadObserver The observer to notify of progress
      * @param retryAfter Time to wait between retries (2 seconds by default)
      * @return A std::expected with ledger edge keys on success, or InitialLedgerLoadError on
      * failure
@@ -160,7 +160,7 @@ public:
     InitialLedgerLoadResult
     loadInitialLedger(
         uint32_t sequence,
-        InitialLoadObserverInterface& observer,
+        InitialLoadObserverInterface& loadObserver,
         std::chrono::steady_clock::duration retryAfter
     ) override;
 

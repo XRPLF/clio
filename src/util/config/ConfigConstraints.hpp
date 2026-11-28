@@ -97,7 +97,7 @@ protected:
      * @brief Creates an error message for all constraints that must satisfy certain hard-coded
      * values.
      *
-     * @tparam arrSize, the size of the array of hardcoded values
+     * @tparam ArrSize the size of the array of hardcoded values
      * @param key The key to the value
      * @param value The value the user provided
      * @param arr The array with hard-coded values to add to error message
@@ -249,7 +249,7 @@ private:
  * @brief A constraint class to ensure the provided value is one of the specified values in an
  * array.
  *
- * @tparam arrSize The size of the array containing the valid values for the constraint
+ * @tparam ArrSize The size of the array containing the valid values for the constraint
  */
 template <std::size_t ArrSize>
 class OneOf final : public Constraint {

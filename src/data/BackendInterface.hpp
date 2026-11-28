@@ -64,17 +64,17 @@ public:
 };
 
 /**
- * @brief Delay before the first retry in @ref retryOnTimeout().
+ * @brief Delay before the first retry in the retry functions.
  */
 static constexpr std::chrono::milliseconds kDefaultWaitBetweenRetry{500};
 
 /**
- * @brief Default upper bound for the exponential backoff in @ref retryOnTimeout().
+ * @brief Default upper bound for the exponential backoff in the retry functions.
  */
 static constexpr std::chrono::milliseconds kMaxWaitBetweenRetry{5'000};
 
 /**
- * @brief Default delays for @ref retryOnTimeout().
+ * @brief Default delays for the retry functions.
  */
 static constexpr util::Retry::Delays kDefaultRetryDelays{
     .initial = kDefaultWaitBetweenRetry,

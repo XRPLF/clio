@@ -71,7 +71,6 @@ public:
     /**
      * @brief Stop any ongoing operations
      * @note This is used to cancel any ongoing initial ledger downloads
-     * @param yield The coroutine context
      */
     void
     stop(boost::asio::yield_context yield);

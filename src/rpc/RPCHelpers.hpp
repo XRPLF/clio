@@ -426,7 +426,7 @@ ledgerHeaderToBlob(xrpl::LedgerHeader const& info, bool includeHash = false);
  * @brief Whether global frozen is set
  *
  * @param backend The backend to use
- * @param seq The ledger sequence
+ * @param sequence The ledger sequence
  * @param issuer The issuer
  * @param yield The coroutine context
  * @return true if the global frozen is set; false otherwise
@@ -434,7 +434,7 @@ ledgerHeaderToBlob(xrpl::LedgerHeader const& info, bool includeHash = false);
 bool
 isGlobalFrozen(
     BackendInterface const& backend,
-    std::uint32_t seq,
+    std::uint32_t sequence,
     xrpl::AccountID const& issuer,
     boost::asio::yield_context yield
 );
@@ -828,7 +828,7 @@ decodeCTID(T const ctid) noexcept
 /**
  * @brief Log the duration of the request processing
  *
- * @tparam T The type of the duration
+ * @tparam DurationType The type of the duration
  * @param request The request to log
  * @param tag The tag of the context of the request
  * @param dur The duration to log

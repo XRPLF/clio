@@ -164,6 +164,7 @@ private:
  *
  * @param config The configuration.
  * @param onConnectCheck The check to perform on each client connection.
+ * @param onIpChangeHook The hook to call when a client's IP changes.
  * @param onDisconnectHook The hook to call when client disconnects.
  * @param context The boost::asio::io_context to use.
  *

@@ -23,8 +23,6 @@ namespace web::dosguard {
 
 /**
  * @brief A simple denial of service guard used for rate limiting.
- *
- * @tparam WhitelistHandlerType The type of the whitelist handler
  */
 class DOSGuard : public DOSGuardInterface {
     /**
@@ -130,7 +128,7 @@ public:
     request(std::string const& ip, boost::json::object const& request) override;
 
     /**
-     * @brief Instantly clears all fetch counters added by @see add(std::string const&, uint32_t).
+     * @brief Instantly clears all fetch counters added by @ref add(std::string const&, uint32_t).
      */
     void
     clear() noexcept override;

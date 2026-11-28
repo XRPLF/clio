@@ -91,7 +91,7 @@ private:
      * The keys will end up having the same naming conventions in Clio Config.
      * Other than the keys specified in user Config file, no new keys are created.
      *
-     * @param obj The JSON object to flatten.
+     * @param jsonRootObject The JSON object to flatten.
      */
     void
     flattenJson(boost::json::object const& jsonRootObject);

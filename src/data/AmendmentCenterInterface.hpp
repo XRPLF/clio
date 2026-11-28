@@ -91,7 +91,7 @@ public:
     /**
      * @brief Get an amendment by its key
      *
-     * @param key The amendment key from @see Amendments
+     * @param key The amendment key from @ref Amendments
      * @return The amendment as a const ref; asserts if the amendment is unknown
      */
     [[nodiscard]] virtual Amendment const&

@@ -117,6 +117,7 @@ private:
      * @brief The request-response loop.
      *
      * @param connection The connection to handle.
+     * @param subscriptionContext The context for subscriptions on this connection.
      * @param yield The yield context.
      * @return True if the connection should be gracefully closed, false otherwise.
      */

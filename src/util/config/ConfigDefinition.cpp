@@ -122,9 +122,9 @@ ClioConfigDefinition::getValueInArray(std::string_view fullKey, std::size_t inde
 }
 
 Array const&
-ClioConfigDefinition::asArray(std::string_view fullKey) const
+ClioConfigDefinition::asArray(std::string_view key) const
 {
-    auto const it = getArrayIterator(fullKey);
+    auto const it = getArrayIterator(key);
     return std::get<Array>(it->second);
 }
 

@@ -193,6 +193,7 @@ public:
      * @param txMeta The transaction and metadata.
      * @param lgrInfo The ledger header.
      * @param backend The backend.
+     * @param amendmentCenter The amendment center.
      * @param networkID The network ID.
      */
     void

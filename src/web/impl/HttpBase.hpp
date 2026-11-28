@@ -311,7 +311,7 @@ public:
     }
 
     /**
-     * @copydoc ConnectionBase::send
+     * @copydoc web::ConnectionBase::send(std::string&&, http::status)
      *
      * @note The message length is added to the DOSGuard. If that puts the client over its limit
      * and the body parses as a JSON object, a "load" warning is attached to it; bodies that are

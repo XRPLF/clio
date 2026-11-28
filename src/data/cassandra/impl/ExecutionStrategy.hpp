@@ -81,6 +81,7 @@ public:
     /**
      * @param settings The settings to use
      * @param handle A handle to the cassandra database
+     * @param counters The counters used to track backend operations
      */
     DefaultExecutionStrategy(
         Settings const& settings,
