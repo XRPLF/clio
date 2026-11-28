@@ -10,8 +10,8 @@
 /**
  * @brief Fixture with an mock backend and an embedded boost::asio context.
  *
- * Use as a handler unittest base fixture thru either @see HandlerBaseTest, @see
- * HandlerBaseTestNaggy or @see HandlerBaseTestStrict.
+ * Use as a handler unittest base fixture thru either @ref HandlerBaseTest, @ref
+ * HandlerBaseTestNaggy or @ref HandlerBaseTestStrict.
  */
 template <template <typename> typename MockType = ::testing::NiceMock>
 struct HandlerBaseTestBase : util::prometheus::WithPrometheus,
@@ -22,11 +22,11 @@ struct HandlerBaseTestBase : util::prometheus::WithPrometheus,
 /**
  * @brief Fixture with a "nice" backend mock and an embedded boost::asio context.
  *
- * Use @see HandlerBaseTest during development to get unset call expectation warnings from the
+ * Use @ref HandlerBaseTestNaggy during development to get unset call expectation warnings from the
  * backend mock. Once the test is ready and you are happy you can switch to this fixture to mute the
  * warnings.
  *
- * @see BackendBaseTest for more details on the injected backend mock.
+ * @see MockBackendTest for more details on the injected backend mock.
  */
 using HandlerBaseTest = HandlerBaseTestBase<::testing::NiceMock>;
 
