@@ -17,7 +17,7 @@ namespace etl {
  * @brief Pull MPT data from TX via ETLService.
  *
  * @param txMeta Transaction metadata
- * @param sttx The transaction
+ * @param sttx The transaction (unused in current implementation)
  * @return The MPTIssuanceID and holder pairs created by the transaction; empty if the transaction
  * failed or created no MPToken.
  */

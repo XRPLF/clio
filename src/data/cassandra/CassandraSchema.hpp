@@ -25,8 +25,6 @@ class CassandraSchema : public Schema<SettingsProvider> {
 public:
     /**
      * @brief Construct a new Cassandra Schema object
-     *
-     * @param settingsProvider The settings provider
      */
     struct CassandraStatements : public Schema<SettingsProvider>::Statements {
         using Schema<SettingsProvider>::Statements::Statements;

@@ -196,7 +196,7 @@ private:
     /**
      * @brief returns the iterator of key-value pair with key fullKey
      *
-     * @param fullKey Key to search for
+     * @param key Key to search for
      * @return iterator of map
      */
     [[nodiscard]] auto

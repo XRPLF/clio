@@ -29,8 +29,6 @@ namespace etl {
  *
  * This class is responsible for loading the cache for a given sequence number.
  *
- * @tparam CacheType The type of the cache to load
- * @tparam CursorProviderType The type of the cursor provider to use
  * @tparam ExecutionContextType The type of the execution context to use
  */
 template <typename ExecutionContextType = util::async::CoroExecutionContext>

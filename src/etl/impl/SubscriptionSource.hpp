@@ -82,7 +82,6 @@ public:
     /**
      * @brief Construct a new Subscription Source object
      *
-     * @tparam NetworkValidatedLedgersType The type of the network validated ledgers object
      * @param ioContext The io_context to use
      * @param ip The ip address of the source
      * @param wsPort The port of the source

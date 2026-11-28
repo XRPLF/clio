@@ -25,8 +25,6 @@ public:
 
     /**
      * @brief Construct a new Keyspace Schema object
-     *
-     * @param settingsProvider The settings provider
      */
     struct KeyspaceStatements : public Schema<SettingsProvider>::Statements {
         using Schema<SettingsProvider>::Statements::Statements;
