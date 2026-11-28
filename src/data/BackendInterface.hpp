@@ -1005,5 +1005,7 @@ private:
 };
 
 }  // namespace data
-/** @brief Global-namespace alias for data::BackendInterface */
+/**
+ * @brief Global-namespace alias for data::BackendInterface
+ */
 using BackendInterface = data::BackendInterface;

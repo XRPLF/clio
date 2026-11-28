@@ -39,9 +39,13 @@ public:
      * @brief A struct to hold the statistics
      */
     struct Stats {
-        /** @brief Mean of the prices */
+        /**
+         * @brief Mean of the prices
+         */
         xrpl::STAmount avg{};  // NOLINT(readability-redundant-member-init)
-        /** @brief Standard deviation of the prices */
+        /**
+         * @brief Standard deviation of the prices
+         */
         xrpl::Number sd{};  // NOLINT(readability-redundant-member-init)
         uint32_t size{0};   ///< Number of prices the statistics are computed from
     };
@@ -52,7 +56,9 @@ public:
     struct Output {
         uint32_t time;        ///< Most recent price update time among the oracles
         Stats extireStats{};  ///< Statistics over all collected prices
-        /** @brief Statistics after trimming outliers, if `trim` was requested */
+        /**
+         * @brief Statistics after trimming outliers, if `trim` was requested
+         */
         std::optional<Stats> trimStats;
         std::string ledgerHash;  ///< Hash of the ledger used
         uint32_t ledgerIndex;    ///< Sequence of the ledger used

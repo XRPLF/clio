@@ -36,9 +36,13 @@ class LedgerDataHandler : public rpc::HandlerFor<rpc::spec::handlers::ledger_dat
 
 public:
     // constants
-    /** @brief Maximum number of objects returned per page in binary mode */
+    /**
+     * @brief Maximum number of objects returned per page in binary mode
+     */
     static constexpr auto kLimitBinary = rpc::spec::handlers::ledger_data::kLimitBinary;
-    /** @brief Maximum number of objects returned per page in JSON mode */
+    /**
+     * @brief Maximum number of objects returned per page in JSON mode
+     */
     static constexpr auto kLimitJson = rpc::spec::handlers::ledger_data::kLimitJson;
 
     /**
@@ -47,11 +51,15 @@ public:
     struct Output {
         uint32_t ledgerIndex{};  ///< Sequence of the ledger used
         std::string ledgerHash;  ///< Hash of the ledger used
-        /** @brief Ledger header, only included in the first page */
+        /**
+         * @brief Ledger header, only included in the first page
+         */
         std::optional<boost::json::object> header;
         boost::json::array states;          ///< Ledger objects in this page
         std::optional<std::string> marker;  ///< Hex object key to resume from, if more pages remain
-        /** @brief Ledger sequence to resume from when paging out of order */
+        /**
+         * @brief Ledger sequence to resume from when paging out of order
+         */
         std::optional<uint32_t> diffMarker;
         std::optional<bool> cacheFull;  ///< Whether the ledger cache is fully loaded
         bool validated = true;          ///< Whether the ledger is validated

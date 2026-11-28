@@ -244,7 +244,9 @@ toJson(xrpl::LedgerHeader const& info, bool binary, std::uint32_t apiVersion);
 boost::json::object
 toJson(xrpl::TxMeta const& meta);
 
-/** @brief Alias for the JSON value type used by libxrpl (rippled). */
+/**
+ * @brief Alias for the JSON value type used by libxrpl (rippled).
+ */
 using RippledJson = json::Value;
 
 /**

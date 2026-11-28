@@ -30,7 +30,9 @@ namespace util::config {
  */
 class ClioConfigDefinition {
 public:
-    /** @brief A config key paired with its definition: a single value or an array */
+    /**
+     * @brief A config key paired with its definition: a single value or an array
+     */
     using KeyValuePair = std::pair<std::string_view, std::variant<ConfigValue, Array>>;
 
     /**

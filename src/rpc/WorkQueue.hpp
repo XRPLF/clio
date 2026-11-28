@@ -143,10 +143,14 @@ private:
     util::Mutex<QueueState> queueState_;
 
 public:
-    /** @brief Tag type used to construct a WorkQueue that does not start processing immediately. */
+    /**
+     * @brief Tag type used to construct a WorkQueue that does not start processing immediately.
+     */
     struct DontStartProcessingTag {};
 
-    /** @brief Tag value used to select the non-starting WorkQueue constructor. */
+    /**
+     * @brief Tag value used to select the non-starting WorkQueue constructor.
+     */
     static constexpr DontStartProcessingTag kDontStartProcessingTag = {};
 
     /**

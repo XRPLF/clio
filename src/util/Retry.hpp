@@ -56,7 +56,9 @@ protected:
     nextDelay() const = 0;
 };
 
-/** @brief Owning pointer to a RetryStrategy */
+/**
+ * @brief Owning pointer to a RetryStrategy
+ */
 using RetryStrategyPtr = std::unique_ptr<RetryStrategy>;
 
 /**

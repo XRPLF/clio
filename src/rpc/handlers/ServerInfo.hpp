@@ -96,14 +96,22 @@ public:
         std::optional<AdminSection> adminSection = std::nullopt;  ///< Admin-only data
         std::string completeLedgers;  ///< Ledgers in the database, as `min-max`
         uint32_t loadFactor = 1u;     ///< Load factor; rippled's takes precedence
-        /** @brief Current time of the server */
+        /**
+         * @brief Current time of the server
+         */
         std::chrono::time_point<std::chrono::system_clock> time = ClockType::now();
         std::chrono::seconds uptime = {};  ///< Time since the server started
-        /** @brief Version of Clio */
+        /**
+         * @brief Version of Clio
+         */
         std::string clioVersion = util::build::getClioVersionString();
-        /** @brief Version of libxrpl */
+        /**
+         * @brief Version of libxrpl
+         */
         std::string xrplVersion = xrpl::build_info::getVersionString();
-        /** @brief `info` from rippled's server_info */
+        /**
+         * @brief `info` from rippled's server_info
+         */
         std::optional<boost::json::object> rippledInfo = std::nullopt;
         ValidatedLedgerSection validatedLedger = {};  ///< Latest validated ledger
         CacheSection cache = {};                      ///< State of the ledger cache

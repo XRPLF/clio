@@ -19,26 +19,38 @@
  */
 namespace spdlog {
 
-/** @brief spdlog logger that log records are written to (forward declaration) */
+/**
+ * @brief spdlog logger that log records are written to (forward declaration)
+ */
 class logger;  // NOLINT(readability-identifier-naming)
 
 /**
  * @brief spdlog sinks (forward declarations only)
  */
 namespace sinks {
-/** @brief spdlog sink that log records are output to (forward declaration) */
+/**
+ * @brief spdlog sink that log records are output to (forward declaration)
+ */
 class sink;  // NOLINT(readability-identifier-naming)
 }  // namespace sinks
 
 }  // namespace spdlog
 
-/** @brief Benchmark logging setup; befriended by Logger and LogService (forward declaration) */
+/**
+ * @brief Benchmark logging setup; befriended by Logger and LogService (forward declaration)
+ */
 struct BenchmarkLoggingInitializer;
-/** @brief Test fixture for logging; befriended by LogServiceState (forward declaration) */
+/**
+ * @brief Test fixture for logging; befriended by LogServiceState (forward declaration)
+ */
 class LoggerFixture;
-/** @brief LogService initialization tests; befriended by LogServiceState (forward declaration) */
+/**
+ * @brief LogService initialization tests; befriended by LogServiceState (forward declaration)
+ */
 struct LogServiceInitTests;
-/** @brief Log file rotation tests; befriended by LogServiceState (forward declaration) */
+/**
+ * @brief Log file rotation tests; befriended by LogServiceState (forward declaration)
+ */
 struct LogFileRotationTests;
 
 namespace util {
@@ -150,7 +162,9 @@ class Logger {
     };
 
 public:
-    /** @brief The predefined log channels; loggers for other channels are created dynamically */
+    /**
+     * @brief The predefined log channels; loggers for other channels are created dynamically
+     */
     static constexpr std::array<std::string_view, 8> kChannels = {
         "General",
         "WebServer",

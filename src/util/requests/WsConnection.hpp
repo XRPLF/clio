@@ -75,7 +75,9 @@ public:
     static constexpr std::chrono::seconds kDefaultTimeout{5};  ///< Default timeout for connecting
 };
 
-/** @brief Owning pointer to a WebSocket connection */
+/**
+ * @brief Owning pointer to a WebSocket connection
+ */
 using WsConnectionPtr = std::unique_ptr<WsConnection>;
 
 /**

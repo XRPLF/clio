@@ -42,7 +42,9 @@ public:
         uint32_t ledgerIndex{};             ///< Sequence of the ledger used
         std::vector<std::string> problems;  ///< Human-readable descriptions of problems found
         // TODO: use better type than json
-        /** @brief Transactions fixing the problems, if requested */
+        /**
+         * @brief Transactions fixing the problems, if requested
+         */
         std::optional<boost::json::array> transactions;
         bool validated = true;  ///< Whether the ledger is validated
     };

@@ -34,7 +34,9 @@ public:
         //
         // Insert queries
         //
-        /** @brief Insert a `ledger_range` row (min or max sequence) if it does not exist */
+        /**
+         * @brief Insert a `ledger_range` row (min or max sequence) if it does not exist
+         */
         PreparedStatement insertLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -49,7 +51,9 @@ public:
         //
         // Update (and "delete") queries
         //
-        /** @brief Conditionally update a `ledger_range` sequence (LWT on the previous value) */
+        /**
+         * @brief Conditionally update a `ledger_range` sequence (LWT on the previous value)
+         */
         PreparedStatement updateLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -64,7 +68,9 @@ public:
             );
         }();
 
-        /** @brief Select both the min and max sequences from `ledger_range` */
+        /**
+         * @brief Select both the min and max sequences from `ledger_range`
+         */
         PreparedStatement selectLedgerRange = [this] {
             return handle_.get().prepare(
                 fmt::format(
@@ -81,7 +87,9 @@ public:
         //
         // Select queries
         //
-        /** @brief Select a page of NFT IDs for an issuer with taxon above a given one */
+        /**
+         * @brief Select a page of NFT IDs for an issuer with taxon above a given one
+         */
         PreparedStatement selectNFTsAfterTaxonKeyspaces = [this] {
             return handle_.get().prepare(
                 fmt::format(

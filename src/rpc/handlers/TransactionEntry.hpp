@@ -32,7 +32,9 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        /** @brief Header of the ledger containing the transaction */
+        /**
+         * @brief Header of the ledger containing the transaction
+         */
         std::optional<xrpl::LedgerHeader> ledgerHeader;
         // TODO: use a better type for this
         boost::json::object metadata;  ///< Transaction metadata as JSON

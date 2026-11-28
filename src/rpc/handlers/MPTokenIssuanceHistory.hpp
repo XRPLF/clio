@@ -43,11 +43,17 @@ class MPTokenIssuanceHistoryHandler
     std::shared_ptr<std::atomic_bool> migrated_ = std::make_shared<std::atomic_bool>(false);
 
 public:
-    /** @brief Minimum allowed value of the `limit` parameter. */
+    /**
+     * @brief Minimum allowed value of the `limit` parameter.
+     */
     static constexpr auto kLimitMin = rpc::spec::handlers::mptoken_issuance_history::kLimitMin;
-    /** @brief Maximum allowed value of the `limit` parameter. */
+    /**
+     * @brief Maximum allowed value of the `limit` parameter.
+     */
     static constexpr auto kLimitMax = rpc::spec::handlers::mptoken_issuance_history::kLimitMax;
-    /** @brief Default value of the `limit` parameter. */
+    /**
+     * @brief Default value of the `limit` parameter.
+     */
     static constexpr auto kLimitDefault =
         rpc::spec::handlers::mptoken_issuance_history::kLimitDefault;
 

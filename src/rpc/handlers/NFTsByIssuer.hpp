@@ -24,11 +24,17 @@ class NFTsByIssuerHandler : public rpc::HandlerFor<rpc::spec::handlers::nfts_by_
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    /** @brief Minimum allowed value of the `limit` parameter */
+    /**
+     * @brief Minimum allowed value of the `limit` parameter
+     */
     static constexpr auto kLimitMin = rpc::spec::handlers::nfts_by_issuer::kLimitMin;
-    /** @brief Maximum allowed value of the `limit` parameter */
+    /**
+     * @brief Maximum allowed value of the `limit` parameter
+     */
     static constexpr auto kLimitMax = rpc::spec::handlers::nfts_by_issuer::kLimitMax;
-    /** @brief Default value of the `limit` parameter */
+    /**
+     * @brief Default value of the `limit` parameter
+     */
     static constexpr auto kLimitDefault = rpc::spec::handlers::nfts_by_issuer::kLimitDefault;
 
     /**

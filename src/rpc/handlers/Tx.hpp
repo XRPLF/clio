@@ -45,25 +45,39 @@ public:
      */
     struct Output {
         uint32_t date = 0u;  ///< Close time of the ledger containing the transaction
-        /** @brief Transaction hash, only set when binary was requested */
+        /**
+         * @brief Transaction hash, only set when binary was requested
+         */
         std::string hash = {};      // NOLINT(readability-redundant-member-init)
         uint32_t ledgerIndex = 0u;  ///< Sequence of the ledger containing the transaction
-        /** @brief Metadata as JSON, unless binary was requested */
+        /**
+         * @brief Metadata as JSON, unless binary was requested
+         */
         std::optional<boost::json::object> meta =
             std::nullopt;  // NOLINT(readability-redundant-member-init)
-        /** @brief Transaction as JSON, unless binary was requested */
+        /**
+         * @brief Transaction as JSON, unless binary was requested
+         */
         std::optional<boost::json::object> tx =
             std::nullopt;  // NOLINT(readability-redundant-member-init)
-        /** @brief Hex-encoded metadata, if binary was requested */
+        /**
+         * @brief Hex-encoded metadata, if binary was requested
+         */
         std::optional<std::string> metaStr =
             std::nullopt;  // NOLINT(readability-redundant-member-init)
-        /** @brief Hex-encoded transaction, if binary was requested */
+        /**
+         * @brief Hex-encoded transaction, if binary was requested
+         */
         std::optional<std::string> txStr =
             std::nullopt;  // NOLINT(readability-redundant-member-init)
-        /** @brief Compact transaction ID, if the network ID is known and the CTID can be encoded */
+        /**
+         * @brief Compact transaction ID, if the network ID is known and the CTID can be encoded
+         */
         std::optional<std::string> ctid =
             std::nullopt;  // NOLINT(readability-redundant-member-init)
-        /** @brief Header of the containing ledger (API version 2+) */
+        /**
+         * @brief Header of the containing ledger (API version 2+)
+         */
         std::optional<xrpl::LedgerHeader> ledgerHeader =
             std::nullopt;  // NOLINT(readability-redundant-member-init) ledger hash when apiVersion
                            // >= 2

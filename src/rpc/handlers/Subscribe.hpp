@@ -48,10 +48,14 @@ public:
         // TODO: use better type than json
         std::optional<boost::json::array> offers;  ///< Book snapshot when `both` is false
         // if snapshot is true and both is true, reversed book' offers go to asks list
-        /** @brief Snapshot of the reversed book when `both` is true */
+        /**
+         * @brief Snapshot of the reversed book when `both` is true
+         */
         std::optional<boost::json::array> asks;
         // if snapshot is true and both is true, original book' offers go to bids list
-        /** @brief Snapshot of the original book when `both` is true */
+        /**
+         * @brief Snapshot of the original book when `both` is true
+         */
         std::optional<boost::json::array> bids;
     };
 

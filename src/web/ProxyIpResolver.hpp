@@ -50,10 +50,14 @@ public:
     static ProxyIpResolver
     fromConfig(util::config::ClioConfigDefinition const& config);
 
-    /** @brief The header type of an HTTP request with a string body. */
+    /**
+     * @brief The header type of an HTTP request with a string body.
+     */
     using HttpHeaders = boost::beast::http::request<boost::beast::http::string_body>::header_type;
 
-    /** @brief Name of the HTTP header carrying the token that identifies a trusted proxy. */
+    /**
+     * @brief Name of the HTTP header carrying the token that identifies a trusted proxy.
+     */
     static constexpr std::string_view kProxyTokenHeader = "X-Proxy-Token";
 
     /**

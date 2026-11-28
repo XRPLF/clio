@@ -30,13 +30,21 @@ class MPTHoldersHandler : public rpc::HandlerFor<rpc::spec::handlers::mpt_holder
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    /** @brief Minimum allowed value of the `limit` parameter */
+    /**
+     * @brief Minimum allowed value of the `limit` parameter
+     */
     static constexpr auto kLimitMin = rpc::spec::handlers::mpt_holders::kLimitMin;
-    /** @brief Maximum allowed value of the `limit` parameter */
+    /**
+     * @brief Maximum allowed value of the `limit` parameter
+     */
     static constexpr auto kLimitMax = rpc::spec::handlers::mpt_holders::kLimitMax;
-    /** @brief Default value of the `limit` parameter */
+    /**
+     * @brief Default value of the `limit` parameter
+     */
     static constexpr auto kLimitDefault = rpc::spec::handlers::mpt_holders::kLimitDefault;
-    /** @brief Maximum number of entries allowed in the `accounts` filter */
+    /**
+     * @brief Maximum number of entries allowed in the `accounts` filter
+     */
     static constexpr auto kMaxAccounts = rpc::spec::handlers::mpt_holders::kMaxAccounts;
 
     /**

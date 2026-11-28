@@ -100,19 +100,29 @@ struct VoidOutput {};
  * @brief Context of an RPC call.
  */
 struct Context {
-    /** @brief The coroutine context the RPC call is executed in */
+    /**
+     * @brief The coroutine context the RPC call is executed in
+     */
     boost::asio::yield_context yield;
 
-    /** @brief The subscription context of the connection; null if not a websocket connection */
+    /**
+     * @brief The subscription context of the connection; null if not a websocket connection
+     */
     web::SubscriptionContextPtr session = {};  // NOLINT(readability-redundant-member-init)
 
-    /** @brief Whether the client has admin privileges */
+    /**
+     * @brief Whether the client has admin privileges
+     */
     bool isAdmin = false;
 
-    /** @brief IP address of the client */
+    /**
+     * @brief IP address of the client
+     */
     std::string clientIp = {};  // NOLINT(readability-redundant-member-init)
 
-    /** @brief The API version requested by the client; 0 means invalid/unset */
+    /**
+     * @brief The API version requested by the client; 0 means invalid/unset
+     */
     uint32_t apiVersion = 0u;  // invalid by default
 };
 

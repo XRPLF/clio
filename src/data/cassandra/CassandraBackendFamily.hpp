@@ -42,7 +42,9 @@
 #include <utility>
 #include <vector>
 
-/** @brief Test fixture granted friend access to CassandraBackendFamily internals */
+/**
+ * @brief Test fixture granted friend access to CassandraBackendFamily internals
+ */
 class CacheBackendCassandraTest;
 
 namespace data::cassandra {

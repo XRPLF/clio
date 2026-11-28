@@ -20,7 +20,9 @@ class Connection;
  */
 class Response {
 public:
-    /** @brief The HTTP response, or the message string for a WebSocket response. */
+    /**
+     * @brief The HTTP response, or the message string for a WebSocket response.
+     */
     std::variant<boost::beast::http::response<boost::beast::http::string_body>, std::string> data;
 
 public:

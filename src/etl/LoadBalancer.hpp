@@ -63,11 +63,17 @@ concept SomeLoadBalancer = std::derived_from<T, LoadBalancerTag>;
  */
 class LoadBalancer : public LoadBalancerInterface, LoadBalancerTag {
 public:
-    /** @brief Raw ledger object as received over gRPC */
+    /**
+     * @brief Raw ledger object as received over gRPC
+     */
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
-    /** @brief gRPC response containing the data of a single ledger */
+    /**
+     * @brief gRPC response containing the data of a single ledger
+     */
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
-    /** @brief Optional ledger response, as returned by fetchLedger() */
+    /**
+     * @brief Optional ledger response, as returned by fetchLedger()
+     */
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
 private:

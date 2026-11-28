@@ -37,7 +37,9 @@ public:
         Blob blob;         ///< Serialized ledger object data
     };
 
-    /** @brief Map from ledger object key to its cache entry */
+    /**
+     * @brief Map from ledger object key to its cache entry
+     */
     using CacheMap = std::map<xrpl::uint256, CacheEntry>;
 
 private:

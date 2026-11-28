@@ -13,9 +13,13 @@ namespace etl {
  * @brief An interface for LedgerFetcher
  */
 struct LedgerFetcherInterface {
-    /** @brief gRPC response containing the data of a single ledger */
+    /**
+     * @brief gRPC response containing the data of a single ledger
+     */
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
-    /** @brief Optional ledger response; empty if the server is shutting down */
+    /**
+     * @brief Optional ledger response; empty if the server is shutting down
+     */
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
     virtual ~LedgerFetcherInterface() = default;

@@ -39,11 +39,17 @@ using InitialLedgerLoadResult = std::expected<std::vector<std::string>, InitialL
  */
 class LoadBalancerInterface {
 public:
-    /** @brief Raw ledger object as received over gRPC */
+    /**
+     * @brief Raw ledger object as received over gRPC
+     */
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
-    /** @brief gRPC response containing the data of a single ledger */
+    /**
+     * @brief gRPC response containing the data of a single ledger
+     */
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
-    /** @brief Optional ledger response, as returned by fetchLedger() */
+    /**
+     * @brief Optional ledger response, as returned by fetchLedger()
+     */
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
     virtual ~LoadBalancerInterface() = default;

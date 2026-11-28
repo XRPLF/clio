@@ -317,7 +317,9 @@ private:
     }
 };
 
-/** @brief The Keyspace backend with the default settings provider and execution strategy */
+/**
+ * @brief The Keyspace backend with the default settings provider and execution strategy
+ */
 using KeyspaceBackend = BasicKeyspaceBackend<SettingsProvider, impl::DefaultExecutionStrategy<>>;
 
 }  // namespace data::cassandra

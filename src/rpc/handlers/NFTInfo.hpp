@@ -36,7 +36,9 @@ public:
         uint32_t transferFee;  ///< Fee on secondary sales, in 1/100000 units
         std::string issuer;    ///< Address of the issuer
         uint32_t taxon;        ///< Taxon of the NFT
-        /** @brief Serial number of the NFT within its issuer */
+        /**
+         * @brief Serial number of the NFT within its issuer
+         */
         uint32_t serial;  // TODO: documented as 'nft_sequence' atm.
                           // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
         std::string uri;  ///< Hex-encoded URI of the NFT

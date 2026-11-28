@@ -14,7 +14,9 @@
 
 namespace data {
 
-/** @brief Raw serialized data, e.g. a ledger object, transaction or metadata */
+/**
+ * @brief Raw serialized data, e.g. a ledger object, transaction or metadata
+ */
 using Blob = std::vector<unsigned char>;
 
 /**
@@ -325,15 +327,21 @@ struct AmendmentKey {
     operator<=>(AmendmentKey const& other) const = default;
 };
 
-/** @brief The smallest possible ledger object key; used as the start of the key space */
+/**
+ * @brief The smallest possible ledger object key; used as the start of the key space
+ */
 constexpr xrpl::uint256 kFirstKey{
     "0000000000000000000000000000000000000000000000000000000000000000"
 };
-/** @brief The largest possible ledger object key; used as the end of the key space */
+/**
+ * @brief The largest possible ledger object key; used as the end of the key space
+ */
 constexpr xrpl::uint256 kLastKey{
     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 };
-/** @brief Key with the high 192 bits zero and the low 64 bits set to 0x1111111111111111 */
+/**
+ * @brief Key with the high 192 bits zero and the low 64 bits set to 0x1111111111111111
+ */
 constexpr xrpl::uint256 kHi192{"0000000000000000000000000000000000000000000000001111111111111111"};
 
 }  // namespace data

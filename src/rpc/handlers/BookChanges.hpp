@@ -33,7 +33,9 @@ public:
         std::string ledgerHash;  ///< Hash of the ledger the changes were computed for
         uint32_t ledgerIndex{};  ///< Sequence of the ledger
         uint32_t ledgerTime{};   ///< Close time of the ledger, in seconds since the Ripple epoch
-        /** @brief Order book changes caused by the ledger's transactions */
+        /**
+         * @brief Order book changes caused by the ledger's transactions
+         */
         std::vector<BookChange> bookChanges;
         bool validated = true;  ///< Whether the ledger is validated
     };

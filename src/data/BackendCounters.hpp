@@ -44,7 +44,9 @@ concept SomeBackendCounters = requires(T a) {
  */
 class BackendCounters {
 public:
-    /** @brief Shared pointer type used to hold BackendCounters instances */
+    /**
+     * @brief Shared pointer type used to hold BackendCounters instances
+     */
     using PtrType = std::shared_ptr<BackendCounters>;
 
     /**

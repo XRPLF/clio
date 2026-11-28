@@ -46,7 +46,9 @@ public:
         std::string destinationAccount;  ///< Address of the receiving account
         std::string ledgerHash;          ///< Hash of the ledger used
         uint32_t ledgerIndex{};          ///< Sequence of the ledger used
-        /** @brief Credentials from the request, if any */
+        /**
+         * @brief Credentials from the request, if any
+         */
         std::optional<std::vector<xrpl::uint256>> credentials;
 
         // validated should be sent via framework

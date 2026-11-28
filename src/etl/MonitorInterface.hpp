@@ -16,11 +16,17 @@ namespace etl {
  */
 class MonitorInterface {
 public:
-    /** @brief Default interval between checks of the database for new ledgers */
+    /**
+     * @brief Default interval between checks of the database for new ledgers
+     */
     static constexpr auto kDefaultRepeatInterval = std::chrono::seconds{1};
-    /** @brief Signal fired with the sequence of each new ledger found in the database */
+    /**
+     * @brief Signal fired with the sequence of each new ledger found in the database
+     */
     using NewSequenceSignalType = boost::signals2::signal<void(uint32_t)>;
-    /** @brief Signal fired when no database update is detected for a configured period */
+    /**
+     * @brief Signal fired when no database update is detected for a configured period
+     */
     using DbStalledSignalType = boost::signals2::signal<void()>;
 
     virtual ~MonitorInterface() = default;

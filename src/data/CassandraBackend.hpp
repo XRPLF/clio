@@ -268,7 +268,9 @@ public:
     }
 };
 
-/** @brief The Cassandra backend with the default settings provider and execution strategy */
+/**
+ * @brief The Cassandra backend with the default settings provider and execution strategy
+ */
 using CassandraBackend = BasicCassandraBackend<SettingsProvider, impl::DefaultExecutionStrategy<>>;
 
 }  // namespace data::cassandra

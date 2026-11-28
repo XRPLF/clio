@@ -33,11 +33,17 @@ public:
         std::string index;       ///< Hex-encoded key of the ledger object
         uint32_t ledgerIndex;    ///< Sequence of the ledger used
         std::string ledgerHash;  ///< Hash of the ledger used
-        /** @brief Ledger object as JSON, unless binary was requested */
+        /**
+         * @brief Ledger object as JSON, unless binary was requested
+         */
         std::optional<boost::json::object> node;
-        /** @brief Hex-encoded ledger object, if binary was requested */
+        /**
+         * @brief Hex-encoded ledger object, if binary was requested
+         */
         std::optional<std::string> nodeBinary;
-        /** @brief Ledger in which the object was deleted, if any */
+        /**
+         * @brief Ledger in which the object was deleted, if any
+         */
         std::optional<uint32_t> deletedLedgerIndex;
         bool validated = true;  ///< Whether the ledger is validated
     };

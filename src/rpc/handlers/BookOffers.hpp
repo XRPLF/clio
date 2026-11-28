@@ -29,11 +29,17 @@ class BookOffersHandler : public rpc::HandlerFor<rpc::spec::handlers::book_offer
     std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
 public:
-    /** @brief Minimum allowed value of the `limit` parameter */
+    /**
+     * @brief Minimum allowed value of the `limit` parameter
+     */
     static constexpr auto kLimitMin = rpc::spec::handlers::book_offers::kLimitMin;
-    /** @brief Maximum allowed value of the `limit` parameter */
+    /**
+     * @brief Maximum allowed value of the `limit` parameter
+     */
     static constexpr auto kLimitMax = rpc::spec::handlers::book_offers::kLimitMax;
-    /** @brief Default value of the `limit` parameter */
+    /**
+     * @brief Default value of the `limit` parameter
+     */
     static constexpr auto kLimitDefault = rpc::spec::handlers::book_offers::kLimitDefault;
 
     /**

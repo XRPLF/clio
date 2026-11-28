@@ -464,59 +464,89 @@ private:
 static constinit PortConstraint gValidatePort{};   ///< Validates a network port number
 static constinit ValidIPConstraint gValidateIp{};  ///< Validates an IP address or hostname
 
-/** @brief Validates a log channel name */
+/**
+ * @brief Validates a log channel name
+ */
 static constinit OneOf gValidateChannelName{"channel", Logger::kChannels};
-/** @brief Validates a log level name */
+/**
+ * @brief Validates a log level name
+ */
 static constinit OneOf gValidateLogLevelName{"log.level", kLogLevels};
-/** @brief Validates the database type */
+/**
+ * @brief Validates the database type
+ */
 static constinit OneOf gValidateCassandraName{"database.type", kDatabaseType};
-/** @brief Validates the cache load mode */
+/**
+ * @brief Validates the cache load mode
+ */
 static constinit OneOf gValidateLoadMode{"cache.load", kLoadCacheMode};
-/** @brief Validates the log tag style */
+/**
+ * @brief Validates the log tag style
+ */
 static constinit OneOf gValidateLogTag{"log.tag_style", kLogTags};
-/** @brief Validates the server request processing policy */
+/**
+ * @brief Validates the server request processing policy
+ */
 static constinit OneOf gValidateProcessingPolicy{"server.processing_policy", kProcessingPolicy};
-/** @brief Validates the Cassandra-compatible database provider */
+/**
+ * @brief Validates the Cassandra-compatible database provider
+ */
 static constinit OneOf gValidateProvider{"database.cassandra.provider", kProvider};
 
 static constinit PositiveDouble gValidatePositiveDouble{};  ///< Validates a number is non-negative
 
-/** @brief Validates the number of markers used for the initial ledger load; must be in [1, 256] */
+/**
+ * @brief Validates the number of markers used for the initial ledger load; must be in [1, 256]
+ */
 static constinit NumberValueConstraint<uint16_t> gValidateNumMarkers{1, 256};
-/** @brief Validates a number of cache loading cursors; any uint16 value, including 0 */
+/**
+ * @brief Validates a number of cache loading cursors; any uint16 value, including 0
+ */
 static constinit NumberValueConstraint<uint16_t> gValidateNumCursors{
     0,
     std::numeric_limits<uint16_t>::max()
 };
 
-/** @brief Validates the database replication factor; 0 is allowed */
+/**
+ * @brief Validates the database replication factor; 0 is allowed
+ */
 static constinit NumberValueConstraint<uint16_t> gValidateReplicationFactor{
     0,
     std::numeric_limits<uint16_t>::max()
 };
 
-/** @brief Validates a positive (non-zero) uint16 value */
+/**
+ * @brief Validates a positive (non-zero) uint16 value
+ */
 static constinit NumberValueConstraint<uint16_t> gValidateUint16{
     1,
     std::numeric_limits<uint16_t>::max()
 };
 
-/** @brief Validates a positive (non-zero) uint32 value */
+/**
+ * @brief Validates a positive (non-zero) uint32 value
+ */
 static constinit NumberValueConstraint<uint32_t> gValidateUint32{
     1,
     std::numeric_limits<uint32_t>::max()
 };
-/** @brief Validates a non-negative uint32 value (0 is allowed) */
+/**
+ * @brief Validates a non-negative uint32 value (0 is allowed)
+ */
 static constinit NumberValueConstraint<uint32_t> gValidateNonNegativeUint32{
     0,
     std::numeric_limits<uint32_t>::max()
 };
-/** @brief Validates an API version; must be within the supported range of API versions */
+/**
+ * @brief Validates an API version; must be within the supported range of API versions
+ */
 static constinit NumberValueConstraint<uint32_t> gValidateApiVersion{
     rpc::kApiVersionMin,
     rpc::kApiVersionMax
 };
 
-/** @brief Validates that a value is a valid RPC command name */
+/**
+ * @brief Validates that a value is a valid RPC command name
+ */
 static constinit RpcNameConstraint gRpcNameConstraint{};
 }  // namespace util::config

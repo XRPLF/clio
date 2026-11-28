@@ -42,15 +42,25 @@ public:
         uint32_t ledgerIndex;    ///< Sequence of the ledger used
         std::string accountID;   ///< Address of the gateway (issuing) account
         bool overflow = false;   ///< Whether a sum overflowed; currently never set (sums saturate)
-        /** @brief Total obligations to customers, per currency */
+        /**
+         * @brief Total obligations to customers, per currency
+         */
         std::map<xrpl::Currency, xrpl::STAmount> sums;
-        /** @brief Balances issued to the requested hot wallets */
+        /**
+         * @brief Balances issued to the requested hot wallets
+         */
         std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> hotBalances;
-        /** @brief Positive balances owed to the gateway, per peer */
+        /**
+         * @brief Positive balances owed to the gateway, per peer
+         */
         std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> assets;
-        /** @brief Obligations frozen by the gateway, per holder */
+        /**
+         * @brief Obligations frozen by the gateway, per holder
+         */
         std::map<xrpl::AccountID, std::vector<xrpl::STAmount>> frozenBalances;
-        /** @brief Amounts locked in escrow, per currency */
+        /**
+         * @brief Amounts locked in escrow, per currency
+         */
         std::map<xrpl::Currency, xrpl::STAmount> locked;
         // validated should be sent via framework
         bool validated = true;  ///< Whether the ledger is validated

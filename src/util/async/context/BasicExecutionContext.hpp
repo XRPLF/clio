@@ -163,7 +163,9 @@ public:
     template <typename T>
     using Operation = Operation<ValueType<T>>;
 
-    /** @brief The strand type created by this context to serialize execution */
+    /**
+     * @brief The strand type created by this context to serialize execution
+     */
     using Strand = impl::BasicStrand<
         BasicExecutionContext,
         StopSourceType,
